@@ -1,3 +1,3 @@
 # RESAAS: Replica Exchange sampling as-a-service
 
-There _is_ going to be readme at one point.
+A first draft of how this service looks like can be found [here](https://docs.google.com/document/d/1DcTozCzTmUbJbhQtj-tYSYvWHRpI2I_mOWS19BOutlk/edit?ts=5ff44579).
