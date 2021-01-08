@@ -4,5 +4,6 @@ pkgs.mkShell {
     python38
     python38Packages.poetry
     niv.niv
+    yarn
   ];
 }
