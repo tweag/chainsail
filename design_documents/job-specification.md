@@ -7,6 +7,11 @@ To specify a job, the user has to specify:
   - `minimum_beta` (float; the minimum inverse temperature (beta) which determines the flatness of the flattest distribution)
   - `initial_schedule_beta_ratio` (float; ratio defining (approximately) the geometric progression) 
 - `probability_definition` (URL to archive including importable Python module providing the log probability and, for now, also possible data files)
-- `deployment_environment` (string such as "single_vm", "vm_cluster" determining the deployment environment the scheduler works with)
-
+- `max_nodes` (maximum number of compute nodes to use. Specifics of the environment in which these are created is configured on the scheduler itself)
+- `model` (dictionary specifying software inputs, etc.)
+  - `uri` (string, uri pointing to a model script)
+  - `method` (string, points to a callable method in the script at `uri`
+  - `data` (string, uri containing data for the model run. This will be made available in the compute environment)
+  - `dependencies` (list of dependencies to install on compute nodes)
+    - e.g. `[{"type": "pip", "pkgs": ["numpy", "plotly"]}, {type: "nixpkgs", "pkgs": ["opencv", ...]}]` (we can just support pip deps for initial PoC)
 The `initial_schedule_parameters` dictionary might allow different entries than the one mentioned above once we support additional families of tempered distributions.
