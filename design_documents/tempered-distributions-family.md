@@ -4,7 +4,7 @@ I'll describe both in the following, but for the very first PoC, we restrict RES
 The two-Boltzmann-chains family can be relatively easily added later (TODO: think how easy schedule optimization actually is...)
 
 ## Family of Boltzmann distributions
-The Boltzmann distribution is a probability distribution of the form `p(x|beta)∝exp(-beta * E(x))` and is thus parameterized by the "inverse temperature" `beta`.
+The Boltzmann distribution is a probability distribution of the form `p(x|beta) ∝ exp(-beta * E(x))` and is thus parameterized by the "inverse temperature" `beta`.
 In physics, `E` is the physical system's energy, but in general, we can, given any probability distribution `p(x)`, define a pseudo-energy by `E(x)=-log p(x)`.
 This translates to a tempered family of distributions `p(x|beta)∝p(x) ^ beta`.
 For `beta=1`, we recover the original probability distribution, while for `beta=0`, we end up with a uniform "distribution" with infinite support.
