@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from libcloud.compute.deployment import MultiStepDeployment, SSHKeyDeployment, ScriptDeployment
-from resaas.scheduler.jobs.spec import Dependency
+from resaas.scheduler.spec import Dependencies
 from resaas.scheduler.nodes.base import Node, NodeStatus
 from libcloud.compute.base import NodeDriver, NodeImage, NodeSize
 from concurrent.futures import Executor, Future
@@ -12,13 +12,22 @@ class VMNode(Node):
 
     NODE_TYPE = "LibcloudVM"
 
+    # loading from db
+    #   - retrieve driver using node_type
+    #   - retrieve size/image using driver + node name query
+    #   - create object
+    #
+    # k8s example:
+    #   - retrieve k8s "driver" using node_type
+    #   - fetch pod yaml from k8s using driver + node name
+
     def __init__(
         self,
         name: str,
         driver: NodeDriver,
         size: NodeSize,
         image: NodeImage,
-        deps: List[Dependency],
+        deps: List[Dependencies],
         entrypoint: str,
         listening_ports: Optional[List[int]] = None,
         ssh_key: Optional[str] = None,
@@ -39,8 +48,6 @@ class VMNode(Node):
             self._listening_ports = []
         self.deps = deps
         self._entrypoint = entrypoint
-
-        self._db = None  # TODO
         self._status = NodeStatus.INITIALIZED
 
     def create(self):
@@ -86,10 +93,6 @@ class VMNode(Node):
         else:
             if not self._node.destroy():
                 raise Exception("Failed to destroy node")
-
-    @property
-    def db(self):
-        return None
 
     @property
     def entrypoint(self):
