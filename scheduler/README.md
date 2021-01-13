@@ -10,7 +10,8 @@ in /tmp.
 $ nix-shell ../shell.nix
 $ poetry install
 $ poetry shell
-$ PYTHONPATH="$PYTHONPATH:$PWD" python scheduler/resaas/scheduler/app.py
+$ cd ..
+$ PYTHONPATH="$PYTHONPATH:$PWD/scheduler" python scheduler/resaas/scheduler/app.py
 ```
 
 then, for example:
