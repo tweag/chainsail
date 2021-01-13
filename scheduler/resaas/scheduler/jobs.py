@@ -13,7 +13,7 @@ class JobStatus(Enum):
     FAILED = auto()
 
 
-# TODO: This doesn't need to be abstract, just load it.
+# TODO: This doesn't need to be abstract
 class Job(ABC):
 
     # Properties

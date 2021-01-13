@@ -26,6 +26,7 @@ pylint = "^2.6.0"
 mypy = "^0.790"
 libvirt-python = "^6.6.0"
 pytest-dotenv = "^0.5.2"
+pytest-cov = "^2.10.1"
 
 [tool.black]
 line-length = 99

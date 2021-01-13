@@ -1,10 +1,13 @@
 from typing import List, Optional
 
 from libcloud.compute.deployment import MultiStepDeployment, SSHKeyDeployment, ScriptDeployment
-from resaas.scheduler.spec import Dependencies
+from resaas.scheduler.config import SchedulerConfig
+from resaas.scheduler.db import TblNodes
+from resaas.scheduler.errors import ObjectConstructionError
+from resaas.scheduler.spec import Dependencies, JobSpec
 from resaas.scheduler.nodes.base import Node, NodeStatus
 from libcloud.compute.base import NodeDriver, NodeImage, NodeSize
-from concurrent.futures import Executor, Future
+from libcloud.compute.base import Node as LibcloudNode
 from libcloud.compute.types import DeploymentException, NodeState
 
 
@@ -25,20 +28,22 @@ class VMNode(Node):
         self,
         name: str,
         driver: NodeDriver,
+        node: Optional[LibcloudNode],
         size: NodeSize,
         image: NodeImage,
         deps: List[Dependencies],
         entrypoint: str,
         listening_ports: Optional[List[int]] = None,
-        ssh_key: Optional[str] = None,
-        ssh_password: Optional[str] = None,
+        status: Optional[NodeStatus] = None
+        # ssh_key: Optional[str] = None,
+        # ssh_password: Optional[str] = None,
     ):
         self._driver = driver
         self._size = size
         self._image = image
-        self._node = None
-        self._ssh_key = ssh_key
-        self._ssh_password = ssh_password
+        self._node = node
+        # self._ssh_key = ssh_key
+        # self._ssh_password = ssh_password
 
         self.name = name
         self._address = None
@@ -48,7 +53,10 @@ class VMNode(Node):
             self._listening_ports = []
         self.deps = deps
         self._entrypoint = entrypoint
-        self._status = NodeStatus.INITIALIZED
+        if not status:
+            self._status = NodeStatus.INITIALIZED
+        else:
+            self._status = status
 
     def create(self):
         if self._status != NodeStatus.INITIALIZED:
@@ -65,8 +73,8 @@ class VMNode(Node):
                 size=self._size,
                 image=self._image,
                 deploy=MultiStepDeployment(deployment_steps),
-                ssh_key=self._ssh_key,
-                ssh_key_password=self._ssh_password,
+                # ssh_key=self._ssh_key,
+                # ssh_key_password=self._ssh_password,
             )
         except DeploymentException as e:
             self._status = NodeStatus.FAILED
@@ -131,3 +139,29 @@ class VMNode(Node):
 
         else:
             self._status = NodeStatus.FAILED
+
+    @classmethod
+    def from_representation(
+        cls, spec: JobSpec, node_rep: TblNodes, config: SchedulerConfig
+    ) -> "Node":
+
+        driver: NodeDriver = config.create_node_driver()
+        node = [n for n in driver.list_nodes() if n.name == node_rep.name]
+        if not node:
+            raise ObjectConstructionError(
+                f"Failed to find an existing node with name "
+                f"{node_rep.name} job: {node_rep.job_id}, node: {node_rep.id}"
+            )
+        else:
+            node = node[0]
+        return cls(
+            name=node.name,
+            driver=driver,
+            node=node,
+            size=node.size,
+            image=node.image,
+            deps=spec.dependencies,
+            entrypoint=node_rep.entrypoint,
+            listening_ports=node_rep.ports,
+            status=node_rep.status,
+        )

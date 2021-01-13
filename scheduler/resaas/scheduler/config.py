@@ -6,9 +6,9 @@ from marshmallow.decorators import post_load
 
 from marshmallow_enum import EnumField
 from resaas.scheduler.nodes.base import NodeType
-from libcloud.compute.base import NodeDriver
 from marshmallow import Schema, fields
 from libcloud.compute.drivers.gce import GCENodeDriver
+from libcloud.compute.drivers.dummy import DummyNodeDriver
 from marshmallow.exceptions import ValidationError
 
 
@@ -19,11 +19,16 @@ class GCEDriverConfigSchema(Schema):
     datacenter = fields.String(required=True)
 
 
-VM_DRIVER_SCHEMAS: Dict[str, Tuple[NodeDriver, Schema]] = {
-    "gce": (GCENodeDriver, GCEDriverConfigSchema)
-}
+class DummyDriverConfigSchema(Schema):
+    creds = fields.String(required=True)
 
-DRIVER_SCHEMAS = {NodeType.LIBCLOUD_VM: VM_DRIVER_SCHEMAS}
+
+DRIVER_SCHEMAS: Dict[NodeType, Dict[str, Tuple[Callable, Schema]]] = {
+    NodeType.LIBCLOUD_VM: {
+        "gce": (GCENodeDriver, GCEDriverConfigSchema),
+        "dummy": (DummyNodeDriver, DummyDriverConfigSchema),
+    }
+}
 
 
 class SchedulerConfig:

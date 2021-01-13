@@ -4,6 +4,7 @@ from enum import Enum, auto
 from typing import List, Optional, Tuple
 from dataclasses import dataclass
 from resaas.scheduler.db import TblNodes
+from resaas.scheduler.spec import JobSpec
 
 
 class NodeType(Enum):
@@ -65,5 +66,5 @@ class Node(ABC):
 
     @classmethod
     @abstractmethod
-    def from_representation(cls) -> "Node":
+    def from_representation(cls, spec, node_rep, config) -> "Node":
         pass
