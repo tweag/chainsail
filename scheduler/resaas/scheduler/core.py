@@ -5,7 +5,10 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
 app = Flask(__name__)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+
+# TODO: Dev-only
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////tmp/test.db"
 
 # Flask-SQLAlchemy support
