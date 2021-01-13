@@ -20,14 +20,23 @@ It should be easily possible to extend this implementation to means of communica
 
 ### Scheduler
 The scheduler takes care of
-- calculating new RE parameters (schedule, number of replicas, initial states) from previous preliminary sampling runs,
-- scaling up / down the computing environment (single big machine or a cluster) according to these new parameters,
-- initiating the next sampling run with these new parameters in the adjusted environment,
-- looping over the previous three points (in that order) until some convergence / stopping criterion is met and finally runs a production run instead of another iteration of this loop,
-- storing sampling run results in the job database.
+- controlling (starting / stopping) new sampling jobs on request of the user
+- scaling up or down the computing environment on request of the JobController
+It exposes a REST API for submitting new job requests and interacting with jobs. It also exposes a backend endpoint via which job controllers can request resizing of their job cluster.
 
-It exposes a REST API for submitting new job requests and interacting with jobs. It also exposes a backend endpoint at which job controllers can request
-resizing of their job cluster.
+### Job controller
+The controller takes care of
+- calculating new RE parameters (schedule, number of replicas, initial states) from previous preliminary sampling runs,
+- requesting an up- or downscaling of the computing environment (depenging on these new parameters) from the Scheduler
+- kicking off the next sampling run with these new parameters in the adjusted environment,
+It loops over these three points (in that order) until some convergence / stopping criterion is met and finally initiates a production run instead of another iteration of this loop. It should also store sampling run results in a (TODO: which?) database.
+
+### Replica Exchange Job Runner 
+The Replica Exchange job runner launches a new `rexfw` calculation. It takes as inputs
+- the algorithmic parameters (initial states, timesteps, temperature schedule)
+- output settings (where to store samples)
+- a REJobId / iteration ID / something else that identifies the sampling statistics logged to the Metadata server as belonging to this particular iteration
+- a definition of the computing environment 
 
 ### Job database
 The job database has one entry for each sampling run and stores its metadata:
