@@ -39,7 +39,7 @@ class PipDependencies(Dependencies):
 
 def _load_dep(dep_type: str, pkgs: List[str]):
     if dep_type == DependenciesType.PIP:
-        return DependenciesType(pkgs)
+        return PipDependencies(pkgs)
     else:
         raise ValueError(f"Unknown dependency type: {dep_type}")
 
@@ -51,6 +51,10 @@ class DependenciesType(Enum):
 class DependencySchema(Schema):
     type = EnumField(DependenciesType, by_value=True)
     deps = fields.List(fields.String())
+
+    @post_load
+    def make_dependencies(self, data, **kwargs):
+        return _load_dep(data["type"], data["deps"])
 
 
 @dataclass

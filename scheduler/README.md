@@ -8,6 +8,7 @@ in /tmp.
 
 ```shell
 $ nix-shell ../shell.nix
+$ poetry install
 $ poetry shell
 $ PYTHONPATH="$PYTHONPATH:$PWD" python scheduler/resaas/scheduler/app.py
 ```

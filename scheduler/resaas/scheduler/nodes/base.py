@@ -3,6 +3,7 @@ from concurrent.futures import Future, Executor
 from enum import Enum, auto
 from typing import List, Optional, Tuple
 from dataclasses import dataclass
+from resaas.scheduler.db import TblNodes
 
 
 class NodeType(Enum):
@@ -60,4 +61,9 @@ class Node(ABC):
 
     @abstractmethod
     def refresh_status(self) -> None:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_representation(cls) -> "Node":
         pass

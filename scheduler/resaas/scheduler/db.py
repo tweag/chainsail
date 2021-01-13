@@ -1,11 +1,12 @@
 from resaas.scheduler.core import db, ma
 
 
-class Job(db.Model):
+class TblJobs(db.Model):
     """
     Persistent job state and metadata
     """
 
+    __tablename__ = "jobs"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=True)
     spec = db.Column(db.Unicode(), nullable=True)
@@ -13,16 +14,17 @@ class Job(db.Model):
     created_at = db.Column(db.DateTime(), nullable=False)
     started_at = db.Column(db.DateTime(), nullable=True)
     finished_at = db.Column(db.DateTime(), nullable=True)
-    nodes = db.relationship("Node", backref="job", lazy=True)
+    nodes = db.relationship("TblNodes", backref="jobs", lazy=True)
 
 
-class Node(db.Model):
+class TblNodes(db.Model):
     """
     Persistent node state
     """
 
+    __tablename__ = "nodes"
     id = db.Column(db.Integer, primary_key=True)
-    job_id = db.Column(db.Integer, db.ForeignKey("job.id"), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey("jobs.id"), nullable=False)
     # e.g. VM or pod identifier
     name = db.Column(db.String(50), nullable=False)
     # Node type for object loading e.g. VMNode
@@ -37,11 +39,11 @@ class JobViewSchema(ma.SQLAlchemyAutoSchema):
     """Schema for returning jobs"""
 
     class Meta:
-        model = Job
+        model = TblJobs
 
 
 class NodeViewSchema(ma.SQLAlchemyAutoSchema):
     """Schema for returning nodes"""
 
     class Meta:
-        model = Node
+        model = TblNodes

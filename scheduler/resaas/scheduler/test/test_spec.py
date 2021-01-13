@@ -26,7 +26,13 @@ def test_parse_partial_job_spec():
         "initial_schedule_parameters": {
             "minimum_beta": 1,
             "beta_ratio": 0.5
-        }
+        },
+        "dependencies": [
+            {
+                "type": "pip",
+                "deps": ["numpy==1.19.5", "pandas==1.0.0"]
+            }
+        ]
     }
     """
     JobSpecSchema().loads(data)
