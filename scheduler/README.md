@@ -31,3 +31,14 @@ To activate dev environment:
 $ nix-shell ../shell.nix
 $ poetry install
 ```
+
+
+## Tests
+
+(assuming you have already run `poetry install`) 
+
+```shell
+$ nix-shell ../shell.nix
+$ poetry shell
+$ PYTHONPATH="$PYTHONPATH:$PWD" pytest --cov-report html --cov=resaas
+```
