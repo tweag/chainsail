@@ -3,6 +3,7 @@ import pytest
 
 VALID_CONFIG = """
 {
+    "ssh_public_key": "notARealKey",
     "node_type": "LibcloudVM",
     "node_driver": "gce",
     "driver_specs": {
@@ -19,6 +20,7 @@ VALID_CONFIG = """
 # The below config fails to specify inputs for the driver
 INVALID_CONFIG_MISSING_SPECS = """
 {
+    "ssh_public_key": "notARealKey",
     "node_type": "LibcloudVM",
     "node_driver": "gce",
     "driver_specs": {}
@@ -28,6 +30,7 @@ INVALID_CONFIG_MISSING_SPECS = """
 # The below config specifies an unknown driver
 INVALID_CONFIG_UNKNOWN_DRIVER = """
 {
+    "ssh_public_key": "notARealKey",
     "node_type": "LibcloudVM",
     "node_driver": "does not exist",
     "driver_specs": {}

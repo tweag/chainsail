@@ -12,12 +12,12 @@ class NodeType(Enum):
 
 
 class NodeStatus(Enum):
-    INITIALIZED = auto()  # The node has been specified
-    CREATING = auto()  # The node is being created and provisioned/deployed
-    RUNNING = auto()  # The node is running
-    RESTARTING = auto()  # The node is being restarted
-    EXITED = auto()  # The node process has exited and the node is shut down
-    FAILED = auto()  # The node experienced an error
+    INITIALIZED = "initialized"  # The node has been specified
+    CREATING = "creating"  # The node is being created and provisioned/deployed
+    RUNNING = "running"  # The node is running
+    RESTARTING = "restarting"  # The node is being restarted
+    EXITED = "exited"  # The node process has exited and the node is shut down
+    FAILED = "failed"  # The node experienced an error
 
 
 class Node(ABC):
@@ -49,15 +49,15 @@ class Node(ABC):
         pass
 
     @abstractmethod
-    def create(self):
+    def create(self) -> Tuple[bool, str]:
         pass
 
     @abstractmethod
-    def restart(self):
+    def restart(self) -> bool:
         pass
 
     @abstractmethod
-    def delete(self):
+    def delete(self) -> bool:
         pass
 
     @abstractmethod

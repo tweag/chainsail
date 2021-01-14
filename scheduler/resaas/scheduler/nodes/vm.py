@@ -1,14 +1,30 @@
-from typing import List, Optional
+from typing import List, Optional, IO, Tuple, Union
 
-from libcloud.compute.deployment import MultiStepDeployment, SSHKeyDeployment, ScriptDeployment
+from libcloud.compute.deployment import (
+    Deployment,
+    MultiStepDeployment,
+    SSHKeyDeployment,
+    ScriptDeployment,
+)
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblNodes
-from resaas.scheduler.errors import ObjectConstructionError
+from resaas.scheduler.errors import MissingNodeError, ObjectConstructionError
 from resaas.scheduler.spec import Dependencies, JobSpec
 from resaas.scheduler.nodes.base import Node, NodeStatus
 from libcloud.compute.base import NodeDriver, NodeImage, NodeSize
 from libcloud.compute.base import Node as LibcloudNode
 from libcloud.compute.types import DeploymentException, NodeState
+
+
+def _deployment_log(deployment: Deployment):
+    stdout = getattr(deployment, "stdout", None)
+    stderr = getattr(deployment, "stdout", None)
+    log = ""
+    if stdout:
+        log += stdout
+    if stderr:
+        log += stderr
+    return log
 
 
 class VMNode(Node):
@@ -28,22 +44,22 @@ class VMNode(Node):
         self,
         name: str,
         driver: NodeDriver,
-        node: Optional[LibcloudNode],
         size: NodeSize,
         image: NodeImage,
-        deps: List[Dependencies],
         entrypoint: str,
+        ssh_key: Union[str, IO[str]],
+        libcloud_node: Optional[LibcloudNode] = None,
+        deps: Optional[List[Dependencies]] = None,
         listening_ports: Optional[List[int]] = None,
-        status: Optional[NodeStatus] = None
-        # ssh_key: Optional[str] = None,
-        # ssh_password: Optional[str] = None,
+        status: Optional[NodeStatus] = None,
+        ssh_password: Optional[str] = None,
     ):
         self._driver = driver
         self._size = size
         self._image = image
-        self._node = node
-        # self._ssh_key = ssh_key
-        # self._ssh_password = ssh_password
+        self._node = libcloud_node
+        self._ssh_key = ssh_key
+        self._ssh_password = ssh_password
 
         self.name = name
         self._address = None
@@ -51,14 +67,17 @@ class VMNode(Node):
             self._listening_ports = listening_ports
         else:
             self._listening_ports = []
-        self.deps = deps
+        if deps:
+            self.deps = deps
+        else:
+            self.deps = []
         self._entrypoint = entrypoint
         if not status:
             self._status = NodeStatus.INITIALIZED
         else:
             self._status = status
 
-    def create(self):
+    def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
             return
         self._status = NodeStatus.CREATING
@@ -73,34 +92,38 @@ class VMNode(Node):
                 size=self._size,
                 image=self._image,
                 deploy=MultiStepDeployment(deployment_steps),
-                # ssh_key=self._ssh_key,
-                # ssh_key_password=self._ssh_password,
+                ssh_key=self._ssh_key,
+                ssh_key_password=self._ssh_password,
             )
         except DeploymentException as e:
             self._status = NodeStatus.FAILED
-            for step in deployment_steps:
-                # TODO: Log errors from each step
-                pass
+            logs = _deployment_log(d for d in deployment_steps)
             if e.node:
                 if not e.node.destroy():
-                    raise Exception("Failed to destroy node")
+                    # Keep node reference to enable later
+                    # destroy attempts
+                    self._node = e.node
+            return (False, logs)
         else:
+            logs = _deployment_log(d for d in deployment_steps)
             if self._node.private_ips:
                 self._address = self._node.private_ips[0]
             self.refresh_status()
+            return (True, logs)
 
-    def restart(self):
+    def restart(self) -> bool:
         if not self._node:
-            return
-        if not self._node.reboot():
-            raise Exception("Could not reboot node")
+            raise MissingNodeError
+        rebooted = self._node.reboot()
+        self.refresh_status()
+        return rebooted
 
-    def delete(self):
+    def delete(self) -> bool:
         if not self._node:
-            return
-        else:
-            if not self._node.destroy():
-                raise Exception("Failed to destroy node")
+            return True
+        deleted = self._node.destroy()
+        self.refresh_status()
+        return deleted
 
     @property
     def entrypoint(self):
@@ -146,22 +169,34 @@ class VMNode(Node):
     ) -> "Node":
 
         driver: NodeDriver = config.create_node_driver()
-        node = [n for n in driver.list_nodes() if n.name == node_rep.name]
-        if not node:
-            raise ObjectConstructionError(
-                f"Failed to find an existing node with name "
-                f"{node_rep.name} job: {node_rep.job_id}, node: {node_rep.id}"
-            )
+        # If the node has only been initialized, no actual compute resource
+        # has been created yet
+        if node_rep.status == NodeStatus.INITIALIZED:
+            node = None
+            size = None  # TODO: need to look these up in config
+            image = None
+            name = None
+        # Otherwise we can look up the compute resource using the driver
         else:
+            node = [n for n in driver.list_nodes() if n.name == node_rep.name]
+            if not node:
+                raise ObjectConstructionError(
+                    f"Failed to find an existing node with name "
+                    f"{node_rep.name} job: {node_rep.job_id}, node: {node_rep.id}"
+                )
             node = node[0]
+            size = node.size
+            image = node.image
+            name = node.name
         return cls(
-            name=node.name,
+            name=name,
             driver=driver,
-            node=node,
-            size=node.size,
-            image=node.image,
+            libcloud_node=node,
+            size=size,
+            image=image,
             deps=spec.dependencies,
             entrypoint=node_rep.entrypoint,
             listening_ports=node_rep.ports,
             status=node_rep.status,
+            ssh_key=config.ssh_public_key,
         )

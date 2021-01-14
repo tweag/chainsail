@@ -11,6 +11,8 @@ from libcloud.compute.drivers.gce import GCENodeDriver
 from libcloud.compute.drivers.dummy import DummyNodeDriver
 from marshmallow.exceptions import ValidationError
 
+from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
+
 
 class GCEDriverConfigSchema(Schema):
     user_id = fields.String(required=True)
@@ -26,7 +28,7 @@ class DummyDriverConfigSchema(Schema):
 DRIVER_SCHEMAS: Dict[NodeType, Dict[str, Tuple[Callable, Schema]]] = {
     NodeType.LIBCLOUD_VM: {
         "gce": (GCENodeDriver, GCEDriverConfigSchema),
-        "dummy": (DummyNodeDriver, DummyDriverConfigSchema),
+        "dummy": (DeployableDummyNodeDriver, DummyDriverConfigSchema),
     }
 }
 
@@ -34,11 +36,13 @@ DRIVER_SCHEMAS: Dict[NodeType, Dict[str, Tuple[Callable, Schema]]] = {
 class SchedulerConfig:
     def __init__(
         self,
+        ssh_public_key: str,
         node_type: NodeType,
         driver: Callable,
         driver_args=Tuple,
         driver_kwargs=Dict,
     ):
+        self.ssh_public_key = ssh_public_key
         self.node_type = node_type
         self.driver = driver
         self.driver_args = driver_args
@@ -59,6 +63,7 @@ class SchedulerConfigSchema(Schema):
     for an example.
     """
 
+    ssh_public_key = fields.String(required=True)
     # The type of nodes to instantiate
     node_type = EnumField(NodeType, by_value=True, required=True)
     node_driver = fields.String(required=True)
@@ -86,5 +91,9 @@ class SchedulerConfigSchema(Schema):
         # Validate that the required config fields exist
         driver_config = driver_config_schema().load(data["driver_specs"][requested_driver])
         return SchedulerConfig(
-            data["node_type"], driver=driver, driver_args=(), driver_kwargs=driver_config
+            data["ssh_public_key"],
+            data["node_type"],
+            driver=driver,
+            driver_args=(),
+            driver_kwargs=driver_config,
         )

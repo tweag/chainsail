@@ -9,5 +9,13 @@ class ObjectConstructionError(BaseSchedulerException):
     """
 
 
+class MissingNodeError(BaseSchedulerException):
+    """
+    Raised when an operation is called on a node which has been
+    instantiated but the corresponding compute resource has
+    not been assigned yet.
+    """
+
+
 class ConfigurationError(BaseSchedulerException):
     """Raised when there is an issue with the external config"""

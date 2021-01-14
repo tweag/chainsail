@@ -34,7 +34,7 @@ class PipDependencies(Dependencies):
 
     @property
     def installation_script(self):
-        return [f"pip install {' '.join(self.packages)}"]
+        return f"pip install {' '.join(self.packages)}"
 
 
 def _load_dep(dep_type: str, pkgs: List[str]):

@@ -1,27 +1,30 @@
 from unittest.mock import Mock, patch
 import pytest
 
+from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
+from resaas.scheduler.config import SchedulerConfig
 
-# TODO: Can't test node creation method due to the DummyNodeDriver not supporting
-# deploy_node(). Need to create our own mock for this.
+
+@pytest.fixture
+def mock_config():
+    driver = DeployableDummyNodeDriver("test")
+    config = Mock(SchedulerConfig)
+    config.ssh_public_key = "testing"
+    config.create_node_driver.return_value = driver
+    return config
 
 
-def test_vm_node_from_representation():
-    from libcloud.compute.drivers.dummy import DummyNodeDriver
-    from resaas.scheduler.config import SchedulerConfig
+def test_vm_node_from_representation(mock_config):
     from resaas.scheduler.db import TblNodes
     from resaas.scheduler.nodes.base import NodeStatus, NodeType
     from resaas.scheduler.spec import JobSpec
     from resaas.scheduler.nodes.vm import VMNode
 
-    # This driver already has some nodes associated with it
-    driver = DummyNodeDriver("test")
     job_spec = JobSpec("gs://my-bucket/scripts")
-    config = Mock(SchedulerConfig)
-    config.create_node_driver.return_value = driver
     node_rep = TblNodes(
         id=1,
         job_id=1,
+        # dummy-1 already exists on the driver
         name="dummy-1",
         node_type=NodeType.LIBCLOUD_VM,
         entrypoint="echo 'hello world'",
@@ -29,23 +32,18 @@ def test_vm_node_from_representation():
         address="127.0.0.1",
         ports=[8080],
     )
-    VMNode.from_representation(job_spec, node_rep, config)
+
+    VMNode.from_representation(job_spec, node_rep, mock_config)
 
 
-def test_vm_node_from_representation_no_match_raises():
-    from libcloud.compute.drivers.dummy import DummyNodeDriver
-    from resaas.scheduler.config import SchedulerConfig
+def test_vm_node_from_representation_no_match_raises(mock_config):
     from resaas.scheduler.db import TblNodes
     from resaas.scheduler.nodes.base import NodeStatus, NodeType
     from resaas.scheduler.spec import JobSpec
     from resaas.scheduler.nodes.vm import VMNode
     from resaas.scheduler.errors import ObjectConstructionError
 
-    # This driver already has some nodes associated with it
-    driver = DummyNodeDriver("test")
     job_spec = JobSpec("gs://my-bucket/scripts")
-    config = Mock(SchedulerConfig)
-    config.create_node_driver.return_value = driver
     node_rep = TblNodes(
         id=1,
         job_id=1,
@@ -56,5 +54,65 @@ def test_vm_node_from_representation_no_match_raises():
         address="127.0.0.1",
         ports=[8080],
     )
+
     with pytest.raises(ObjectConstructionError):
-        VMNode.from_representation(job_spec, node_rep, config)
+        VMNode.from_representation(job_spec, node_rep, mock_config)
+
+
+def test_vm_node_from_representation_then_create(mock_config):
+    from resaas.scheduler.db import TblNodes
+    from resaas.scheduler.nodes.base import NodeStatus, NodeType
+    from resaas.scheduler.spec import JobSpec
+    from resaas.scheduler.nodes.vm import VMNode
+    from resaas.scheduler.spec import PipDependencies
+
+    job_spec = JobSpec("gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])])
+    node_rep = TblNodes(
+        id=1,
+        job_id=1,
+        name="new-node",
+        node_type=NodeType.LIBCLOUD_VM,
+        entrypoint="echo 'hello world'",
+        # This node has not been actually created yet
+        status=NodeStatus.INITIALIZED,
+    )
+
+    # Create the node object
+    node = VMNode.from_representation(job_spec, node_rep, mock_config)
+    node.refresh_status()
+
+    assert node.create()
+    assert node.status == NodeStatus.RUNNING
+
+
+def test_vm_node_lifecycle(mock_config):
+    from resaas.scheduler.nodes.base import NodeStatus
+    from resaas.scheduler.nodes.vm import VMNode
+
+    driver = mock_config.create_node_driver()
+    node = VMNode(
+        name="test",
+        driver=mock_config.create_node_driver(),
+        size=driver.list_sizes()[0],
+        image=driver.list_images()[0],
+        entrypoint="echo 'foo'",
+        ssh_key="testing",
+    )
+
+    statuses = [node.status]
+    is_created, _ = node.create()
+    statuses.append(node.status)
+    is_restarted = node.restart()
+    statuses.append(node.status)
+    is_deleted = node.delete()
+    statuses.append(node.status)
+
+    # Check that all operations succeeded
+    assert all([is_created, is_restarted, is_deleted])
+    # If so, the following statuses should have been observed:
+    assert statuses == [
+        NodeStatus.INITIALIZED,
+        NodeStatus.RUNNING,
+        NodeStatus.RESTARTING,
+        NodeStatus.EXITED,
+    ]

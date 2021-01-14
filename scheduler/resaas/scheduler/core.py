@@ -7,6 +7,7 @@ from flask_marshmallow import Marshmallow
 app = Flask(__name__)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+# TODO: Logger setup
 
 # TODO: Dev-only
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////tmp/test.db"
