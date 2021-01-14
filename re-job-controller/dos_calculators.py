@@ -29,8 +29,8 @@ class AbstractWHAM(metaclass=ABCMeta):
         '''
         Interface for classes implementing WHAM (TODO: link)
 
-        :param energies: negative log-probabilities ('energies') from
-                         from different ensembles
+        :param energies: negative log-probabilities ("energies") of states in
+                         their respective ensembles
         :type energies: :class:`numpy.ndarray` of shape 
                         (# ensembles, # samples per ensemble)
         :param log_ensemble: logarithm of the probability density defining the
@@ -82,7 +82,7 @@ class DefaultWHAM(AbstractWHAM):
 
     def calc_log_L(self, f, log_g):
         return -f.sum() + log_g.sum()
-    
+
     def run(self, max_iterations=5000, threshold=1e-6):
         '''
         Do multiple histogram reweighting with infinitely fine binning as
@@ -92,7 +92,7 @@ class DefaultWHAM(AbstractWHAM):
         :param n_iterations: how many WHAM iterations to perform
         :type n_iterations: int
         '''
-        
+
         f = np.zeros(self.n_ensembles)
         log_qs = self.calculate_loq_qs()
 
@@ -117,8 +117,8 @@ class DefaultWHAM(AbstractWHAM):
 
 
 class AbstractDOSCalculator(metaclass=ABCMeta):
-    def __init__(self, wham_class=DefaultWHAM,
-                 max_wham_iterations=5000, wham_threshold=1e-6):
+    def __init__(self, wham_class=DefaultWHAM, max_wham_iterations=5000,
+                 wham_threshold=1e-6):
         '''
         Defines the interface for classes which estimate the density
         of states (DOS) for different families of tempered distributions
@@ -129,11 +129,34 @@ class AbstractDOSCalculator(metaclass=ABCMeta):
         self.wham_threshold = wham_threshold
 
     @abstractmethod
-    def log_ensemble(self, energy):
+    def log_ensemble(self, energy, **parameters):
+        '''
+        An ensemble is essentially a function q(E) which maps an energy
+        E to a probability q. It might be parameterized.
+
+        :param energy: energy of the system
+        :type energy: float
+        :param parameters: dictionary of ensemble parameters
+        :type parameters: dict
+        '''
         pass
 
-    def calculate_dos(self, sampling_result, schedule, log_prob):
-        energies = sampling_result['energies']
+    def calculate_dos(self, energies, schedule):
+        '''
+        Calculate the density of states (DOS) using multiple histogram
+        reweighting (WHAM).
+
+        :param energies: negative log-probabilities ("energies") of states in
+                         their respective ensembles
+        :type energies: :class:`numpy.ndarray` of shape 
+                        (# ensembles, # samples per ensemble)
+        :param parameters: parameter values defining the ensemble at different
+                           "temperatures"
+        :type parameters: dict of parameter values. The keys are the parameter
+                          names and the values :class:`numpy.ndarray`s with the
+                          parameter values corresponding to the first dimension
+                          of the `energies` argument
+        '''
         wham = self.wham_class(energies, self.log_ensemble, schedule)
         log_dos = wham.run(self.max_wham_iterations, self.wham_threshold)
 
@@ -141,6 +164,13 @@ class AbstractDOSCalculator(metaclass=ABCMeta):
 
 
 class BoltzmannDOSCalculator(AbstractDOSCalculator):
+    def log_ensemble(self, energy, beta):
+        '''
+        Implements the Boltzmann ensemble q(E|\beta) = exp(-beta * E)
 
-    def make_log_ensemble(self, energy):
-        return lambda energy, beta: -energy * beta
+        :param energy: energy of the system
+        :type energy: float
+        :param beta: inverse temperature
+        :type beta: float
+        '''
+        return lambda energy, beta: -beta * energy
