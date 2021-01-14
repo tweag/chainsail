@@ -46,7 +46,8 @@ class REJobController:
             env_info = self.scale_environment(self.schedule.length)
             sampling_result = self.re_runner.run_sampling(env_info,
                                                           parameter_set)
-            dos = self.dos_calculator.calculate_dos(sampling_result)
+            dos = self.dos_calculator.calculate_dos(
+                sampling_result, parameter_set['pdf'].log_prob)
             schedule = self.schedule_optimizer.optimize(dos)
             initial_states, local_params = self.setup_initial_values(
                 dos, sampling_result, schedule)
@@ -60,9 +61,9 @@ class REJobController:
         schedule = self.initial_schedule_calculator.calculate_schedule(
             job_spec['initial_schedule_params']
         )
-        initial_parameter_set = FullParameterSet(schedule, initial_states,
-                                                 initial_local_params,
-                                                 re_params)
+        initial_parameter_set = FullParameterSet(
+            schedule, job_spec['initial_states_params'],
+            job_spec['initial_local_params'], job_spec['re_params')
         return initial_parameter_set
 
     def do_single_run(self, parameter_set):
@@ -77,9 +78,10 @@ class REJobController:
     def run_job(self, job_spec, env_info):
         self.job_spec = job_spec
         self.env_info = env_info
-        
-        self.check_compatibility(initial_schedule_params, optimization_params)
-        self._set_helpers(initial_schedule_params, optimization_params)
+        self.check_compatibility(job_spec['initial_schedule_params'],
+                                 job_spec['optimization_params'])
+        self._set_helpers(job_spec['initial_schedule_params'],
+                          job_spec['optimization_params'])
         initial_parameter_set = self.make_initial_parameter_set(job_spec)
         optimized_parameter_set = self.optimize_schedule(initial_parameter_set)
         final_result = self.do_single_run(optimized_parameter_set)
