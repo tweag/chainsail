@@ -2,8 +2,9 @@ import pytest
 
 
 def test_parse_job_spec_extra_fields():
-    from resaas.scheduler.spec import JobSpecSchema
     from marshmallow.exceptions import ValidationError
+
+    from resaas.scheduler.spec import JobSpecSchema
 
     data = """
     {

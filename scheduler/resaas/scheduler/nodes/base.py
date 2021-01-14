@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod, abstractproperty
-from concurrent.futures import Future, Executor
+from concurrent.futures import Executor, Future
+from dataclasses import dataclass
 from enum import Enum, auto
 from typing import List, Optional, Tuple
-from dataclasses import dataclass
+
 from resaas.scheduler.db import TblNodes
 from resaas.scheduler.spec import JobSpec
 

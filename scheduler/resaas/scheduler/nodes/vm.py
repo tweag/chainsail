@@ -1,19 +1,16 @@
-from typing import List, Optional, IO, Tuple, Union
+from typing import IO, List, Optional, Tuple, Union
 
-from libcloud.compute.deployment import (
-    Deployment,
-    MultiStepDeployment,
-    SSHKeyDeployment,
-    ScriptDeployment,
-)
+from libcloud.compute.base import Node as LibcloudNode
+from libcloud.compute.base import NodeDriver, NodeImage, NodeSize
+from libcloud.compute.deployment import (Deployment, MultiStepDeployment,
+                                         ScriptDeployment, SSHKeyDeployment)
+from libcloud.compute.types import DeploymentException, NodeState
+
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblNodes
 from resaas.scheduler.errors import MissingNodeError, ObjectConstructionError
-from resaas.scheduler.spec import Dependencies, JobSpec
 from resaas.scheduler.nodes.base import Node, NodeStatus
-from libcloud.compute.base import NodeDriver, NodeImage, NodeSize
-from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.types import DeploymentException, NodeState
+from resaas.scheduler.spec import Dependencies, JobSpec
 
 
 def _deployment_log(deployment: Deployment):

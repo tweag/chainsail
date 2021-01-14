@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod, abstractproperty
+from concurrent.futures import Future
 from enum import Enum, auto
+from typing import List
+
 from scheduler.resaas.scheduler.jobs.restart import RestartPolicy
 from scheduler.resaas.scheduler.nodes.base import Node
-from typing import List
-from concurrent.futures import Future
 
 
 class JobStatus(Enum):

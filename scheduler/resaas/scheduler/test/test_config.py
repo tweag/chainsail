@@ -1,5 +1,5 @@
-from marshmallow.exceptions import ValidationError
 import pytest
+from marshmallow.exceptions import ValidationError
 
 VALID_CONFIG = """
 {

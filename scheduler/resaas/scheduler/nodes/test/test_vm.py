@@ -1,8 +1,9 @@
 from unittest.mock import Mock, patch
+
 import pytest
 
-from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 from resaas.scheduler.config import SchedulerConfig
+from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 
 
 @pytest.fixture
@@ -17,8 +18,8 @@ def mock_config():
 def test_vm_node_from_representation(mock_config):
     from resaas.scheduler.db import TblNodes
     from resaas.scheduler.nodes.base import NodeStatus, NodeType
-    from resaas.scheduler.spec import JobSpec
     from resaas.scheduler.nodes.vm import VMNode
+    from resaas.scheduler.spec import JobSpec
 
     job_spec = JobSpec("gs://my-bucket/scripts")
     node_rep = TblNodes(
@@ -38,10 +39,10 @@ def test_vm_node_from_representation(mock_config):
 
 def test_vm_node_from_representation_no_match_raises(mock_config):
     from resaas.scheduler.db import TblNodes
-    from resaas.scheduler.nodes.base import NodeStatus, NodeType
-    from resaas.scheduler.spec import JobSpec
-    from resaas.scheduler.nodes.vm import VMNode
     from resaas.scheduler.errors import ObjectConstructionError
+    from resaas.scheduler.nodes.base import NodeStatus, NodeType
+    from resaas.scheduler.nodes.vm import VMNode
+    from resaas.scheduler.spec import JobSpec
 
     job_spec = JobSpec("gs://my-bucket/scripts")
     node_rep = TblNodes(
@@ -62,9 +63,8 @@ def test_vm_node_from_representation_no_match_raises(mock_config):
 def test_vm_node_from_representation_then_create(mock_config):
     from resaas.scheduler.db import TblNodes
     from resaas.scheduler.nodes.base import NodeStatus, NodeType
-    from resaas.scheduler.spec import JobSpec
     from resaas.scheduler.nodes.vm import VMNode
-    from resaas.scheduler.spec import PipDependencies
+    from resaas.scheduler.spec import JobSpec, PipDependencies
 
     job_spec = JobSpec("gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])])
     node_rep = TblNodes(

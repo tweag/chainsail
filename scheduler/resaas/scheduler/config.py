@@ -2,15 +2,15 @@
 Scheduler app configuration file parsing
 """
 from typing import Callable, Dict, Tuple
-from marshmallow.decorators import post_load
 
-from marshmallow_enum import EnumField
-from resaas.scheduler.nodes.base import NodeType
-from marshmallow import Schema, fields
-from libcloud.compute.drivers.gce import GCENodeDriver
 from libcloud.compute.drivers.dummy import DummyNodeDriver
+from libcloud.compute.drivers.gce import GCENodeDriver
+from marshmallow import Schema, fields
+from marshmallow.decorators import post_load
 from marshmallow.exceptions import ValidationError
+from marshmallow_enum import EnumField
 
+from resaas.scheduler.nodes.base import NodeType
 from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 
 

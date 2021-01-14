@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List
-
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
+
 from marshmallow import Schema, fields, post_load
 from marshmallow_enum import EnumField
 

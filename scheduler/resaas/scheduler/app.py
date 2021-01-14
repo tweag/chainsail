@@ -2,9 +2,12 @@
 Scheduler REST API and endpoint specifications
 """
 from datetime import datetime
-from resaas.scheduler.core import app, db, get_config
+
 from flask import jsonify, request
-from resaas.scheduler.db import TblJobs, TblNodes, JobViewSchema, NodeViewSchema
+
+from resaas.scheduler.core import app, db, get_config
+from resaas.scheduler.db import (JobViewSchema, NodeViewSchema, TblJobs,
+                                 TblNodes)
 from resaas.scheduler.spec import JobSpecSchema
 
 config = get_config()

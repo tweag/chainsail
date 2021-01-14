@@ -1,10 +1,11 @@
 from typing import Callable, List, Optional
 
-from libcloud.compute.base import T_Auth, T_Ssh_key
 from libcloud.compute.base import Node as LibcloudNode
+from libcloud.compute.base import T_Auth, T_Ssh_key
 from libcloud.compute.deployment import Deployment
-from resaas.scheduler.nodes.base import Node, NodeStatus
 from libcloud.compute.drivers.dummy import DummyNodeDriver
+
+from resaas.scheduler.nodes.base import Node, NodeStatus
 
 
 class DeployableDummyNodeDriver(DummyNodeDriver):
