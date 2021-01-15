@@ -24,5 +24,4 @@ jobs:
       - name: Run scheduler tests
         run: |
           cd ./scheduler
-          PYTHONPATH=$PYTHONPATH:$PWD
-          poetry run pytest
+          PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
