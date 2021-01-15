@@ -5,7 +5,7 @@ distribution at different "temperatures".
 import numpy as np
 from abc import abstractmethod, ABCMeta
 
-from .util import log_sum_exp
+from util import log_sum_exp
 
 
 def log(text):
@@ -213,7 +213,7 @@ class AbstractDOSCalculator(metaclass=ABCMeta):
           :class:`np.ndarray`: estimate of the log-DOS evaluated at the sampled
               energies
         """
-        wham = self.wham_class(energies, self.log_ensemble, schedule)
+        wham = self.wham_class(energies, self.log_ensemble, parameters)
         log_dos = wham.run(self.max_wham_iterations, self.wham_threshold)
 
         return log_dos
