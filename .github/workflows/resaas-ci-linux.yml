@@ -1,0 +1,20 @@
+name: resaas CI (Linux)
+
+on: [push]
+
+jobs:
+  build:
+    name: resaas/scheduler
+    runs-on: ubuntu-latest
+    steps:
+      # Setup
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v12
+      # Scheduler tests
+      - name: Run scheduler unit tests
+        run: PYTHONPATH=$PYTHONPATH:$PWD/scheduler \
+          nix-shell --run '\
+          cd ./scheduler && \
+          poetry install && \
+          poetry run pytest \
+          '
