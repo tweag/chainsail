@@ -13,7 +13,8 @@ def log(text):
 
     TODO: we might log to some database or a file instead of stdout
     '''
-    print(text)
+    # print(text)
+    pass
 
 
 class AbstractWHAM(metaclass=ABCMeta):
