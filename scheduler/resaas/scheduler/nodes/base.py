@@ -1,11 +1,6 @@
-from abc import ABC, abstractmethod, abstractproperty
-from concurrent.futures import Executor, Future
-from dataclasses import dataclass
-from enum import Enum, auto
-from typing import List, Optional, Tuple
-
-from resaas.scheduler.db import TblNodes
-from resaas.scheduler.spec import JobSpec
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import List, Tuple
 
 
 class NodeType(Enum):
@@ -68,4 +63,8 @@ class Node(ABC):
     @classmethod
     @abstractmethod
     def from_representation(cls, spec, node_rep, config) -> "Node":
+        pass
+
+    @classmethod
+    def from_config(cls, name, config, spec) -> "Node":
         pass

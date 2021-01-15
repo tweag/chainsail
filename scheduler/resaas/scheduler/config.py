@@ -3,7 +3,6 @@ Scheduler app configuration file parsing
 """
 from typing import Callable, Dict, Tuple
 
-from libcloud.compute.drivers.dummy import DummyNodeDriver
 from libcloud.compute.drivers.gce import GCENodeDriver
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
@@ -37,12 +36,18 @@ class SchedulerConfig:
     def __init__(
         self,
         ssh_public_key: str,
+        node_entrypoint: str,
+        node_image: str,
+        node_size: str,
         node_type: NodeType,
         driver: Callable,
         driver_args=Tuple,
         driver_kwargs=Dict,
     ):
         self.ssh_public_key = ssh_public_key
+        self.node_entrypoint = node_entrypoint
+        self.image = node_image
+        self.size = node_size
         self.node_type = node_type
         self.driver = driver
         self.driver_args = driver_args
@@ -64,6 +69,9 @@ class SchedulerConfigSchema(Schema):
     """
 
     ssh_public_key = fields.String(required=True)
+    node_entrypoint = fields.String(required=True)
+    node_image = fields.String(required=True)
+    node_size = fields.String(required=True)
     # The type of nodes to instantiate
     node_type = EnumField(NodeType, by_value=True, required=True)
     node_driver = fields.String(required=True)
@@ -91,8 +99,11 @@ class SchedulerConfigSchema(Schema):
         # Validate that the required config fields exist
         driver_config = driver_config_schema().load(data["driver_specs"][requested_driver])
         return SchedulerConfig(
-            data["ssh_public_key"],
-            data["node_type"],
+            ssh_public_key=data["ssh_public_key"],
+            node_entrypoint=data["node_entrypoint"],
+            node_image=data["node_image"],
+            node_size=data["node_size"],
+            node_type=data["node_type"],
             driver=driver,
             driver_args=(),
             driver_kwargs=driver_config,

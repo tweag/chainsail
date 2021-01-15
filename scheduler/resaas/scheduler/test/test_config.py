@@ -4,6 +4,9 @@ from marshmallow.exceptions import ValidationError
 VALID_CONFIG = """
 {
     "ssh_public_key": "notARealKey",
+    "node_entrypoint": "docker run -d someimage",
+    "node_image": "Ubuntu 9.10",
+    "node_size": "Small",
     "node_type": "LibcloudVM",
     "node_driver": "gce",
     "driver_specs": {
@@ -21,6 +24,9 @@ VALID_CONFIG = """
 INVALID_CONFIG_MISSING_SPECS = """
 {
     "ssh_public_key": "notARealKey",
+    "node_entrypoint": "docker run -d someimage",
+    "node_image": "Ubuntu 9.10",
+    "node_size": "Small",
     "node_type": "LibcloudVM",
     "node_driver": "gce",
     "driver_specs": {}
@@ -31,6 +37,9 @@ INVALID_CONFIG_MISSING_SPECS = """
 INVALID_CONFIG_UNKNOWN_DRIVER = """
 {
     "ssh_public_key": "notARealKey",
+    "node_entrypoint": "docker run -d someimage",
+    "node_image": "Ubuntu 9.10",
+    "node_size": "Small",
     "node_type": "LibcloudVM",
     "node_driver": "does not exist",
     "driver_specs": {}

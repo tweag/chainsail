@@ -6,8 +6,7 @@ from datetime import datetime
 from flask import jsonify, request
 
 from resaas.scheduler.core import app, db, get_config
-from resaas.scheduler.db import (JobViewSchema, NodeViewSchema, TblJobs,
-                                 TblNodes)
+from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.spec import JobSpecSchema
 
 config = get_config()
@@ -43,6 +42,14 @@ def get_jobs():
 @app.route("/job/<job_id>/nodes", methods=["GET"])
 def job_nodes(job_id):
     """List all nodes for a given job"""
+    nodes = TblNodes.query.filter_by(job_id=job_id)
+    return NodeViewSchema().jsonify(nodes, many=True)
+
+
+# TODO:
+@app.route("/internal/job/<job_id>/scale/<n_nodes>", methods=["GET"])
+def scale_job(job_id, n_nodes):
+    """Cheap and dirty way to allow for jobs to be externally scaled"""
     nodes = TblNodes.query.filter_by(job_id=job_id)
     return NodeViewSchema().jsonify(nodes, many=True)
 

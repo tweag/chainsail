@@ -19,3 +19,11 @@ class MissingNodeError(BaseSchedulerException):
 
 class ConfigurationError(BaseSchedulerException):
     """Raised when there is an issue with the external config"""
+
+
+class JobError(BaseSchedulerException):
+    """Raised when there is an issue with running a job"""
+
+
+class NodeError(BaseSchedulerException):
+    """Raised when there is an issue with a node"""

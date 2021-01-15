@@ -17,6 +17,7 @@ flask-marshmallow = "^0.14.0"
 marshmallow-sqlalchemy = "^0.24.1"
 marshmallow-enum = "^1.5.1"
 PyYAML = "^5.3.1"
+shortuuid = "^1.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

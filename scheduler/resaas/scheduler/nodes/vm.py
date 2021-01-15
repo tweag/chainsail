@@ -2,13 +2,17 @@ from typing import IO, List, Optional, Tuple, Union
 
 from libcloud.compute.base import Node as LibcloudNode
 from libcloud.compute.base import NodeDriver, NodeImage, NodeSize
-from libcloud.compute.deployment import (Deployment, MultiStepDeployment,
-                                         ScriptDeployment, SSHKeyDeployment)
+from libcloud.compute.deployment import (
+    Deployment,
+    MultiStepDeployment,
+    ScriptDeployment,
+    SSHKeyDeployment,
+)
 from libcloud.compute.types import DeploymentException, NodeState
 
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblNodes
-from resaas.scheduler.errors import MissingNodeError, ObjectConstructionError
+from resaas.scheduler.errors import ConfigurationError, MissingNodeError, NodeError, ObjectConstructionError
 from resaas.scheduler.nodes.base import Node, NodeStatus
 from resaas.scheduler.spec import Dependencies, JobSpec
 
@@ -76,7 +80,7 @@ class VMNode(Node):
 
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
-            return
+            raise NodeError("Attempted to created a node which has already been created")
         self._status = NodeStatus.CREATING
         deployment_steps = (
             [SSHKeyDeployment(self._ssh_key)]
@@ -125,6 +129,10 @@ class VMNode(Node):
     @property
     def entrypoint(self):
         return self._entrypoint
+
+    @entrypoint.setter
+    def entrypoint(self, value):
+        self._entrypoint = value
 
     @property
     def listening_ports(self):
@@ -195,5 +203,42 @@ class VMNode(Node):
             entrypoint=node_rep.entrypoint,
             listening_ports=node_rep.ports,
             status=node_rep.status,
+            ssh_key=config.ssh_public_key,
+        )
+
+    @classmethod
+    def from_config(
+        cls,
+        name: str,
+        config: SchedulerConfig,
+        spec: JobSpec,
+    ) -> "Node":
+
+        driver: NodeDriver = config.create_node_driver()
+        image = [i for i in driver.list_images() if i.name == config.image]
+        size = [s for s in driver.list_sizes() if s.name == config.size]
+
+        if not image:
+            raise ConfigurationError(
+                f"Failed to find image with name '{config.image}' in driver "
+                f"'{driver.__class__}'. Please update your configuration file with "
+                f"a valid image name for this driver."
+            )
+
+        if not size:
+            raise ConfigurationError(
+                f"Failed to find node size with name '{config.size}' in driver "
+                f"'{driver.__class__}'. Please update your configuration file with "
+                f"a valid image name for this driver."
+            )
+
+        return cls(
+            name=name,
+            driver=driver,
+            size=size[0],
+            image=image[0],
+            deps=spec.dependencies,
+            entrypoint=config.entrypoint,
+            listening_ports=config.ports,
             ssh_key=config.ssh_public_key,
         )
