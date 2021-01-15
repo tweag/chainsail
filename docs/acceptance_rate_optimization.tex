@@ -1,0 +1,62 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{array}
+%\usepackage{upgreek}
+\title{Multimodal MCMC with Replica Exchange and TensorFlow Probability}
+\date{Bayesian Mixer London, Nov 30, 2020}
+\author{Simeon Carstens}
+\renewcommand{\d}{\mathrm{d}}
+\begin{document}
+
+Two replicas are sampling distributions $p_1(x)$ and $p_2(x)$ and are currently at states $x_1$ and $x_2$. The probability for accepting an exchange is then given by
+\begin{equation}
+  p_{\mathrm{acc}}(x_1, x_2|p_1, p_2) = \mathrm{min}\left\{1, \frac{p_1(x_2)}{p_1(x_1)} \frac{p_2(x_1)}{p_2(x_2)}\right\} \mbox .
+\end{equation}
+Assume $p_1$ and $p_2$ depend on $x$ only through a common function $E(x)$, the ``energy'', that is, we have $p_i(x)=p_i(E(x))$. \\
+To calculate the average acceptance rate $\overline{p}_{\mathrm{acc}}$, we calculate the expectation value of $p_{\mathrm{acc}}$ with respect to the joint distribution $p(x_1, x_2)=p_1(x_1)p_2(x_2)$ and we have
+\begin{equation}
+  \overline{p}_{\mathrm{acc}} = \int \int p_{\mathrm{acc}}(x_1, x_2|p_1, p_2) p_1(x_1)p_2(x_2)\d x_1 \d x_2 \mbox .
+\end{equation}
+This is a double integral over two potentially high-dimensional variables. To make progress, we introduce the density of states (DOS) $g(E)$, which counts the multiplicity of energies:
+\begin{equation}
+  g(E) = \int \d x \ \delta(E-E(x))
+\end{equation}
+Using the DOS, we can write the expectation value of any function $f(x)$ which depends on $x$ only via the energy E (meaning, again, $f(x)=f(E(x))$), as an integral over $E$ instead of $x$:
+\begin{equation}
+  \int \d x \ f(E(x)) = \int \d E g(E) f(E)
+\end{equation}
+We further note that often, we only now distributions $p$ up to a normalization constant $Z$, and we have
+\begin{equation}
+  p(x) = \frac{1}{Z}q(x)
+\end{equation}
+Using the DOS, above equation and the assumption that $q(x)=q(E(x))$, we can now rewrite the expected acceptance rate as an integral over energies:
+\begin{eqnarray}
+  \overline{p}_{\mathrm{acc}} &= \frac{1}{Z_1 Z_2} \int \int \d x_1 \d x_2 \ \mathrm{min}\left\{1, \frac{q_1(E(x_2))}{q_1(E(x_1))} \frac{q_2(E(x_1))}{q_2(E(x_2))}\right\} q_1(E(x_1)) q_2(E(x_2)) \\
+                              &= \frac{1}{Z_1 Z_2} \int \int \d x_1 \d x_2 \ \mathrm{min}\left\{q_1(E(x_1)) q_2(E(x_2)), q_1(E(x_2)) q_2(E(x_1))\right\} \\
+  &= \frac{1}{Z_1 Z_2} \int \int \d E_1 \d E_2 \ g(E_1) g(E_2) \mathrm{min}\left\{q_1(E_1) q_2(E_2), q_1(E_2) q_2(E_1)\right\}
+\end{eqnarray}
+Note that the normalization constants $Z_1, Z_2$ can be written in terms of the energies $E$, too:
+\begin{equation}
+  Z_i = \int \d x \ q(E(x)) = \int \d E \ g(e) q(E)
+\end{equation}
+Long story short: if we have access to $g(E)$, we can estimate the expected acceptance rate by means of simple numeric approximation of one-dimensional and two-dimensional integrals over energies.\\
+We can get a good estimate of $g(E)$ via multiple histogram reweighting; it is essentially an estimate of $g(E)$ at every sampled value and thus the integrals collapse into weighted sums.\\
+More specifically, for the Boltzmann ensemble, we have
+\begin{eqnarray}
+  p_1(x) &= \frac{1}{Z(\beta_1)}\exp(-\beta_1 E(x)) \\
+  p_2(x) &= \frac{1}{Z(\beta_2)}\exp(-\beta_2 E(x))
+\end{eqnarray}
+Assuming we have an estimate of $g(E)$ from multiple histogram reweighting, this means we can calculate the expected acceptance rate for any two pairs of inverse temperatures $\beta_1, \beta_2$. Say now that $\beta_0=1$ gives us the distribution we actually are interested in and $\beta_N=\epsilon \approx 0$ is an almost uniform distribution. This suggests an iterative algorithm to get a sequence $\beta_0 > \beta_1 > \ldots > \beta_N$ for which the acceptance rates between simulations at consecutive temperatures $\beta_i, \beta_{i+1}$ are attain a constant value $\overline p_{\mathrm{acc}}^\mathrm{target}$: we start with $\beta = 1$ and lower $\beta$ in increments of $\Delta\beta$, until the expected acceptance rate drops below $\overline p_{\mathrm{acc}}^\mathrm{target}$. We then save the $\beta$ value before the last decrement as $\beta_1$. We then calculate acceptance rates between $\beta_1$ and steadily decreasing $\beta$ values, until the acceptance reate drops below $\overline p_{\mathrm{acc}}^\mathrm{target}$ again and we save the previous $\beta$ value as $\beta_2$ and so on and so forth. At one point, we will hit a predefined $\beta_{\mathrm{min}}$. We then terminate and have obtained the desired sequence of $\beta$ values as our optimized schedule.
+% \\
+% Given
+% \begin{itemize}
+% \item $\beta_0 = 1$,
+% \item a decrement $\Delta\beta$,
+% \item a minimal beta $\beta^\epsilon$,
+% \end{itemize}
+% set $\beta_{test} = \beta_0 - \Delta\Beta$ and iterate
+% \begin{enumerate}
+%   \item calculate $p_{\mathrm{acc}}(\be
+% \end{enumerate}
+\end{document}
