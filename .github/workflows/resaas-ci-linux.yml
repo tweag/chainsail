@@ -12,8 +12,7 @@ jobs:
       - uses: cachix/install-nix-action@v12
       # Scheduler tests
       - name: Run scheduler unit tests
-        run: PYTHONPATH=$PYTHONPATH:$PWD/scheduler \
-          nix-shell --run '\
+        run: nix-shell --command '\
           cd ./scheduler && \
           poetry install && \
           poetry run pytest \
