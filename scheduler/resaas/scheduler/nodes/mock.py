@@ -1,11 +1,5 @@
-from typing import Callable, List, Optional
-
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import T_Auth, T_Ssh_key
-from libcloud.compute.deployment import Deployment
 from libcloud.compute.drivers.dummy import DummyNodeDriver
-
-from resaas.scheduler.nodes.base import Node, NodeStatus
 
 
 class DeployableDummyNodeDriver(DummyNodeDriver):
@@ -35,13 +29,3 @@ class DeployableDummyNodeDriver(DummyNodeDriver):
         """
         # Create the node
         return self.create_node(**create_node_kwargs)
-
-
-# class MockNode(Node):
-#     """
-#     A simple node to use for development and integration testing. This node
-#     performs all operations in memory and does not actually spin up additional
-#     compute resources.
-#     """
-
-#     pass
