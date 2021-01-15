@@ -5,6 +5,7 @@ distribution at different "temperatures".
 import numpy as np
 from abc import abstractmethod, ABCMeta
 
+from util import log_sum_exp
 
 def log(text):
     '''
@@ -13,15 +14,6 @@ def log(text):
     TODO: we might log to some database or a file instead of stdout
     '''
     print(text)
-
-
-def log_sum_exp(x, axis=0):
-    '''
-    Calculate the log of a sum of exponentials in a numerically
-    stable way
-    '''
-    xmax = x.max(axis)
-    return np.log(np.exp(x - xmax).sum(axis)) + xmax
 
 
 class AbstractWHAM(metaclass=ABCMeta):
@@ -94,7 +86,7 @@ class DefaultWHAM(AbstractWHAM):
         '''
 
         f = np.zeros(self.n_ensembles)
-        log_qs = self.calculate_loq_qs()
+        log_qs = self.calculate_log_qs()
 
         old_log_L = 1e300
         for i in range(max_iterations):
@@ -103,10 +95,10 @@ class DefaultWHAM(AbstractWHAM):
             f = -log_sum_exp((log_qs + log_gs).T, axis=0)
 
             log_L = self.calc_log_L(f, log_gs)
-            if i % 100 == 0:
-                log('Likelihood: {}'.format(L))
-            if self.stopping_criterion(log_L, old_log_L, threshold):
-                break
+            if i % 1 == 0:
+                log('Likelihood: {}'.format(log_L))
+            # if self.stopping_criterion(log_L, old_log_L, threshold):
+            #     break
             old_log_L = log_L
                 
         if i > 0.8 * max_iterations:
@@ -173,4 +165,4 @@ class BoltzmannDOSCalculator(AbstractDOSCalculator):
         :param beta: inverse temperature
         :type beta: float
         '''
-        return lambda energy, beta: -beta * energy
+        return -beta * energy
