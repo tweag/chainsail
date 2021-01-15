@@ -1,10 +1,10 @@
 import functools
-import pytest
 from unittest.mock import Mock
-import functools
-from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
-from resaas.scheduler.nodes.base import NodeStatus, NodeType
 
+import pytest
+
+from resaas.scheduler.nodes.base import NodeStatus, NodeType
+from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 
 FAILURE_LOG = "deployment failed for some reason..."
 SUCCESS_LOG = "deployment succeeded"
@@ -173,8 +173,8 @@ def test_job_scale_down(mock_config, mock_spec):
 
 
 def test_scale_non_running_job_raises(mock_config, mock_spec):
-    from resaas.scheduler.jobs import Job
     from resaas.scheduler.errors import JobError
+    from resaas.scheduler.jobs import Job
 
     job = Job(id=1, spec=mock_spec, config=mock_config, node_registry={"mock": mk_mock_node_cls()})
 
@@ -186,9 +186,8 @@ def test_vm_job_from_db_representation():
     # Note: this test uses a concrete Node implementation with a *Mock*
     # node driver.
     from resaas.scheduler.db import TblJobs, TblNodes
-    from resaas.scheduler.jobs import Job
+    from resaas.scheduler.jobs import Job, JobStatus
     from resaas.scheduler.nodes.base import NodeStatus
-    from resaas.scheduler.jobs import JobStatus
 
     spec = """
     {

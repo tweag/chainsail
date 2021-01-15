@@ -1,12 +1,14 @@
 from enum import Enum
 from typing import Callable, Dict, List, Optional
+
+import shortuuid
+
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import JobError
+from resaas.scheduler.nodes.base import Node, NodeType
 from resaas.scheduler.nodes.registry import NODE_CLS_REGISTRY
 from resaas.scheduler.spec import JobSpec, JobSpecSchema
-import shortuuid
-from resaas.scheduler.nodes.base import Node, NodeType
 
 
 class JobStatus(Enum):
