@@ -22,4 +22,6 @@ jobs:
           cd ./scheduler
           poetry install
       - name: Run scheduler tests
-        run: poetry run pytest
+        run: |
+          cd ./scheduler
+          poetry run pytest
