@@ -63,7 +63,7 @@ class REJobController:
         )
         initial_parameter_set = FullParameterSet(
             schedule, job_spec['initial_states_params'],
-            job_spec['initial_local_params'], job_spec['re_params')
+            job_spec['initial_local_params'], job_spec['re_params'])
         return initial_parameter_set
 
     def do_single_run(self, parameter_set):

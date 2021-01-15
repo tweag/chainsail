@@ -1,6 +1,6 @@
-'''
-Classes for calculating a schedule given the density of states
-'''
+"""
+Classes for calculating a schedule given the density of states (DOS)
+"""
 import numpy as np
 from abc import abstractmethod, ABCMeta
 
