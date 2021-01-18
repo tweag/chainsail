@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { Layout, FlexRow, FlexCol, FlexCenter, FormField, Math, Navbar } from '../../components';
+import {
+  Link,
+  Layout,
+  FlexRow,
+  FlexCol,
+  FlexCenter,
+  FormField,
+  Math,
+  Navbar,
+  Modal,
+} from '../../components';
 
 // Form fields icons
 
@@ -8,9 +18,15 @@ const urlIconClassName = 'fas fa-link';
 const jobIconClassName = 'fas fa-bars';
 const nodesIconClassName = 'fas fa-cloud';
 
-const Form = ({ setActiveField }) => {
+const Form = ({ setActiveField, setJobCreated }) => {
   return (
-    <form className="w-full h-full">
+    <form
+      className="w-full h-full"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setJobCreated(true);
+      }}
+    >
       <FlexCol between className="w-full h-full">
         <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
           <FormField label="Job name" inputName="job_name" setActiveField={setActiveField} />
@@ -132,11 +148,35 @@ const Descs = ({ activeField }) => {
   );
 };
 
+const JobCreatedModal = ({ isActive }) => {
+  return (
+    <Modal isActive={isActive}>
+      <div className="mb-7">
+        Job created successfully. Please look at result page to check its latest status.
+      </div>
+      <FlexCenter>
+        <Link href="/job/results">
+          <a
+            className={
+              'px-6 py-2 text-base text-center bg-purple-700  ' +
+              ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
+            }
+          >
+            Checkout results!
+          </a>
+        </Link>
+      </FlexCenter>
+    </Modal>
+  );
+};
+
 export default function Job() {
   const [activeField, setActiveField] = useState('other');
+  const [jobCreated, setJobCreated] = useState(false);
 
   return (
     <Layout>
+      <JobCreatedModal isActive={jobCreated} />
       <FlexCol
         between
         className="px-5 text-white md:px-20 bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body"
@@ -163,6 +203,7 @@ export default function Job() {
               <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0">
                 <Form
                   setActiveField={setActiveField}
+                  setJobCreated={setJobCreated}
                   clearActiveField={() => setActiveField('other')}
                 />
               </FlexCenter>

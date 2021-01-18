@@ -8,5 +8,23 @@ import { FormField } from './Form';
 import Code from './Code';
 import Math from './Math';
 import Navbar from './Navbar';
+import { ChartBar } from './Chart';
+import Container from './Container';
+import Modal from './Modal';
 
-export { Button, Code, FlexCenter, FlexCol, FlexRow, FormField, Image, Layout, Link, Math, Navbar };
+export {
+  Button,
+  ChartBar,
+  Code,
+  Container,
+  FlexCenter,
+  FlexCol,
+  FlexRow,
+  FormField,
+  Image,
+  Layout,
+  Link,
+  Math,
+  Modal,
+  Navbar,
+};
