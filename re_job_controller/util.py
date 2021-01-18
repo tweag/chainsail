@@ -7,3 +7,9 @@ def log_sum_exp(x, axis=0):
     '''
     xmax = x.max(axis)
     return np.log(np.exp(x - xmax).sum(axis)) + xmax
+
+
+def storage_factory(path):
+    pstorage = FileSystemPickleStorage(path)
+    sstorage = FileSystemStringStorage(path)
+    return pstorage, sstorage
