@@ -1,15 +1,23 @@
 from typing import IO, List, Optional, Tuple, Union
-
-from libcloud.compute.base import Node as LibcloudNode
+import traceback
+from libcloud.compute.base import Node as LibcloudNode, NodeAuthSSHKey
 from libcloud.compute.base import NodeDriver, NodeImage, NodeSize
-from libcloud.compute.deployment import (Deployment, MultiStepDeployment,
-                                         ScriptDeployment, SSHKeyDeployment)
+from libcloud.compute.deployment import (
+    Deployment,
+    MultiStepDeployment,
+    ScriptDeployment,
+    SSHKeyDeployment,
+)
 from libcloud.compute.types import DeploymentException, NodeState
 
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblNodes
-from resaas.scheduler.errors import (ConfigurationError, MissingNodeError,
-                                     NodeError, ObjectConstructionError)
+from resaas.scheduler.errors import (
+    ConfigurationError,
+    MissingNodeError,
+    NodeError,
+    ObjectConstructionError,
+)
 from resaas.scheduler.nodes.base import Node, NodeStatus
 from resaas.scheduler.spec import Dependencies, JobSpec
 
@@ -45,18 +53,32 @@ class VMNode(Node):
         size: NodeSize,
         image: NodeImage,
         entrypoint: str,
-        ssh_key: Union[str, IO[str]],
+        ssh_user: str,
+        # Private key file for provisioning
+        ssh_key_file: str,
+        # Public key content
+        ssh_pub: str,
         libcloud_node: Optional[LibcloudNode] = None,
         deps: Optional[List[Dependencies]] = None,
         listening_ports: Optional[List[int]] = None,
         status: Optional[NodeStatus] = None,
         ssh_password: Optional[str] = None,
+        create_kwargs: Optional[dict] = None,
     ):
+        if "create_node" not in driver.features or "ssh_key" not in driver.features["create_node"]:
+            raise ValueError(
+                "The supplied driver does not support node creation with ssh authentication. "
+                "Please consult the libcloud documentation for a list of cloud providers which "
+                f"support this method. Current driver: {driver}"
+            )
+        # TODO: Assert that the driver supports create_node method with "ssh_key" feature
         self._driver = driver
         self._size = size
         self._image = image
         self._node = libcloud_node
-        self._ssh_key = ssh_key
+        self._ssh_user = ssh_user
+        self._ssh_key_file = ssh_key_file
+        self._ssh_pub = ssh_pub
         self._ssh_password = ssh_password
 
         self.name = name
@@ -74,28 +96,40 @@ class VMNode(Node):
             self._status = NodeStatus.INITIALIZED
         else:
             self._status = status
+        if create_kwargs is None:
+            self.create_kwargs = {}
+        else:
+            self.create_kwargs = create_kwargs
 
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
             raise NodeError("Attempted to created a node which has already been created")
         self._status = NodeStatus.CREATING
-        deployment_steps = (
-            [SSHKeyDeployment(self._ssh_key)]
-            + [ScriptDeployment(dep.installation_script) for dep in self.deps]
-            + [ScriptDeployment(self.entrypoint)]
-        )
+        deployment_steps = [ScriptDeployment(dep.installation_script) for dep in self.deps] + [
+            ScriptDeployment(self.entrypoint)
+        ]
         try:
             self._node = self._driver.deploy_node(
                 name=self.name,
                 size=self._size,
                 image=self._image,
+                ssh_username=self._ssh_user,
+                # Some common fallback options for username
+                ssh_alternate_usernames=["root", "ubuntu", "resaas"],
                 deploy=MultiStepDeployment(deployment_steps),
-                ssh_key=self._ssh_key,
+                auth=NodeAuthSSHKey(self._ssh_pub),
+                ssh_key=self._ssh_key_file,
                 ssh_key_password=self._ssh_password,
+                wait_period=30,
+                **self.create_kwargs,
             )
         except DeploymentException as e:
             self._status = NodeStatus.FAILED
-            logs = _deployment_log(d for d in deployment_steps)
+            logs = (
+                traceback.format_exc()
+                + "\n"
+                + "\n".join([_deployment_log(d) for d in deployment_steps])
+            )
             if e.node:
                 if not e.node.destroy():
                     # Keep node reference to enable later
@@ -200,7 +234,10 @@ class VMNode(Node):
             entrypoint=node_rep.entrypoint,
             listening_ports=node_rep.ports,
             status=node_rep.status,
-            ssh_key=config.ssh_public_key,
+            ssh_user=config.ssh_user,
+            ssh_pub=config.ssh_public_key,
+            ssh_key_file=config.ssh_private_key_path,
+            create_kwargs=config.extra_creation_kwargs,
         )
 
     @classmethod
@@ -212,6 +249,7 @@ class VMNode(Node):
     ) -> "Node":
 
         driver: NodeDriver = config.create_node_driver()
+        # TODO: Need to provide filter to list_images annd list_sizes() to avoid slow load times
         image = [i for i in driver.list_images() if i.name == config.image]
         size = [s for s in driver.list_sizes() if s.name == config.size]
 
@@ -235,7 +273,10 @@ class VMNode(Node):
             size=size[0],
             image=image[0],
             deps=spec.dependencies,
-            entrypoint=config.entrypoint,
-            listening_ports=config.ports,
-            ssh_key=config.ssh_public_key,
+            entrypoint=config.node_entrypoint,
+            listening_ports=config.node_ports,
+            ssh_user=config.ssh_user,
+            ssh_pub=config.ssh_public_key,
+            ssh_key_file=config.ssh_private_key_path,
+            create_kwargs=config.extra_creation_kwargs,
         )

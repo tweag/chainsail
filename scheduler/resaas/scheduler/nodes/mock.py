@@ -7,6 +7,8 @@ class DeployableDummyNodeDriver(DummyNodeDriver):
     A dummy driver which also implements a dummy "deploy_node()" method
     """
 
+    features = {"create_node": ["ssh_key"]}
+
     def deploy_node(
         self,
         deploy,

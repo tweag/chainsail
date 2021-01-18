@@ -1,7 +1,8 @@
 """
 Scheduler app configuration file parsing
 """
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
+from libcloud.compute.drivers.ec2 import EC2NodeDriver
 
 from libcloud.compute.drivers.gce import GCENodeDriver
 from marshmallow import Schema, fields
@@ -18,16 +19,30 @@ class GCEDriverConfigSchema(Schema):
     key = fields.String(required=True)
     project = fields.String(required=True)
     datacenter = fields.String(required=True)
+    extra_creation_args = fields.Dict(fields.String(), fields.String())
+
+
+class EC2DriverConfigSchema(Schema):
+    class EC2ExtraArgs(Schema):
+        ex_security_groups = fields.List(fields.String)
+
+    key = fields.String(required=True)
+    secret = fields.String(required=True)
+    token = fields.String(required=True)
+    region = fields.String(required=True)
+    extra_creation_args = fields.Nested(EC2ExtraArgs, required=True)
 
 
 class DummyDriverConfigSchema(Schema):
     creds = fields.String(required=True)
+    extra_creation_args = fields.Dict(fields.String, fields.String)
 
 
 DRIVER_SCHEMAS: Dict[NodeType, Dict[str, Tuple[Callable, Schema]]] = {
     NodeType.LIBCLOUD_VM: {
         "gce": (GCENodeDriver, GCEDriverConfigSchema),
         "dummy": (DeployableDummyNodeDriver, DummyDriverConfigSchema),
+        "ec2": (EC2NodeDriver, EC2DriverConfigSchema),
     }
 }
 
@@ -35,23 +50,38 @@ DRIVER_SCHEMAS: Dict[NodeType, Dict[str, Tuple[Callable, Schema]]] = {
 class SchedulerConfig:
     def __init__(
         self,
+        ssh_user: str,
         ssh_public_key: str,
+        ssh_private_key_path: str,
         node_entrypoint: str,
+        node_ports: Optional[List[int]],
         node_image: str,
         node_size: str,
         node_type: NodeType,
         driver: Callable,
-        driver_args=Tuple,
-        driver_kwargs=Dict,
+        driver_kwargs: Dict,
+        extra_creation_kwargs: Optional[Dict],
+        # driver_args is currently unused
+        driver_args: Tuple = (),
     ):
+        self.ssh_user = ssh_user
         self.ssh_public_key = ssh_public_key
+        self.ssh_private_key_path = ssh_private_key_path
         self.node_entrypoint = node_entrypoint
+        if node_ports is None:
+            self.node_ports = []
+        else:
+            self.node_ports = node_ports
         self.image = node_image
         self.size = node_size
         self.node_type = node_type
         self.driver = driver
         self.driver_args = driver_args
         self.driver_kwargs = driver_kwargs
+        if extra_creation_kwargs is None:
+            self.extra_creation_kwargs = {}
+        else:
+            self.extra_creation_kwargs = extra_creation_kwargs
 
     def create_node_driver(self):
         """Create a new node driver instance using the scheduler config"""
@@ -68,8 +98,11 @@ class SchedulerConfigSchema(Schema):
     for an example.
     """
 
+    ssh_user = fields.String(required=True)
     ssh_public_key = fields.String(required=True)
+    ssh_private_key_path = fields.String(required=True)
     node_entrypoint = fields.String(required=True)
+    node_ports = fields.List(fields.Integer, required=True)
     node_image = fields.String(required=True)
     node_size = fields.String(required=True)
     # The type of nodes to instantiate
@@ -98,13 +131,21 @@ class SchedulerConfigSchema(Schema):
             )
         # Validate that the required config fields exist
         driver_config = driver_config_schema().load(data["driver_specs"][requested_driver])
+        if "extra_creation_kargs" not in driver_config:
+            extra_creation_kwargs = {}
+        else:
+            extra_creation_kwargs = driver_config.pop("extra_creation_kargs")
         return SchedulerConfig(
+            ssh_user=data["ssh_user"],
             ssh_public_key=data["ssh_public_key"],
+            ssh_private_key_path=data["ssh_private_key_path"],
             node_entrypoint=data["node_entrypoint"],
+            node_ports=data["node_ports"],
             node_image=data["node_image"],
             node_size=data["node_size"],
             node_type=data["node_type"],
             driver=driver,
             driver_args=(),
             driver_kwargs=driver_config,
+            extra_creation_kwargs=extra_creation_kwargs,
         )
