@@ -15,8 +15,8 @@ const Form = ({ setActiveField }) => {
         <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
           <FormField label="Job name" inputName="job_name" setActiveField={setActiveField} />
           <FormField
-            label="Max N° nodes"
-            inputName="max_nodes"
+            label="Max N° replicas"
+            inputName="max_replicas"
             inputType="number"
             setActiveField={setActiveField}
             minNumber={1}
@@ -28,7 +28,7 @@ const Form = ({ setActiveField }) => {
           hasDropdown
           setActiveField={setActiveField}
           disabled
-          defaultValue="Boltzman"
+          defaultValue="Boltzmann"
         />
         <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
           <FormField
@@ -38,7 +38,7 @@ const Form = ({ setActiveField }) => {
             setActiveField={setActiveField}
             minNumber={0}
             maxNumber={1}
-            stepNumber={0.1}
+            stepNumber={0.01}
           />
           <FormField
             label="Initial schedule beta ratio"
@@ -98,8 +98,8 @@ const Descs = ({ activeField }) => {
       <FieldDescription activeField={activeField} name="job_name" icon={jobIconClassName}>
         Job name: a unique key id for your job.
       </FieldDescription>
-      <FieldDescription activeField={activeField} name="max_nodes" icon={nodesIconClassName}>
-        Max N° nodes: maximum number of compute nodes to use. Specifics of the environment in which
+      <FieldDescription activeField={activeField} name="max_replicas" icon={nodesIconClassName}>
+        Max N° replicas: maximum number of replicas to use. Specifics of the environment in which
         these are created is configured on the scheduler itself
       </FieldDescription>
       <FieldDescription
@@ -108,7 +108,7 @@ const Descs = ({ activeField }) => {
         math="\{\mathbb{P}\}"
       >
         Tempered distribution family: the family of tempered distributions to use. For now, the only
-        valid value is "Boltzman"
+        valid value is "Boltzmann"
       </FieldDescription>
       <FieldDescription activeField={activeField} name="minimum_beta" math="\beta_{min}">
         Beta min: the minimum inverse temperature (beta) which determines the flatness of the
