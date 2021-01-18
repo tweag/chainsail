@@ -6,6 +6,8 @@ from schedule_optimizers import BoltzmannAcceptanceRateOptimizer
 # draw samples from a bunch of normal distributions with standard deviations
 # 1, 2, ...
 sigmas = np.arange(1, 5)
+betas = np.load('/tmp/betas.npy')
+sigmas = 1. / np.sqrt(betas)
 samples = np.array([np.random.normal(0, s, size=200) for s in sigmas])
 # calculate the "energies"
 energies = 0.5 * samples ** 2
@@ -19,5 +21,6 @@ log_dos = dc.calculate_dos(energies, schedule)
 optimizer = BoltzmannAcceptanceRateOptimizer(log_dos, energies)
 # find schedule s.t. acceptance rates are always 80% and with a minimum beta
 # of 0.01
-optimized_schedule = optimizer.optimize(0.8, 1.0, 0.01, 1e-2)
-print('Optimized schedule: ', ['{:.3f}'.format(x) for x in optimized_schedule['beta']])
+print([optimizer.estimate_target_quantity(betas[i], betas[i+1]) for i in range(len(betas)-1)])
+# optimized_schedule = optimizer.optimize(0.8, 1.0, 0.01, 1e-2)
+# print('Optimized schedule: ', ['{:.3f}'.format(x) for x in optimized_schedule['beta']])
