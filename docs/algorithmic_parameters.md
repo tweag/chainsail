@@ -19,7 +19,7 @@ We refer to one such iteration as an `optimization super-iteration`.
 #### Initial schedule
 To set an initial schedule for the very first simulation, a few parameters are needed:
 - **`beta_min`**: the minimum `beta` value occuring in the schedule; it defines the flattest distribution. Default: 0.01.
-- **`beta_ratio`**: the automatic schedule optimization needs a schedule to start with. It is common practice to define a temperature schedule by a geometric progression in which the ration of successive `beta` values is constant. The close `beta_ratio` is to one, the more gentle the the sequence of `beta`s progresses from one to zero. If you expect a lot of change in "sampling difficulty" close to `beta=1`, set this to close to 1 (say, 0.95), else, smaller values such as 0.5 might work. Default: 0.8.
+- **`beta_ratio`**: the automatic schedule optimization needs a schedule to start with. It is common practice to define a temperature schedule by a geometric progression in which the ratio of successive `beta` values is constant. The close `beta_ratio` is to one, the more gentle the the sequence of `beta`s progresses from one to zero. If you expect a lot of change in "sampling difficulty" close to `beta=1`, set this to close to 1 (say, 0.95), else, smaller values such as 0.5 might work. Default: 0.8.
 
 #### Super-iteration parameters
 The super-iteration loops runs a certain number of Replica Exchange simulations in sequence and terminates as soon as the number of replicas in the improved schedule doesn't change anymore or a maximum number `max_optimization_runs` is attained.
