@@ -10,8 +10,11 @@ from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 def mock_config():
     driver = DeployableDummyNodeDriver("test")
     config = Mock(SchedulerConfig)
+    config.ssh_user = "user"
     config.ssh_public_key = "testing"
+    config.ssh_private_key_path = "./foo/bar"
     config.create_node_driver.return_value = driver
+    config.extra_creation_kwargs = {}
     return config
 
 
@@ -96,7 +99,9 @@ def test_vm_node_lifecycle(mock_config):
         size=driver.list_sizes()[0],
         image=driver.list_images()[0],
         entrypoint="echo 'foo'",
-        ssh_key="testing",
+        ssh_user=mock_config.ssh_user,
+        ssh_pub=mock_config.ssh_public_key,
+        ssh_key_file=mock_config.ssh_private_key_path,
     )
 
     statuses = [node.status]

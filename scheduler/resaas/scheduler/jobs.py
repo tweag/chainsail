@@ -97,6 +97,7 @@ class Job:
             if not created:
                 for j in created_nodes:
                     self.nodes[j].delete()
+                self.status = JobStatus.FAILED
                 raise JobError(f"Failed to start node for job {id}. Deployment logs: \n" + logs)
         self.status = JobStatus.RUNNING
 

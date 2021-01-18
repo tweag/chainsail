@@ -3,8 +3,11 @@ from marshmallow.exceptions import ValidationError
 
 VALID_CONFIG = """
 {
+    "ssh_user": "ubuntu",
     "ssh_public_key": "notARealKey",
+    "ssh_private_key_path": "/home/someone/.ssh/key.pem",
     "node_entrypoint": "docker run -d someimage",
+    "node_ports": [8080],
     "node_image": "Ubuntu 9.10",
     "node_size": "Small",
     "node_type": "LibcloudVM",
@@ -23,8 +26,11 @@ VALID_CONFIG = """
 # The below config fails to specify inputs for the driver
 INVALID_CONFIG_MISSING_SPECS = """
 {
+    "ssh_user": "ubuntu",
     "ssh_public_key": "notARealKey",
+    "ssh_private_key_path": "/home/someone/.ssh/key.pem",
     "node_entrypoint": "docker run -d someimage",
+    "node_ports": [8080],
     "node_image": "Ubuntu 9.10",
     "node_size": "Small",
     "node_type": "LibcloudVM",
@@ -36,8 +42,11 @@ INVALID_CONFIG_MISSING_SPECS = """
 # The below config specifies an unknown driver
 INVALID_CONFIG_UNKNOWN_DRIVER = """
 {
+    "ssh_user": "ubuntu",
     "ssh_public_key": "notARealKey",
+    "ssh_private_key_path": "/home/someone/.ssh/key.pem",
     "node_entrypoint": "docker run -d someimage",
+    "node_ports": [8080],
     "node_image": "Ubuntu 9.10",
     "node_size": "Small",
     "node_type": "LibcloudVM",
