@@ -4,11 +4,7 @@ import pickle
 import yaml
 import numpy as np
 
-from storage import (FileSystemPickleStorage,
-                     # CloudPickleStorage,
-                     FileSystemStringStorage,
-                     # CloudStringStorage
-                     )
+from util import storage_factory
 from dos_calculators import BoltzmannDOSCalculator
 from schedule_optimizers import BoltzmannAcceptanceRateOptimizer
 
@@ -18,6 +14,9 @@ INITIAL_STATES_PATH = 'initial_states.pickle'
 DOS_PATH = 'dos.pickle'
 FINAL_DOS_PATH = 'final_dos.pickle'
 SCHEDULE_PATH = 'schedule.pickle'
+PROD_OUTPUT_PATH = 'production_run/'
+ENERGIES_PATH = 'energies/'
+CONFIG_PATH = 'config.yml'
 
 cfg_template = {
     're_params': {
@@ -28,7 +27,9 @@ cfg_template = {
         'statistics_update_interval': 50,
     },
     'general_params': {
-        'output_path': None
+        'output_path': None,
+        'initial_states': None,
+        'num_replicas': None
     },
     'local_sampling_params': {
         'n_steps': 20,
@@ -36,15 +37,8 @@ cfg_template = {
         'timestep_adaption_limit': None,
         'adaption_uprate': 1.05,
         'adaption_downrate': 0.95,
-        'initial_states': None
     }
 }
-
-
-def storage_factory(path):
-    pstorage = FileSystemPickleStorage(path)
-    sstorage = FileSystemStringStorage(path)
-    return pstorage, sstorage
 
 
 def get_schedule_length(schedule):
@@ -68,6 +62,10 @@ class InitialValueSetuper(metaclass=ABCMeta):
                                                    old_timesteps)
         self.pickle_storage.write(timesteps,
                                   sim_path + TIMESTEPS_PATH)
+
+    def interpolate_timesteps(self, schedule, old_schedule, old_timesteps):
+        # TODO
+        return np.array([0.001] * get_schedule_length(schedule))
 
     def setup_initial_states(self, sim_path, schedule, dos=None,
                              previous_sim_path=None):
@@ -120,16 +118,17 @@ class REJobController:
         dos = None
         schedule = None
         previous_sim_path = None
+        opt_params = self.optimization_params
         while (not self.optimization_converged()
-               or run_counter > self.optimization_params['max_optimization_runs'):
+               or run_counter > opt_params['max_optimization_runs']):
             sim_path = 'optimization_run{}/'.format(run_counter)
             if schedule is not None:
                 schedule = self.schedule_optimizer.optimize(dos)
             else:
                 schedule = self.make_initial_schedule(
-                    self.initial_schedule_params, re_params['num_replicas'])
-            self.setup_simulation(sim_path, schedule, config, dos,
-                                  previous_sim_path)
+                    self.initial_schedule_params,
+                    self.re_params['num_replicas'])
+            self.setup_simulation(sim_path, schedule, dos, previous_sim_path)
             dos = self.do_single_run()
             previous_sim_path = sim_path
             run_counter += 1
@@ -150,7 +149,7 @@ class REJobController:
             self.initial_value_setuper.setup_initial_states(sim_path, schedule,
                                                             previous_dos,
                                                             previous_sim_path)
-            config_updates['local_sampling_params'] = {
+            config_updates['general'] = {
                 'initial_states': sim_path + INITIAL_STATES_PATH}
         if prod:
             num_samples = self.re_params['num_production_samples']
@@ -161,15 +160,34 @@ class REJobController:
             or int(0.1 * num_samples)
         config_updates['local_sampling_params']['timestep_adaption_limit'] = \
             ts_adaption_limit
-        config = self.make_config(general={'output_path': sim_path},
+        n_replicas = get_schedule_length(schedule)
+        config = self.make_config(general={'output_path': sim_path,
+                                           'num_replicas': n_replicas},
                                   **config_updates)
-        self.storage.write(config, sim_path + 'config.yml')
+        self.string_storage.write(config, sim_path + CONFIG_PATH)
         self.scale_environment(get_schedule_length(schedule))
 
+    def load_energies(self, sim_path):
+        config = yaml.load(self.string_storage.read(sim_path + CONFIG_PATH))
+        n_replicas = config['general_params']['num_replicas']
+        n_samples = config['general_params']['num_iterations']
+        dump_interval = config['re_params']['dump_interval']
+        energies = []
+        for r in range(1, n_replicas + 1):
+            r_energies = []
+            for n in range(0, n_samples - dump_interval, dump_interval):
+                fname = 'energies_replica{}_{}-{}.pickle'.format(
+                    r, n, n + dump_interval)
+                r_energies.append(self.pickle_storage.load(
+                    sim_path + ENERGIES_PATH + fname))
+        return np.array(energies)
+        
     def do_single_run(self, sim_path):
         self.re_runner.run_sampling()
-        dos = self.dos_calculator.calculate_dos(schedule)
-        self.storage.write(dos, DOS_PATH)
+        energies = self.load_energies(sim_path)
+        schedule = self.pickle_storage.read(SCHEDULE_PATH)
+        dos = self.dos_calculator.calculate_dos(energies, schedule)
+        self.pickle_storage.write(dos, DOS_PATH)
         return dos
 
     def check_compatibility(self, initial_schedule_params,
@@ -190,8 +208,7 @@ class REJobController:
         optimization_result = self.optimize_schedule()
         final_opt_sim_path, final_schedule, final_dos = optimization_result
 
-        prod_output_path = 'production_run/'
-        self.setup_simulation(prod_output_path, final_schedule, final_dos,
+        self.setup_simulation(PROD_OUTPUT_PATH, final_schedule, final_dos,
                               final_opt_sim_path, prod=True)
-        self.do_single_run(prod_output_path)
+        self.do_single_run(PROD_OUTPUT_PATH)
         self.log_result()
