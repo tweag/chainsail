@@ -2,8 +2,8 @@
 Scheduler app configuration file parsing
 """
 from typing import Callable, Dict, List, Optional, Tuple
-from libcloud.compute.drivers.ec2 import EC2NodeDriver
 
+from libcloud.compute.drivers.ec2 import EC2NodeDriver
 from libcloud.compute.drivers.gce import GCENodeDriver
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
