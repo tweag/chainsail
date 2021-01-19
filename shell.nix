@@ -1,6 +1,6 @@
 { pkgs ? import ./nix {} }:
 let 
-  pythonPackages = with pkgs.python38Packages; [poetry libcloud numpy ipython matplotlib pyyaml ];
+  pythonPackages = with pkgs.python38Packages; [ poetry ];
 in
   pkgs.mkShell {
     buildInputs = with pkgs; [
