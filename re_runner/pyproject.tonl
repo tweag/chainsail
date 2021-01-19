@@ -8,7 +8,7 @@ authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
 python = "^3.8"
 numpy = "*"
 pyyaml = "*"
-resaas-lib = { path = "../lib/" }
+resaas-common = { path = "../common/" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
