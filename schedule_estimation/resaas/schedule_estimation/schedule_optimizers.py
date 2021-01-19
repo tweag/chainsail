@@ -4,7 +4,7 @@ Classes for calculating a schedule given the density of states (DOS)
 import numpy as np
 from abc import abstractmethod, ABCMeta
 
-from util import log_sum_exp
+from resaas.common.util import log_sum_exp
 
 
 class AbstractScheduleOptimizer(metaclass=ABCMeta):

@@ -1,4 +1,5 @@
 import numpy as np
+np.random.seed(42)
 
 from dos_calculators import BoltzmannDOSCalculator
 from schedule_optimizers import BoltzmannAcceptanceRateOptimizer
@@ -19,5 +20,8 @@ log_dos = dc.calculate_dos(energies, schedule)
 optimizer = BoltzmannAcceptanceRateOptimizer(log_dos, energies)
 # find schedule s.t. acceptance rates are always 80% and with a minimum beta
 # of 0.01
+
+print("ratio:", optimizer.log_Z(schedule['beta'][0]) / optimizer.log_Z(schedule['beta'][3]))
+
 optimized_schedule = optimizer.optimize(0.8, 1.0, 0.01, 1e-2)
 print('Optimized schedule: ', ['{:.3f}'.format(x) for x in optimized_schedule['beta']])
