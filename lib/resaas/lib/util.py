@@ -1,5 +1,8 @@
 import numpy as np
 
+from .storage import (FileSystemPickleStorage,
+                      FileSystemStringStorage)
+
 def log_sum_exp(x, axis=0):
     '''
     Calculate the log of a sum of exponentials in a numerically
