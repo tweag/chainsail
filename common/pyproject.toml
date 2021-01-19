@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "resaas-lib"
+name = "resaas-common"
 version = "0.1.0"
-description = "Library of RESAAS code shared between components"
+description = "RESAAS code shared between components"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
 
 [tool.poetry.dependencies]
