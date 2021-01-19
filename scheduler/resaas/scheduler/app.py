@@ -4,15 +4,14 @@ Scheduler REST API and endpoint specifications
 from datetime import datetime
 
 from flask import abort, jsonify, request
+from flask_cors import cross_origin
 
 from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import app, db
-from resaas.scheduler.db import (JobViewSchema, NodeViewSchema, TblJobs,
-                                 TblNodes)
+from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.jobs import JobStatus
 from resaas.scheduler.spec import JobSpecSchema
-from resaas.scheduler.tasks import (scale_job_task, start_job_task,
-                                    stop_job_task)
+from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task
 
 config = load_scheduler_config()
 
@@ -25,6 +24,7 @@ def get_job(job_id):
 
 
 @app.route("/job", methods=["POST"])
+@cross_origin()
 def create_job():
     """Create a job"""
     # Validate the provided job spec
