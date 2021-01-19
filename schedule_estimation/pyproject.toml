@@ -3,6 +3,7 @@ name = "resaas-schedule-estimation"
 version = "0.1.0"
 description = "Temperature schedule estimation for resaas"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
+packages = [ { include = "resaas/schedule_estimation/" } ]
 
 [tool.poetry.dependencies]
 python = "^3.8"
