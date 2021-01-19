@@ -115,6 +115,12 @@ class FileSystemPickleStorage(AbstractFileSystemStorage):
             opf.write(self._make_data_stream(data).getbuffer())
 
     def read(self, path):
+        '''
+        Unpickle a file.
+
+        :param path: file to unpickle
+        :type path: str
+        '''
         with open(path, "rb") as ipf:
             return load(ipf)
 
@@ -202,5 +208,11 @@ class FileSystemStringStorage(AbstractStorage):
             opf.write(self._make_data_stream(data))
 
     def read(self, path):
+        '''
+        Reads a string from a file.
+
+        :param path: path of the file
+        :type path: str
+        '''
         with open(path) as ipf:
             return ipf.read()

@@ -13,6 +13,13 @@ def log_sum_exp(x, axis=0):
 
 
 def storage_factory(path):
+    '''
+    Creates storage objects, which, depending on the environment, either
+    access a local file system or a cloud storage.
+
+    :param path: base path of a simulation
+    :type path: str
+    '''
     pstorage = FileSystemPickleStorage(path)
     sstorage = FileSystemStringStorage(path)
     return pstorage, sstorage
