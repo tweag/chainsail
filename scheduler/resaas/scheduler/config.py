@@ -1,6 +1,7 @@
 """
 Scheduler app configuration file parsing
 """
+import os
 from typing import Callable, Dict, List, Optional, Tuple
 
 from libcloud.compute.drivers.ec2 import EC2NodeDriver
@@ -9,6 +10,7 @@ from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from marshmallow.exceptions import ValidationError
 from marshmallow_enum import EnumField
+import yaml
 
 from resaas.scheduler.nodes.base import NodeType
 from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
@@ -149,3 +151,16 @@ class SchedulerConfigSchema(Schema):
             driver_kwargs=driver_config,
             extra_creation_kwargs=extra_creation_kwargs,
         )
+
+
+def load_scheduler_config():
+    """Loads SchedulerConfig from a yaml config file
+
+    The default path is "scheduler.yaml". To provide a custom
+    config file path use the RESAAS_SCHEDULER_CONFIG environment
+    variable.
+    """
+    config_file = os.environ.get("RESAAS_SCHEDULER_CONFIG", "scheduler.yaml")
+    with open(config_file) as f:
+        raw_config = yaml.load(f, Loader=yaml.FullLoader)
+    return SchedulerConfigSchema().load(raw_config)

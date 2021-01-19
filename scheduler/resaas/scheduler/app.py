@@ -5,12 +5,27 @@ from datetime import datetime
 
 from flask import jsonify, request
 
-from resaas.scheduler.core import app, db, get_config
-from resaas.scheduler.db import (JobViewSchema, NodeViewSchema, TblJobs,
-                                 TblNodes)
+from resaas.scheduler.core import app, db
+from resaas.scheduler.config import load_scheduler_config
+from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.spec import JobSpecSchema
+from resaas.scheduler.tasks import echo_job, update_job_finished_time
 
-config = get_config()
+config = load_scheduler_config()
+
+
+@app.route("/job/test_update_time/<job_id>", methods=["POST"])
+def celery_dev_test(job_id):
+    """Call celery"""
+    job = TblJobs.query.filter_by(id=job_id).first()
+    if not job:
+        raise Exception
+    app.logger.info("Calling job update task")
+    result = update_job_finished_time.apply_async((job_id,), {})
+    if not result.get():
+        raise Exception
+    db.session.refresh(job)
+    return JobViewSchema().jsonify(job, many=False)
 
 
 @app.route("/job/<job_id>", methods=["GET"])

@@ -1,0 +1,16 @@
+ssh_user: ubuntu
+ssh_public_key: >
+  ssh-rsa ssh-rsa xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx myKeyComment
+ssh_private_key_path: /home/yourname/.ssh/foo.pem
+node_entrypoint: bash -c 'echo gruezi'
+node_ports: [8080]
+node_image: "Ubuntu 9.10"
+node_size: "Small"
+node_type: LibcloudVM
+node_driver: "dummy"
+driver_specs:
+  dummy:
+    creds: foobar
+    extra_creation_args: {}
