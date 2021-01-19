@@ -9,17 +9,38 @@ import os
 
 
 def sanitize_basename(basename):
+    """
+
+    Args:
+      basename: 
+
+    Returns:
+
+    """
     return basename if basename[-1] == '/' else basename + '/'
 
 
 def make_sure_dir_exists(output_path):
+    """
+
+    Args:
+      output_path: 
+
+    Returns:
+
+    """
     os.makedirs(output_path[:output_path.rfind('/')])
 
     
 def pickle_to_stream(data):
-    '''
-    Pickles a Python object and writes it to a BytesIO stream
-    '''
+    """Pickles a Python object and writes it to a BytesIO stream
+
+    Args:
+      data: 
+
+    Returns:
+
+    """
     bytes_stream = BytesIO()
     dump(data, bytes_stream)
     bytes_stream.seek(0)
@@ -27,68 +48,86 @@ def pickle_to_stream(data):
 
 
 class AbstractStorage(metaclass=ABCMeta):
+    """ """
     @staticmethod
     @abstractmethod
     def _make_data_stream(data):
-        '''
-        Make a byte stream object.
+        """Make a byte stream object.
 
-        :param data: object to convert into a byte stream
-        :type data: object
-        '''
+        Args:
+          data(object): object to convert into a byte stream
+
+        Returns:
+
+        """
         pass
     
     @abstractmethod
     def write(self, data, **kwargs):
-        '''
-        Write data to some kind of permanent storage.
+        """Write data to some kind of permanent storage.
 
-        :param data: data to write
-        :type data: object
-        '''
+        Args:
+          data(object): data to write
+          **kwargs: 
+
+        Returns:
+
+        """
         pass
 
 
 class AbstractFileSystemStorage(AbstractStorage):
     def __init__(self, default_basename, default_mode_flags):
-        '''
-        Writes something to the file system.
+    """Writes something to the file system.
 
-        :param default_basename: basename (folder) of location the 
-                                 pickled Python object will be written to
-        :type default_basename: str
-        :param default_mode_flags: mode flags to pass to open() call
-        :type default_mode_flags: str
-        '''
+    Args:
+      default_basename(str): basename (folder) of location the
+        pickled Python object will be written to
+      default_mode_flags(str): mode flags to pass to open() call
+
+    Returns:
+
+    """
         self.default_basename = sanitize_basename(default_basename)
         self.default_mode_flags = default_mode_flags
 
 
 class FileSystemPickleStorage(AbstractFileSystemStorage):
     def __init__(self, default_basename):
-        '''
-        Pickles a Python object and writes it to the file system.
+    """Pickles a Python object and writes it to the file system.
 
-        :param default_basename: basename (folder) of location the 
-                                 pickled Python object will be written to
-        :type default_basename: str
-        '''
+    Args:
+      default_basename(str): basename (folder) of location the
+        pickled Python object will be written to
+
+    Returns:
+
+    """
         super().__init__(default_basename, 'wb')
 
     @staticmethod
     def _make_data_stream(data):
+        """
+
+        Args:
+          data: 
+
+        Returns:
+
+        """
         return pickle_to_stream(data)
 
     def _construct_file_path(self, file_name, basename=None):
-        '''
-        Construct a full file path (possible relative) from a file name and
+        """Construct a full file path (possible relative) from a file name and
         a basename.
 
-        :param file_name: file name
-        :type file_name: str
-        :param basename: basename
-        :type basename: str or None
-        '''
+        Args:
+          file_name(str): file name
+          basename(str or None, optional): basename (Default value = None)
+
+        Returns:
+
+        """
         basename = basename or self.default_basename
         if basename is None:
             raise ValueError(('Basename not set. Needs to be either given '
@@ -98,60 +137,74 @@ class FileSystemPickleStorage(AbstractFileSystemStorage):
         return basename + file_name
 
     def write(self, data, file_name, basename=None):
-        '''
-        Pickles a Python object and writes it to a file.
+        """Pickles a Python object and writes it to a file.
 
-        :param data: data
-        :type data: object
-        :param basename: basename (folder) of location the pickled
-                         Python object will be written to
-        :type basename: str
-        :param mode_flags: mode flags to pass to open() call
-        :type mode_flags: str
-        '''
+        Args:
+          data(object): data
+          basename(str, optional): basename (folder) of location the pickled
+        Python object will be written to (Default value = None)
+          mode_flags(str): mode flags to pass to open() call
+          file_name: 
+
+        Returns:
+
+        """
         file_path = self._construct_file_path(file_name, basename)
         make_sure_dir_exists(file_path)
         with open(file_path, self.default_mode_flags) as opf:
             opf.write(self._make_data_stream(data).getbuffer())
 
     def read(self, path):
-        '''
-        Unpickle a file.
+        """Unpickle a file.
 
-        :param path: file to unpickle
-        :type path: str
-        '''
+        Args:
+          path(str): file to unpickle
+
+        Returns:
+
+        """
         with open(path, "rb") as ipf:
             return load(ipf)
 
 
 class CloudPickleStorage(AbstractStorage):
     def __init__(self, driver, container, default_basename):
-        '''
-        Writer that pickles objects and writes them to cloud locations via the
+    """Writer that pickles objects and writes them to cloud locations via the
         libcloud Storage API.
 
-        :params driver: libcloud driver instance
-        :type driver: subclass of :class:`libcloud.storage.base.StorageDriver`
-        '''
+    Args:
+      s: driver: libcloud driver instance
+
+    Returns:
+
+    """
         self._driver = driver
         self._container = container
         self._default_basename = default_basename
 
     @staticmethod
     def _make_data_stream(data):
+        """
+
+        Args:
+          data: 
+
+        Returns:
+
+        """
         return pickle_to_stream(data)
 
     def _construct_object_name(self, file_name, basename=None):
-        '''
-        Construct a full object name from a file name and
+        """Construct a full object name from a file name and
         a basename.
 
-        :param file_name: file name
-        :type file_name: str
-        :param basename: basename
-        :type basename: str or None
-        '''
+        Args:
+          file_name(str): file name
+          basename(str or None, optional): basename (Default value = None)
+
+        Returns:
+
+        """
         basename = basename or self._default_basename
         if basename is None:
             basename = ''
@@ -160,14 +213,18 @@ class CloudPickleStorage(AbstractStorage):
         return basename + file_name
 
     def write(self, data, file_name, basename=None):
-        '''
-        Uploads data to a new "file" in a given container.
+        """Uploads data to a new "file" in a given container.
 
-        :params data: data to upload
-        :type data: object
-        :params file_name: name of new object in the cloud storage
-        :type file_name: str
-        '''
+        Args:
+          s: data: data to upload
+          s: file_name: name of new object in the cloud storage
+          data: 
+          file_name: 
+          basename:  (Default value = None)
+
+        Returns:
+
+        """
         byte_data = self._make_data_stream(data)
         object_name = self._construct_object_name(file_name, basename)
         self._driver.upload_object_via_stream(byte_data, self._container,
@@ -176,43 +233,54 @@ class CloudPickleStorage(AbstractStorage):
 
 class FileSystemStringStorage(AbstractStorage):
     def __init__(self, default_basename, default_mode_flags='a'):
-        '''
-        TODO: test / actually use this
-
+    """TODO: test / actually use this
+    
         Writes a string to the file system.
 
-        :param default_basename: basename (folder) of location the
-                                 pickled Python object will be written to
-        :type default_basename: str
-        :param mode_flags: mode flags to pass to open() call
-        :type mode_flags: str
-        '''
+    Args:
+      default_basename(str): basename (folder) of location the
+    pickled Python object will be written to
+      mode_flags(str): mode flags to pass to open() call
+
+    Returns:
+
+    """
 
     @staticmethod
     def _make_data_stream(data):
+        """
+
+        Args:
+          data: 
+
+        Returns:
+
+        """
         return StringIO(data)
 
     def write(self, data, output_path, mode_flags):
-        '''
-        Writes a string to a file.
+        """Writes a string to a file.
 
-        :param data: data
-        :type data: object
-        :param output_path: output path to write to
-        :type output_path: str
-        :param mode_flags: mode flags to pass to open()
-        :type mode_flags: str
-        '''
+        Args:
+          data(object): data
+          output_path(str): output path to write to
+          mode_flags(str): mode flags to pass to open()
+
+        Returns:
+
+        """
         make_sure_dir_exists(output_path)
         with open(output_path, mode_flags) as opf:
             opf.write(self._make_data_stream(data))
 
     def read(self, path):
-        '''
-        Reads a string from a file.
+        """Reads a string from a file.
 
-        :param path: path of the file
-        :type path: str
-        '''
+        Args:
+          path(str): path of the file
+
+        Returns:
+
+        """
         with open(path) as ipf:
             return ipf.read()
