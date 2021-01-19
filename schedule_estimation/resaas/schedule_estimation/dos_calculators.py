@@ -5,7 +5,7 @@ distribution at different "temperatures".
 import numpy as np
 from abc import abstractmethod, ABCMeta
 
-from resaas.lib.util import log_sum_exp
+from resaas.common.util import log_sum_exp
 
 
 def log(text):
