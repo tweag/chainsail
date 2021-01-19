@@ -1,1 +1,35 @@
-# TODO: docker compose stack for scheduler
+version: "3.5"
+
+services:
+  # Scheduler database
+  postgres:
+    image: postgres:11.5-alpine
+    environment:
+      # Using default "postgres" database and "postgres" user
+      - POSTGRES_PASSWORD=resaas-dev
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+  # For async-task message passing
+  redis:
+    image: redis:6.2-rc2-alpine
+    volumes:
+      - redis:/data
+    ports:
+      - 6379:6379
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+volumes:
+  redis:
+  postgres:
