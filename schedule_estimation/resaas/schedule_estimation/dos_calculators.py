@@ -43,7 +43,7 @@ class AbstractWHAM(metaclass=ABCMeta):
         self.parameters = parameters
         self.n_ensembles = energies.shape[0]
 
-    def validate_shapes(self, energies, parameters):
+    def _validate_shapes(self, energies, parameters):
         """
         Makes sure that energies and replica parameter shapes make sense and
         match.
