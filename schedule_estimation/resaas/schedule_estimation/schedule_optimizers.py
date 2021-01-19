@@ -54,11 +54,13 @@ class SingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
               samples
             energies(:class:`np.ndarray`): sampled energies from which the DOS
               estimate was calculated
-            optimization_quantity(callable): calculates an optimization quantity
-              such as the acceptance rate for two replicas at two different schedule
-              parameter values given a DOS estimate and the corresponding
-              sampled energies. Takes arguments ``(dos, energies, param1, param2)``.
-            param_name(str): name of the schedule parameter to be optimized
+            optimization_quantity(callable): calculates an optimization
+              quantity such as the acceptance rate for two replicas at two
+              different schedule parameter values given a DOS estimate and the
+              corresponding sampled energies. Takes arguments
+              ``(dos, energies, param1, param2)``.
+            param_name(str): name of the
+              schedule parameter to be optimized
         '''
         super().__init__(dos, energies)
         self._optimization_quantity = optimization_quantity
