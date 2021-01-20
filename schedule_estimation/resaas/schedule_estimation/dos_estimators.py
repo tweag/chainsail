@@ -24,8 +24,17 @@ def log(text):
 
 
 class AbstractWHAM(metaclass=ABCMeta):
+    '''
+    Interface for classes implementing multiple histogram reweighting,
+    which estimates the partition function or the density of states
+    from sampled energies.
+    '''
     def __init__(self, energies, log_ensemble, parameters):
-        """Interface for classes implementing WHAM
+        """Initializes an WHAM object.
+
+        This requires the sampled energies, a function describing the 
+        log-ensemble and a dictionary of ensemble parameters which describe
+        the ensemble instances from which the energies were sampled.
 
         Args:
           energies(:class:`np.ndarray`): negative log-probabilities

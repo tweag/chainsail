@@ -31,6 +31,16 @@ class AbstractScheduleOptimizer(metaclass=ABCMeta):
 
 
 class AbstractSingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
+    '''
+    Interface for classes which estimate Replica Exchange schedules based on
+    a single parameter.
+
+    This works by trying to keep a certain quantity, which somehow describes an
+    inverse "distance" between the distributions of neighboring replicas,
+    constant between adjacent parameter values. Examples for this distance measure
+    are the acceptance rate, the Kullback-Leibler divergence, the Hellinger
+    distance, ...
+    '''
     def __init__(self, dos, energies, optimization_quantity):
         '''
         Initializes a schedule optimizer.
