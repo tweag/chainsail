@@ -2,22 +2,54 @@
 Asynchronous tasks run using celery
 """
 
-# Our own pre-configured version of celery
-from datetime import datetime
 from resaas.scheduler.core import celery, db
 from resaas.scheduler.db import TblJobs
-
-
-@celery.task(time_limit=3)
-def echo_job():
-    print("welcome to the task")
-    print("blarg")
+from resaas.scheduler.jobs import Job
+from resaas.scheduler.config import load_scheduler_config
+from resaas.scheduler.errors import JobError
 
 
 @celery.task()
-def update_job_finished_time(job_id):
-    print("welcome to the task")
-    job = TblJobs.query.filter_by(id=job_id).first()
-    job.finished_at = datetime.utcnow()
-    db.session.commit()
-    return True
+def start_job_task(job_id):
+    """Starts a job
+
+    Args:
+        job_id: The id of the job to start
+
+    Raises:
+        JobError: If the job failed to start
+    """
+    # Load Job object from database entry
+    job = Job.from_representation(
+        TblJobs.query.filter_by(id=job_id).first(), load_scheduler_config()
+    )
+    try:
+        job.start()
+    except JobError as e:
+        db.session.commit()
+        raise e
+    else:
+        db.session.commit()
+
+
+@celery.task()
+def stop_job_task(job_id):
+    """Stops a job
+
+    Args:
+        job_id: The id of the job to stop
+
+    Raises:
+        JobError: If the job failed to stop
+    """
+    # Load Job object from database entry
+    job = Job.from_representation(
+        TblJobs.query.filter_by(id=job_id).first(), load_scheduler_config()
+    )
+    try:
+        job.stop()
+    except JobError as e:
+        db.session.commit()
+        raise e
+    else:
+        db.session.commit()

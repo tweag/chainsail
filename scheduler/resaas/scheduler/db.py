@@ -14,7 +14,6 @@ class TblJobs(db.Model):
     created_at = db.Column(db.DateTime(), nullable=False)
     started_at = db.Column(db.DateTime(), nullable=True)
     finished_at = db.Column(db.DateTime(), nullable=True)
-    nodes = db.relationship("TblNodes", backref="jobs", lazy=True)
 
 
 class TblNodes(db.Model):
@@ -33,6 +32,11 @@ class TblNodes(db.Model):
     status = db.Column(db.String(50), nullable=True)
     address = db.Column(db.String(50), nullable=True)
     ports = db.Column(db.String(50), nullable=True)
+    # Flag for indicating whether the node is currently used by the job
+    # nodes which have been removed as a part of restarts, scaling, etc.
+    # are flagged as in_use=False.
+    in_use = db.Column(db.Boolean(), nullable=True)
+    job = db.relationship("TblJobs", backref="nodes", lazy=True)
 
 
 class JobViewSchema(ma.SQLAlchemyAutoSchema):

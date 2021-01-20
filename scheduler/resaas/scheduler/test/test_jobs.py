@@ -205,9 +205,10 @@ def test_vm_job_from_db_representation():
                 name=f"dummy-{i+1}",
                 entrypoint="test",
                 status=NodeStatus.RUNNING,
-                node_type=NodeType.LIBCLOUD_VM,
+                node_type=NodeType.LIBCLOUD_VM.value,
                 address=f"127.0.0.{i}",
                 ports=[8080, 8081],
+                in_use=True,
             )
         )
 

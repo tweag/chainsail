@@ -8,24 +8,25 @@ from flask import jsonify, request
 from resaas.scheduler.core import app, db
 from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
+from resaas.scheduler.jobs import Job
 from resaas.scheduler.spec import JobSpecSchema
-from resaas.scheduler.tasks import echo_job, update_job_finished_time
+from resaas.scheduler.tasks import start_job_task
 
 config = load_scheduler_config()
 
 
-@app.route("/job/test_update_time/<job_id>", methods=["POST"])
-def celery_dev_test(job_id):
-    """Call celery"""
-    job = TblJobs.query.filter_by(id=job_id).first()
-    if not job:
-        raise Exception
-    app.logger.info("Calling job update task")
-    result = update_job_finished_time.apply_async((job_id,), {})
-    if not result.get():
-        raise Exception
-    db.session.refresh(job)
-    return JobViewSchema().jsonify(job, many=False)
+# @app.route("/job/test_update_time/<job_id>", methods=["POST"])
+# def celery_dev_test(job_id):
+#     """Call celery"""
+#     job = TblJobs.query.filter_by(id=job_id).first()
+#     if not job:
+#         raise Exception
+#     app.logger.info("Calling job update task")
+#     result = update_job_finished_time.apply_async((job_id,), {})
+#     if not result.get():
+#         raise Exception
+#     db.session.refresh(job)
+#     return JobViewSchema().jsonify(job, many=False)
 
 
 @app.route("/job/<job_id>", methods=["GET"])
@@ -44,8 +45,18 @@ def create_job():
     job = TblJobs(status="created", created_at=datetime.utcnow(), spec=schema.dumps(job_spec))
     db.session.add(job)
     db.session.commit()
-    # TODO: Submit job's celery task here
     return jsonify({"job_id": job.id})
+
+
+@app.route("/job/start/<job_id>", methods=["POST"])
+def start_job(job_id):
+    """Start a single job"""
+    job = TblJobs.query.filter_by(id=job_id).first()
+    if not job:
+        raise ValueError("Job does not exist yet")
+    start_job_task.apply_async((job_id,), {})
+    # ("message", status_code)
+    return ("message", 200)
 
 
 @app.route("/jobs", methods=["GET"])

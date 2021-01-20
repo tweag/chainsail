@@ -75,16 +75,17 @@ class Job:
         self._node_cls = node_registry[self.config.node_type]
         if not self.nodes:
             self._initialize_nodes()
-
+        
     def _initialize_nodes(self):
         if self.nodes:
             raise JobError(
                 "Cannot initialize nodes for a job which already has nodes assigned to it."
             )
         self.status = JobStatus.INITIALIZED
+        self.control_node = _DEFAULT_CONTROL_NODE
         for _ in range(n_replicas_to_nodes(self.spec.initial_number_of_replicas)):
             self._add_node()
-        self.control_node = _DEFAULT_CONTROL_NODE
+        self.sync_representation()
 
     def start(self) -> None:
         if self.status != JobStatus.INITIALIZED:
@@ -102,6 +103,7 @@ class Job:
                 self.status = JobStatus.FAILED
                 raise JobError(f"Failed to start node for job {id}. Deployment logs: \n" + logs)
         self.status = JobStatus.RUNNING
+        self.sync_representation()
 
     def stop(self):
         for i, node in enumerate(self.nodes):
@@ -110,6 +112,7 @@ class Job:
         # Dropping references to deleted nodes
         self.nodes = []
         self.status = JobStatus.STOPPED
+        self.sync_representation()
 
     def restart(self):
         """
@@ -118,6 +121,7 @@ class Job:
         self.stop()
         self._initialize_nodes()
         self.start()
+        self.sync_representation()
 
     def _add_node(self) -> int:
         """Add a new node to a job"""
@@ -139,6 +143,7 @@ class Job:
             )
         ):
             self.nodes[i].entrypoint = entrypoint
+        self.sync_representation()
         return i_new_node
 
     def _remove_node(self, index: int):
@@ -150,6 +155,9 @@ class Job:
         node = self.nodes[index]
         if not node.delete():
             raise JobError(f"Failed to delete node {node} for job {self.id}")
+        if node.representation:
+            node.representation.in_use = False
+        self.sync_representation()
         self.nodes.pop(index)
 
     def scale_to(self, n_replicas: int):
@@ -175,6 +183,7 @@ class Job:
             removeable = [i for i in range(len(self.nodes)) if i != self.control_node]
             for _ in range(to_remove):
                 self._remove_node(removeable.pop())
+        self.sync_representation()
 
     def watch(self) -> bool:
         # Await control node until it reports exit or dies
@@ -196,7 +205,7 @@ class Job:
         """
         if not self.representation:
             return
-        self.representation.status = self.status
+        self.representation.status = self.status.value
         self.representation.spec = JobSpecSchema().dumps(self.spec)
         for node in self.nodes:
             node.sync_representation()
@@ -208,12 +217,15 @@ class Job:
         config: SchedulerConfig,
         node_registry: Dict[NodeType, Node] = NODE_CLS_REGISTRY,
         entrypoint_assigner: Callable[[str, int, int], List[str]] = assign_entrypoints,
-    ):
+    ) -> "Job":
         spec = JobSpecSchema().loads(job_rep.spec)
         nodes = []
         for node_rep in job_rep.nodes:
+            # Ignore nodes which are no longer in use
+            if not node_rep.in_use:
+                continue
             node_rep: TblNodes
-            node_cls = node_registry[node_rep.node_type]
+            node_cls = node_registry[NodeType(node_rep.node_type)]
             nodes.append(node_cls.from_representation(spec, node_rep, config))
         return cls(
             id=job_rep.id,

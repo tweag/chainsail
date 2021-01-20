@@ -103,6 +103,7 @@ class VMNode(Node):
             self.create_kwargs = {}
         else:
             self.create_kwargs = create_kwargs
+        self.sync_representation()
 
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
@@ -138,12 +139,14 @@ class VMNode(Node):
                     # Keep node reference to enable later
                     # destroy attempts
                     self._node = e.node
+            self.sync_representation()
             return (False, logs)
         else:
             logs = _deployment_log(d for d in deployment_steps)
             if self._node.private_ips:
                 self._address = self._node.private_ips[0]
             self.refresh_status()
+            self.sync_representation()
             return (True, logs)
 
     def restart(self) -> bool:
@@ -151,6 +154,7 @@ class VMNode(Node):
             raise MissingNodeError
         rebooted = self._node.reboot()
         self.refresh_status()
+        self.sync_representation()
         return rebooted
 
     def delete(self) -> bool:
@@ -158,6 +162,7 @@ class VMNode(Node):
             return True
         deleted = self._node.destroy()
         self.refresh_status()
+        self.sync_representation()
         return deleted
 
     @property
@@ -277,9 +282,11 @@ class VMNode(Node):
             )
         # Bind the new node to a database record if a job record was specified
         if job_rep:
-            node_rep = TblNodes(jobs=job_rep)
+            node_rep = TblNodes(in_use=True)
+            job_rep.nodes.append(node_rep)
         else:
             node_rep = None
+
         node = cls(
             name=name,
             driver=driver,
