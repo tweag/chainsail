@@ -78,31 +78,31 @@ class AbstractStorage(metaclass=ABCMeta):
 
 class AbstractFileSystemStorage(AbstractStorage):
     def __init__(self, default_basename, default_mode_flags):
-    """Writes something to the file system.
+        """Writes something to the file system.
 
-    Args:
-      default_basename(str): basename (folder) of location the
-        pickled Python object will be written to
-      default_mode_flags(str): mode flags to pass to open() call
+        Args:
+          default_basename(str): basename (folder) of location the
+            pickled Python object will be written to
+          default_mode_flags(str): mode flags to pass to open() call
 
-    Returns:
+        Returns:
 
-    """
+        """
         self.default_basename = sanitize_basename(default_basename)
         self.default_mode_flags = default_mode_flags
 
 
 class FileSystemPickleStorage(AbstractFileSystemStorage):
     def __init__(self, default_basename):
-    """Pickles a Python object and writes it to the file system.
+        """Pickles a Python object and writes it to the file system.
 
-    Args:
-      default_basename(str): basename (folder) of location the
-        pickled Python object will be written to
+        Args:
+          default_basename(str): basename (folder) of location the
+            pickled Python object will be written to
 
-    Returns:
+        Returns:
 
-    """
+        """
         super().__init__(default_basename, 'wb')
 
     @staticmethod
@@ -169,15 +169,15 @@ class FileSystemPickleStorage(AbstractFileSystemStorage):
 
 class CloudPickleStorage(AbstractStorage):
     def __init__(self, driver, container, default_basename):
-    """Writer that pickles objects and writes them to cloud locations via the
-        libcloud Storage API.
+        """Writer that pickles objects and writes them to cloud locations via the
+            libcloud Storage API.
 
-    Args:
-      s: driver: libcloud driver instance
+        Args:
+          s: driver: libcloud driver instance
 
-    Returns:
+        Returns:
 
-    """
+        """
         self._driver = driver
         self._container = container
         self._default_basename = default_basename
@@ -233,18 +233,18 @@ class CloudPickleStorage(AbstractStorage):
 
 class FileSystemStringStorage(AbstractStorage):
     def __init__(self, default_basename, default_mode_flags='a'):
-    """TODO: test / actually use this
-    
-        Writes a string to the file system.
+        """TODO: test / actually use this
 
-    Args:
-      default_basename(str): basename (folder) of location the
-    pickled Python object will be written to
-      mode_flags(str): mode flags to pass to open() call
+            Writes a string to the file system.
 
-    Returns:
+        Args:
+          default_basename(str): basename (folder) of location the
+        pickled Python object will be written to
+          mode_flags(str): mode flags to pass to open() call
 
-    """
+        Returns:
+
+        """
 
     @staticmethod
     def _make_data_stream(data):
