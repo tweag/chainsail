@@ -10,12 +10,11 @@ from resaas.common.util import log_sum_exp
 
 def log(text):
     """Write a log entry.
-    
+
     TODO: we might log to some database or a file instead of stdout
 
     Args:
-      text: 
-tes
+      text:
     Returns:
 
     """
@@ -127,7 +126,7 @@ class WHAM:
                  stopping_threshold=1e-6):
         """Initializes an WHAM object.
 
-        This requires the sampled energies, a function describing the 
+        This requires the sampled energies, a function describing the
         log-ensemble and a dictionary of ensemble parameters which describe
         the ensemble instances from which the energies were sampled.
 
@@ -168,21 +167,10 @@ class WHAM:
 
         return log_qs
 
-
     def estimate_dos(self):
         """Do multiple histogram reweighting with infinitely fine binning as
         outlined in the paper "Evaluation of marginal likelihoods via the
         density of states" (Habeck, AISTATS 2012)
-
-        Args:
-          max_iterations(int): how many WHAM iterations to perform.
-              (Default value = 5000)
-          threshold(float): log-likelihood difference threshold surpassing
-              of which means the iteration converged. (Default value = 1e-6)
-
-        Returns:
-          :class:`np.ndarray`: estimate of the log-DOS evaluated at the sampled
-              energies
         """
         f = np.zeros(self._n_ensembles)
         log_qs = self._calculate_log_qs()
@@ -200,7 +188,7 @@ class WHAM:
             # if self.stopping_criterion(log_L, old_log_L, self._stopping_threshold):
             #     break
             # old_log_L = log_L
-                
+
         if i > 0.8 * self._max_iterations:
             log(('More than 80% of max WHAM iterations were required. '
                  'Histogram reweighting might not have converged.'))
