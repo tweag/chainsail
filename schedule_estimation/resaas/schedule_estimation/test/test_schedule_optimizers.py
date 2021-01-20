@@ -17,8 +17,8 @@ class TestSingleParameterScheduleOptimizer(unittest.TestCase):
 
     def testOptimize(self):
         # TODO: I _think_ this test is okay, but for small decrements there are
-        # issues, but these are, I think, related to the above estimate_quantity
-        # definition.
+        # issues, but these are, I think, related to the above
+        # mock_quantity definition.
         for decrement in (0.1, 0.01,
                           #0.001, (fails)
                           ):
