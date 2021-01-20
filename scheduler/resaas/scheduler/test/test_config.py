@@ -17,7 +17,8 @@ VALID_CONFIG = """
             "user_id": "worker@resaas-demo.iam.gserviceaccount.com",
             "key": "./home/user/my-key.json",
             "project": "resaas-demo",
-            "datacenter": "us-central1-a"
+            "datacenter": "us-central1-a",
+            "extra_creation_kwargs": {}
         }
     }
 }

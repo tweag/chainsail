@@ -21,7 +21,7 @@ class GCEDriverConfigSchema(Schema):
     key = fields.String(required=True)
     project = fields.String(required=True)
     datacenter = fields.String(required=True)
-    extra_creation_args = fields.Dict(fields.String(), fields.String())
+    extra_creation_kwargs = fields.Dict(fields.String(), fields.String())
 
 
 class EC2DriverConfigSchema(Schema):
@@ -32,12 +32,12 @@ class EC2DriverConfigSchema(Schema):
     secret = fields.String(required=True)
     token = fields.String(required=True)
     region = fields.String(required=True)
-    extra_creation_args = fields.Nested(EC2ExtraArgs, required=True)
+    extra_creation_kwargs = fields.Nested(EC2ExtraArgs, required=True)
 
 
 class DummyDriverConfigSchema(Schema):
     creds = fields.String(required=True)
-    extra_creation_args = fields.Dict(fields.String, fields.String)
+    extra_creation_kwargs = fields.Dict(fields.String, fields.String)
 
 
 DRIVER_SCHEMAS: Dict[NodeType, Dict[str, Tuple[Callable, Schema]]] = {
@@ -133,10 +133,10 @@ class SchedulerConfigSchema(Schema):
             )
         # Validate that the required config fields exist
         driver_config = driver_config_schema().load(data["driver_specs"][requested_driver])
-        if "extra_creation_kargs" not in driver_config:
+        if "extra_creation_kwargs" not in driver_config:
             extra_creation_kwargs = {}
         else:
-            extra_creation_kwargs = driver_config.pop("extra_creation_kargs")
+            extra_creation_kwargs = driver_config.pop("extra_creation_kwargs")
         return SchedulerConfig(
             ssh_user=data["ssh_user"],
             ssh_public_key=data["ssh_public_key"],
