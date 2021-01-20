@@ -33,9 +33,10 @@ class AbstractScheduleOptimizer(metaclass=ABCMeta):
         pass
 
 
-class SingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
+class AbstractSingleParameterScheduleOptimizer(
+        AbstractScheduleOptimizer):
     @abstractmethod
-    def estimate_target_quantity(self, param1, param2):
+    def estimate_quantity(self, param1, param2):
         '''
         Estimates some target quantity (acceptance rate, cross entropy, ...)
         for two values of the replica parameter.
@@ -62,21 +63,22 @@ class SingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
               iteration terminates
             decremet(float): parameter value decrement
         '''
+
         params = [max_param]
-        previous_test_param = params[-1]
+        delta = decrement
+        while params[-1] >= min_param:
+            est_q = self.estimate_quantity(params[-1], params[-1] - delta)
+            if est_q <= target_value:
+                params.append(params[-1] - delta)
+                delta = decrement
+            else:
+                delta += decrement
+                
+        return {self._param_name: params[:-1]}
 
-        while previous_test_param > min_param:
-            current_test_param = previous_test_param - decrement
-            estimated_quantity = self.estimate_target_quantity(
-                params[-1], current_test_param)
-            if estimated_quantity < target_value:
-                params.append(previous_test_param)
-            previous_test_param = current_test_param
 
-        return {self._param_name: params}
-
-
-class BoltzmannAcceptanceRateOptimizer(SingleParameterScheduleOptimizer):
+class BoltzmannAcceptanceRateOptimizer(
+        AbstractSingleParameterScheduleOptimizer):
     _param_name = 'beta'
 
     def log_Z(self, beta):
@@ -92,7 +94,7 @@ class BoltzmannAcceptanceRateOptimizer(SingleParameterScheduleOptimizer):
         return log_sum_exp(
             (-self.energies.ravel() * beta + self.dos).T, axis=0)
 
-    def estimate_target_quantity(self, beta1, beta2):
+    def estimate_quantity(self, beta1, beta2):
         '''
         Estimates acceptance rate between two neighboring replicas.
 

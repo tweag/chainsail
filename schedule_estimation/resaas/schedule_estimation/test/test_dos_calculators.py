@@ -8,7 +8,7 @@ from resaas.common.util import log_sum_exp
 # draw samples from a bunch of normal distributions with standard deviations
 # 1, 2, ...
 sigmas = np.arange(1, 5)
-samples = np.array([np.random.normal(0, s, size=500) for s in sigmas])
+samples = np.array([np.random.normal(0, s, size=1000) for s in sigmas])
 # calculate the "energies"
 energies = 0.5 * samples ** 2
 # morph normal distributions into samples of harmonic oscillator at different
@@ -31,5 +31,5 @@ class testDefaultWHAM(unittest.TestCase):
         Z2 = np.sqrt(2 * np.pi / beta2)
         Z1_est = np.exp(log_sum_exp(-energies.ravel() * beta1 + est_log_dos))
         Z2_est = np.exp(log_sum_exp(-energies.ravel() * beta2 + est_log_dos))
-        
+
         self.assertTrue(np.fabs(Z1 / Z2 - Z1_est / Z2_est) < 1e-2)
