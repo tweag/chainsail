@@ -3,7 +3,7 @@ Scheduler REST API and endpoint specifications
 """
 from datetime import datetime
 
-from flask import jsonify, request
+from flask import jsonify, request, abort
 
 from resaas.scheduler.core import app, db
 from resaas.scheduler.config import load_scheduler_config
@@ -53,10 +53,9 @@ def start_job(job_id):
     """Start a single job"""
     job = TblJobs.query.filter_by(id=job_id).first()
     if not job:
-        raise ValueError("Job does not exist yet")
+        abort(404, "job does not exist")
     start_job_task.apply_async((job_id,), {})
-    # ("message", status_code)
-    return ("message", 200)
+    return ("ok", 200)
 
 
 @app.route("/jobs", methods=["GET"])
