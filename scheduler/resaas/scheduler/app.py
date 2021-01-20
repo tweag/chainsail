@@ -10,7 +10,7 @@ from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.jobs import Job
 from resaas.scheduler.spec import JobSpecSchema
-from resaas.scheduler.tasks import start_job_task, stop_job_task
+from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task
 
 config = load_scheduler_config()
 
@@ -88,7 +88,11 @@ def scale_job(job_id, n_replicas):
     # TODO
     # Call celery task function which performs scaling. Can include redirect link to
     # await status of scaling.
-    return
+    job = TblJobs.query.filter_by(id=job_id).first()
+    if not job:
+        abort(404, "job does not exist")
+    scale_job_task.apply_async((job_id, n_replicas), {})
+    return ("ok", 200)
 
 
 if __name__ == "__main__":
