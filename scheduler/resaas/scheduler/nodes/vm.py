@@ -2,16 +2,23 @@ import traceback
 from typing import IO, List, Optional, Tuple, Union
 
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import (NodeAuthSSHKey, NodeDriver, NodeImage,
-                                   NodeSize)
-from libcloud.compute.deployment import (Deployment, MultiStepDeployment,
-                                         ScriptDeployment, SSHKeyDeployment)
+from libcloud.compute.base import NodeAuthSSHKey, NodeDriver, NodeImage, NodeSize
+from libcloud.compute.deployment import (
+    Deployment,
+    MultiStepDeployment,
+    ScriptDeployment,
+    SSHKeyDeployment,
+)
 from libcloud.compute.types import DeploymentException, NodeState
 
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblNodes
-from resaas.scheduler.errors import (ConfigurationError, MissingNodeError,
-                                     NodeError, ObjectConstructionError)
+from resaas.scheduler.errors import (
+    ConfigurationError,
+    MissingNodeError,
+    NodeError,
+    ObjectConstructionError,
+)
 from resaas.scheduler.nodes.base import Node, NodeStatus
 from resaas.scheduler.spec import Dependencies, JobSpec
 
@@ -75,7 +82,7 @@ class VMNode(Node):
         self._ssh_pub = ssh_pub
         self._ssh_password = ssh_password
 
-        self.name = name
+        self._name = name
         self._address = None
         if listening_ports:
             self._listening_ports = listening_ports
@@ -150,6 +157,10 @@ class VMNode(Node):
         deleted = self._node.destroy()
         self.refresh_status()
         return deleted
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def entrypoint(self):

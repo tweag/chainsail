@@ -26,6 +26,11 @@ class Node(ABC):
 
     @property
     @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
     def listening_ports(self) -> List[int]:
         pass
 
