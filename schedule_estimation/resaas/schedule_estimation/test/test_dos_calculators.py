@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 np.random.seed(42)
 
-from resaas.schedule_estimation.dos_calculators import DefaultWHAM
+from resaas.schedule_estimation.dos_estimators import DefaultWHAM
 from resaas.common.util import log_sum_exp
 
 # draw samples from a bunch of normal distributions with standard deviations

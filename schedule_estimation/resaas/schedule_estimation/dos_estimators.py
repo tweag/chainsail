@@ -170,7 +170,7 @@ class DefaultWHAM(AbstractWHAM):
         return log_gs
 
 
-class AbstractDOSCalculator(metaclass=ABCMeta):
+class AbstractDOSEstimator(metaclass=ABCMeta):
     def __init__(self, wham_class=DefaultWHAM, max_wham_iterations=5000,
                  wham_threshold=1e-6):
         '''
@@ -220,7 +220,7 @@ class AbstractDOSCalculator(metaclass=ABCMeta):
         return log_dos
 
 
-class BoltzmannDOSCalculator(AbstractDOSCalculator):
+class BoltzmannDOSEstimator(AbstractDOSEstimator):
     def _log_ensemble(self, energy, beta):
         """Implements the Boltzmann ensemble q(E|\beta) = exp(-beta * E)
 
