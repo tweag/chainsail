@@ -1,3 +1,4 @@
+import json
 import traceback
 from typing import IO, List, Optional, Tuple, Union
 
@@ -240,6 +241,10 @@ class VMNode(Node):
             size = node.size
             image = node.image
             name = node.name
+        if node_rep.ports:
+            ports = json.loads(node_rep.ports)
+        else:
+            ports = []
         return cls(
             name=name,
             driver=driver,
@@ -248,7 +253,7 @@ class VMNode(Node):
             image=image,
             deps=spec.dependencies,
             entrypoint=node_rep.entrypoint,
-            listening_ports=node_rep.ports,
+            listening_ports=ports,
             status=node_rep.status,
             ssh_user=config.ssh_user,
             ssh_pub=config.ssh_public_key,

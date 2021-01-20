@@ -88,7 +88,7 @@ class Node(ABC):
         to match the state of the node.
         """
         if not self.representation:
-            # If a node is created without a corresponding databse row,
+            # If a node is created without a corresponding database row,
             # there is nothing to do
             return
         self.representation.name = self.name
