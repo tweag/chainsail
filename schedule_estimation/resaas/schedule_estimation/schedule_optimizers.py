@@ -1,10 +1,7 @@
 """
 Classes for calculating a schedule given the density of states (DOS)
 """
-import numpy as np
 from abc import abstractmethod, ABCMeta
-
-from resaas.common.util import log_sum_exp
 
 
 class AbstractScheduleOptimizer(metaclass=ABCMeta):
@@ -33,15 +30,24 @@ class AbstractScheduleOptimizer(metaclass=ABCMeta):
         pass
 
 
-class AbstractSingleParameterScheduleOptimizer(
-        AbstractScheduleOptimizer):
-    @abstractmethod
-    def estimate_quantity(self, param1, param2):
+class AbstractSingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
+    def __init__(self, dos, energies, optimization_quantity):
         '''
-        Estimates some target quantity (acceptance rate, cross entropy, ...)
-        for two values of the replica parameter.
+        Initializes a schedule optimizer.
+
+        Args:
+            dos(:class:`np.ndarray`): estimate of the DOS evaluated at energy
+              samples
+            energies(:class:`np.ndarray`): sampled energies from which the DOS
+              estimate was calculated
+            optimization_quantity(callable): calculates an optimization quantity
+              such as the acceptance rate for two replicas at two different schedule
+              parameter values given a DOS estimate and the corresponding
+              sampled energies. Takes arguments ``(dos, energies, param1, param2)``.
         '''
-        pass
+        self._dos = dos
+        self._energies = energies
+        self._optimization_quantity = optimization_quantity
 
     def optimize(self, target_value, max_param, min_param, decrement):
         '''
@@ -63,54 +69,20 @@ class AbstractSingleParameterScheduleOptimizer(
               iteration terminates
             decremet(float): parameter value decrement
         '''
-
         params = [max_param]
         delta = decrement
         while params[-1] >= min_param:
-            est_q = self.estimate_quantity(params[-1], params[-1] - delta)
+            est_q = self._optimization_quantity(self._dos, self._energies,
+                                                params[-1], params[-1] - delta)
             if est_q <= target_value:
                 params.append(params[-1] - delta)
                 delta = decrement
             else:
                 delta += decrement
-                
+
         return {self._param_name: params[:-1]}
 
 
 class BoltzmannAcceptanceRateOptimizer(
         AbstractSingleParameterScheduleOptimizer):
     _param_name = 'beta'
-
-    def log_Z(self, beta):
-        '''
-        Calculates an estimate of the partition function.
-
-        Uses the DOS estimate to calculate an estimate of the partition
-        function Z(beta) at a given inverse temperature beta.
-
-        Args:
-            beta(float): inverse temperature
-        '''
-        return log_sum_exp(
-            (-self.energies.ravel() * beta + self.dos).T, axis=0)
-
-    def estimate_quantity(self, beta1, beta2):
-        '''
-        Estimates acceptance rate between two neighboring replicas.
-
-        Uses the DOS estimate to calculate the expected acceptance rate
-        between two replicas in a Boltzmann schedule with inverse temperatures
-        ``beta1`` and ``beta2``.
-
-        Args:
-            beta1(float): first inverse temperature
-            beta2(float): second inverse temperature
-        '''
-        energies = self.energies.ravel()
-        log_Z1 = self.log_Z(beta1)
-        log_Z2 = self.log_Z(beta2)
-        g = np.add.outer(-energies * beta1, -energies * beta2)
-        mins = np.min(np.dstack((g, g.T)), axis=2)
-        integrand = mins + np.add.outer(self.dos, self.dos)
-
-        return np.exp(log_sum_exp(integrand.ravel()) - log_Z1 - log_Z2)
