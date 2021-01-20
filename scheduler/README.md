@@ -21,7 +21,7 @@ are in a nix-shell environment.
      1. Request a temporary AWS key for making dev requests: `aws sts get-session-token` and fill in the info in the config file. Note that for AWS
      we already have the necessary security group created in the eu-central-1 region,
      so you should leave the region to that setting for development.
-  2. Boot up docker and redis using docker-compose: `docker-compose --file example/docker-compose.yaml`
+  2. Boot up docker and redis using docker-compose: `docker-compose --file example/docker-compose.yaml up`
   3. Start the celery task worker:
   ```shell
   # Its easiest to run things from the repository root directory
