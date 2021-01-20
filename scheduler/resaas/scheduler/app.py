@@ -10,7 +10,7 @@ from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.jobs import Job
 from resaas.scheduler.spec import JobSpecSchema
-from resaas.scheduler.tasks import start_job_task
+from resaas.scheduler.tasks import start_job_task, stop_job_task
 
 config = load_scheduler_config()
 
@@ -48,13 +48,23 @@ def create_job():
     return jsonify({"job_id": job.id})
 
 
-@app.route("/job/start/<job_id>", methods=["POST"])
+@app.route("/job/<job_id>/start", methods=["POST"])
 def start_job(job_id):
     """Start a single job"""
     job = TblJobs.query.filter_by(id=job_id).first()
     if not job:
         abort(404, "job does not exist")
     start_job_task.apply_async((job_id,), {})
+    return ("ok", 200)
+
+
+@app.route("/job/<job_id>/stop", methods=["POST"])
+def stop_job(job_id):
+    """Start a single job"""
+    job = TblJobs.query.filter_by(id=job_id).first()
+    if not job:
+        abort(404, "job does not exist")
+    stop_job_task.apply_async((job_id,), {})
     return ("ok", 200)
 
 
