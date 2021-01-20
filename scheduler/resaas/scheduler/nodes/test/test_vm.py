@@ -15,7 +15,7 @@ def mock_config():
     config.ssh_private_key_path = "./foo/bar"
     config.node_entrypoint = "bash -c 'echo foo'"
     config.image = "Ubuntu 9.10"
-    config.node_ports = [8080]
+    config.node_ports = "[8080]"
     config.size = "Small"
     config.node_type = "LibcloudVM"
     config.create_node_driver.return_value = driver
@@ -39,7 +39,7 @@ def test_vm_node_from_representation(mock_config):
         entrypoint="echo 'hello world'",
         status=NodeStatus.RUNNING,
         address="127.0.0.1",
-        ports=[8080],
+        ports="[8080]",
     )
 
     node = VMNode.from_representation(job_spec, node_rep, mock_config)
@@ -56,7 +56,7 @@ def test_vm_node_from_config_with_job(mock_config):
     job_spec = JobSpec("gs://my-bucket/scripts")
     node = VMNode.from_config("dummy-1", mock_config, job_spec, job_rep=TblJobs(id=1))
     assert node.representation
-    assert node.representation.jobs.id == 1
+    assert node.representation.job.id == 1
 
 
 def test_vm_node_from_representation_no_match_raises(mock_config):
