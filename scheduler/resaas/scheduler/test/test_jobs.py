@@ -57,7 +57,7 @@ def mk_mock_node_cls(
     """
     node_cls = Mock("resaas.scheduler.nodes.base.Node")
 
-    def from_config(name, config, spec):
+    def from_config(name, config, spec, job_rep=None):
         node = node_cls()
         node.name = name
         node.entrypoint = config.entrypoint
@@ -211,4 +211,6 @@ def test_vm_job_from_db_representation():
             )
         )
 
-    Job.from_representation(job_rep, config)
+    job = Job.from_representation(job_rep, config)
+    assert job.representation
+    assert all([node.representation is not None for node in job.nodes])

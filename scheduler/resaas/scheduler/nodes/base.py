@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Optional, Tuple
+import json
+
+from resaas.scheduler.db import TblJobs, TblNodes
 
 
 class NodeType(Enum):
@@ -49,6 +52,11 @@ class Node(ABC):
     def entrypoint(self) -> str:
         pass
 
+    @property
+    @abstractmethod
+    def representation(self) -> Optional[TblNodes]:
+        pass
+
     @abstractmethod
     def create(self) -> Tuple[bool, str]:
         pass
@@ -71,5 +79,21 @@ class Node(ABC):
         pass
 
     @classmethod
-    def from_config(cls, name, config, spec) -> "Node":
+    def from_config(cls, name, config, spec, job_rep: Optional[TblJobs] = None) -> "Node":
         pass
+
+    def sync_representation(self) -> None:
+        """
+        Updates the state of a node's database representation, if it exists,
+        to match the state of the node.
+        """
+        if not self.representation:
+            # If a node is created without a corresponding databse row,
+            # there is nothing to do
+            return
+        self.representation.name = self.name
+        self.representation.address = self.address
+        self.representation.entrypoint = self.entrypoint
+        self.representation.ports = json.dumps(self.listening_ports)
+        self.representation.status = self.status.value
+        self.representation.node_type = self.NODE_TYPE

@@ -12,7 +12,7 @@ from libcloud.compute.deployment import (
 from libcloud.compute.types import DeploymentException, NodeState
 
 from resaas.scheduler.config import SchedulerConfig
-from resaas.scheduler.db import TblNodes
+from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import (
     ConfigurationError,
     MissingNodeError,
@@ -60,6 +60,7 @@ class VMNode(Node):
         # Public key content
         ssh_pub: str,
         libcloud_node: Optional[LibcloudNode] = None,
+        representation: Optional[TblNodes] = None,
         deps: Optional[List[Dependencies]] = None,
         listening_ports: Optional[List[int]] = None,
         status: Optional[NodeStatus] = None,
@@ -81,6 +82,7 @@ class VMNode(Node):
         self._ssh_key_file = ssh_key_file
         self._ssh_pub = ssh_pub
         self._ssh_password = ssh_password
+        self._representation = representation
 
         self._name = name
         self._address = None
@@ -163,6 +165,10 @@ class VMNode(Node):
         return self._name
 
     @property
+    def representation(self) -> Optional[TblNodes]:
+        return self._representation
+
+    @property
     def entrypoint(self):
         return self._entrypoint
 
@@ -243,14 +249,12 @@ class VMNode(Node):
             ssh_pub=config.ssh_public_key,
             ssh_key_file=config.ssh_private_key_path,
             create_kwargs=config.extra_creation_kwargs,
+            representation=node_rep,
         )
 
     @classmethod
     def from_config(
-        cls,
-        name: str,
-        config: SchedulerConfig,
-        spec: JobSpec,
+        cls, name: str, config: SchedulerConfig, spec: JobSpec, job_rep: Optional[TblJobs] = None
     ) -> "Node":
 
         driver: NodeDriver = config.create_node_driver()
@@ -271,8 +275,12 @@ class VMNode(Node):
                 f"'{driver.__class__}'. Please update your configuration file with "
                 f"a valid image name for this driver."
             )
-
-        return cls(
+        # Bind the new node to a database record if a job record was specified
+        if job_rep:
+            node_rep = TblNodes(jobs=job_rep)
+        else:
+            node_rep = None
+        node = cls(
             name=name,
             driver=driver,
             size=size[0],
@@ -284,4 +292,8 @@ class VMNode(Node):
             ssh_pub=config.ssh_public_key,
             ssh_key_file=config.ssh_private_key_path,
             create_kwargs=config.extra_creation_kwargs,
+            representation=node_rep,
         )
+        # Sync over the various fields
+        node.sync_representation()
+        return node

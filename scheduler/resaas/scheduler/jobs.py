@@ -56,12 +56,14 @@ class Job:
         nodes=None,
         node_registry: Dict[NodeType, Node] = NODE_CLS_REGISTRY,
         entrypoint_assigner: Callable[[str, int, int], List[str]] = assign_entrypoints,
+        representation: Optional[TblJobs] = None,
     ):
         self.id = id
         self.spec = spec
         self.config = config
         self.driver = config.create_node_driver()
         self.tries = 0
+        self.representation = representation
         self.node_type: Optional[NodeType] = None,
         if nodes is None:
             self.nodes = []
@@ -123,7 +125,9 @@ class Job:
             raise JobError(f"Attempted to add a node to a job ({self.id}) which has exited.")
         i_new_node = len(self.nodes)
         self.nodes.append(
-            self._node_cls.from_config(f"node-{shortuuid.uuid()}", self.config, self.spec)
+            self._node_cls.from_config(
+                f"node-{shortuuid.uuid()}", self.config, self.spec, job_rep=self.representation
+            )
         )
         # Since the model implementation may require different entrypoints for
         # different nodes, we update them here. If in the future model execution allows
@@ -184,6 +188,19 @@ class Job:
         #     healthy exit or returned an error (or the connection was permanently lost)
         raise NotImplementedError
 
+    def sync_representation(self) -> None:
+        """
+        Updates the state of the job's database representation along with all of
+        its nodes. If the Job instance is not bound to a database representation
+        this method will simply return.
+        """
+        if not self.representation:
+            return
+        self.representation.status = self.status
+        self.representation.spec = JobSpecSchema().dumps(self.spec)
+        for node in self.nodes:
+            node.sync_representation()
+
     @classmethod
     def from_representation(
         cls,
@@ -205,4 +222,5 @@ class Job:
             nodes=nodes,
             node_registry=node_registry,
             entrypoint_assigner=entrypoint_assigner,
+            representation=job_rep
         )
