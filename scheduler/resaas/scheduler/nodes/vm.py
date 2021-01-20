@@ -162,7 +162,15 @@ class VMNode(Node):
         if not self._node:
             return True
         deleted = self._node.destroy()
-        self.refresh_status()
+        if deleted:
+            # If the delete request was successful we can go ahead
+            # and flag the node as exited.
+            self._status = NodeStatus.EXITED
+        else:
+            # Otherwise refresh the status from the driver to see
+            # what the node's state is
+            self.refresh_status()
+        print(self.status)
         self.sync_representation()
         return deleted
 
@@ -201,7 +209,7 @@ class VMNode(Node):
             return
         if self.status == NodeStatus.FAILED:
             return
-        if self._node.state in (NodeState.RUNNING, NodeState.STOPPING):
+        if self._node.state in (NodeState.RUNNING):
             self._status = NodeStatus.RUNNING
         elif self._node.state == NodeState.REBOOTING:
             self._status = NodeStatus.RESTARTING
@@ -210,6 +218,7 @@ class VMNode(Node):
             NodeState.PAUSED,
             NodeState.TERMINATED,
             NodeState.SUSPENDED,
+            NodeState.STOPPING,
         ):
             self._status = NodeStatus.EXITED
 
@@ -254,7 +263,7 @@ class VMNode(Node):
             deps=spec.dependencies,
             entrypoint=node_rep.entrypoint,
             listening_ports=ports,
-            status=node_rep.status,
+            status=NodeStatus(node_rep.status),
             ssh_user=config.ssh_user,
             ssh_pub=config.ssh_public_key,
             ssh_key_file=config.ssh_private_key_path,
