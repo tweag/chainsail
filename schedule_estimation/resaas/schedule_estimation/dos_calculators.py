@@ -38,10 +38,10 @@ class AbstractWHAM(metaclass=ABCMeta):
               :class:`np.ndarray`s with the parameter values corresponding to
               the first dimension of the ``energies`` argument
         """
-        self.energies = energies
-        self.log_ensemble = log_ensemble
-        self.parameters = parameters
-        self.n_ensembles = energies.shape[0]
+        self._energies = energies
+        self._log_ensemble = log_ensemble
+        self._parameters = parameters
+        self._n_ensembles = energies.shape[0]
 
     def _validate_shapes(self, energies, parameters):
         """
@@ -86,7 +86,7 @@ class AbstractWHAM(metaclass=ABCMeta):
 
 
 class DefaultWHAM(AbstractWHAM):
-    def calculate_log_qs(self):
+    def _calculate_log_qs(self):
         """Builds up the matrix of the log-probabilities of the energies in all
         ensembles.
 
@@ -94,14 +94,14 @@ class DefaultWHAM(AbstractWHAM):
           :class:`np.ndarray`: matrix of the log-probabilities of all energies
               in all ensembles.
         """
-        param_dicts = [{param: self.parameters[param][i] for param in
-                        self.parameters} for i in range(self.n_ensembles)]
-        log_qs = np.array([self.log_ensemble(self.energies.ravel(), **params)
+        param_dicts = [{param: self._parameters[param][i] for param in
+                        self._parameters} for i in range(self._n_ensembles)]
+        log_qs = np.array([self._log_ensemble(self._energies.ravel(), **params)
                            for params in param_dicts])
 
         return log_qs
 
-    def stopping_criterion(self, log_L, previous_log_L, termination_threshold):
+    def _stopping_criterion(self, log_L, previous_log_L, termination_threshold):
         """
         Defines a convergence criterion for stopping the WHAM iteration.
 
@@ -116,7 +116,7 @@ class DefaultWHAM(AbstractWHAM):
         """
         return abs(log_L - previous_log_L) / log_L < termination_threshold
 
-    def calc_log_L(self, f, log_g):
+    def _calculate_log_L(self, f, log_g):
         """
         Calculates the log-likelihood of the energies for values of the free
         energies and the log-DOS.
@@ -146,21 +146,22 @@ class DefaultWHAM(AbstractWHAM):
           :class:`np.ndarray`: estimate of the log-DOS evaluated at the sampled
               energies
         """
-        f = np.zeros(self.n_ensembles)
-        log_qs = self.calculate_log_qs()
+        f = np.zeros(self._n_ensembles)
+        log_qs = self._calculate_log_qs()
 
-        old_log_L = 1e300
+        # old_log_L = 1e300
         for i in range(max_iterations):
             log_gs = -log_sum_exp(log_qs + f[:, None], axis=0)
             log_gs -= log_sum_exp(log_gs)
             f = -log_sum_exp((log_qs + log_gs).T, axis=0)
 
-            log_L = self.calc_log_L(f, log_gs)
+            log_L = self._calculate_log_L(f, log_gs)
             if i % 1 == 0:
                 log('Likelihood: {}'.format(log_L))
+            # TODO: implement working stopping criterion
             # if self.stopping_criterion(log_L, old_log_L, threshold):
             #     break
-            old_log_L = log_L
+            # old_log_L = log_L
                 
         if i > 0.8 * max_iterations:
             log(('More than 80% of max WHAM iterations were required. '
@@ -177,12 +178,12 @@ class AbstractDOSCalculator(metaclass=ABCMeta):
         of states (DOS) for different families of tempered distributions
         ("ensembles").
         '''
-        self.wham_class = wham_class
-        self.max_wham_iterations = max_wham_iterations
-        self.wham_threshold = wham_threshold
+        self._wham_class = wham_class
+        self._max_wham_iterations = max_wham_iterations
+        self._wham_threshold = wham_threshold
 
     @abstractmethod
-    def log_ensemble(self, energy, **parameters):
+    def _log_ensemble(self, energy, **parameters):
         """An ensemble is essentially a function q(E) which maps an energy
         E to a probability q. It might be parameterized.
 
@@ -213,14 +214,14 @@ class AbstractDOSCalculator(metaclass=ABCMeta):
           :class:`np.ndarray`: estimate of the log-DOS evaluated at the sampled
               energies
         """
-        wham = self.wham_class(energies, self.log_ensemble, parameters)
-        log_dos = wham.run(self.max_wham_iterations, self.wham_threshold)
+        wham = self._wham_class(energies, self._log_ensemble, parameters)
+        log_dos = wham.run(self._max_wham_iterations, self._wham_threshold)
 
         return log_dos
 
 
 class BoltzmannDOSCalculator(AbstractDOSCalculator):
-    def log_ensemble(self, energy, beta):
+    def _log_ensemble(self, energy, beta):
         """Implements the Boltzmann ensemble q(E|\beta) = exp(-beta * E)
 
         Args:
