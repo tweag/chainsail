@@ -106,7 +106,7 @@ class JobSpec:
         if initial_schedule_parameters is None:
             self.initial_schedule_parameters = DistributionSchedule(1.0, 0.5)
         else:
-            self.initial_schedule_parameters = initial_number_of_replicas
+            self.initial_schedule_parameters = initial_schedule_parameters
         if dependencies is None:
             self.dependencies = []
         else:
