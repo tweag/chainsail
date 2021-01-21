@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "resaas-schedule-estimation"
+name = "resaas-schedule-optimization"
 version = "0.1.0"
 description = "Temperature schedule estimation for resaas"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
