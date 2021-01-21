@@ -42,7 +42,11 @@ def create_job():
     # Validate the provided job spec
     schema = JobSpecSchema()
     job_spec = schema.load(request.json)
-    job = TblJobs(status="created", created_at=datetime.utcnow(), spec=schema.dumps(job_spec))
+    job = TblJobs(
+        status=JobStatus.INITIALIZED.value,
+        created_at=datetime.utcnow(),
+        spec=schema.dumps(job_spec),
+    )
     db.session.add(job)
     db.session.commit()
     return jsonify({"job_id": job.id})
