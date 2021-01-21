@@ -7,8 +7,8 @@ authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "*"
-resaas-common = { path = "../common/" }
-resaas-schedule-optimization = { path = "../schedule_estimation/" }
+resaas-common = { path = "../common" }
+resaas-schedule-optimization = { path = "../schedule_estimation" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
