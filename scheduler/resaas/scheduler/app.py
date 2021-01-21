@@ -3,30 +3,18 @@ Scheduler REST API and endpoint specifications
 """
 from datetime import datetime
 
-from flask import jsonify, request, abort
+from flask import abort, jsonify, request
 
-from resaas.scheduler.core import app, db
 from resaas.scheduler.config import load_scheduler_config
-from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
-from resaas.scheduler.jobs import Job, JobStatus
+from resaas.scheduler.core import app, db
+from resaas.scheduler.db import (JobViewSchema, NodeViewSchema, TblJobs,
+                                 TblNodes)
+from resaas.scheduler.jobs import JobStatus
 from resaas.scheduler.spec import JobSpecSchema
-from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task
+from resaas.scheduler.tasks import (scale_job_task, start_job_task,
+                                    stop_job_task)
 
 config = load_scheduler_config()
-
-
-# @app.route("/job/test_update_time/<job_id>", methods=["POST"])
-# def celery_dev_test(job_id):
-#     """Call celery"""
-#     job = TblJobs.query.filter_by(id=job_id).first()
-#     if not job:
-#         raise Exception
-#     app.logger.info("Calling job update task")
-#     result = update_job_finished_time.apply_async((job_id,), {})
-#     if not result.get():
-#         raise Exception
-#     db.session.refresh(job)
-#     return JobViewSchema().jsonify(job, many=False)
 
 
 @app.route("/job/<job_id>", methods=["GET"])
@@ -92,15 +80,16 @@ def job_nodes(job_id):
 
 @app.route("/internal/job/<job_id>/scale/<n_replicas>", methods=["POST"])
 def scale_job(job_id, n_replicas):
-    """Cheap and dirty way to allow for jobs to be scaled"""
-    # TODO
-    # Call celery task function which performs scaling. Can include redirect link to
-    # await status of scaling.
+    """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
     job = TblJobs.query.filter_by(id=job_id).first()
     if not job:
         abort(404, "job does not exist")
-    scale_job_task.apply_async((job_id, n_replicas), {})
+    scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
+    # Await the result, raising any exceptions that get thrown
+    scaled = scaling_task.get()
+    if not scaled:
+        abort(409, "job is currently being scaled")
     return ("ok", 200)
 
 

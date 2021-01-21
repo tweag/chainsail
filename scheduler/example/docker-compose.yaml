@@ -4,6 +4,7 @@ services:
   # Scheduler database
   postgres:
     image: postgres:11.5-alpine
+    command: ["postgres", "-c", "log_statement=all"]
     environment:
       # Using default "postgres" database and "postgres" user
       - POSTGRES_PASSWORD=resaas-dev

@@ -4,13 +4,13 @@ Scheduler app configuration file parsing
 import os
 from typing import Callable, Dict, List, Optional, Tuple
 
+import yaml
 from libcloud.compute.drivers.ec2 import EC2NodeDriver
 from libcloud.compute.drivers.gce import GCENodeDriver
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from marshmallow.exceptions import ValidationError
 from marshmallow_enum import EnumField
-import yaml
 
 from resaas.scheduler.nodes.base import NodeType
 from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver

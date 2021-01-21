@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from typing import Callable, Dict, List, Optional
 
@@ -20,6 +21,9 @@ class JobStatus(Enum):
     STOPPED = "stopped"
     SUCCESS = "success"
     FAILED = "failed"
+
+
+N_CREATION_THREADS = 10
 
 
 # ---------------- BEGIN REXFW IMPLEMENTATION SPECIFIC STUFF ----------------
@@ -48,6 +52,7 @@ def n_replicas_to_nodes(n_replicas: int):
 
 # ---------------------------------------------------------------------
 
+
 class Job:
     def __init__(
         self,
@@ -58,15 +63,13 @@ class Job:
         node_registry: Dict[NodeType, Node] = NODE_CLS_REGISTRY,
         entrypoint_assigner: Callable[[str, int, int], List[str]] = assign_entrypoints,
         representation: Optional[TblJobs] = None,
-        status: JobStatus = JobStatus.INITIALIZED
+        status: JobStatus = JobStatus.INITIALIZED,
     ):
         self.id = id
         self.spec = spec
         self.config = config
         self.driver = config.create_node_driver()
-        self.tries = 0
         self.representation = representation
-        self.node_type: Optional[NodeType] = None,
         if nodes is None:
             self.nodes = []
         else:
@@ -77,7 +80,7 @@ class Job:
         self._node_cls = node_registry[self.config.node_type]
         if not self.nodes:
             self._initialize_nodes()
-  
+
     def _initialize_nodes(self):
         if self.nodes:
             raise JobError(
@@ -93,18 +96,20 @@ class Job:
         if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING):
             raise JobError("Attempted to start a job which has already been started")
         self.status = JobStatus.STARTING
-        self.tries += 1
-        created_nodes = []
-        # TODO: This should be multithreaded since deployment will take a while
-        # with installing dependencies, etc.
-        for i, node in enumerate(self.nodes):
-            created, logs = node.create()
-            if not created:
-                for j in created_nodes:
-                    self.nodes[j].delete()
+        with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
+            try:
+                for created, logs in ex.map(lambda n: n.create(), self.nodes):
+                    if not created:
+                        raise JobError(
+                            f"Failed to start node for job {id}. Deployment logs: \n" + logs
+                        )
+            except Exception as e:
+                # Cleanup created nodes on failure
+                for n in self.nodes:
+                    n.delete()
                 self.status = JobStatus.FAILED
                 self.sync_representation()
-                raise JobError(f"Failed to start node for job {id}. Deployment logs: \n" + logs)
+                raise e
         self.status = JobStatus.RUNNING
         self.sync_representation()
 
@@ -134,7 +139,10 @@ class Job:
         i_new_node = len(self.nodes)
         self.nodes.append(
             self._node_cls.from_config(
-                f"node-{shortuuid.uuid()}", self.config, self.spec, job_rep=self.representation
+                f"node-{shortuuid.uuid()}",
+                self.config,
+                self.spec,
+                job_rep=self.representation,
             )
         )
         # Since the model implementation may require different entrypoints for
@@ -243,5 +251,5 @@ class Job:
             node_registry=node_registry,
             entrypoint_assigner=entrypoint_assigner,
             representation=job_rep,
-            status=JobStatus(job_rep.status)
+            status=JobStatus(job_rep.status),
         )

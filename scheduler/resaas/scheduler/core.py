@@ -1,11 +1,12 @@
 # Config loading, sqlalchemy/flask declarations, etc.
 import os
 from pathlib import Path
+
+import yaml
+from celery import Celery
 from flask import Flask, has_app_context
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
-from celery import Celery
-import yaml
 
 
 class FlaskCelery(Celery):

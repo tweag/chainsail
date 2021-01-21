@@ -48,7 +48,7 @@ def test_vm_node_from_representation(mock_config):
 
 
 def test_vm_node_from_config_with_job(mock_config):
-    from resaas.scheduler.db import TblNodes, TblJobs
+    from resaas.scheduler.db import TblJobs, TblNodes
     from resaas.scheduler.nodes.base import NodeStatus, NodeType
     from resaas.scheduler.nodes.vm import VMNode
     from resaas.scheduler.spec import JobSpec

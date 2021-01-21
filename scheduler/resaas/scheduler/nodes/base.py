@@ -1,7 +1,7 @@
+import json
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List, Optional, Tuple
-import json
 
 from resaas.scheduler.db import TblJobs, TblNodes
 

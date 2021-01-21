@@ -3,23 +3,16 @@ import traceback
 from typing import IO, List, Optional, Tuple, Union
 
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import NodeAuthSSHKey, NodeDriver, NodeImage, NodeSize
-from libcloud.compute.deployment import (
-    Deployment,
-    MultiStepDeployment,
-    ScriptDeployment,
-    SSHKeyDeployment,
-)
+from libcloud.compute.base import (NodeAuthSSHKey, NodeDriver, NodeImage,
+                                   NodeSize)
+from libcloud.compute.deployment import (Deployment, MultiStepDeployment,
+                                         ScriptDeployment, SSHKeyDeployment)
 from libcloud.compute.types import DeploymentException, NodeState
 
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblJobs, TblNodes
-from resaas.scheduler.errors import (
-    ConfigurationError,
-    MissingNodeError,
-    NodeError,
-    ObjectConstructionError,
-)
+from resaas.scheduler.errors import (ConfigurationError, MissingNodeError,
+                                     NodeError, ObjectConstructionError)
 from resaas.scheduler.nodes.base import Node, NodeStatus
 from resaas.scheduler.spec import Dependencies, JobSpec
 
@@ -272,7 +265,11 @@ class VMNode(Node):
 
     @classmethod
     def from_config(
-        cls, name: str, config: SchedulerConfig, spec: JobSpec, job_rep: Optional[TblJobs] = None
+        cls,
+        name: str,
+        config: SchedulerConfig,
+        spec: JobSpec,
+        job_rep: Optional[TblJobs] = None,
     ) -> "Node":
 
         driver: NodeDriver = config.create_node_driver()
