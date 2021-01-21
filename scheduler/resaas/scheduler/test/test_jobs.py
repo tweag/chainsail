@@ -50,14 +50,16 @@ def mock_delete(node: Mock, fails: bool):
 
 
 def mk_mock_node_cls(
-    create_failure: bool = False, delete_failure: bool = False, restart_failure: bool = False
+    create_failure: bool = False,
+    delete_failure: bool = False,
+    restart_failure: bool = False,
 ):
     """
     Creates a mock Node whose various methods can be set to either succeed or fail.
     """
     node_cls = Mock("resaas.scheduler.nodes.base.Node")
 
-    def from_config(name, config, spec):
+    def from_config(name, config, spec, job_rep=None):
         node = node_cls()
         node.name = name
         node.entrypoint = config.entrypoint
@@ -92,7 +94,12 @@ def test_job_init(mock_config, mock_spec):
     from resaas.scheduler.jobs import Job, JobStatus, n_replicas_to_nodes
 
     expected_n_nodes = n_replicas_to_nodes(mock_spec.initial_number_of_replicas)
-    job = Job(id=1, spec=mock_spec, config=mock_config, node_registry={"mock": mk_mock_node_cls()})
+    job = Job(
+        id=1,
+        spec=mock_spec,
+        config=mock_config,
+        node_registry={"mock": mk_mock_node_cls()},
+    )
     assert job.status == JobStatus.INITIALIZED
     assert len(job.nodes) == expected_n_nodes
     assert all([n.status == NodeStatus.INITIALIZED for n in job.nodes])
@@ -101,7 +108,12 @@ def test_job_init(mock_config, mock_spec):
 def test_job_start(mock_config, mock_spec):
     from resaas.scheduler.jobs import Job, JobStatus
 
-    job = Job(id=1, spec=mock_spec, config=mock_config, node_registry={"mock": mk_mock_node_cls()})
+    job = Job(
+        id=1,
+        spec=mock_spec,
+        config=mock_config,
+        node_registry={"mock": mk_mock_node_cls()},
+    )
     job.start()
     assert job.status == JobStatus.RUNNING
     assert all([n.status == NodeStatus.RUNNING for n in job.nodes])
@@ -110,7 +122,12 @@ def test_job_start(mock_config, mock_spec):
 def test_job_stop_running(mock_config, mock_spec):
     from resaas.scheduler.jobs import Job, JobStatus
 
-    job = Job(id=1, spec=mock_spec, config=mock_config, node_registry={"mock": mk_mock_node_cls()})
+    job = Job(
+        id=1,
+        spec=mock_spec,
+        config=mock_config,
+        node_registry={"mock": mk_mock_node_cls()},
+    )
     job.start()
 
     job.stop()
@@ -122,7 +139,12 @@ def test_job_stop_running(mock_config, mock_spec):
 def test_job_restart_running(mock_config, mock_spec):
     from resaas.scheduler.jobs import Job, JobStatus
 
-    job = Job(id=1, spec=mock_spec, config=mock_config, node_registry={"mock": mk_mock_node_cls()})
+    job = Job(
+        id=1,
+        spec=mock_spec,
+        config=mock_config,
+        node_registry={"mock": mk_mock_node_cls()},
+    )
     job.start()
 
     job.restart()
@@ -134,7 +156,12 @@ def test_job_restart_running(mock_config, mock_spec):
 def test_job_restart_stopped(mock_config, mock_spec):
     from resaas.scheduler.jobs import Job, JobStatus
 
-    job = Job(id=1, spec=mock_spec, config=mock_config, node_registry={"mock": mk_mock_node_cls()})
+    job = Job(
+        id=1,
+        spec=mock_spec,
+        config=mock_config,
+        node_registry={"mock": mk_mock_node_cls()},
+    )
     job.start()
     job.stop()
 
@@ -147,7 +174,12 @@ def test_job_restart_stopped(mock_config, mock_spec):
 def test_job_scale_up(mock_config, mock_spec):
     from resaas.scheduler.jobs import Job, JobStatus
 
-    job = Job(id=1, spec=mock_spec, config=mock_config, node_registry={"mock": mk_mock_node_cls()})
+    job = Job(
+        id=1,
+        spec=mock_spec,
+        config=mock_config,
+        node_registry={"mock": mk_mock_node_cls()},
+    )
     job.start()
 
     job.scale_to(8)
@@ -161,7 +193,12 @@ def test_job_scale_up(mock_config, mock_spec):
 def test_job_scale_down(mock_config, mock_spec):
     from resaas.scheduler.jobs import Job, JobStatus
 
-    job = Job(id=1, spec=mock_spec, config=mock_config, node_registry={"mock": mk_mock_node_cls()})
+    job = Job(
+        id=1,
+        spec=mock_spec,
+        config=mock_config,
+        node_registry={"mock": mk_mock_node_cls()},
+    )
     job.start()
 
     job.scale_to(1)
@@ -176,7 +213,12 @@ def test_scale_non_running_job_raises(mock_config, mock_spec):
     from resaas.scheduler.errors import JobError
     from resaas.scheduler.jobs import Job
 
-    job = Job(id=1, spec=mock_spec, config=mock_config, node_registry={"mock": mk_mock_node_cls()})
+    job = Job(
+        id=1,
+        spec=mock_spec,
+        config=mock_config,
+        node_registry={"mock": mk_mock_node_cls()},
+    )
 
     with pytest.raises(JobError):
         job.scale_to(2)
@@ -205,10 +247,13 @@ def test_vm_job_from_db_representation():
                 name=f"dummy-{i+1}",
                 entrypoint="test",
                 status=NodeStatus.RUNNING,
-                node_type=NodeType.LIBCLOUD_VM,
+                node_type=NodeType.LIBCLOUD_VM.value,
                 address=f"127.0.0.{i}",
-                ports=[8080, 8081],
+                ports="[8080, 8081]",
+                in_use=True,
             )
         )
 
-    Job.from_representation(job_rep, config)
+    job = Job.from_representation(job_rep, config)
+    assert job.representation
+    assert all([node.representation is not None for node in job.nodes])

@@ -1,3 +1,4 @@
+import json
 import traceback
 from typing import IO, List, Optional, Tuple, Union
 
@@ -9,7 +10,7 @@ from libcloud.compute.deployment import (Deployment, MultiStepDeployment,
 from libcloud.compute.types import DeploymentException, NodeState
 
 from resaas.scheduler.config import SchedulerConfig
-from resaas.scheduler.db import TblNodes
+from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import (ConfigurationError, MissingNodeError,
                                      NodeError, ObjectConstructionError)
 from resaas.scheduler.nodes.base import Node, NodeStatus
@@ -53,6 +54,7 @@ class VMNode(Node):
         # Public key content
         ssh_pub: str,
         libcloud_node: Optional[LibcloudNode] = None,
+        representation: Optional[TblNodes] = None,
         deps: Optional[List[Dependencies]] = None,
         listening_ports: Optional[List[int]] = None,
         status: Optional[NodeStatus] = None,
@@ -74,8 +76,9 @@ class VMNode(Node):
         self._ssh_key_file = ssh_key_file
         self._ssh_pub = ssh_pub
         self._ssh_password = ssh_password
+        self._representation = representation
 
-        self.name = name
+        self._name = name
         self._address = None
         if listening_ports:
             self._listening_ports = listening_ports
@@ -94,6 +97,7 @@ class VMNode(Node):
             self.create_kwargs = {}
         else:
             self.create_kwargs = create_kwargs
+        self.sync_representation()
 
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
@@ -129,12 +133,14 @@ class VMNode(Node):
                     # Keep node reference to enable later
                     # destroy attempts
                     self._node = e.node
+            self.sync_representation()
             return (False, logs)
         else:
             logs = _deployment_log(d for d in deployment_steps)
             if self._node.private_ips:
                 self._address = self._node.private_ips[0]
             self.refresh_status()
+            self.sync_representation()
             return (True, logs)
 
     def restart(self) -> bool:
@@ -142,14 +148,31 @@ class VMNode(Node):
             raise MissingNodeError
         rebooted = self._node.reboot()
         self.refresh_status()
+        self.sync_representation()
         return rebooted
 
     def delete(self) -> bool:
         if not self._node:
             return True
         deleted = self._node.destroy()
-        self.refresh_status()
+        if deleted:
+            # If the delete request was successful we can go ahead
+            # and flag the node as exited.
+            self._status = NodeStatus.EXITED
+        else:
+            # Otherwise refresh the status from the driver to see
+            # what the node's state is
+            self.refresh_status()
+        self.sync_representation()
         return deleted
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def representation(self) -> Optional[TblNodes]:
+        return self._representation
 
     @property
     def entrypoint(self):
@@ -178,7 +201,7 @@ class VMNode(Node):
             return
         if self.status == NodeStatus.FAILED:
             return
-        if self._node.state in (NodeState.RUNNING, NodeState.STOPPING):
+        if self._node.state in (NodeState.RUNNING):
             self._status = NodeStatus.RUNNING
         elif self._node.state == NodeState.REBOOTING:
             self._status = NodeStatus.RESTARTING
@@ -187,6 +210,7 @@ class VMNode(Node):
             NodeState.PAUSED,
             NodeState.TERMINATED,
             NodeState.SUSPENDED,
+            NodeState.STOPPING,
         ):
             self._status = NodeStatus.EXITED
 
@@ -218,6 +242,10 @@ class VMNode(Node):
             size = node.size
             image = node.image
             name = node.name
+        if node_rep.ports:
+            ports = json.loads(node_rep.ports)
+        else:
+            ports = []
         return cls(
             name=name,
             driver=driver,
@@ -226,12 +254,13 @@ class VMNode(Node):
             image=image,
             deps=spec.dependencies,
             entrypoint=node_rep.entrypoint,
-            listening_ports=node_rep.ports,
-            status=node_rep.status,
+            listening_ports=ports,
+            status=NodeStatus(node_rep.status),
             ssh_user=config.ssh_user,
             ssh_pub=config.ssh_public_key,
             ssh_key_file=config.ssh_private_key_path,
             create_kwargs=config.extra_creation_kwargs,
+            representation=node_rep,
         )
 
     @classmethod
@@ -240,19 +269,15 @@ class VMNode(Node):
         name: str,
         config: SchedulerConfig,
         spec: JobSpec,
+        job_rep: Optional[TblJobs] = None,
     ) -> "Node":
 
         driver: NodeDriver = config.create_node_driver()
-        # TODO: Need to provide filter to list_images annd list_sizes() to avoid slow load times
-        image = [i for i in driver.list_images() if i.name == config.image]
+        # Note: constructing NodeImage directly due to performance
+        # limitations of the list_images() method.
+        image = NodeImage(id=config.image, name="unknown", driver=driver)
+        # image = [i for i in driver.list_images() if i.name == config.image]
         size = [s for s in driver.list_sizes() if s.name == config.size]
-
-        if not image:
-            raise ConfigurationError(
-                f"Failed to find image with name '{config.image}' in driver "
-                f"'{driver.__class__}'. Please update your configuration file with "
-                f"a valid image name for this driver."
-            )
 
         if not size:
             raise ConfigurationError(
@@ -260,12 +285,18 @@ class VMNode(Node):
                 f"'{driver.__class__}'. Please update your configuration file with "
                 f"a valid image name for this driver."
             )
+        # Bind the new node to a database record if a job record was specified
+        if job_rep:
+            node_rep = TblNodes(in_use=True)
+            job_rep.nodes.append(node_rep)
+        else:
+            node_rep = None
 
-        return cls(
+        node = cls(
             name=name,
             driver=driver,
             size=size[0],
-            image=image[0],
+            image=image,
             deps=spec.dependencies,
             entrypoint=config.node_entrypoint,
             listening_ports=config.node_ports,
@@ -273,4 +304,8 @@ class VMNode(Node):
             ssh_pub=config.ssh_public_key,
             ssh_key_file=config.ssh_private_key_path,
             create_kwargs=config.extra_creation_kwargs,
+            representation=node_rep,
         )
+        # Sync over the various fields
+        node.sync_representation()
+        return node

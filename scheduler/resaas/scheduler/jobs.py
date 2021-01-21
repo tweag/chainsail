@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from typing import Callable, Dict, List, Optional
 
@@ -16,9 +17,13 @@ class JobStatus(Enum):
     STARTING = "starting"
     RUNNING = "running"
     RESTARTING = "restarting"
+    STOPPING = "stopping"
     STOPPED = "stopped"
     SUCCESS = "success"
     FAILED = "failed"
+
+
+N_CREATION_THREADS = 10
 
 
 # ---------------- BEGIN REXFW IMPLEMENTATION SPECIFIC STUFF ----------------
@@ -47,6 +52,7 @@ def n_replicas_to_nodes(n_replicas: int):
 
 # ---------------------------------------------------------------------
 
+
 class Job:
     def __init__(
         self,
@@ -56,20 +62,21 @@ class Job:
         nodes=None,
         node_registry: Dict[NodeType, Node] = NODE_CLS_REGISTRY,
         entrypoint_assigner: Callable[[str, int, int], List[str]] = assign_entrypoints,
+        representation: Optional[TblJobs] = None,
+        status: JobStatus = JobStatus.INITIALIZED,
     ):
         self.id = id
         self.spec = spec
         self.config = config
         self.driver = config.create_node_driver()
-        self.tries = 0
-        self.node_type: Optional[NodeType] = None,
+        self.representation = representation
         if nodes is None:
             self.nodes = []
         else:
             self.nodes = nodes
         self.entrypoint_assigner = entrypoint_assigner
         self.control_node: Optional[int] = None
-        self.status = JobStatus.INITIALIZED
+        self.status = status
         self._node_cls = node_registry[self.config.node_type]
         if not self.nodes:
             self._initialize_nodes()
@@ -80,34 +87,41 @@ class Job:
                 "Cannot initialize nodes for a job which already has nodes assigned to it."
             )
         self.status = JobStatus.INITIALIZED
+        self.control_node = _DEFAULT_CONTROL_NODE
         for _ in range(n_replicas_to_nodes(self.spec.initial_number_of_replicas)):
             self._add_node()
-        self.control_node = _DEFAULT_CONTROL_NODE
+        self.sync_representation()
 
     def start(self) -> None:
-        if self.status != JobStatus.INITIALIZED:
+        if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING):
             raise JobError("Attempted to start a job which has already been started")
         self.status = JobStatus.STARTING
-        self.tries += 1
-        created_nodes = []
-        # TODO: This should be multithreaded since deployment will take a while
-        # with installing dependencies, etc.
-        for i, node in enumerate(self.nodes):
-            created, logs = node.create()
-            if not created:
-                for j in created_nodes:
-                    self.nodes[j].delete()
+        with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
+            try:
+                for created, logs in ex.map(lambda n: n.create(), self.nodes):
+                    if not created:
+                        raise JobError(
+                            f"Failed to start node for job {id}. Deployment logs: \n" + logs
+                        )
+            except Exception as e:
+                # Cleanup created nodes on failure
+                for n in self.nodes:
+                    n.delete()
                 self.status = JobStatus.FAILED
-                raise JobError(f"Failed to start node for job {id}. Deployment logs: \n" + logs)
+                self.sync_representation()
+                raise e
         self.status = JobStatus.RUNNING
+        self.sync_representation()
 
     def stop(self):
         for i, node in enumerate(self.nodes):
             if not node.delete():
+                self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
         # Dropping references to deleted nodes
         self.nodes = []
         self.status = JobStatus.STOPPED
+        self.sync_representation()
 
     def restart(self):
         """
@@ -116,14 +130,20 @@ class Job:
         self.stop()
         self._initialize_nodes()
         self.start()
+        self.sync_representation()
 
     def _add_node(self) -> int:
         """Add a new node to a job"""
-        if self.status not in (JobStatus.INITIALIZED, JobStatus.RUNNING, JobStatus.RESTARTING):
+        if self.status in (JobStatus.STOPPED, JobStatus.SUCCESS, JobStatus.FAILED):
             raise JobError(f"Attempted to add a node to a job ({self.id}) which has exited.")
         i_new_node = len(self.nodes)
         self.nodes.append(
-            self._node_cls.from_config(f"node-{shortuuid.uuid()}", self.config, self.spec)
+            self._node_cls.from_config(
+                f"node-{shortuuid.uuid()}",
+                self.config,
+                self.spec,
+                job_rep=self.representation,
+            )
         )
         # Since the model implementation may require different entrypoints for
         # different nodes, we update them here. If in the future model execution allows
@@ -135,6 +155,7 @@ class Job:
             )
         ):
             self.nodes[i].entrypoint = entrypoint
+        self.sync_representation()
         return i_new_node
 
     def _remove_node(self, index: int):
@@ -145,13 +166,19 @@ class Job:
             )
         node = self.nodes[index]
         if not node.delete():
+            self.sync_representation()
             raise JobError(f"Failed to delete node {node} for job {self.id}")
+        if node.representation:
+            node.representation.in_use = False
+        self.sync_representation()
         self.nodes.pop(index)
 
     def scale_to(self, n_replicas: int):
         if n_replicas < 0:
             raise ValueError("Can only scale to >= 0 replicas")
         if self.status != JobStatus.RUNNING:
+            print(self.id)
+            print(self.status)
             raise JobError(f"Attempted to scale job ({self.id}) which is not currently running.")
         requested_size = n_replicas_to_nodes(n_replicas)
         current_size = len(self.nodes)
@@ -164,6 +191,7 @@ class Job:
                 new_node = self._add_node()
                 started, logs = self.nodes[new_node].create()
                 if not started:
+                    self.sync_representation()
                     raise JobError(f"Failed to start new node while scaling up. Logs: \n {logs}")
         else:
             # Scale down
@@ -171,6 +199,7 @@ class Job:
             removeable = [i for i in range(len(self.nodes)) if i != self.control_node]
             for _ in range(to_remove):
                 self._remove_node(removeable.pop())
+        self.sync_representation()
 
     def watch(self) -> bool:
         # Await control node until it reports exit or dies
@@ -184,6 +213,19 @@ class Job:
         #     healthy exit or returned an error (or the connection was permanently lost)
         raise NotImplementedError
 
+    def sync_representation(self) -> None:
+        """
+        Updates the state of the job's database representation along with all of
+        its nodes. If the Job instance is not bound to a database representation
+        this method will simply return.
+        """
+        if not self.representation:
+            return
+        self.representation.status = self.status.value
+        self.representation.spec = JobSpecSchema().dumps(self.spec)
+        for node in self.nodes:
+            node.sync_representation()
+
     @classmethod
     def from_representation(
         cls,
@@ -191,12 +233,15 @@ class Job:
         config: SchedulerConfig,
         node_registry: Dict[NodeType, Node] = NODE_CLS_REGISTRY,
         entrypoint_assigner: Callable[[str, int, int], List[str]] = assign_entrypoints,
-    ):
+    ) -> "Job":
         spec = JobSpecSchema().loads(job_rep.spec)
         nodes = []
         for node_rep in job_rep.nodes:
+            # Ignore nodes which are no longer in use
+            if not node_rep.in_use:
+                continue
             node_rep: TblNodes
-            node_cls = node_registry[node_rep.node_type]
+            node_cls = node_registry[NodeType(node_rep.node_type)]
             nodes.append(node_cls.from_representation(spec, node_rep, config))
         return cls(
             id=job_rep.id,
@@ -205,4 +250,6 @@ class Job:
             nodes=nodes,
             node_registry=node_registry,
             entrypoint_assigner=entrypoint_assigner,
+            representation=job_rep,
+            status=JobStatus(job_rep.status),
         )

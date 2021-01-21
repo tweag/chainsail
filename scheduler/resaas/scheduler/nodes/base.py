@@ -1,6 +1,9 @@
+import json
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Optional, Tuple
+
+from resaas.scheduler.db import TblJobs, TblNodes
 
 
 class NodeType(Enum):
@@ -26,6 +29,11 @@ class Node(ABC):
 
     @property
     @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
     def listening_ports(self) -> List[int]:
         pass
 
@@ -42,6 +50,11 @@ class Node(ABC):
     @property
     @abstractmethod
     def entrypoint(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def representation(self) -> Optional[TblNodes]:
         pass
 
     @abstractmethod
@@ -66,5 +79,21 @@ class Node(ABC):
         pass
 
     @classmethod
-    def from_config(cls, name, config, spec) -> "Node":
+    def from_config(cls, name, config, spec, job_rep: Optional[TblJobs] = None) -> "Node":
         pass
+
+    def sync_representation(self) -> None:
+        """
+        Updates the state of a node's database representation, if it exists,
+        to match the state of the node.
+        """
+        if not self.representation:
+            # If a node is created without a corresponding database row,
+            # there is nothing to do
+            return
+        self.representation.name = self.name
+        self.representation.address = self.address
+        self.representation.entrypoint = self.entrypoint
+        self.representation.ports = json.dumps(self.listening_ports)
+        self.representation.status = self.status.value
+        self.representation.node_type = self.NODE_TYPE

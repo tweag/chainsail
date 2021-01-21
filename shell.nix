@@ -5,5 +5,6 @@ pkgs.mkShell {
     python38Packages.poetry
     niv.niv
     yarn
+    docker-compose
   ];
 }

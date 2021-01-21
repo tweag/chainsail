@@ -98,7 +98,7 @@ class JobSpec:
         tempered_dist_family: TemperedDistributionFamily = TemperedDistributionFamily.BOLTZMANN,
         dependencies: Optional[Dependencies] = None,
     ):
-        self.prob_definition = probability_definition
+        self.probability_definition = probability_definition
         self.initial_number_of_replicas = initial_number_of_replicas
         self.max_replicas = max_replicas
         self.tempered_dist_family = tempered_dist_family
@@ -106,7 +106,7 @@ class JobSpec:
         if initial_schedule_parameters is None:
             self.initial_schedule_parameters = DistributionSchedule(1.0, 0.5)
         else:
-            self.initial_schedule_parameters = initial_number_of_replicas
+            self.initial_schedule_parameters = initial_schedule_parameters
         if dependencies is None:
             self.dependencies = []
         else:
