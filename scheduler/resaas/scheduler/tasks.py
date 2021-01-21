@@ -2,6 +2,7 @@
 Asynchronous tasks run using celery
 """
 
+from datetime import datetime
 from resaas.scheduler.core import celery, db
 from resaas.scheduler.db import TblJobs
 from resaas.scheduler.jobs import Job
@@ -25,6 +26,7 @@ def start_job_task(job_id):
     )
     try:
         job.start()
+        job.representation.started_at = datetime.utcnow()
     except JobError as e:
         db.session.commit()
         raise e
@@ -48,6 +50,7 @@ def stop_job_task(job_id):
     )
     try:
         job.stop()
+        job.representation.finished_at = datetime.utcnow()
     except JobError as e:
         db.session.commit()
         raise e

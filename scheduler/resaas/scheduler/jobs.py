@@ -16,6 +16,7 @@ class JobStatus(Enum):
     STARTING = "starting"
     RUNNING = "running"
     RESTARTING = "restarting"
+    STOPPING = "stopping"
     STOPPED = "stopped"
     SUCCESS = "success"
     FAILED = "failed"
@@ -57,6 +58,7 @@ class Job:
         node_registry: Dict[NodeType, Node] = NODE_CLS_REGISTRY,
         entrypoint_assigner: Callable[[str, int, int], List[str]] = assign_entrypoints,
         representation: Optional[TblJobs] = None,
+        status: JobStatus = JobStatus.INITIALIZED
     ):
         self.id = id
         self.spec = spec
@@ -71,11 +73,11 @@ class Job:
             self.nodes = nodes
         self.entrypoint_assigner = entrypoint_assigner
         self.control_node: Optional[int] = None
-        self.status = JobStatus.INITIALIZED
+        self.status = status
         self._node_cls = node_registry[self.config.node_type]
         if not self.nodes:
             self._initialize_nodes()
-        
+  
     def _initialize_nodes(self):
         if self.nodes:
             raise JobError(
@@ -88,7 +90,7 @@ class Job:
         self.sync_representation()
 
     def start(self) -> None:
-        if self.status != JobStatus.INITIALIZED:
+        if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING):
             raise JobError("Attempted to start a job which has already been started")
         self.status = JobStatus.STARTING
         self.tries += 1
@@ -101,6 +103,7 @@ class Job:
                 for j in created_nodes:
                     self.nodes[j].delete()
                 self.status = JobStatus.FAILED
+                self.sync_representation()
                 raise JobError(f"Failed to start node for job {id}. Deployment logs: \n" + logs)
         self.status = JobStatus.RUNNING
         self.sync_representation()
@@ -108,6 +111,7 @@ class Job:
     def stop(self):
         for i, node in enumerate(self.nodes):
             if not node.delete():
+                self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
         # Dropping references to deleted nodes
         self.nodes = []
@@ -125,7 +129,7 @@ class Job:
 
     def _add_node(self) -> int:
         """Add a new node to a job"""
-        if self.status not in (JobStatus.INITIALIZED, JobStatus.RUNNING, JobStatus.RESTARTING):
+        if self.status in (JobStatus.STOPPED, JobStatus.SUCCESS, JobStatus.FAILED):
             raise JobError(f"Attempted to add a node to a job ({self.id}) which has exited.")
         i_new_node = len(self.nodes)
         self.nodes.append(
@@ -154,6 +158,7 @@ class Job:
             )
         node = self.nodes[index]
         if not node.delete():
+            self.sync_representation()
             raise JobError(f"Failed to delete node {node} for job {self.id}")
         if node.representation:
             node.representation.in_use = False
@@ -164,6 +169,8 @@ class Job:
         if n_replicas < 0:
             raise ValueError("Can only scale to >= 0 replicas")
         if self.status != JobStatus.RUNNING:
+            print(self.id)
+            print(self.status)
             raise JobError(f"Attempted to scale job ({self.id}) which is not currently running.")
         requested_size = n_replicas_to_nodes(n_replicas)
         current_size = len(self.nodes)
@@ -176,6 +183,7 @@ class Job:
                 new_node = self._add_node()
                 started, logs = self.nodes[new_node].create()
                 if not started:
+                    self.sync_representation()
                     raise JobError(f"Failed to start new node while scaling up. Logs: \n {logs}")
         else:
             # Scale down
@@ -234,5 +242,6 @@ class Job:
             nodes=nodes,
             node_registry=node_registry,
             entrypoint_assigner=entrypoint_assigner,
-            representation=job_rep
+            representation=job_rep,
+            status=JobStatus(job_rep.status)
         )

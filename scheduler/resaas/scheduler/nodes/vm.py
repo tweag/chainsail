@@ -170,7 +170,6 @@ class VMNode(Node):
             # Otherwise refresh the status from the driver to see
             # what the node's state is
             self.refresh_status()
-        print(self.status)
         self.sync_representation()
         return deleted
 
@@ -277,16 +276,11 @@ class VMNode(Node):
     ) -> "Node":
 
         driver: NodeDriver = config.create_node_driver()
-        # TODO: Need to provide filter to list_images annd list_sizes() to avoid slow load times
-        image = [i for i in driver.list_images() if i.name == config.image]
+        # Note: constructing NodeImage directly due to performance
+        # limitations of the list_images() method.
+        image = NodeImage(id=config.image, name="unknown", driver=driver)
+        # image = [i for i in driver.list_images() if i.name == config.image]
         size = [s for s in driver.list_sizes() if s.name == config.size]
-
-        if not image:
-            raise ConfigurationError(
-                f"Failed to find image with name '{config.image}' in driver "
-                f"'{driver.__class__}'. Please update your configuration file with "
-                f"a valid image name for this driver."
-            )
 
         if not size:
             raise ConfigurationError(
@@ -305,7 +299,7 @@ class VMNode(Node):
             name=name,
             driver=driver,
             size=size[0],
-            image=image[0],
+            image=image,
             deps=spec.dependencies,
             entrypoint=config.node_entrypoint,
             listening_ports=config.node_ports,
