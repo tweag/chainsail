@@ -4,8 +4,8 @@ import pickle
 import yaml
 import numpy as np
 
-from resaas.lib.util import storage_factory
-from resaas.schedule_estimation.dos_calculators import BoltzmannDOSCalculator
+from resaas.common.util import storage_factory
+from resaas.schedule_estimation.dos_estimators import BoltzmannDOSEstimator
 from resaas.schedule_estimation.schedule_optimizers import BoltzmannAcceptanceRateOptimizer
 
 TIMESTEPS_PATH = 'timesteps.pickle'
