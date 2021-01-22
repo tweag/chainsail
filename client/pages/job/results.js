@@ -64,9 +64,11 @@ const JobsTable = ({ data }) => {
             <TableHeader>{h}</TableHeader>
           ))}
         </tr>
-        {data.map((row) => (
-          <TableRow row={row} />
-        ))}
+        {data
+          .sort((a, b) => (a.id > b.id ? 1 : -1))
+          .map((row) => (
+            <TableRow row={row} />
+          ))}
       </table>
     </div>
   );
