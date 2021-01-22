@@ -3,8 +3,28 @@ import moment from 'moment';
 import { Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
 
 const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
-const JOBS_LIST_ENDPOINT = '/jobs';
-const JOB_START_ENDPOINT = '/job';
+
+const StartJobButton = ({ jobId }) => {
+  return (
+    <div
+      className={
+        'py-1 text-center bg-purple-900 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700 text-white'
+      }
+      onClick={() => startJob(jobId)}
+    >
+      START
+    </div>
+  );
+};
+
+const startJob = (jobId) => {
+  const JOB_START_ENDPOINT = `/job/${jobId}/start`;
+  const requestOptions = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  };
+  fetch(`${FLASK_URL}${JOB_START_ENDPOINT}`, requestOptions);
+};
 
 const JobsTable = ({ data }) => {
   const headersName = [
@@ -30,11 +50,11 @@ const JobsTable = ({ data }) => {
       <TableData d={dateFormatter(row.started_at_at)} />
       <TableData d={dateFormatter(row.finished_at)} />
       <TableData d={row.status} />
-      {row.status === 'initialized' && <td className="px-4 py-2 border-t-2">Button</td>}
+      <TableData>{row.status === 'initialized' && <StartJobButton jobId={row.id} />}</TableData>
     </tr>
   );
-  const TableData = ({ d }) => (
-    <td className="px-4 py-2 border-t-2 transition duration-100">{d}</td>
+  const TableData = ({ d, children }) => (
+    <td className="px-4 py-2 border-t-2 transition duration-100">{d ? d : children}</td>
   );
   return (
     <div className="w-full overflow-hidden text-white bg-gray-900 rounded-lg shadow-xl">
@@ -54,6 +74,7 @@ const JobsTable = ({ data }) => {
 
 export default function Job() {
   // Data fetching
+  const JOBS_LIST_ENDPOINT = '/jobs';
   const fetcher = (url) => fetch(url).then((res) => res.json());
   const { data, error } = useSWR(`${FLASK_URL}${JOBS_LIST_ENDPOINT}`, fetcher, {
     refreshInterval: 3000,
