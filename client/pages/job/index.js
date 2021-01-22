@@ -104,19 +104,21 @@ export default function Job() {
   // Form fields state variables
   const [job_name, setJobName] = useState('');
   const [max_replicas, setMaxReplicas] = useState(1);
+  const [initial_number_of_replicas, setInitNReplicas] = useState(1);
   const [tempered_distribution_family, setTemperedDist] = useState('boltzmann');
   const [minimum_beta, setMinBeta] = useState(0.01);
   const [initial_schedule_beta_ratio, setInitScheduleBetaRatio] = useState(1);
   const [probability_definition, setProbDef] = useState('');
   const [dependencies, setDeps] = useState([]);
+
   const [jobId, setJobID] = useState(null);
 
   const createJob = async () => {
     const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
     const JOB_CREATION_ENDPOINT = '/job';
     const body = JSON.stringify({
-      //TODO: should be checked in scheduler      job_name,
-      initial_number_of_replicas: 1,
+      //TODO: should be checked in scheduler job schema whether job_name is required
+      initial_number_of_replicas,
       max_replicas,
       tempered_dist_family: tempered_distribution_family,
       initial_schedule_parameters: {
@@ -176,13 +178,20 @@ export default function Job() {
                   }}
                 >
                   <FlexCol between className="w-full h-full">
+                    <FormField
+                      label="Job name"
+                      inputName="job_name"
+                      setActiveField={setActiveField}
+                      value={job_name}
+                      onChange={(e) => setJobName(e.target.value)}
+                    />
                     <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
                       <FormField
-                        label="Job name"
-                        inputName="job_name"
+                        label="Initial N° replicas"
+                        inputName="initial_number_of_replicas"
                         setActiveField={setActiveField}
-                        value={job_name}
-                        onChange={(e) => setJobName(e.target.value)}
+                        value={initial_number_of_replicas}
+                        onChange={(e) => setInitNReplicas(e.target.value)}
                       />
                       <FormField
                         label="Max N° replicas"
