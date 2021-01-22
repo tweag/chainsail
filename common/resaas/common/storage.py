@@ -29,7 +29,7 @@ def make_sure_dir_exists(output_path):
     Returns:
 
     """
-    os.makedirs(output_path[:output_path.rfind('/')])
+    os.makedirs(output_path[:output_path.rfind('/')], exist_ok=True)
 
     
 def pickle_to_stream(data):
@@ -88,8 +88,8 @@ class AbstractFileSystemStorage(AbstractStorage):
         Returns:
 
         """
-        self.default_basename = sanitize_basename(default_basename)
-        self.default_mode_flags = default_mode_flags
+        self._default_basename = sanitize_basename(default_basename)
+        self._default_mode_flags = default_mode_flags
 
 
 class FileSystemPickleStorage(AbstractFileSystemStorage):
@@ -128,7 +128,7 @@ class FileSystemPickleStorage(AbstractFileSystemStorage):
         Returns:
 
         """
-        basename = basename or self.default_basename
+        basename = basename or self._default_basename
         if basename is None:
             raise ValueError(('Basename not set. Needs to be either given '
                               'a default in __init__() or as an argument to '
@@ -151,7 +151,7 @@ class FileSystemPickleStorage(AbstractFileSystemStorage):
         """
         file_path = self._construct_file_path(file_name, basename)
         make_sure_dir_exists(file_path)
-        with open(file_path, self.default_mode_flags) as opf:
+        with open(file_path, self._default_mode_flags) as opf:
             opf.write(self._make_data_stream(data).getbuffer())
 
     def read(self, path):
@@ -163,7 +163,7 @@ class FileSystemPickleStorage(AbstractFileSystemStorage):
         Returns:
 
         """
-        with open(path, "rb") as ipf:
+        with open(self._default_basename + path, "rb") as ipf:
             return load(ipf)
 
 
@@ -269,7 +269,8 @@ class FileSystemStringStorage(AbstractStorage):
         Returns:
 
         """
-        make_sure_dir_exists(output_path)
+        file_path = self._construct_file_path(output_path)
+        make_sure_dir_exists(file_path)
         with open(output_path, mode_flags) as opf:
             opf.write(self._make_data_stream(data))
 
@@ -282,5 +283,5 @@ class FileSystemStringStorage(AbstractStorage):
         Returns:
 
         """
-        with open(path) as ipf:
+        with open(self._basename + path) as ipf:
             return ipf.read()
