@@ -194,7 +194,7 @@ class REJobController:
         pass
 
     def load_energies(self, sim_path):
-        config = yaml.load(self.string_storage.read(sim_path + CONFIG_PATH))
+        config = yaml.safe_load(self.string_storage.read(sim_path + CONFIG_PATH))
         n_replicas = config['general']['num_replicas']
         n_samples = config['general']['n_iterations']
         dump_interval = config['re']['dump_interval']
