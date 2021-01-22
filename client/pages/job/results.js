@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import useSWR from 'swr';
 import { Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
 
 const Table = ({ data }) => {
@@ -31,31 +32,22 @@ const Table = ({ data }) => {
 };
 
 export default function Job() {
-  const [data, setData] = useState([]);
+  // Data fetching
+  const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
+  const JOBS_LIST_ENDPOINT = '/jobs';
+  const fetcher = (url) => fetch(url).then((res) => res.json());
+  const { data, error } = useSWR(`${FLASK_URL}${JOBS_LIST_ENDPOINT}`, fetcher, {
+    refreshInterval: 1000,
+  });
 
-  const updateData = async () => {
-    const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
-    const JOBS_LIST_ENDPOINT = '/jobs';
-    const requestOptions = {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    };
-    let response = await fetch(`${FLASK_URL}${JOBS_LIST_ENDPOINT}`, requestOptions);
-    let data = await response.json();
-    console.log(data);
-    if (response.status === 200) {
-      setData(data);
-    }
-  };
-  updateData();
+  if (error) return <div>failed to load</div>;
+
   return (
     <Layout>
       <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600">
         <FlexCol between className="lg:h-screen">
           <Navbar />
-          <FlexCenter className="w-full h-full py-5 md:py-20">
-            <Table data={data} />
-          </FlexCenter>
+          <FlexCenter className="w-full h-full py-5 md:py-20"></FlexCenter>
         </FlexCol>
       </Container>
     </Layout>
