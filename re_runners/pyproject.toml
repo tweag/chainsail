@@ -3,14 +3,14 @@ name = "resaas-re-runners"
 version = "0.1.0"
 description = "RESAAS runners for Replica Exchange sampling"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
-packages = [ {include = "resaas/re_runners" } ]
+packages = [ {include = "resaas" } ]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "*"
 pyyaml = "*"
-resaas-common = { path = "../common/", develop=true }
-rexfw = { git = "ssh://git@github.com/tweag/rexfw.git", branch="start-script" }
+resaas-common = { path = "../common", develop = true }
+rexfw = { git = "ssh://git@github.com/tweag/rexfw.git", branch = "start-script" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

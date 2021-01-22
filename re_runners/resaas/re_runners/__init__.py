@@ -3,7 +3,8 @@ import os
 
 import yaml
 
-from util import storage_factory, WHERE
+
+from resaas.common.util import storage_factory
 
 class AbstractRERunner(metaclass=ABCMeta):
     @abstractmethod
@@ -13,10 +14,10 @@ class AbstractRERunner(metaclass=ABCMeta):
 
 class MPIRERunner(AbstractRERunner):
     def run_sampling(self, config_file):
-        _, string_storage = storage_factory()
+        _, string_storage = storage_factory('/tmp/jctest/')
         config = yaml.load(string_storage.read(config_file))
         n_replicas = config['general']['num_replicas']
         cfg_path = config['general_params']['output_path'] + 'config.yml'
         output = os.subprocess.check_output([
             'mpirun', '-n', str(n_replicas + 1),
-            'python', 'run_simulation.py', cfg_path, WHERE])
+            'python', 'run_simulation.py', cfg_path, "local"])
