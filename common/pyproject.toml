@@ -3,7 +3,7 @@ name = "resaas-common"
 version = "0.1.0"
 description = "RESAAS code shared between components"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
-packages = [ { include = "resaas/common/" } ]
+packages = [ { include = "resaas" } ]
 
 [tool.poetry.dependencies]
 python = "^3.8"

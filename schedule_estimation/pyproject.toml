@@ -8,7 +8,7 @@ packages = [ { include = "resaas" } ]
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "*"
-resaas-common = { path = "../common/" }
+resaas-common = { path = "../common" , develop = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
