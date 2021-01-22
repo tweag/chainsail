@@ -205,6 +205,7 @@ class FileSystemStringStorage(AbstractStorage):
         Returns:
 
         '''
+        mode_flags = mode_flags or self._default_mode_flags
         basename = sanitize_basename(basename) or self._default_basename
         file_path = basename + file_path
         make_sure_basename_exists(file_path)
