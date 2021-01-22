@@ -30,7 +30,7 @@ cfg_template = {
         'swap_interval': 5,
         'status_interval': 100,
         'dump_interval': 1000,
-        'statistics_update_interval': 50,
+        'statistics_update_interval': 100,
         'schedule': None
     },
     'general': {
@@ -76,12 +76,16 @@ class InitialValueSetuper(metaclass=ABCMeta):
         # TODO
         return np.array([0.001] * get_schedule_length(schedule))
 
+    def _draw_initial_states(self, schedule, previous_sim_path, dos):
+        # TODO
+        return np.array([0.001] * get_schedule_length(schedule))
+
     def setup_initial_states(self, sim_path, schedule, dos=None,
                              previous_sim_path=None):
         if previous_sim_path is not None:
-            initial_states = self.draw_initial_states(schedule,
-                                                      previous_sim_path,
-                                                      dos)
+            initial_states = self._draw_initial_states(schedule,
+                                                       previous_sim_path,
+                                                       dos)
             self.pickle_storage.write(initial_states,
                                       sim_path + INITIAL_STATES_PATH)
 
@@ -96,6 +100,8 @@ class REJobController:
         #     job_spec['job_name'])
         self._basename = job_spec['path']
         self.pickle_storage, self.string_storage = storage_factory(self._basename)
+        self.initial_value_setuper = InitialValueSetuper(
+            self.pickle_storage, self.string_storage)
         self.re_params = None
         self.local_sampling_params = None
         self.optimization_params = None
@@ -134,7 +140,6 @@ class REJobController:
             print("ITERATION #{}".format(run_counter))
             sim_path = 'optimization_run{}/'.format(run_counter)
             if schedule is not None:
-                print(previous_sim_path + ENERGIES_PATH)
                 optimizer = self.schedule_optimizer_class(
                     dos, self.load_energies(previous_sim_path),
                     acceptance_rate)
@@ -181,7 +186,7 @@ class REJobController:
         config_updates['local_sampling']['timestep_adaption_limit'] = ts_adaption_limit
         config_updates['re'] = {'schedule': sim_path + SCHEDULE_PATH}
         config = self.make_config(**config_updates)
-        self.string_storage.write(config, sim_path + CONFIG_PATH, 'w')
+        self.string_storage.write(config, sim_path + CONFIG_PATH, mode_flags='w')
         self.pickle_storage.write(schedule, sim_path + SCHEDULE_PATH)
         self.scale_environment(get_schedule_length(schedule))
 
@@ -239,7 +244,7 @@ class REJobController:
 job_spec = dict(re_params=dict(num_replicas=8, num_optimization_samples=5000),
                 local_sampling_params=dict(hmc_num_adaption_steps=100),
                 optimization_params=dict(target_value=0.3, max_param=1,
-                                         min_param=0.01, decrement=0.01),
+                                         min_param=0.1, decrement=0.05),
                 initial_schedule_params=dict(beta_min=0.01, beta_ratio=0.9),
                 path='/tmp/jctest/')
 
