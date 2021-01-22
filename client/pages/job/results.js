@@ -18,8 +18,8 @@ const JobsTable = ({ data }) => {
     '',
   ];
   const dateFormatter = (d) => {
-    if (d) return moment(d).startOf('hour').fromNow();
-    else return 'unknown';
+    if (d) return moment(d).format('d MMM hh:mm');
+    else return '---';
   };
   const TableHeader = ({ children }) => <th className="px-4 py-2 text-left ">{children}</th>;
   const TableRow = ({ row }) => (
