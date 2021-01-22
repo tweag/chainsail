@@ -2,7 +2,8 @@ import unittest
 import numpy as np
 np.random.seed(42)
 
-from resaas.schedule_estimation.dos_estimators import DefaultWHAM
+from resaas.schedule_estimation.dos_estimators import (WHAM,
+                                                       BoltzmannEnsemble)
 from resaas.common.util import log_sum_exp
 
 # draw samples from a bunch of normal distributions with standard deviations
@@ -16,15 +17,15 @@ energies = 0.5 * samples ** 2
 schedule = {'beta': 1.0 / sigmas ** 2}
 
 
-class testDefaultWHAM(unittest.TestCase):
+class testWHAM(unittest.TestCase):
     def setUp(self):
-        self.wham = DefaultWHAM(energies, lambda E, beta: -beta * E, schedule)
+        self.wham = WHAM(energies, BoltzmannEnsemble, schedule)
 
-    def testRun(self):
+    def testEstimateDos(self):
         # TODO: replace this test (of the derived normalization constants) with a test
         # of the actual DOS estimate
         # TODO: maybe write unit test for WHAM, although it's probably rather difficult
-        est_log_dos = self.wham.run()
+        est_log_dos = self.wham.estimate_dos()
         beta1 = schedule['beta'][0]
         beta2 = schedule['beta'][3]
         Z1 = np.sqrt(2 * np.pi / beta1)

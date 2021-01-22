@@ -1,10 +1,10 @@
 """
 Classes for calculating a schedule given the density of states (DOS)
 """
-from abc import abstractmethod, ABCMeta
+from abc import abstractmethod, ABC
 
 
-class AbstractScheduleOptimizer(metaclass=ABCMeta):
+class AbstractScheduleOptimizer(ABC):
     '''
     Interface for classes which estimate Replica Exchange schedules based on
     a density of states (DOS) estimate.
