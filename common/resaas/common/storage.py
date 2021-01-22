@@ -193,6 +193,8 @@ class FileSystemStringStorage(AbstractStorage):
         Returns:
 
         '''
+        self._default_basename = default_basename
+        self._default_mode_flags = default_mode_flags
 
     def write(self, data, file_path, basename=None, mode_flags=None):
         '''Writes a string to a file.
@@ -221,5 +223,5 @@ class FileSystemStringStorage(AbstractStorage):
         Returns:
           str: string read from file
         '''
-        with open(self._basename + path) as ipf:
+        with open(self._default_basename + path) as ipf:
             return ipf.read()
