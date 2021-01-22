@@ -1,31 +1,8 @@
 import { useState } from 'react';
-import { Layout, FlexCol, FlexCenter, Navbar, Container, FlexRow } from '../../components';
-
-const jobsData = [
-  {
-    id: 'id1',
-    name: 'name1',
-    spec: 'spec1',
-    status: 'status1',
-    created_at: 'created_at1',
-    started_at: 'started_at1',
-    finished_at: 'finished_at1',
-    nodes: 'node1',
-  },
-  {
-    id: 'id2',
-    name: 'name2',
-    spec: 'spec2',
-    status: 'status2',
-    created_at: 'created_at2',
-    started_at: 'started_at2',
-    finished_at: 'finished_at2',
-    nodes: 'node2',
-  },
-];
+import { Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
 
 const Table = ({ data }) => {
-  const headers = Object.keys(data[0]);
+  const headers = data.length != 0 ? Object.keys(data[0]) : [];
   const TableRow = ({ children }) => (
     <tr className="hover:bg-gray-700 transition duration-100">{children}</tr>
   );
@@ -34,7 +11,7 @@ const Table = ({ data }) => {
     <td className="px-4 py-2 border-t-2 transition duration-100">{children}</td>
   );
   return (
-    <div className="w-full text-white bg-gray-900 shadow-xl rounded-lg overflow-hidden">
+    <div className="w-full overflow-hidden text-white bg-gray-900 rounded-lg shadow-xl">
       <table className="w-full">
         <tr className="bg-blue-900 hover:bg-blue-800">
           {headers.map((h) => (
@@ -54,7 +31,23 @@ const Table = ({ data }) => {
 };
 
 export default function Job() {
-  const [data, setData] = useState(jobsData);
+  const [data, setData] = useState([]);
+
+  const updateData = async () => {
+    const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
+    const JOBS_LIST_ENDPOINT = '/jobs';
+    const requestOptions = {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    };
+    let response = await fetch(`${FLASK_URL}${JOBS_LIST_ENDPOINT}`, requestOptions);
+    let data = await response.json();
+    console.log(data);
+    if (response.status === 200) {
+      setData(data);
+    }
+  };
+  updateData();
   return (
     <Layout>
       <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600">
