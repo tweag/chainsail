@@ -10,6 +10,7 @@
   "dependencies": {
     "autoprefixer": "^10.2.1",
     "chart.js": "^2.9.4",
+    "moment": "^2.29.1",
     "next": "10.0.5",
     "postcss": "^8.2.3",
     "react": "17.0.1",
