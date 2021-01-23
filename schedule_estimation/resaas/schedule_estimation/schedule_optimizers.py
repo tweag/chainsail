@@ -21,8 +21,8 @@ class AbstractScheduleOptimizer(ABC):
             energies(:class:`np.ndarray`): sampled energies from which the DOS
               estimate was calculated
         '''
-        self.dos = dos
-        self.energies = energies
+        self._dos = dos
+        self._energies = energies
 
     @abstractmethod
     def optimize(self):
@@ -57,8 +57,7 @@ class AbstractSingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
               parameter values given a DOS estimate and the corresponding
               sampled energies. Takes arguments ``(dos, energies, param1, param2)``.
         '''
-        self._dos = dos
-        self._energies = energies
+        super().__init__(dos, energies)
         self._optimization_quantity = optimization_quantity
 
     def optimize(self, target_value, max_param, min_param, decrement):
@@ -95,6 +94,6 @@ class AbstractSingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
         return {self._param_name: np.array(params)}
 
 
-class BoltzmannAcceptanceRateOptimizer(
+class BoltzmannOptimizer(
         AbstractSingleParameterScheduleOptimizer):
     _param_name = 'beta'
