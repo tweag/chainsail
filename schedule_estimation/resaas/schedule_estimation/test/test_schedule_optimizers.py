@@ -28,6 +28,6 @@ class TestSingleParameterScheduleOptimizer(unittest.TestCase):
                           #0.001, (fails)
                           ):
             result = self.optimizer.optimize(0.1, 1.0, 0.1, decrement)
-            expected = {'my_param': np.arange(1.0, 0.0, -0.1)}
+            expected = {'my_param': np.arange(1.0, -0.1, -0.1)}
             diffs = np.fabs(result['my_param'] - expected['my_param'])
             self.assertTrue(np.all(diffs < 1e-10))

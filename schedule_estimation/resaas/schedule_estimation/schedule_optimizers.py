@@ -3,6 +3,8 @@ Classes for calculating a schedule given the density of states (DOS)
 """
 from abc import abstractmethod, ABC
 
+import numpy as np
+
 
 class AbstractScheduleOptimizer(ABC):
     '''
@@ -90,7 +92,7 @@ class AbstractSingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
             else:
                 delta += decrement
 
-        return {self._param_name: params[:-1]}
+        return {self._param_name: np.array(params)}
 
 
 class BoltzmannAcceptanceRateOptimizer(
