@@ -86,9 +86,9 @@ export default function Job() {
   return (
     <Layout>
       <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600">
-        <FlexCol between>
+        <FlexCol start className="min-h-screen">
           <Navbar />
-          <FlexCenter className="w-full h-full py-5 md:py-20">
+          <FlexCenter className="py-5 md:py-32">
             {error && <div>Failed to load. Please refresh the page.</div>}
             {(data == undefined || data.length == 0) && <div>Loading</div>}
             {data != undefined && data.length > 0 && <JobsTable data={data} />}
