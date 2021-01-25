@@ -11,13 +11,6 @@ import {
   Modal,
 } from '../../components';
 
-// Form fields icons
-
-const depsIconClassName = 'fas fa-bolt';
-const urlIconClassName = 'fas fa-link';
-const jobIconClassName = 'fas fa-bars';
-const nodesIconClassName = 'fas fa-cloud';
-
 const FieldDescription = ({ children, name, activeField, icon, math }) => (
   <div
     className={`${
@@ -37,10 +30,10 @@ const FieldDescription = ({ children, name, activeField, icon, math }) => (
 const Descs = ({ activeField }) => {
   return (
     <FlexCol between className="w-full h-full">
-      <FieldDescription activeField={activeField} name="job_name" icon={jobIconClassName}>
+      <FieldDescription activeField={activeField} name="job_name" icon="fas fa-bars">
         Job name: a unique key id for your job.
       </FieldDescription>
-      <FieldDescription activeField={activeField} name="max_replicas" icon={nodesIconClassName}>
+      <FieldDescription activeField={activeField} name="max_replicas" icon="fas fa-cloud">
         Max N° replicas: maximum number of replicas to use. Specifics of the environment in which
         these are created is configured on the scheduler itself
       </FieldDescription>
@@ -59,15 +52,11 @@ const Descs = ({ activeField }) => {
       <FieldDescription activeField={activeField} name="initial_schedule_beta_ratio" math="\alpha">
         Initial schedule beta ratio: the ratio defining (approximately) the geometric progression
       </FieldDescription>
-      <FieldDescription
-        activeField={activeField}
-        name="probability_definition"
-        icon={urlIconClassName}
-      >
+      <FieldDescription activeField={activeField} name="probability_definition" icon="fas fa-link">
         Probability definition: URL to archive including importable Python module providing the log
         probability
       </FieldDescription>
-      <FieldDescription activeField={activeField} name="dependencies" icon={depsIconClassName}>
+      <FieldDescription activeField={activeField} name="dependencies" icon="fas fa-bolt">
         Dependencies: list of dependencies to install on compute nodes
       </FieldDescription>
     </FlexCol>
