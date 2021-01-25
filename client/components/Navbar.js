@@ -24,9 +24,6 @@ const Navbar = () => {
       <NavItem href="/" isActive={activeItem === 'home'} onClick={() => setAcitveItem('home')}>
         Home
       </NavItem>
-      <NavItem href="/" isActive={activeItem === 'about'} onClick={() => setAcitveItem('about')}>
-        About
-      </NavItem>
     </FlexRow>
   );
 };
