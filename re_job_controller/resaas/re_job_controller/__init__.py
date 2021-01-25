@@ -235,7 +235,7 @@ class AbstractREJobController(ABC):
     initial states for the next simulation, setting it up and running it.
     '''
 
-    def __init__(self, job_spec, re_runner,
+    def __init__(self, job_spec, re_runner, pickle_storage, string_storage,
                  initial_schedule_maker=GeometricInitialScheduleMaker,
                  schedule_optimizer=SingleParameterScheduleOptimizer,
                  ensemble=BoltzmannEnsemble,
@@ -249,6 +249,13 @@ class AbstractREJobController(ABC):
 
         Args:
           job_spec(dict): job specifications provided by the user
+          re_runner(:class:`AbstractRERunner`): runner which runs an RE
+              simulation (depends on the environment) 
+          pickle_storage(:class:`AbstractStorage): storage backend for
+              pickleing / unpickleing Python objects to / from permanent
+              storage
+          string_storage(:class:`AbstractStorage`:): storage backend for
+              reading / writing strings from / to permanent storage
           initial_schedule_maker(:class:`InitialScheduleMaker`): schedule
               maker objects which calculates a very first Replica Exchange
               schedule
@@ -268,8 +275,8 @@ class AbstractREJobController(ABC):
         self._optimization_quantity = optimization_quantity
         self._dos_estimator = dos_estimator
         self._basename = job_spec['path']
-        self._pickle_storage, self._string_storage = storage_factory(
-            self._basename)
+        self._pickle_storage = pickle_storage
+        self._string_storage = string_storage
         self._initial_value_setuper = InitialValueSetuper(
             self._pickle_storage, self._string_storage)
         self._re_params = None
