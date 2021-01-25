@@ -11,6 +11,7 @@ class AbstractScheduleOptimizer(ABC):
     Interface for classes which estimate Replica Exchange schedules based on
     a density of states (DOS) estimate.
     '''
+
     def __init__(self, dos, energies):
         '''
         Initializes a schedule optimizer.
@@ -32,7 +33,7 @@ class AbstractScheduleOptimizer(ABC):
         pass
 
 
-class AbstractSingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
+class SingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
     '''
     Interface for classes which estimate Replica Exchange schedules based on
     a single parameter.
@@ -43,7 +44,8 @@ class AbstractSingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
     are the acceptance rate, the Kullback-Leibler divergence, the Hellinger
     distance, ...
     '''
-    def __init__(self, dos, energies, optimization_quantity):
+
+    def __init__(self, dos, energies, optimization_quantity, param_name):
         '''
         Initializes a schedule optimizer.
 
@@ -56,9 +58,11 @@ class AbstractSingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
               such as the acceptance rate for two replicas at two different schedule
               parameter values given a DOS estimate and the corresponding
               sampled energies. Takes arguments ``(dos, energies, param1, param2)``.
+            param_name(str): name of the schedule parameter to be optimized
         '''
         super().__init__(dos, energies)
         self._optimization_quantity = optimization_quantity
+        self._param_name = param_name
 
     def optimize(self, target_value, max_param, min_param, decrement):
         '''
@@ -92,8 +96,3 @@ class AbstractSingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
                 delta += decrement
 
         return {self._param_name: np.array(params)}
-
-
-class BoltzmannOptimizer(
-        AbstractSingleParameterScheduleOptimizer):
-    _param_name = 'beta'
