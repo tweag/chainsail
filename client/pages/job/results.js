@@ -4,12 +4,11 @@ import { Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components
 
 const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
 
-const StartJobButton = ({ jobId }) => {
+const StartJobButton = ({ jobId, isShown }) => {
   return (
     <div
-      className={
-        'py-1 text-center bg-purple-900 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700 text-white'
-      }
+      className={`py-1 text-center bg-purple-900 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700 text-white
+	      ${isShown ? 'visible' : 'invisible'}`}
       onClick={() => startJob(jobId)}
     >
       START
@@ -50,7 +49,9 @@ const JobsTable = ({ data }) => {
       <TableData d={dateFormatter(row.started_at_at)} />
       <TableData d={dateFormatter(row.finished_at)} />
       <TableData d={row.status} />
-      <TableData>{row.status === 'initialized' && <StartJobButton jobId={row.id} />}</TableData>
+      <TableData>
+        <StartJobButton jobId={row.id} isShown={row.status === 'initialized'} />
+      </TableData>
     </tr>
   );
   const TableData = ({ d, children }) => (
