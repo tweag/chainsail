@@ -3,12 +3,7 @@ import unittest
 import numpy as np
 
 from resaas.schedule_estimation.schedule_optimizers import (
-    AbstractSingleParameterScheduleOptimizer)
-
-
-class MockSingleParameterScheduleOptimizer(
-        AbstractSingleParameterScheduleOptimizer):
-    _param_name = 'my_param'
+    SingleParameterScheduleOptimizer)
 
 
 def mock_quantity(_, __, param1, param2):
@@ -17,8 +12,8 @@ def mock_quantity(_, __, param1, param2):
 
 class TestSingleParameterScheduleOptimizer(unittest.TestCase):
     def setUp(self):
-        self.optimizer = MockSingleParameterScheduleOptimizer(
-            None, None, mock_quantity)
+        self.optimizer = SingleParameterScheduleOptimizer(
+            None, None, mock_quantity, 'my_param')
 
     def testOptimize(self):
         # TODO: I _think_ this test is okay, but for small decrements there are
