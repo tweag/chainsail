@@ -3,6 +3,7 @@ name = "resaas-re-job-controller"
 version = "0.1.0"
 description = "RESAAS component which, within a job received from the scheduler, manages optimization and final runs"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
+packages = [ { include = 'resaas' } ]
 
 [tool.poetry.dependencies]
 python = "^3.8"
