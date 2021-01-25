@@ -103,6 +103,10 @@ export default function Job() {
 
   const [createdJobId, setCreatedJobID] = useState(null);
 
+  // Error handling states
+  const [err, setErr] = useState(false);
+  const [errMsg, setErrMsg] = useState('');
+
   const createJob = async () => {
     const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
     const JOB_CREATION_ENDPOINT = '/job';
@@ -124,11 +128,16 @@ export default function Job() {
       headers: { 'Content-Type': 'application/json' },
       body,
     };
-    let response = await fetch(`${FLASK_URL}${JOB_CREATION_ENDPOINT}`, requestOptions);
-    let data = await response.json();
-    if (response.status === 200) {
-      setJobCreated(true);
-      if (data.job_id) setCreatedJobID(data.job_id);
+    try {
+      let response = await fetch(`${FLASK_URL}${JOB_CREATION_ENDPOINT}`, requestOptions);
+      let data = await response.json();
+      if (response.status === 200) {
+        setJobCreated(true);
+        if (data.job_id) setCreatedJobID(data.job_id);
+      }
+    } catch (e) {
+      setErr(true);
+      setErrMsg(e);
     }
   };
 
