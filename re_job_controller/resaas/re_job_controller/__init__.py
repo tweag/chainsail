@@ -5,7 +5,6 @@ import numpy as np
 
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
-from resaas.schedule_estimation.optimization_quantities import acceptance_rate
 # from resaas.re_runners import LocalRERunner
 
 
@@ -238,11 +237,9 @@ class AbstractREJobController(ABC):
     '''
 
     def __init__(self, job_spec, re_runner, pickle_storage, string_storage,
+                 schedule_optimizer, dos_estimator,
                  initial_schedule_maker=GeometricInitialScheduleMaker,
-                 schedule_optimizer=SingleParameterScheduleOptimizer,
-                 ensemble=BoltzmannEnsemble,
-                 optimization_quantity=acceptance_rate,
-                 dos_estimator=WHAM):
+                 ):
         '''
         Initializes a Replica Exchange job controller.
 
@@ -258,24 +255,18 @@ class AbstractREJobController(ABC):
               storage
           string_storage(:class:`AbstractStorage`:): storage backend for
               reading / writing strings from / to permanent storage
-          initial_schedule_maker(:class:`InitialScheduleMaker`): schedule
-              maker objects which calculates a very first Replica Exchange
-              schedule
           schedule_optimizer(:class:`AbstractScheduleOptimizer`): schedule
-              optimizer class which calculates a new schedule based on
+              optimizer which calculates a new schedule based on
               an estimate for the density of states
-          ensemble(:class:`AbstractEnsemble`): the ensemble (family of
-              tempered distributions) to use
-          optimization_quantity(callable): the quantitiy which controls
-              schedule optimization
-          dos_estimator(:class:`WHAM`): WHAM implementation which estimates the
+          dos_estimator(:class:`WHAM`): WHAM object which estimates the
               density of states from samples of a previous simulation
+          initial_schedule_maker(:class:`InitialScheduleMaker`): schedule
+              maker object which calculates a very first Replica Exchange
+              schedule
         '''
         self._re_runner = re_runner
         self._initial_schedule_maker = initial_schedule_maker
         self._schedule_optimizer = schedule_optimizer
-        self._ensemble = ensemble
-        self._optimization_quantity = optimization_quantity
         self._dos_estimator = dos_estimator
         self._basename = job_spec['path']
         self._pickle_storage = pickle_storage
@@ -324,12 +315,7 @@ class AbstractREJobController(ABC):
         '''
         energies = load_energies(previous_sim_path, self._pickle_storage,
                                  self._string_storage)
-        # TODO: refactoring required; have user instantiate schedule optimizer
-        optimizer = self._schedule_optimizer(dos, energies,
-                                             acceptance_rate, 'beta')
-        params_copy = dict(self._optimization_params)
-        params_copy.pop('max_optimization_runs')
-        schedule = optimizer.optimize(**params_copy)
+        schedule = self._schedule_optimizer.optimize(dos, energies)
 
         return schedule
 
@@ -363,9 +349,7 @@ class AbstractREJobController(ABC):
                     run_counter, max_runs, schedule_length(schedule))
                 log(msg_part1 + msg_part2)
             else:
-                sched_maker = self._initial_schedule_maker()
-                schedule = sched_maker.make_initial_schedule(
-                    **self._initial_schedule_params)
+                schedule = self._initial_schedule_maker.make_initial_schedule()
 
             self._setup_simulation(sim_path, schedule, previous_sim_path)
             self._do_single_run(sim_path)
@@ -461,8 +445,7 @@ class AbstractREJobController(ABC):
         energies = load_energies(sim_path, self._pickle_storage,
                                  self._string_storage)
         schedule = self._pickle_storage.read(sim_path + SCHEDULE_PATH)
-        dos_estimator = self._dos_estimator(energies, self._ensemble, schedule)
-        dos = dos_estimator.estimate_dos()
+        dos = self._dos_estimator.estimate_dos(energies, schedule)
         self._pickle_storage.write(dos, sim_path + DOS_PATH)
 
     def _check_compatibility(self, initial_schedule_params,

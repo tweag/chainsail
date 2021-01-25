@@ -5,19 +5,18 @@ import numpy as np
 import yaml
 
 from resaas.common.util import FileSystemStringStorage, FileSystemPickleStorage
-from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
-from .. import AbstractREJobController, FINAL_TIMESTEPS_PATH
+from resaas.re_job_controller import AbstractREJobController, FINAL_TIMESTEPS_PATH
 
 
-class MockWham(WHAM):
-    def estimate_dos(self):
-        return len(self._parameters['beta'])
+class MockWham:
+    def estimate_dos(self, energies, parameters):
+        return len(parameters['beta'])
 
 
 class MockOptimizer(SingleParameterScheduleOptimizer):
-    def optimize(self, **args):
-        return {'beta': np.array([42] * (self._dos - 1))}
+    def optimize(self, dos, energies):
+        return {'beta': np.array([42] * (dos - 1))}
 
 
 class MockInitialScheduleMaker:
@@ -31,7 +30,8 @@ class MockRERunner:
         sstorage = FileSystemStringStorage(basename)
         path = yaml.safe_load(
             sstorage.read(config_file))['general']['output_path']
-        pstorage.write(np.array([1,2,3]), path + FINAL_TIMESTEPS_PATH)
+        pstorage.write(np.array([1, 2, 3]), path + FINAL_TIMESTEPS_PATH)
+
 
 class MockREJobController(AbstractREJobController):
     def _scale_environment(self, _):
@@ -60,10 +60,13 @@ class testREJobController(unittest.TestCase):
                         initial_schedule_params={},
                         path=tempdir_name)
 
+        opt_params_copy = job_spec['optimization_params'].copy()
+        opt_params_copy.pop('max_optimization_runs')
+        optimizer = MockOptimizer(optimization_quantity=None,
+                                  param_name='beta', **opt_params_copy)
         self._controller = MockREJobController(
-            job_spec, MockRERunner(), pstorage, sstorage,
-            MockInitialScheduleMaker, MockOptimizer,
-            BoltzmannEnsemble, None, MockWham)
+            job_spec, MockRERunner(), pstorage, sstorage, optimizer,
+            MockWham(), MockInitialScheduleMaker())
 
     def testOptimizeSchedule(self):
         res_path, res_sched, res_dos = self._controller.optimize_schedule()
