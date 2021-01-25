@@ -343,26 +343,24 @@ class AbstractREJobController(ABC):
         Its results are then used to improve the schedule in another run and
         so on and so forth.
         '''
-        run_counter = 1
         dos = None
         previous_schedule = None
         previous_sim_path = None
         opt_params = self._optimization_params
 
         for run_counter in range(1, opt_params['max_optimization_runs']):
-            log('Schedule optimization simulation #{} started'.format(
-                run_counter))
+            log('Schedule optimization simulation #{}/{} started'.format(
+                run_counter, opt_params['max_optimization_runs']))
             sim_path = 'optimization_run{}/'.format(run_counter)
             if previous_schedule is not None:
                 schedule = self._calculate_schedule_from_dos(
-                    previous_sim_path, dos, self._pickle_storage,
-                    self._string_storage)
+                    previous_sim_path, dos)
                 if run_counter == opt_params['max_optimization_runs']:
                     submsg = 'final run'
                 else:
                     submsg = 'optimization run #{}'.format(run_counter)
-                log('Calculated schedule for {} '.format(submsg)
-                    + 'with {} replicas'.format(schedule_length(schedule)))
+                log('Calculated schedule for {} with {} replicas'.format(
+                    submsg, schedule_length(schedule)))
             else:
                 schedule = self._initial_schedule_maker.make_initial_schedule(
                     **self._initial_schedule_params)
@@ -375,8 +373,7 @@ class AbstractREJobController(ABC):
 
             previous_sim_path = sim_path
             previous_schedule = schedule
-
-        if run_counter == opt_params['max_optimization_runs']:
+        else:
             log(('Maximum number of optimization runs reached. '
                  'Schedule optimization might not have converged'))
         final_schedule = self._calculate_schedule_from_dos(sim_path, dos)
@@ -462,7 +459,7 @@ class AbstractREJobController(ABC):
         schedule = self._pickle_storage.read(sim_path + SCHEDULE_PATH)
         dos_estimator = self._dos_estimator(energies, self._ensemble, schedule)
         dos = dos_estimator.estimate_dos()
-        self._pickle_storage.write(dos, DOS_PATH)
+        self._pickle_storage.write(dos, sim_path + DOS_PATH)
         return dos
 
     def _check_compatibility(self, initial_schedule_params,
