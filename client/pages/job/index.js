@@ -173,7 +173,6 @@ export default function Job() {
                   className="w-full h-full"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    //setJobCreated(true);
                     createJob(e);
                   }}
                 >
