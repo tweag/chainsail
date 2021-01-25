@@ -7,6 +7,7 @@ from celery import Celery
 from flask import Flask, has_app_context
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 
 class FlaskCelery(Celery):
@@ -59,6 +60,11 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:"
 )
 # TODO: Logger setup
+
+# In the simplest case, initialize the Flask-Cors extension with default arguments in order to
+# allow CORS for all domains on all routes. See the full list of options in the documentation:
+# https://flask-cors.corydolphin.com/en/latest/api.html#extension
+CORS(app)
 
 
 # Flask-SQLAlchemy support

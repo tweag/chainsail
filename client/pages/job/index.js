@@ -18,80 +18,6 @@ const urlIconClassName = 'fas fa-link';
 const jobIconClassName = 'fas fa-bars';
 const nodesIconClassName = 'fas fa-cloud';
 
-const Form = ({ setActiveField, setJobCreated }) => {
-  return (
-    <form
-      className="w-full h-full"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setJobCreated(true);
-      }}
-    >
-      <FlexCol between className="w-full h-full">
-        <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
-          <FormField label="Job name" inputName="job_name" setActiveField={setActiveField} />
-          <FormField
-            label="Max N° replicas"
-            inputName="max_replicas"
-            inputType="number"
-            setActiveField={setActiveField}
-            minNumber={1}
-          />
-        </FlexRow>
-        <FormField
-          label="Tempered distribution family"
-          inputName="tempered_distribution_family"
-          hasDropdown
-          setActiveField={setActiveField}
-          disabled
-          defaultValue="Boltzmann"
-        />
-        <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
-          <FormField
-            label="Beta min"
-            inputName="minimum_beta"
-            inputType="number"
-            setActiveField={setActiveField}
-            minNumber={0}
-            maxNumber={1}
-            stepNumber={0.01}
-          />
-          <FormField
-            label="Initial schedule beta ratio"
-            inputName="initial_schedule_beta_ratio"
-            inputType="text"
-            setActiveField={setActiveField}
-          />
-        </FlexRow>
-        <FormField
-          label="Probability definition"
-          inputName="probability_definition"
-          inputType="url"
-          setActiveField={setActiveField}
-        />
-        <FormField
-          label="Dependencies"
-          inputName="dependencies"
-          inputType="text"
-          setActiveField={setActiveField}
-          className="mb-5"
-        />
-
-        <FlexCenter>
-          <input
-            type="submit"
-            value="Submit"
-            className={
-              'w-52 px-6 pt-3 pb-4 text-base text-center bg-purple-700  ' +
-              ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
-            }
-          />
-        </FlexCenter>
-      </FlexCol>
-    </form>
-  );
-};
-
 const FieldDescription = ({ children, name, activeField, icon, math }) => (
   <div
     className={`${
@@ -148,11 +74,12 @@ const Descs = ({ activeField }) => {
   );
 };
 
-const JobCreatedModal = ({ isActive }) => {
+const JobCreatedModal = ({ isActive, jobId }) => {
   return (
     <Modal isActive={isActive}>
       <div className="mb-7">
-        Job created successfully. Please look at result page to check its latest status.
+        Job with id {jobId} created successfully. Please look at result page to check its latest
+        status.
       </div>
       <FlexCenter>
         <Link href="/job/results">
@@ -174,9 +101,50 @@ export default function Job() {
   const [activeField, setActiveField] = useState('other');
   const [jobCreated, setJobCreated] = useState(false);
 
+  // Form fields state variables
+  const [job_name, setJobName] = useState('');
+  const [max_replicas, setMaxReplicas] = useState(1);
+  const [initial_number_of_replicas, setInitNReplicas] = useState(1);
+  const [tempered_distribution_family, setTemperedDist] = useState('boltzmann');
+  const [minimum_beta, setMinBeta] = useState(0.01);
+  const [initial_schedule_beta_ratio, setInitScheduleBetaRatio] = useState(1);
+  const [probability_definition, setProbDef] = useState('');
+  const [dependencies, setDeps] = useState([]);
+
+  const [jobId, setJobID] = useState(null);
+
+  const createJob = async () => {
+    const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
+    const JOB_CREATION_ENDPOINT = '/job';
+    const body = JSON.stringify({
+      //TODO: should be checked in scheduler job schema whether job_name is required
+      initial_number_of_replicas,
+      max_replicas,
+      tempered_dist_family: tempered_distribution_family,
+      initial_schedule_parameters: {
+        minimum_beta,
+        beta_ratio: initial_schedule_beta_ratio,
+      },
+      probability_definition,
+      dependencies: [{ type: 'pip', deps: dependencies }],
+    });
+
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    };
+    let response = await fetch(`${FLASK_URL}${JOB_CREATION_ENDPOINT}`, requestOptions);
+    let data = await response.json();
+    if (response.status === 200) {
+      setJobCreated(true);
+      if (data.job_id) setJobID(data.job_id);
+    }
+  };
+
   return (
     <Layout>
-      <JobCreatedModal isActive={jobCreated} />
+      <JobCreatedModal isActive={jobCreated} jobId={jobId} />
       <FlexCol
         between
         className="px-5 text-white md:px-20 bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body"
@@ -201,11 +169,101 @@ export default function Job() {
               className="w-full lg:px-20 lg:h-3/5 lg:space-x-20"
             >
               <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0">
-                <Form
-                  setActiveField={setActiveField}
-                  setJobCreated={setJobCreated}
-                  clearActiveField={() => setActiveField('other')}
-                />
+                <form
+                  className="w-full h-full"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    //setJobCreated(true);
+                    createJob(e);
+                  }}
+                >
+                  <FlexCol between className="w-full h-full">
+                    <FormField
+                      label="Job name"
+                      inputName="job_name"
+                      setActiveField={setActiveField}
+                      value={job_name}
+                      onChange={(e) => setJobName(e.target.value)}
+                    />
+                    <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
+                      <FormField
+                        label="Initial N° replicas"
+                        inputName="initial_number_of_replicas"
+                        setActiveField={setActiveField}
+                        value={initial_number_of_replicas}
+                        onChange={(e) => setInitNReplicas(e.target.value)}
+                      />
+                      <FormField
+                        label="Max N° replicas"
+                        inputName="max_replicas"
+                        inputType="number"
+                        setActiveField={setActiveField}
+                        minNumber={1}
+                        value={max_replicas}
+                        onChange={(e) => setMaxReplicas(e.target.value)}
+                      />
+                    </FlexRow>
+                    <FormField
+                      label="Tempered distribution family"
+                      inputName="tempered_distribution_family"
+                      hasDropdown
+                      setActiveField={setActiveField}
+                      disabled
+                      defaultValue="Boltzmann"
+                      value={tempered_distribution_family}
+                      onChange={(e) => setTemperedDist(e.target.value)}
+                    />
+                    <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
+                      <FormField
+                        label="Beta min"
+                        inputName="minimum_beta"
+                        inputType="number"
+                        setActiveField={setActiveField}
+                        minNumber={0}
+                        maxNumber={1}
+                        stepNumber={0.01}
+                        value={minimum_beta}
+                        onChange={(e) => setMinBeta(e.target.value)}
+                      />
+                      <FormField
+                        label="Initial schedule beta ratio"
+                        inputName="initial_schedule_beta_ratio"
+                        inputType="text"
+                        setActiveField={setActiveField}
+                        value={initial_schedule_beta_ratio}
+                        onChange={(e) => setInitScheduleBetaRatio(e.target.value)}
+                      />
+                    </FlexRow>
+                    <FormField
+                      label="Probability definition"
+                      inputName="probability_definition"
+                      inputType="url"
+                      setActiveField={setActiveField}
+                      value={probability_definition}
+                      onChange={(e) => setProbDef(e.target.value)}
+                    />
+                    <FormField
+                      label="Dependencies"
+                      inputName="dependencies"
+                      inputType="text"
+                      setActiveField={setActiveField}
+                      value={dependencies}
+                      onChange={(e) => setDeps(e.target.value.split(','))}
+                      className="mb-5"
+                    />
+
+                    <FlexCenter>
+                      <input
+                        type="submit"
+                        value="Submit"
+                        className={
+                          'w-52 px-6 pt-3 pb-4 text-base text-center bg-purple-700  ' +
+                          ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
+                        }
+                      />
+                    </FlexCenter>
+                  </FlexCol>
+                </form>
               </FlexCenter>
               <FlexCenter className="w-full p-5 bg-gray-700 md:p-10 lg:w-1/2 lg:h-full rounded-xl">
                 <Descs activeField={activeField} />

@@ -1,67 +1,96 @@
-import { useState } from 'react';
-import { Layout, FlexCol, FlexCenter, Navbar, Container, FlexRow } from '../../components';
+import useSWR from 'swr';
+import moment from 'moment';
+import { Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
 
-const jobsData = [
-  {
-    id: 'id1',
-    name: 'name1',
-    spec: 'spec1',
-    status: 'status1',
-    created_at: 'created_at1',
-    started_at: 'started_at1',
-    finished_at: 'finished_at1',
-    nodes: 'node1',
-  },
-  {
-    id: 'id2',
-    name: 'name2',
-    spec: 'spec2',
-    status: 'status2',
-    created_at: 'created_at2',
-    started_at: 'started_at2',
-    finished_at: 'finished_at2',
-    nodes: 'node2',
-  },
-];
+const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
 
-const Table = ({ data }) => {
-  const headers = Object.keys(data[0]);
-  const TableRow = ({ children }) => (
-    <tr className="hover:bg-gray-700 transition duration-100">{children}</tr>
+const StartJobButton = ({ jobId }) => {
+  return (
+    <div
+      className={
+        'py-1 text-center bg-purple-900 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700 text-white'
+      }
+      onClick={() => startJob(jobId)}
+    >
+      START
+    </div>
   );
+};
+
+const startJob = (jobId) => {
+  const JOB_START_ENDPOINT = `/job/${jobId}/start`;
+  const requestOptions = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  };
+  fetch(`${FLASK_URL}${JOB_START_ENDPOINT}`, requestOptions);
+};
+
+const JobsTable = ({ data }) => {
+  const headersName = [
+    'Id',
+    'Name',
+    'Created at',
+    'Finished at',
+    'Started at',
+    //'spec' //TODO: should be checked if it's a good option to hide spec
+    'Status',
+    '',
+  ];
+  const dateFormatter = (d) => {
+    if (d) return moment(d).format('d MMM hh:mm');
+    else return '---';
+  };
   const TableHeader = ({ children }) => <th className="px-4 py-2 text-left ">{children}</th>;
-  const TableData = ({ children }) => (
-    <td className="px-4 py-2 border-t-2 transition duration-100">{children}</td>
+  const TableRow = ({ row }) => (
+    <tr className="hover:bg-gray-700 transition duration-100">
+      <TableData d={row.id} />
+      <TableData d={row.name} />
+      <TableData d={dateFormatter(row.created_at)} />
+      <TableData d={dateFormatter(row.started_at_at)} />
+      <TableData d={dateFormatter(row.finished_at)} />
+      <TableData d={row.status} />
+      <TableData>{row.status === 'initialized' && <StartJobButton jobId={row.id} />}</TableData>
+    </tr>
+  );
+  const TableData = ({ d, children }) => (
+    <td className="px-4 py-2 border-t-2 transition duration-100">{d ? d : children}</td>
   );
   return (
-    <div className="w-full text-white bg-gray-900 shadow-xl rounded-lg overflow-hidden">
+    <div className="w-full overflow-hidden text-white bg-gray-900 rounded-lg shadow-xl">
       <table className="w-full">
         <tr className="bg-blue-900 hover:bg-blue-800">
-          {headers.map((h) => (
+          {headersName.map((h) => (
             <TableHeader>{h}</TableHeader>
           ))}
         </tr>
-        {data.map((d) => (
-          <TableRow>
-            {Object.values(d).map((v) => (
-              <TableData>{v}</TableData>
-            ))}
-          </TableRow>
-        ))}
+        {data
+          .sort((a, b) => (a.id > b.id ? 1 : -1))
+          .map((row) => (
+            <TableRow row={row} />
+          ))}
       </table>
     </div>
   );
 };
 
 export default function Job() {
-  const [data, setData] = useState(jobsData);
+  // Data fetching
+  const JOBS_LIST_ENDPOINT = '/jobs';
+  const fetcher = (url) => fetch(url).then((res) => res.json());
+  const { data, error } = useSWR(`${FLASK_URL}${JOBS_LIST_ENDPOINT}`, fetcher, {
+    refreshInterval: 3000,
+  });
+
   return (
     <Layout>
       <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600">
-        <FlexCol between className="lg:h-screen">
+        <FlexCol between>
           <Navbar />
           <FlexCenter className="w-full h-full py-5 md:py-20">
-            <Table data={data} />
+            {error && <div>Failed to load. Please refresh the page.</div>}
+            {(data == undefined || data.length == 0) && <div>Loading</div>}
+            {data != undefined && data.length > 0 && <JobsTable data={data} />}
           </FlexCenter>
         </FlexCol>
       </Container>

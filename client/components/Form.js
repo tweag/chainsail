@@ -14,6 +14,8 @@ const FormField = ({
   setActiveField,
   className,
   width,
+  value,
+  onChange,
 }) => (
   <FlexRow className={`h-10 text-xs md:text-base ${width ? width : 'w-full'} ${className}`}>
     <label
@@ -38,6 +40,8 @@ const FormField = ({
       placeholder={placeholder}
       defaultValue={defaultValue}
       disabled={disabled}
+      value={value}
+      onChange={onChange}
     />
   </FlexRow>
 );
