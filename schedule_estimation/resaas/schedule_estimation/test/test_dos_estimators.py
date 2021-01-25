@@ -19,14 +19,14 @@ schedule = {'beta': 1.0 / sigmas ** 2}
 
 class testWHAM(unittest.TestCase):
     def setUp(self):
-        self.wham = WHAM(energies, BoltzmannEnsemble, schedule)
+        self.wham = WHAM(BoltzmannEnsemble)
 
     def testEstimateDos(self):
         # TODO: replace this test (of the derived normalization constants) with
         # a test of the actual DOS estimate
         # Also maybe write unit test for WHAM, although it's probably rather
         # difficult
-        est_log_dos = self.wham.estimate_dos()
+        est_log_dos = self.wham.estimate_dos(energies, schedule)
         beta1 = schedule['beta'][0]
         beta2 = schedule['beta'][3]
         Z1 = np.sqrt(2 * np.pi / beta1)
