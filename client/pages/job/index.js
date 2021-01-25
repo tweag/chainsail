@@ -63,9 +63,9 @@ const Descs = ({ activeField }) => {
   );
 };
 
-const JobCreatedModal = ({ isActive, jobId }) => {
+const JobCreatedModal = ({ jobCreated, jobId }) => {
   return (
-    <Modal isActive={isActive}>
+    <Modal isActive={jobCreated}>
       <div className="mb-7">
         Job with id {jobId} created successfully. Please look at result page to check its latest
         status.
@@ -100,7 +100,7 @@ export default function Job() {
   const [probability_definition, setProbDef] = useState('');
   const [dependencies, setDeps] = useState([]);
 
-  const [jobId, setJobID] = useState(null);
+  const [createdJobId, setCreatedJobID] = useState(null);
 
   const createJob = async () => {
     const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
@@ -127,13 +127,13 @@ export default function Job() {
     let data = await response.json();
     if (response.status === 200) {
       setJobCreated(true);
-      if (data.job_id) setJobID(data.job_id);
+      if (data.job_id) setCreatedJobID(data.job_id);
     }
   };
 
   return (
     <Layout>
-      <JobCreatedModal isActive={jobCreated} jobId={jobId} />
+      <JobCreatedModal jobCreated={jobCreated} jobId={createdJobId} />
       <FlexCol
         between
         className="px-5 text-white md:px-20 bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body"
