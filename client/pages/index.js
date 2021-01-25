@@ -14,8 +14,7 @@ export default function Home() {
               Replica exchange runs multiple MCMC samplers in parallel, the required number of which
               strongly depends on the probability distribution at hand and can go into the the
               hundreds. The number of parallel samplers, each running in a separate process, can be
-              iteratively optimized, which is easily doable by upscaling the cluster on the cloud
-              platform.
+              iteratively optimized by upscaling the cluster on the cloud platform.
             </div>
             <Button href="/job" className="bg-purple-600 hover:bg-purple-500">
               Checkout more!
