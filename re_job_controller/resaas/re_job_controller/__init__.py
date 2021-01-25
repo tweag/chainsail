@@ -55,8 +55,7 @@ def schedule_length(schedule):
     return len(list(schedule.values())[0])
 
 
-# I totally made up a word for "the one before the last one"
-def optimization_converged(preprevious_schedule, previous_schedule):
+def optimization_converged(schedule, previous_schedule):
     '''
     Check for convergence of schedule optimization.
 
@@ -65,18 +64,44 @@ def optimization_converged(preprevious_schedule, previous_schedule):
     shift while the length stays the same, but for now that'll do.
 
     Args:
-      preprevious_schedule(dict): a schedule obtained from an iteration
+      schedule(dict): a schedule obtained from an iteration
       previous_schedule(dict): schedule obtained from the iteration after
     '''
-    return schedule_length(preprevious_schedule) \
-      == schedule_length(previous_schedule)
+    return schedule_length(schedule) == schedule_length(previous_schedule)
+
+
+def load_energies(sim_path, pickle_storage, string_storage):
+    '''
+    Loads energies from a simulation.
+
+    Args:
+      sim_path(str): path of the simulation
+      pickle_storage(:class:`AbstractStorage): storage backend for pickleing /
+          unpickleing Python objects to / from permanent storage
+      string_storage(:class:`AbstractStorage`:): storage backend for reading /
+          writing strings from / to permanent storage
+    '''
+    config = yaml.safe_load(string_storage.read(sim_path + CONFIG_PATH))
+    n_replicas = config['general']['num_replicas']
+    n_samples = config['general']['n_iterations']
+    dump_interval = config['re']['dump_interval']
+    energies = []
+    for r in range(1, n_replicas + 1):
+        r_energies = []
+        for n in range(0, n_samples - dump_interval, dump_interval):
+            fname = 'energies_replica{}_{}-{}.pickle'.format(
+                r, n, n + dump_interval)
+            r_energies.append(pickle_storage.read(
+                sim_path + ENERGIES_PATH + fname))
+        energies.append(np.concatenate(r_energies))
+    return np.array(energies)
 
 
 class InitialValueSetuper:
     '''
     Sets up an initial values for local sampling.
     '''
-    
+
     def __init__(self, pickle_storage):
         '''
         Initialize a schedule setuper.
@@ -217,7 +242,7 @@ class AbstractREJobController(ABC):
                  optimization_quantity=acceptance_rate,
                  dos_estimator=WHAM):
         '''
-        Initializes a Replixa Exchange job controller.
+        Initializes a Replica Exchange job controller.
 
         Arguments contain everything required for running simulations and
         optimizing schedules.
@@ -274,6 +299,31 @@ class AbstractREJobController(ABC):
         '''
         pass
 
+    def _calculate_schedule_from_dos(self, previous_sim_path, dos):
+        '''
+        Calculates an optimized schedule given a previous simulation and its
+        resulting density of states estimate.
+
+        Args:
+          previous_sim_path(str): path of previous simulation
+          dos(:class:`np.array`): the density of states estimate obtained from
+              the previous simulation
+
+        Returns:
+          dict: optimized schedule
+        '''
+        energies = load_energies(previous_sim_path, self._pickle_storage,
+                                 self._string_storage)
+        optimizer = self._schedule_optimizer(dos, energies,
+                                             acceptance_rate)
+        schedule = optimizer.optimize(
+            self._optimization_params['target_value'],
+            self._optimization_params['max_param'],
+            self._optimization_params['min_param'],
+            self._optimization_params['decrement'])
+
+        return schedule
+
     def optimize_schedule(self):
         '''
         Run schedule optimization loop.
@@ -289,24 +339,17 @@ class AbstractREJobController(ABC):
         run_counter = 1
         dos = None
         previous_schedule = None
-        preprevious_schedule = None
         previous_sim_path = None
         opt_params = self._optimization_params
-        while (not optimization_converged(preprevious_schedule,
-                                          previous_schedule)
-               or run_counter > opt_params['max_optimization_runs']):
+
+        for run_counter in range(1, opt_params['max_optimization_runs']):
             log('Schedule optimization simulation #{} started'.format(
                 run_counter))
             sim_path = 'optimization_run{}/'.format(run_counter)
             if previous_schedule is not None:
-                optimizer = self._schedule_optimizer(
-                    dos, self._load_energies(previous_sim_path),
-                    acceptance_rate)
-                schedule = optimizer.optimize(
-                    self._optimization_params['target_value'],
-                    self._optimization_params['max_param'],
-                    self._optimization_params['min_param'],
-                    self._optimization_params['decrement'])
+                schedule = self._calculate_schedule_from_dos(
+                    previous_sim_path, dos, self._pickle_storage,
+                    self._string_storage)
                 if run_counter == opt_params['max_optimization_runs']:
                     submsg = 'final run'
                 else:
@@ -316,21 +359,22 @@ class AbstractREJobController(ABC):
             else:
                 schedule = self._initial_schedule_maker.make_initial_schedule(
                     **self._initial_schedule_params)
+
             self._setup_simulation(sim_path, schedule, dos, previous_sim_path)
             dos = self._do_single_run(sim_path)
 
+            if optimization_converged(schedule, previous_schedule):
+                break
+
             previous_sim_path = sim_path
-            preprevious_schedule = previous_schedule
             previous_schedule = schedule
-            run_counter += 1
-            if run_counter == opt_params['max_optimization_runs']:
-                log(('Maximum number of optimization runs reached. '
-                     'Schedule optimization might not have converged'))
 
-        final_dos = self._dos_estimator.calculate_dos(schedule)
-        final_schedule = self._schedule_optimizer.optimize(dos)
+        if run_counter == opt_params['max_optimization_runs']:
+            log(('Maximum number of optimization runs reached. '
+                 'Schedule optimization might not have converged'))
+        final_schedule = self._calculate_schedule_from_dos(sim_path, dos)
 
-        return sim_path, final_schedule, final_dos
+        return sim_path, final_schedule, dos
 
     def _fill_config_template(self, sim_path, previous_sim_path, schedule,
                               prod=False):
@@ -394,28 +438,6 @@ class AbstractREJobController(ABC):
         self._pickle_storage.write(schedule, sim_path + SCHEDULE_PATH)
         self._scale_environment(schedule_length(schedule))
 
-    def _load_energies(self, sim_path):
-        '''
-        Loads energies from a simulation.
-
-        Args:
-          sim_path(str): path of the simulation
-        '''
-        config = yaml.safe_load(self._string_storage.read(sim_path + CONFIG_PATH))
-        n_replicas = config['general']['num_replicas']
-        n_samples = config['general']['n_iterations']
-        dump_interval = config['re']['dump_interval']
-        energies = []
-        for r in range(1, n_replicas + 1):
-            r_energies = []
-            for n in range(0, n_samples - dump_interval, dump_interval):
-                fname = 'energies_replica{}_{}-{}.pickle'.format(
-                    r, n, n + dump_interval)
-                r_energies.append(self._pickle_storage.read(
-                    sim_path + ENERGIES_PATH + fname))
-            energies.append(np.concatenate(r_energies))
-        return np.array(energies)
-
     def _do_single_run(self, sim_path):
         '''
         Run a single Replica Exchange simulation, estimate the density of
@@ -428,7 +450,8 @@ class AbstractREJobController(ABC):
           :class:`np.array`: density of states estimate
         '''
         self._re_runner.run_sampling(sim_path)
-        energies = self._load_energies(sim_path)
+        energies = load_energies(sim_path, self._pickle_storage,
+                                 self._string_storage)
         schedule = self._pickle_storage.read(sim_path + SCHEDULE_PATH)
         dos_estimator = self._dos_estimator(energies, self._ensemble, schedule)
         dos = dos_estimator.estimate_dos()
