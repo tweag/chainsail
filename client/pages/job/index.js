@@ -64,25 +64,48 @@ const Descs = ({ activeField }) => {
   );
 };
 
-const JobCreatedModal = ({ jobCreated, jobId }) => {
+const JobPageModal = ({ jobCreated, jobId, err, errMsg, setErr, setErrMsg }) => {
   return (
-    <Modal isActive={jobCreated}>
-      <div className="mb-7">
-        Job with id {jobId} created successfully. Please look at result page to check its latest
-        status.
-      </div>
-      <FlexCenter>
-        <Link href="/job/results">
-          <a
-            className={
-              'px-6 py-2 text-base text-center bg-purple-700  ' +
-              ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
-            }
-          >
-            Checkout results!
-          </a>
-        </Link>
-      </FlexCenter>
+    <Modal isActive={jobCreated || err}>
+      {!err && (
+        <>
+          <div className="mb-7">
+            Job with id {jobId} created successfully. Please look at result page to check its latest
+            status.
+          </div>
+          <FlexCenter>
+            <Link href="/job/results">
+              <a
+                className={
+                  'px-6 py-2 text-base text-center bg-purple-700  ' +
+                  ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
+                }
+              >
+                Checkout results!
+              </a>
+            </Link>
+          </FlexCenter>
+        </>
+      )}
+      {err && (
+        <>
+          <div className="mb-7">{errMsg.message}</div>
+          <FlexCenter>
+            <a
+              className={
+                'px-6 py-2 text-base text-center bg-purple-700  ' +
+                ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
+              }
+              onClick={() => {
+                setErr(false);
+                setErrMsg('');
+              }}
+            >
+              Try again!
+            </a>
+          </FlexCenter>
+        </>
+      )}
     </Modal>
   );
 };
@@ -143,7 +166,14 @@ export default function Job() {
 
   return (
     <Layout>
-      <JobCreatedModal jobCreated={jobCreated} jobId={createdJobId} />
+      <JobPageModal
+        jobCreated={jobCreated}
+        jobId={createdJobId}
+        err={err}
+        errMsg={errMsg}
+        setErr={setErr}
+        setErrMsg={setErrMsg}
+      />
       <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
         <FlexCol between className="h-full">
           <Navbar />
