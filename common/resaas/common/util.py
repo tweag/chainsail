@@ -1,7 +1,6 @@
 import numpy as np
 
-from .storage import (FileSystemPickleStorage,
-                      FileSystemStringStorage)
+from .storage import LocalStorageBackend, CloudStorageBackend
 
 def log_sum_exp(x, axis=0):
     """Calculate the log of a sum of exponentials in a numerically
@@ -18,7 +17,7 @@ def log_sum_exp(x, axis=0):
     return np.log(np.exp(x - xmax).sum(axis)) + xmax
 
 
-def storage_factory(path):
+def storage_factory():
     """Creates storage objects, which, depending on the environment, either
     access a local file system or a cloud storage.
 
@@ -28,6 +27,5 @@ def storage_factory(path):
     Returns:
 
     """
-    pstorage = FileSystemPickleStorage(path)
-    sstorage = FileSystemStringStorage(path)
-    return pstorage, sstorage
+    # TODO: make environment-dependent
+    return LocalStorageBackend()
