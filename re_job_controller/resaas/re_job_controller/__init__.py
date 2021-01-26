@@ -56,43 +56,6 @@ def optimization_converged(schedule, previous_schedule):
     return schedule_length(schedule) == schedule_length(previous_schedule)
 
 
-class AbstractInitialScheduleMaker(ABC):
-    '''
-    Interface for classes which are responsible for creating
-    initial schedules.
-    '''
-
-    def __init__(self, param_name):
-        self._param_name = param_name
-
-    @abstractmethod
-    def make_initial_schedule(self, **params):
-        '''
-        Make an initial schedule from some parameters.
-        '''
-        pass
-
-
-class GeometricInitialScheduleMaker(AbstractInitialScheduleMaker):
-    '''
-    Schedule maker which makes a schedule using a geometric progression.
-    '''
-
-    def make_initial_schedule(self, num_replicas, min_value, max_value=1.0):
-        '''
-        Makes a schedule of replica parameters (usually inverse temperatures)
-        with a fixed length defined by a geometric progression.
-
-        Args:
-            num_replicas(int): number of replicas
-            min_value(float): minimum parameter value
-            max_value(float): maximum parameter value
-        '''
-        common_ratio = (max_value / min_value) ** (1. / num_replicas)
-        geometric_progression = common_ratio ** np.arange(num_replicas)
-        return {self._param_name: geometric_progression}
-
-
 class AbstractREJobController(ABC):
     '''
     Interface for Replica Exchange job controllers. They implement the main
@@ -101,9 +64,7 @@ class AbstractREJobController(ABC):
     '''
 
     def __init__(self, job_spec, re_runner, storage_backend, schedule_optimizer,
-                 dos_estimator,
-                 initial_schedule_maker=GeometricInitialScheduleMaker,
-                 basename=''):
+                 dos_estimator, initial_schedule, basename=''):
         '''
         Initializes a Replica Exchange job controller.
 
@@ -121,14 +82,14 @@ class AbstractREJobController(ABC):
               an estimate for the density of states
             dos_estimator(:class:`WHAM`): WHAM object which estimates the
               density of states from samples of a previous simulation
-            initial_schedule_maker(:class:`InitialScheduleMaker`): schedule
+            initial_schedule(dict`): initial parameter schedule
               maker object which calculates a very first Replica Exchange
               schedule
             basename(str): optional basename to the simulation storage path
               (required for running locally or when reusing an existing bucket)
         '''
         self._re_runner = re_runner
-        self._initial_schedule_maker = initial_schedule_maker
+        self._initial_schedule = initial_schedule
         self._schedule_optimizer = schedule_optimizer
         self._dos_estimator = dos_estimator
         self._storage_backend = storage_backend
@@ -136,7 +97,6 @@ class AbstractREJobController(ABC):
         self._re_params = job_spec['re_params']
         self._local_sampling_params = job_spec['local_sampling_params']
         self._optimization_params = job_spec['optimization_params']
-        self._initial_schedule_params = job_spec['initial_schedule_params']
 
     @abstractmethod
     def _scale_environment(self, num_replicas):
@@ -199,7 +159,7 @@ class AbstractREJobController(ABC):
                     run_counter, max_runs, schedule_length(schedule))
                 log(msg_part1 + msg_part2)
             else:
-                schedule = self._initial_schedule_maker.make_initial_schedule()
+                schedule = self._initial_schedule
 
             self._setup_simulation(current_storage, schedule, previous_storage)
             self._do_single_run(current_storage)
@@ -299,30 +259,12 @@ class AbstractREJobController(ABC):
         dos = self._dos_estimator.estimate_dos(energies, schedule)
         storage.save_dos(dos)
 
-    def _check_compatibility(self, initial_schedule_params,
-                             optimization_params):
-        '''
-        Check whether initial schedule parameters are compatible with the
-        optimization parameters.
-
-        Args:
-            initial_schedule_params(dict): initial schedule parameters
-            optimization_params(dict): optimization params
-        '''
-        # TODO: check whether optimization params and initial schedule params
-        # are compatible. Although that's a late failure - perhaps do this upon
-        # job submission?
-        pass
-
     def run_job(self):
         '''
         Runs a complete Replica Exchange sampling job.
 
         This comprises schedule optimization and a final production run.
         '''
-        self._check_compatibility(self._initial_schedule_params,
-                                  self._optimization_params)
-
         optimization_result = self._optimize_schedule()
         final_opt_storage, final_schedule = optimization_result
 

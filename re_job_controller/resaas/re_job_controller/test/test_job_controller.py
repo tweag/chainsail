@@ -30,11 +30,6 @@ class MockOptimizer(SingleParameterScheduleOptimizer):
         return {'beta': np.array([42] * (dos - 1))}
 
 
-class MockInitialScheduleMaker:
-    def make_initial_schedule(self):
-        return {'beta': np.array([42] * 8)}
-
-
 class MockRERunner:
     def run_sampling(self, storage):
         storage.save_final_timesteps(np.array([1, 2, 3]))
@@ -71,9 +66,10 @@ class testREJobController(unittest.TestCase):
         opt_params_copy.pop('max_optimization_runs')
         optimizer = MockOptimizer(optimization_quantity=None,
                                   param_name='beta', **opt_params_copy)
+        initial_schedule = {'beta': np.array([42] * 8)}
         self._controller = MockREJobController(
             job_spec, MockRERunner(), MockStorageBackend(), optimizer,
-            MockWham(), MockInitialScheduleMaker(), basename='/tmp')
+            MockWham(), initial_schedule, basename='/tmp')
 
     def testOptimizeSchedule(self):
         res_storage, res_sched = self._controller.optimize_schedule()
