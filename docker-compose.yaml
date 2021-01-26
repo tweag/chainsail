@@ -1,0 +1,55 @@
+# docker run -v  -v $PWD/osu_latency.py:/osu_latency.py  59c6e26c1f27 /app/deps/openmpi/bin/mpirun --allow-run-as-root /app/deps/rexfw/bin/python /osu_latency.py
+version: "3.5"
+services:
+  mpi-master:
+    build:
+      context: .
+      dockerfile: docker/node/base/Dockerfile
+    # image: openmpi
+    ports:
+      - "22"
+    links:
+      - mpi-node-1
+      - mpi-node-2
+    volumes:
+      - $PWD/docker/node/ssh/known_hosts:/etc/ssh/ssh_config
+      - $HOME/.ssh/dorran-resaas-pair.pem:/root/.ssh/dorran-resaas-pair.pem
+      - $HOME/.ssh/dorran-resaas-pair.pub:/app/config/ssh/authorized_keys
+      - $PWD/osu_latency.py:/osu_latency.py
+      - $PWD/normal.py:/normal.py
+    command:
+      - /usr/sbin/sshd
+      - -D
+      # - /app/deps/openmpi/bin/mpirun
+      # - --allow-run-as-root
+      # - --host
+      # - mpi_node
+      # - /app/deps/rexfw/bin/python
+      # - /osu_latency.py
+    depends_on: [mpi-node-1, mpi-node-2]
+  mpi-node-1:
+    build:
+      context: .
+      dockerfile: docker/node/base/Dockerfile
+    ports:
+      - "22"
+    volumes:
+      - $HOME/.ssh/dorran-resaas-pair.pub:/app/config/ssh/authorized_keys
+      - $PWD/osu_latency.py:/osu_latency.py
+      - $PWD/normal.py:/normal.py
+    command:
+      - /usr/sbin/sshd
+      - -D
+  mpi-node-2:
+    ports:
+      - "22"
+    build:
+      context: .
+      dockerfile: docker/node/base/Dockerfile
+    volumes:
+      - $HOME/.ssh/dorran-resaas-pair.pub:/app/config/ssh/authorized_keys
+      - $PWD/osu_latency.py:/osu_latency.py
+      - $PWD/normal.py:/normal.py
+    command:
+      - /usr/sbin/sshd
+      - -D
