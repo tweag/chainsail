@@ -1,6 +1,10 @@
 '''
 Logic to set up initial states and values for Replica Exchange simulations
 '''
+import numpy as np
+
+from .util import schedule_length
+
 
 def setup_timesteps(current_storage, schedule, previous_storage=None):
     '''
@@ -16,11 +20,11 @@ def setup_timesteps(current_storage, schedule, previous_storage=None):
     if previous_storage is None:
         timesteps = np.linspace(1e-3, 1e-1, len(schedule))
     else:
-        old_timesteps = previous_storage.load_timesteps()
+        old_timesteps = previous_storage.load_final_timesteps()
         old_schedule = previous_storage.load_schedule()
         timesteps = interpolate_timesteps(schedule, old_schedule,
                                           old_timesteps)
-    current_storage.save_timesteps(timesteps)
+    current_storage.save_initial_timesteps(timesteps)
 
 
 def interpolate_timesteps(schedule, old_schedule, old_timesteps):

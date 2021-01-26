@@ -5,8 +5,10 @@ import numpy as np
 
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
-from resaas.common.storage import SimulationStorage
+from resaas.common.storage import (
+    SimulationStorage, default_dir_structure as dir_structure)
 from .initial_setup import setup_initial_states, setup_timesteps
+from .util import schedule_length
 
 
 def log(msg):
@@ -37,10 +39,6 @@ cfg_template = {
         'adaption_downrate': 0.95,
     }
 }
-
-
-def schedule_length(schedule):
-    return len(list(schedule.values())[0])
 
 
 def optimization_converged(schedule, previous_schedule):
@@ -102,10 +100,10 @@ class AbstractREJobController(ABC):
     initial states for the next simulation, setting it up and running it.
     '''
 
-    def __init__(self, job_spec, re_runner, storage, schedule_optimizer,
+    def __init__(self, job_spec, re_runner, storage_backend, schedule_optimizer,
                  dos_estimator,
                  initial_schedule_maker=GeometricInitialScheduleMaker,
-                 base_name=''):
+                 basename=''):
         '''
         Initializes a Replica Exchange job controller.
 
@@ -126,7 +124,7 @@ class AbstractREJobController(ABC):
             initial_schedule_maker(:class:`InitialScheduleMaker`): schedule
               maker object which calculates a very first Replica Exchange
               schedule
-            base_name(str): optional basename to the simulation storage path
+            basename(str): optional basename to the simulation storage path
               (required for running locally or when reusing an existing bucket)
         '''
         self._re_runner = re_runner
@@ -134,7 +132,7 @@ class AbstractREJobController(ABC):
         self._schedule_optimizer = schedule_optimizer
         self._dos_estimator = dos_estimator
         self._storage_backend = storage_backend
-        self._base_name = base_name
+        self._basename = basename
         self._re_params = job_spec['re_params']
         self._local_sampling_params = job_spec['local_sampling_params']
         self._optimization_params = job_spec['optimization_params']
@@ -156,13 +154,15 @@ class AbstractREJobController(ABC):
         resulting density of states estimate.
 
         Args:
+            previous_storage(:class:`SimulationStorage`): storage for previous
+              simulation
             dos(:class:`np.array`): the density of states estimate obtained from
               the previous simulation
 
         Returns:
             dict: optimized schedule
         '''
-        energies = self._storage.load_energies()
+        energies = previous_storage.load_all_energies()
         schedule = self._schedule_optimizer.optimize(dos, energies)
 
         return schedule
@@ -188,9 +188,9 @@ class AbstractREJobController(ABC):
         for run_counter in range(max_runs):
             log('Schedule optimization simulation #{}/{} started'.format(
                 run_counter + 1, max_runs))
-                current_storage = SimulationStorage(
-                    self._basename, 'optimization_run{}'.format(run_counter),
-                    self._storage_backend)
+            current_storage = SimulationStorage(
+                self._basename, 'optimization_run{}'.format(run_counter),
+                self._storage_backend)
             if previous_schedule is not None:
                 schedule = self._calculate_schedule_from_dos(
                     previous_storage, dos)
@@ -202,14 +202,14 @@ class AbstractREJobController(ABC):
                 schedule = self._initial_schedule_maker.make_initial_schedule()
 
             self._setup_simulation(current_storage, schedule, previous_storage)
-            self._do_single_run(storage)
-            dos = self._storage.load_dos()
+            self._do_single_run(current_storage)
+            dos = current_storage.load_dos()
 
             if previous_schedule is not None and optimization_converged(
                 schedule, previous_schedule):
                 break
 
-            previous_storage = storage
+            previous_storage = current_storage
             previous_schedule = schedule
         else:
             log(('Maximum number of optimization runs reached. '
@@ -217,7 +217,7 @@ class AbstractREJobController(ABC):
         final_schedule = self._calculate_schedule_from_dos(
             current_storage, dos)
 
-        return storage, final_schedule
+        return current_storage, final_schedule
 
     def _fill_config_template(self, storage, previous_storage, schedule,
                               prod=False):
@@ -237,9 +237,9 @@ class AbstractREJobController(ABC):
         updates['local_sampling']['timestep_adaption_limit'] = adapt_limit
         if previous_storage is not None:
             updates['local_sampling'] = {
-                'timesteps': dir_structure.TIMESTEPS_FILE_NAME}
+                'timesteps': dir_structure.INITIAL_TIMESTEPS_FILE_NAME}
             updates['general'] = {
-                'initial_states': dir_structure.INITIAL_STATES_PATH}
+                'initial_states': dir_structure.INITIAL_STATES_FILE_NAME}
         if prod:
             num_samples = self._re_params['num_production_samples']
         else:
@@ -248,12 +248,12 @@ class AbstractREJobController(ABC):
                               'output_path': storage.sim_path,
                               'num_replicas': schedule_length(schedule),
                               'basename': storage._basename}
-        updates['re'] = {'schedule': dir_structure.SCHEDULE_PATH,
+        updates['re'] = {'schedule': dir_structure.SCHEDULE_FILE_NAME,
                          'dump_interval': self._re_params['dump_interval']}
 
         return updates
 
-    def _setup_simulation(self, schedule, previous_storage=None,
+    def _setup_simulation(self, current_storage, schedule, previous_storage=None,
                           prod=False):
         '''
         Sets up a simulation such that a RE runner only has to start it.
@@ -264,22 +264,21 @@ class AbstractREJobController(ABC):
         folder.
 
         Args:
+            current_storage(:class:`SimulationStorage`): storage for current
+              simulation
             schedule(dict): Replica Exchange schedule
             previous_storage(:class:`SimulationStorage`): storage for previous
               simulation
             prod(bool): whether this is the production run or not
         '''
         if previous_storage is not None:
-            self._initial_value_setuper.setup_timesteps(storage, schedule,
-                                                        previous_storage)
-            self._initial_value_setuper.setup_initial_states(
-                storage, schedule, previous_storage)
+            setup_timesteps(current_storage, schedule, previous_storage)
+            setup_initial_states(current_storage, schedule, previous_storage)
 
-        config_dict = self._fill_config_template(storage, previous_storage,
-                                                 schedule, prod)
-        config = yaml.dump(config_dict)
-        self._storage.save_config(config)
-        self._storage.save_schedule(schedule)
+        config_dict = self._fill_config_template(
+            current_storage, previous_storage, schedule, prod)
+        current_storage.save_config(config_dict)
+        current_storage.save_schedule(schedule)
         self._scale_environment(schedule_length(schedule))
 
     def _do_single_run(self, storage):
@@ -288,17 +287,17 @@ class AbstractREJobController(ABC):
         states and write it to the simulation folder.
 
         Args:
-            current_storage(:class:`SimulationStorage`): storage for simulation
+            storage(:class:`SimulationStorage`): storage for simulation
               to be set up
 
         Returns:
           :class:`np.array`: density of states estimate
         '''
-        self._re_runner.run_sampling(storage.config_file_name)
-        energies = self._storage.load_all_energies()
-        schedule = self._storage.load_schedule()
+        self._re_runner.run_sampling(storage)
+        energies = storage.load_all_energies()
+        schedule = storage.load_schedule()
         dos = self._dos_estimator.estimate_dos(energies, schedule)
-        self._storage.save_dos(dos)
+        storage.save_dos(dos)
 
     def _check_compatibility(self, initial_schedule_params,
                              optimization_params):
@@ -341,14 +340,3 @@ class LocalREJobController(AbstractREJobController):
 
     def _scale_environment(self, _):
         pass
-
-
-# job_spec = dict(re_params=dict(num_replicas=8, num_optimization_samples=5000),
-#                 local_sampling_params=dict(hmc_num_adaption_steps=100),
-#                 optimization_params=dict(target_value=0.3, max_param=1,
-#                                          min_param=0.1, decrement=0.05),
-#                 initial_schedule_params=dict(beta_min=0.01, beta_ratio=0.9),
-#                 path='/tmp/jctest/')
-
-# c = LocalREJobController(job_spec, MockRERunner())
-# c.run_job()
