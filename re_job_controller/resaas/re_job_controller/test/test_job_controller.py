@@ -3,9 +3,9 @@ import unittest
 import numpy as np
 import yaml
 
-from resaas.common.storage import SimulationStorage, AbstractStorageBackend
+from resaas.common.storage import SimulationStorage, AbstractStorageBackend, dir_structure
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
-from resaas.re_job_controller import AbstractREJobController, FINAL_TIMESTEPS_PATH
+from resaas.re_job_controller import AbstractREJobController
 
 
 class MockWham:
@@ -24,12 +24,9 @@ class MockInitialScheduleMaker:
 
 
 class MockRERunner:
-    def run_sampling(self, config_file, basename):
-        pstorage = FileSystemPickleStorage(basename)
-        sstorage = FileSystemStringStorage(basename)
-        path = yaml.safe_load(
-            sstorage.read(config_file))['general']['output_path']
-        pstorage.write(np.array([1, 2, 3]), path + FINAL_TIMESTEPS_PATH)
+    def run_sampling(self, storage):
+        storage.write(np.array([1, 2, 3]),
+                      dir_structure.FINAL_TIMESTEPS_PATH)
 
 
 class MockREJobController(AbstractREJobController):
@@ -60,8 +57,7 @@ class testREJobController(unittest.TestCase):
                                              'max_param': 1.0,
                                              'min_param': 1.0,
                                              'decrement': 0.2},
-                        initial_schedule_params={},
-                        path=tempdir_name)
+                        initial_schedule_params={})
 
         opt_params_copy = job_spec['optimization_params'].copy()
         opt_params_copy.pop('max_optimization_runs')
