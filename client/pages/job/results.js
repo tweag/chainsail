@@ -4,12 +4,11 @@ import { Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components
 
 const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
 
-const StartJobButton = ({ jobId }) => {
+const StartJobButton = ({ jobId, isShown }) => {
   return (
     <div
-      className={
-        'py-1 text-center bg-purple-900 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700 text-white'
-      }
+      className={`py-1 text-center bg-purple-900 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700 text-white
+	      ${isShown ? 'visible' : 'invisible'}`}
       onClick={() => startJob(jobId)}
     >
       START
@@ -50,7 +49,9 @@ const JobsTable = ({ data }) => {
       <TableData d={dateFormatter(row.started_at_at)} />
       <TableData d={dateFormatter(row.finished_at)} />
       <TableData d={row.status} />
-      <TableData>{row.status === 'initialized' && <StartJobButton jobId={row.id} />}</TableData>
+      <TableData>
+        <StartJobButton jobId={row.id} isShown={row.status === 'initialized'} />
+      </TableData>
     </tr>
   );
   const TableData = ({ d, children }) => (
@@ -85,9 +86,9 @@ export default function Job() {
   return (
     <Layout>
       <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600">
-        <FlexCol between>
+        <FlexCol start className="min-h-screen">
           <Navbar />
-          <FlexCenter className="w-full h-full py-5 md:py-20">
+          <FlexCenter className="py-5 md:py-32">
             {error && <div>Failed to load. Please refresh the page.</div>}
             {(data == undefined || data.length == 0) && <div>Loading</div>}
             {data != undefined && data.length > 0 && <JobsTable data={data} />}
