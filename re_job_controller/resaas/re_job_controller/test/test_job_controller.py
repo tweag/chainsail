@@ -39,6 +39,8 @@ class MockRERunner:
     def run_sampling(self, storage):
         storage.save_final_timesteps(np.array([1, 2, 3]))
         cfg = storage.load_config()
+        # save fake energies b/c I'm too stupid to mock
+        # StorageWriter.load_all_energies()
         di = cfg['re']['dump_interval']
         for r in range(1, cfg['general']['num_replicas'] + 1):
             for s in range(0, cfg['general']['n_iterations'],
