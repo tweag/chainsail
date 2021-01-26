@@ -1,10 +1,9 @@
 import unittest
-import tempfile
 
 import numpy as np
 import yaml
 
-from resaas.common.util import FileSystemStringStorage, FileSystemPickleStorage
+from resaas.common.storage import SimulationStorage, AbstractStorageBackend
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 from resaas.re_job_controller import AbstractREJobController, FINAL_TIMESTEPS_PATH
 
@@ -38,15 +37,19 @@ class MockREJobController(AbstractREJobController):
         pass
 
 
+class MockStorageBackend(AbstractStorageBackend):
+    def __init__(self):
+        self._data = {}
+        
+    def write(self, data,  filename):
+        self._data[filename] = data
+
+    def read(self, filename, data_type):
+        return self._data[filename]
+
+
 class testREJobController(unittest.TestCase):
     def setUp(self):
-        tempdir = tempfile.TemporaryDirectory()
-        tempdir_name = tempdir.name
-        self._tempdir_name = tempdir_name
-
-        pstorage = FileSystemPickleStorage(tempdir_name)
-        sstorage = FileSystemStringStorage(tempdir_name)
-
         re_params = dict(num_replicas=8, num_optimization_samples=5000,
                          dump_interval=1000)
         ls_params = dict(hmc_num_adaption_steps=100)
@@ -65,7 +68,7 @@ class testREJobController(unittest.TestCase):
         optimizer = MockOptimizer(optimization_quantity=None,
                                   param_name='beta', **opt_params_copy)
         self._controller = MockREJobController(
-            job_spec, MockRERunner(), pstorage, sstorage, optimizer,
+            job_spec, MockRERunner(), MockStorageBackend(), optimizer,
             MockWham(), MockInitialScheduleMaker())
 
     def testOptimizeSchedule(self):

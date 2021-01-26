@@ -5,23 +5,13 @@ import numpy as np
 
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
+from resaas.common.storage import SimulationStorage
 # from resaas.re_runners import LocalRERunner
 
 
 def log(msg):
     # TODO
     pass
-
-
-TIMESTEPS_PATH = 'timesteps.pickle'
-FINAL_TIMESTEPS_PATH = 'final_timesteps.pickle'
-INITIAL_STATES_PATH = 'initial_states.pickle'
-DOS_PATH = 'dos.pickle'
-FINAL_DOS_PATH = 'final_dos.pickle'
-SCHEDULE_PATH = 'schedule.pickle'
-PROD_OUTPUT_PATH = 'production_run/'
-ENERGIES_PATH = 'energies/'
-CONFIG_PATH = 'config.yml'
 
 
 cfg_template = {
@@ -62,134 +52,89 @@ def optimization_converged(schedule, previous_schedule):
     shift while the length stays the same, but for now that'll do.
 
     Args:
-      schedule(dict): a schedule obtained from an iteration
-      previous_schedule(dict): schedule obtained from the iteration after
+        schedule(dict): a schedule obtained from an iteration
+        previous_schedule(dict): schedule obtained from the iteration after
     '''
     return schedule_length(schedule) == schedule_length(previous_schedule)
 
 
-def load_energies(sim_path, pickle_storage, string_storage):
+def setup_timesteps(current_storage, schedule, previous_storage=None):
     '''
-    Loads energies from a simulation.
+    Sets up time steps, possibly based on a previous simulation.
 
     Args:
-      sim_path(str): path of the simulation
-      pickle_storage(:class:`AbstractStorage): storage backend for pickleing /
-          unpickleing Python objects to / from permanent storage
-      string_storage(:class:`AbstractStorage`:): storage backend for reading /
-          writing strings from / to permanent storage
+        current_storage(:class:`SimulationStorage`): storage for simulation
+          to be set up
+        schedule(dict): current parameter schedule
+        previous_storage(:class:`SimulationStorage`): storage for previous
+          simulation
     '''
-    # TODO: I didn't manage to mock this function using unittest.mock,
-    # so this has to be commented out for the test :-(
-    # return np.eye(len(pickle_storage.read(sim_path + 'schedule.pickle')['beta']))
-    config = yaml.safe_load(string_storage.read(sim_path + CONFIG_PATH))
-    n_replicas = config['general']['num_replicas']
-    n_samples = config['general']['n_iterations']
-    dump_interval = config['re']['dump_interval']
-    energies = []
-    for r in range(1, n_replicas + 1):
-        r_energies = []
-        for n in range(0, n_samples - dump_interval, dump_interval):
-            fname = 'energies_replica{}_{}-{}.pickle'.format(
-                r, n, n + dump_interval)
-            r_energies.append(pickle_storage.read(
-                sim_path + ENERGIES_PATH + fname))
-        energies.append(np.concatenate(r_energies))
-    return np.array(energies)
+    if previous_storage is None:
+        timesteps = np.linspace(1e-3, 1e-1, len(schedule))
+    else:
+        old_timesteps = previous_storage.load_timesteps()
+        old_schedule = previous_storage.load_schedule()
+        timesteps = interpolate_timesteps(schedule, old_schedule,
+                                          old_timesteps)
+    current_storage.save_timesteps(timesteps)
 
 
-class InitialValueSetuper:
+def interpolate_timesteps(schedule, old_schedule, old_timesteps):
     '''
-    Sets up an initial values for local sampling.
+    Interpolates time steps from a previous simulation.
+
+    Given time steps from a previous simulation and its schedule,
+    this interpolates between these time steps to a new schedule
+    length.
+
+    Args:
+        schedule(dict): current parameter schedule
+        old_schedule(dict): previous parameter schedule
+        old_timesteps(dict): previous set of time steps
     '''
+    # TODO: somehow interpolate timesteps from old simulation, e.g., by
+    # fitting spline or just simple linear interpolation
+    return np.array([0.001] * schedule_length(schedule))
 
-    def __init__(self, pickle_storage):
-        '''
-        Initialize a schedule setuper.
 
-        Args:
-          pickle_storage(:class:`AbstractStorage`): storage backend for pickled
-                                                    Python objects
-        '''
-        self._pickle_storage = pickle_storage
+def draw_initial_states(schedule, previous_storage, dos):
+    '''
+    Draw initial states using the density of states.
 
-    def setup_timesteps(self, sim_path, schedule, previous_sim_path=None):
-        '''
-        Sets up time steps, possibly based on a previous simulation.
+    Given previous samples, their energies, and the current parameter
+    schedule, this uses the density of states to calculate probability
+    weights of the previous samples under the new schedule and uses
+    those weights to sample fitting new initial states from the existing
+    samples.
 
-        Args:
-          sim_path(str): path of current simulation
-          schedule(dict): current parameter schedule
-          previous_sim_path(str): path of previous simulation
-        '''
-        if previous_sim_path is None:
-            timesteps = np.linspace(1e-3, 1e-1, len(schedule))
-        else:
-            old_timesteps = self._pickle_storage.read(
-                previous_sim_path + FINAL_TIMESTEPS_PATH)
-            old_schedule = self._pickle_storage.read(
-                previous_sim_path + SCHEDULE_PATH)
-            timesteps = self._interpolate_timesteps(schedule, old_schedule,
-                                                    old_timesteps)
-        self._pickle_storage.write(timesteps,
-                                   sim_path + TIMESTEPS_PATH)
+    Args:
+        schedule(dict): current temperature schedule
+        dos(:class:`np.array`): density of states estimate of previous
+          simulation
+    '''
+    # TODO
+    return np.array([0.001] * schedule_length(schedule))
 
-    def _interpolate_timesteps(self, schedule, old_schedule, old_timesteps):
-        '''
-        Interpolates time steps from a previous simulation.
 
-        Given time steps from a previous simulation and its schedule,
-        this interpolates between these time steps to a new schedule
-        length.
+def setup_initial_states(current_storage, schedule, previous_storage=None):
+    '''
+    Sets up initial states.
 
-        Args:
-          schedule(dict): current parameter schedule
-          old_schedule(dict): previous parameter schedule
-          old_timesteps(dict): previous set of time steps
-        '''
-        # TODO: somehow interpolate timesteps from old simulation, e.g., by
-        # fitting spline or just simple linear interpolation
-        return np.array([0.001] * schedule_length(schedule))
+    Uses the density of states to draw new initial states and writes them
+    to the simulation directory.
 
-    def _draw_initial_states(self, schedule, previous_sim_path, dos):
-        '''
-        Draw initial states using the density of states.
-
-        Given previous samples, their energies, and the current parameter
-        schedule, this uses the density of states to calculate probability
-        weights of the previous samples under the new schedule and uses
-        those weights to sample fitting new initial states from the existing
-        samples.
-
-        Args:
-          schedule(dict): current temperature schedule
-          previous_sim_path(dict): path of previous simulation
-          dos(:class:`np.array`): density of states estimate of previous
-              simulation
-        '''
-        # TODO
-        return np.array([0.001] * schedule_length(schedule))
-
-    def setup_initial_states(self, sim_path, schedule,
-                             previous_sim_path=None):
-        '''
-        Sets up initial states.
-
-        Uses the density of states to draw new initial states and writes them
-        to the simulation directory.
-
-        Args:
-          sim_path(str): path of current simulation
-          schedule(dict): current paramter schedule
-          previous_sim_path(str): path of previous simulation
-        '''
-        if previous_sim_path is not None:
-            dos = self._pickle_storage.read(previous_sim_path + DOS_PATH)
-            initial_states = self._draw_initial_states(schedule,
-                                                       previous_sim_path,
-                                                       dos)
-            self._pickle_storage.write(initial_states,
-                                       sim_path + INITIAL_STATES_PATH)
+    Args:
+        current_storage(:class:`SimulationStorage`): storage for simulation
+          to be set up
+        schedule(dict): current paramter schedule
+        previous_storage(:class:`SimulationStorage`): storage for previous
+          simulation
+    '''
+    if previous_storage is not None:
+        dos = previous_storage.load_dos()
+        initial_states = draw_initial_states(
+            schedule, previous_storage, dos)
+        current_storage.save_initial_states(initial_states)
 
 
 class AbstractInitialScheduleMaker(ABC):
@@ -220,9 +165,9 @@ class GeometricInitialScheduleMaker(AbstractInitialScheduleMaker):
         with a fixed length defined by a geometric progression.
 
         Args:
-          num_replicas(int): number of replicas
-          min_value(float): minimum parameter value
-          max_value(float): maximum parameter value
+            num_replicas(int): number of replicas
+            min_value(float): minimum parameter value
+            max_value(float): maximum parameter value
         '''
         common_ratio = (max_value / min_value) ** (1. / num_replicas)
         geometric_progression = common_ratio ** np.arange(num_replicas)
@@ -236,10 +181,10 @@ class AbstractREJobController(ABC):
     initial states for the next simulation, setting it up and running it.
     '''
 
-    def __init__(self, job_spec, re_runner, pickle_storage, string_storage,
-                 schedule_optimizer, dos_estimator,
+    def __init__(self, job_spec, re_runner, storage, schedule_optimizer,
+                 dos_estimator,
                  initial_schedule_maker=GeometricInitialScheduleMaker,
-                 ):
+                 base_name=''):
         '''
         Initializes a Replica Exchange job controller.
 
@@ -247,44 +192,28 @@ class AbstractREJobController(ABC):
         optimizing schedules.
 
         Args:
-          job_spec(dict): job specifications provided by the user
-          re_runner(:class:`AbstractRERunner`): runner which runs an RE
+            job_spec(dict): job specifications provided by the user
+            re_runner(:class:`AbstractRERunner`): runner which runs an RE
               simulation (depends on the environment) 
-          pickle_storage(:class:`AbstractStorage): storage backend for
-              pickleing / unpickleing Python objects to / from permanent
-              storage
-          string_storage(:class:`AbstractStorage`:): storage backend for
-              reading / writing strings from / to permanent storage
-          schedule_optimizer(:class:`AbstractScheduleOptimizer`): schedule
+            base_storage(:class:`AbstractStorage`:): storage backend for
+              reading / writing strings from / to permanent simulation storage
+            schedule_optimizer(:class:`AbstractScheduleOptimizer`): schedule
               optimizer which calculates a new schedule based on
               an estimate for the density of states
-          dos_estimator(:class:`WHAM`): WHAM object which estimates the
+            dos_estimator(:class:`WHAM`): WHAM object which estimates the
               density of states from samples of a previous simulation
-          initial_schedule_maker(:class:`InitialScheduleMaker`): schedule
+            initial_schedule_maker(:class:`InitialScheduleMaker`): schedule
               maker object which calculates a very first Replica Exchange
               schedule
+            base_name(str): optional basename to the simulation storage path
+              (required for running locally or when reusing an existing bucket)
         '''
         self._re_runner = re_runner
         self._initial_schedule_maker = initial_schedule_maker
         self._schedule_optimizer = schedule_optimizer
         self._dos_estimator = dos_estimator
-        self._basename = job_spec['path']
-        self._pickle_storage = pickle_storage
-        self._string_storage = string_storage
-        self._initial_value_setuper = InitialValueSetuper(
-            self._pickle_storage)
-        self._re_params = None
-        self._local_sampling_params = None
-        self._optimization_params = None
-        self._set_params(job_spec)
-
-    def _set_params(self, job_spec):
-        '''
-        Set different parameter dictionaries from job specification.
-
-        Args:
-          job_spec(dict): job specification
-        '''
+        self._storage_backend = storage_backend
+        self._base_name = base_name
         self._re_params = job_spec['re_params']
         self._local_sampling_params = job_spec['local_sampling_params']
         self._optimization_params = job_spec['optimization_params']
@@ -296,25 +225,23 @@ class AbstractREJobController(ABC):
         Scale up / down the environment to the given numer of replicas.
 
         Args:
-          num_replicas(int): number of replicas
+            num_replicas(int): number of replicas
         '''
         pass
 
-    def _calculate_schedule_from_dos(self, previous_sim_path, dos):
+    def _calculate_schedule_from_dos(self, previous_storage, dos):
         '''
         Calculates an optimized schedule given a previous simulation and its
         resulting density of states estimate.
 
         Args:
-          previous_sim_path(str): path of previous simulation
-          dos(:class:`np.array`): the density of states estimate obtained from
+            dos(:class:`np.array`): the density of states estimate obtained from
               the previous simulation
 
         Returns:
-          dict: optimized schedule
+            dict: optimized schedule
         '''
-        energies = load_energies(previous_sim_path, self._pickle_storage,
-                                 self._string_storage)
+        energies = self._storage.load_energies()
         schedule = self._schedule_optimizer.optimize(dos, energies)
 
         return schedule
@@ -333,17 +260,19 @@ class AbstractREJobController(ABC):
         '''
         dos = None
         previous_schedule = None
-        previous_sim_path = None
+        previous_storage = None
         opt_params = self._optimization_params
 
         max_runs = opt_params['max_optimization_runs']
         for run_counter in range(max_runs):
             log('Schedule optimization simulation #{}/{} started'.format(
                 run_counter + 1, max_runs))
-            sim_path = 'optimization_run{}/'.format(run_counter)
+                current_storage = SimulationStorage(
+                    self._basename, 'optimization_run{}'.format(run_counter),
+                    self._storage_backend)
             if previous_schedule is not None:
                 schedule = self._calculate_schedule_from_dos(
-                    previous_sim_path, dos)
+                    previous_storage, dos)
                 msg_part1 = 'Calculated schedule for optimization run '
                 msg_part2 = '{}/{} with {} replicas'.format(
                     run_counter, max_runs, schedule_length(schedule))
@@ -351,56 +280,59 @@ class AbstractREJobController(ABC):
             else:
                 schedule = self._initial_schedule_maker.make_initial_schedule()
 
-            self._setup_simulation(sim_path, schedule, previous_sim_path)
-            self._do_single_run(sim_path)
-            dos = self._pickle_storage.read(sim_path + DOS_PATH)
+            self._setup_simulation(current_storage, schedule, previous_storage)
+            self._do_single_run(storage)
+            dos = self._storage.load_dos()
 
             if previous_schedule is not None and optimization_converged(
                 schedule, previous_schedule):
                 break
 
-            previous_sim_path = sim_path
+            previous_storage = storage
             previous_schedule = schedule
         else:
             log(('Maximum number of optimization runs reached. '
                  'Schedule optimization might not have converged'))
-        final_schedule = self._calculate_schedule_from_dos(sim_path, dos)
+        final_schedule = self._calculate_schedule_from_dos(
+            current_storage, dos)
 
-        return sim_path, final_schedule, dos
+        return storage, final_schedule
 
-    def _fill_config_template(self, sim_path, previous_sim_path, schedule,
+    def _fill_config_template(self, storage, previous_storage, schedule,
                               prod=False):
         '''
         Fills in the config template with run-specific values.
 
         Args:
-          sim_path(str): path of the current simulation
-          previous_sim_path(str): path of the previous simulation
-          schedule(dict): schedule of the current simulation
-          prod(bool): whether this is the production run or not
+            current_storage(:class:`SimulationStorage`): storage for simulation
+              to be set up
+            previous_storage(:class:`SimulationStorage`): storage for previous
+              simulation
+            schedule(dict): schedule of the current simulation
+            prod(bool): whether this is the production run or not
         '''
         updates = {'local_sampling': {}, 'general': {}, }
         adapt_limit = self._local_sampling_params['hmc_num_adaption_steps']
         updates['local_sampling']['timestep_adaption_limit'] = adapt_limit
-        if previous_sim_path is not None:
+        if previous_storage is not None:
             updates['local_sampling'] = {
-                'timesteps': sim_path + TIMESTEPS_PATH}
+                'timesteps': dir_structure.TIMESTEPS_FILE_NAME}
             updates['general'] = {
-                'initial_states': sim_path + INITIAL_STATES_PATH}
+                'initial_states': dir_structure.INITIAL_STATES_PATH}
         if prod:
             num_samples = self._re_params['num_production_samples']
         else:
             num_samples = self._re_params['num_optimization_samples']
         updates['general'] = {'n_iterations': num_samples,
-                              'output_path': sim_path,
+                              'output_path': storage.sim_path,
                               'num_replicas': schedule_length(schedule),
-                              'basename': self._basename}
-        updates['re'] = {'schedule': sim_path + SCHEDULE_PATH,
+                              'basename': storage._basename}
+        updates['re'] = {'schedule': dir_structure.SCHEDULE_PATH,
                          'dump_interval': self._re_params['dump_interval']}
 
         return updates
 
-    def _setup_simulation(self, sim_path, schedule, previous_sim_path=None,
+    def _setup_simulation(self, schedule, previous_storage=None,
                           prod=False):
         '''
         Sets up a simulation such that a RE runner only has to start it.
@@ -411,42 +343,41 @@ class AbstractREJobController(ABC):
         folder.
 
         Args:
-          sim_path(str): path of the simulation
-          schedule(dict): Replica Exchange schedule
-          previous_sim_path(str): path of previous simulation
-          prod(bool): whether this is the production run or not
+            schedule(dict): Replica Exchange schedule
+            previous_storage(:class:`SimulationStorage`): storage for previous
+              simulation
+            prod(bool): whether this is the production run or not
         '''
-        if previous_sim_path is not None:
-            self._initial_value_setuper.setup_timesteps(sim_path, schedule,
-                                                        previous_sim_path)
+        if previous_storage is not None:
+            self._initial_value_setuper.setup_timesteps(storage, schedule,
+                                                        previous_storage)
             self._initial_value_setuper.setup_initial_states(
-                sim_path, schedule, previous_sim_path)
+                storage, schedule, previous_storage)
 
-        config_dict = self._fill_config_template(sim_path, previous_sim_path,
+        config_dict = self._fill_config_template(storage, previous_storage,
                                                  schedule, prod)
         config = yaml.dump(config_dict)
-        self._string_storage.write(config, sim_path + CONFIG_PATH,
-                                   mode_flags='w')
-        self._pickle_storage.write(schedule, sim_path + SCHEDULE_PATH)
+        self._storage.save_config(config)
+        self._storage.save_schedule(schedule)
         self._scale_environment(schedule_length(schedule))
 
-    def _do_single_run(self, sim_path):
+    def _do_single_run(self, storage):
         '''
         Run a single Replica Exchange simulation, estimate the density of
         states and write it to the simulation folder.
 
         Args:
-          sim_path(str): path of the simulation
+            current_storage(:class:`SimulationStorage`): storage for simulation
+              to be set up
 
         Returns:
           :class:`np.array`: density of states estimate
         '''
-        self._re_runner.run_sampling(sim_path + CONFIG_PATH, self._basename)
-        energies = load_energies(sim_path, self._pickle_storage,
-                                 self._string_storage)
-        schedule = self._pickle_storage.read(sim_path + SCHEDULE_PATH)
+        self._re_runner.run_sampling(storage.config_file_name)
+        energies = self._storage.load_all_energies()
+        schedule = self._storage.load_schedule()
         dos = self._dos_estimator.estimate_dos(energies, schedule)
-        self._pickle_storage.write(dos, sim_path + DOS_PATH)
+        self._storage.save_dos(dos)
 
     def _check_compatibility(self, initial_schedule_params,
                              optimization_params):
@@ -455,8 +386,8 @@ class AbstractREJobController(ABC):
         optimization parameters.
 
         Args:
-          initial_schedule_params(dict): initial schedule parameters
-          optimization_params(dict): optimization params
+            initial_schedule_params(dict): initial schedule parameters
+            optimization_params(dict): optimization params
         '''
         # TODO: check whether optimization params and initial schedule params
         # are compatible. Although that's a late failure - perhaps do this upon
@@ -473,11 +404,12 @@ class AbstractREJobController(ABC):
                                   self._optimization_params)
 
         optimization_result = self._optimize_schedule()
-        final_opt_sim_path, final_schedule = optimization_result
+        final_opt_storage, final_schedule = optimization_result
 
-        self._setup_simulation(PROD_OUTPUT_PATH, final_schedule,
-                               final_opt_sim_path, prod=True)
-        self._do_single_run(PROD_OUTPUT_PATH)
+        prod_storage = SimulationStorage(self._basename, 'production_run')
+        self._setup_simulation(prod_storage, final_schedule,
+                               final_opt_storage, prod=True)
+        self._do_single_run(prod_storage.config_file_name)
 
 
 class LocalREJobController(AbstractREJobController):
