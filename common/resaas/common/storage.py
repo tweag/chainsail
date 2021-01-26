@@ -6,9 +6,20 @@ import os
 from io import BytesIO, StringIO
 from abc import abstractmethod, ABC
 from pickle import dump, load
+from enum import Enum
 
 import yaml
 import numpy as np
+
+
+class DirStructure(Enum):
+    SAMPLES_TEMPLATE = 'samples/samples_{}_{}-{}.pickle'
+    ENERGIES_TEMPLATE = 'energies/energies_{}_{}-{}.pickle'
+    INITIAL_TIMESTEPS_FILE_NAME = 'initial_timesteps.pickle'
+    FINAL_TIMESTEPS_FILE_NAME = 'final_timesteps.pickle'
+    INITIAL_STATES_FILE_NAME = 'initial_states.pickle'
+    DOS_FILE_NAME = 'dos.pickle'
+    CONFIG_FILE_NAME = 'config.yml'
 
 
 def make_sure_basename_exists(file_path):
@@ -121,14 +132,6 @@ class CloudStorageBackend(AbstractStorageBackend):
 
 
 class SimulationStorage:
-    _SAMPLES_TEMPLATE = 'samples/samples_{}_{}-{}.pickle'
-    _ENERGIES_TEMPLATE = 'energies/energies_{}_{}-{}.pickle'
-    _INITIAL_TIMESTEPS_FILE_NAME = 'initial_timesteps.pickle'
-    _FINAL_TIMESTEPS_FILE_NAME = 'final_timesteps.pickle'
-    _INITIAL_STATES_FILE_NAME = 'initial_states.pickle'
-    _DOS_FILE_NAME = 'dos.pickle'
-    _CONFIG_FILE_NAME = 'config.yml'
-
     def __init__(self, basename, sim_path, storage_backend):
         self._basename = basename
         self._sim_path = sim_path
@@ -147,6 +150,11 @@ class SimulationStorage:
         # TODO: sanitize / check
         self._sim_path = value
 
+    @property
+    def config_file_name(self):
+        return os.join(self._basename, self._sim_path,
+                       DirStructure.CONFIG_FILE_NAME)
+
     def save(self, data, file_name, data_type='pickle'):
         self._storage_backend.write(data, os.path.join(
             self._basename, file_name), data_type)
@@ -155,20 +163,20 @@ class SimulationStorage:
         self._storage_backend.load(os.path.join(self._basename, file_name))
 
     def save_samples(self, samples, replica_name, from_samples, to_samples):
-        self.save(samples, self._SAMPLES_TEMPLATE.format(
+        self.save(samples, DirStructure.SAMPLES_TEMPLATE.format(
             replica_name, from_samples, to_samples))
 
     def save_energies(self, energies, replica_name, from_energies,
                       to_energies):
-        self.save(energies, self._ENERGIES_TEMPLATE.format(
+        self.save(energies, DirStructure.ENERGIES_TEMPLATE.format(
             replica_name, from_energies, to_energies))
 
     def load_energies(self, replica_name, from_energies, to_energies):
-        return self.load(self._ENERGIES_TEMPLATE.format(
+        return self.load(DirStructure.ENERGIES_TEMPLATE.format(
             replica_name, from_energies, to_energies))
 
     def load_all_energies(self):
-        config = self.load_config(self._CONFIG_FILE_NAME)
+        config = self.load_config(DirStructure.CONFIG_FILE_NAME)
         n_replicas = config['general']['num_replicas']
         n_samples = config['general']['n_iterations']
         dump_interval = config['re']['dump_interval']
@@ -183,32 +191,32 @@ class SimulationStorage:
         return np.array(energies)
 
     def save_config(self, config_dict):
-        self.save(yaml.dump(config_dict), self._CONFIG_FILE_NAME)
+        self.save(yaml.dump(config_dict), DirStructure.CONFIG_FILE_NAME)
 
     def load_config(self):
-        return yaml.safe_load(self.load(self._CONFIG_FILE_NAME),
+        return yaml.safe_load(self.load(DirStructure.CONFIG_FILE_NAME),
                               data_type='text')
 
     def save_dos(self, dos):
-        self.save(dos, self._DOS_FILE_NAME)
+        self.save(dos, DirStructure.DOS_FILE_NAME)
 
     def load_dos(self):
-        return self.load(self._DOS_FILE_NAME)
+        return self.load(DirStructure.DOS_FILE_NAME)
 
     def save_initial_timesteps(self, timesteps):
-        self.save(timesteps, self._INITIAL_TIMESTEPS_FILE_NAME)
+        self.save(timesteps, DirStructure.INITIAL_TIMESTEPS_FILE_NAME)
 
     def load_initial_timesteps(self):
-        return self.load(self._INITIAL_TIMESTEPS_FILE_NAME)
+        return self.load(DirStructure.INITIAL_TIMESTEPS_FILE_NAME)
 
     def save_final_timesteps(self, timesteps):
-        self.save(timesteps, self._FINAL_TIMESTEPS_FILE_NAME)
+        self.save(timesteps, DirStructure.FINAL_TIMESTEPS_FILE_NAME)
 
     def load_final_timesteps(self):
-        return self.load(self._FINAL_TIMESTEPS_FILE_NAME)
+        return self.load(DirStructure.FINAL_TIMESTEPS_FILE_NAME)
 
     def save_initial_states(self, initial_states):
-        self.save(initial_states, self._INITIAL_STATES_FILE_NAME)
+        self.save(initial_states, DirStructure.INITIAL_STATES_FILE_NAME)
 
     def load_initial_states(self):
-        return self.load(self._INITIAL_STATES_FILE_NAME)
+        return self.load(DirStructure.INITIAL_STATES_FILE_NAME)
