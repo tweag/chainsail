@@ -10,6 +10,7 @@ python = "^3.8"
 apache-libcloud = "^3.3.1"
 numpy = "^1.19.5"
 PyYAML = "^5.4.1"
+marshmallow = "^3.10.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
