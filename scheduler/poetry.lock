@@ -833,6 +833,7 @@ version = "0.1.0"
 PyYAML = "^5.4.1"
 apache-libcloud = "^3.3.1"
 marshmallow = "^3.10.0"
+marshmallow-enum = "^1.5.1"
 numpy = "^1.19.5"
 
 [package.source]
