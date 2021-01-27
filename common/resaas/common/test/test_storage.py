@@ -1,54 +1,59 @@
 import os
 import unittest
 from pickle import load
-from tempfile import mkdtemp
 
-from resaas.common.storage import (FileSystemPickleStorage,
-                                   sanitize_basename,
-                                   pickle_to_stream)
+from resaas.common.storage import SimulationStorage, pickle_to_stream
+
+
+obj = ['a', 'list', 42]
+
+
+class MockStorageBackend:
+    def __init__(self):
+        self.data = {}
+
+    def write(self, data, file_name):
+        self.data[file_name] = data
+
+    def load(self, file_name, data_type='pickle'):
+        return self.data[file_name]
 
 
 class testFunctions(unittest.TestCase):
-    def testSanitizeBasename(self):
-        res1 = sanitize_basename('/this/is/a/path')
-        expected1 = '/this/is/a/path/'
-        self.assertEqual(res1, expected1)
-
-        res2 = sanitize_basename('/this/is/a/path/')
-        expected2 = '/this/is/a/path/'
-        self.assertEqual(res2, expected2)
-
     def testPickleToStream(self):
-        obj = ['a', 'list', 42]
         res = load(pickle_to_stream(obj))
         expected = obj
         self.assertEqual(res, expected)
 
 
-class testFileSystemPickleStorage(unittest.TestCase):
+class testSimulationStorage(unittest.TestCase):
     def setUp(self):
-        self._tmpdir = mkdtemp()
-        self._writer = FileSystemPickleStorage(self._tmpdir)
+        self._basename = '/some/base'
+        self._sim_path = '/sim/path'
+        self._backend = MockStorageBackend()
+        self._storage = SimulationStorage(
+            self._basename, self._sim_path, self._backend)
 
     def testWrite(self):
-        obj = ['a', 'list', 42]
+        fname = 'a_file.pickle'
+        self._storage.save(obj, fname)
+        full_fname = os.path.join(self._basename, self._sim_path, fname)
+        self.assertTrue(full_fname in self._backend.data)
+        self.assertEqual(self._backend.data[full_fname], obj)
 
-        self._writer.write(obj, 'a_file.pickle')
-        with open(self._tmpdir + '/a_file.pickle', 'rb') as ipf:
-            res1 = load(ipf)
-            self.assertEqual(obj, res1)
+        fname = 'folder/a_file.pickle'
+        self._storage.save(obj, fname)
+        full_fname = os.path.join(self._basename, self._sim_path, fname)
+        self.assertTrue(full_fname in self._backend.data)
+        self.assertEqual(self._backend.data[full_fname], obj)
 
-        different_basename = self._tmpdir + '/some_dir'
-        os.makedirs(different_basename, exist_ok=True)
-        self._writer.write(obj, 'another_file.pickle', different_basename)
-        with open(different_basename + '/another_file.pickle', 'rb') as ipf:
-            res2 = load(ipf)
-            self.assertEqual(obj, res2)
+    def testLoad(self):
+        fname = 'a_file.pickle'
+        full_fname = os.path.join(self._basename, self._sim_path, fname)
+        self._backend.data[full_fname] = obj
+        self.assertEqual(self._storage.load(fname), obj)
 
-        different_basename_wslash = self._tmpdir + '/some_dir/'
-        os.makedirs(different_basename_wslash, exist_ok=True)
-        self._writer.write(obj, 'another_file.pickle', different_basename_wslash)
-        file_path = different_basename_wslash[:-1] + '/another_file.pickle'
-        with open(file_path, 'rb') as ipf:
-            res3 = load(ipf)
-            self.assertEqual(obj, res3)
+        fname = 'folder/a_file.pickle'
+        full_fname = os.path.join(self._basename, self._sim_path, fname)
+        self._backend.data[full_fname] = obj
+        self.assertEqual(self._storage.load(fname), obj)
