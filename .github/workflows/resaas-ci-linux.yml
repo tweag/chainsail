@@ -26,6 +26,8 @@ jobs:
           cd ./common
           poetry install
           PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
+          # Remove automatically generated lockfile for library
+          rm ./poetry.lock
       - name: Install and test resaas.scheduler
         run: |
           cd ./scheduler
