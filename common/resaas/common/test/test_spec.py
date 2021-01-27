@@ -4,7 +4,7 @@ import pytest
 def test_parse_job_spec_extra_fields():
     from marshmallow.exceptions import ValidationError
 
-    from resaas.scheduler.spec import JobSpecSchema
+    from resaas.common.spec import JobSpecSchema
 
     data = """
     {
@@ -18,7 +18,7 @@ def test_parse_job_spec_extra_fields():
 
 
 def test_parse_partial_job_spec():
-    from resaas.scheduler.spec import JobSpecSchema
+    from resaas.common.spec import JobSpecSchema
 
     data = """
     {
