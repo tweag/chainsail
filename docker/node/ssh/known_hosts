@@ -1,3 +1,4 @@
 Host *
   IdentityFile /root/.ssh/dorran-resaas-pair.pem
   StrictHostKeyChecking accept-new
+  Port 26

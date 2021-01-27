@@ -77,6 +77,8 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/app/deps/openmpi/lib
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 # Disable password authentication
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+# Listen on a non-default port to avoid clashing with the host's ssh
+RUN sed -i 's/#Port 22/Port 26/' /etc/ssh/sshd_config
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
@@ -94,20 +96,3 @@ ENTRYPOINT ["/entrypoint.sh"]
 # WORKDIR /app/code/pipelines/dag-triggers
 # RUN poetry config virtualenvs.in-project true && poetry run pip install --upgrade pip
 # RUN poetry install
-
-# ##############################################################################
-# # OUTPUT
-# ##############################################################################
-# FROM system-deps as final
-# RUN mkdir /app/venv && mkdir -p /app/code/mlinfra
-# COPY --from=builder /app/code/pipelines/dag-triggers/.venv /app/venv
-# COPY --from=builder /app/code/mlinfra /app/code/mlinfra
-
-# WORKDIR /app
-# ENV PATH=/app/venv/bin:$PATH
-
-# COPY docker/mlinfra-tasks/pipeline-entrypoint.sh docker/mlinfra-tasks/pipeline-entrypoint-wrapper.sh ./
-# RUN chmod u+x ./pipeline-entrypoint.sh ./pipeline-entrypoint-wrapper.sh
-
-# ENTRYPOINT [ "./pipeline-entrypoint.sh" ]
-# CMD ["/app/venv/bin/python"]
