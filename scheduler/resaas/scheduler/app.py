@@ -9,7 +9,7 @@ from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import app, db
 from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.jobs import JobStatus
-from resaas.scheduler.spec import JobSpecSchema
+from resaas.common.spec import JobSpecSchema
 from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task
 
 config = load_scheduler_config()

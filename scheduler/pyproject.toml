@@ -6,6 +6,7 @@ authors = ["dorranh <dorran.howell@tweag.io>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+resaas-common = { path = "../common", develop = true }
 Flask = "^1.1.2"
 apache-libcloud = "^3.3.0"
 marshmallow = "^3.10.0"

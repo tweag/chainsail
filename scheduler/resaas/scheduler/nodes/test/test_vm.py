@@ -27,7 +27,7 @@ def test_vm_node_from_representation(mock_config):
     from resaas.scheduler.db import TblNodes
     from resaas.scheduler.nodes.base import NodeStatus, NodeType
     from resaas.scheduler.nodes.vm import VMNode
-    from resaas.scheduler.spec import JobSpec
+    from resaas.common.spec import JobSpec
 
     job_spec = JobSpec("gs://my-bucket/scripts")
     node_rep = TblNodes(
@@ -51,7 +51,7 @@ def test_vm_node_from_config_with_job(mock_config):
     from resaas.scheduler.db import TblJobs, TblNodes
     from resaas.scheduler.nodes.base import NodeStatus, NodeType
     from resaas.scheduler.nodes.vm import VMNode
-    from resaas.scheduler.spec import JobSpec
+    from resaas.common.spec import JobSpec
 
     job_spec = JobSpec("gs://my-bucket/scripts")
     node = VMNode.from_config("dummy-1", mock_config, job_spec, job_rep=TblJobs(id=1))
@@ -64,7 +64,7 @@ def test_vm_node_from_representation_no_match_raises(mock_config):
     from resaas.scheduler.errors import ObjectConstructionError
     from resaas.scheduler.nodes.base import NodeStatus, NodeType
     from resaas.scheduler.nodes.vm import VMNode
-    from resaas.scheduler.spec import JobSpec
+    from resaas.common.spec import JobSpec
 
     job_spec = JobSpec("gs://my-bucket/scripts")
     node_rep = TblNodes(
@@ -86,7 +86,7 @@ def test_vm_node_from_representation_then_create(mock_config):
     from resaas.scheduler.db import TblNodes
     from resaas.scheduler.nodes.base import NodeStatus, NodeType
     from resaas.scheduler.nodes.vm import VMNode
-    from resaas.scheduler.spec import JobSpec, PipDependencies
+    from resaas.common.spec import JobSpec, PipDependencies
 
     job_spec = JobSpec("gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])])
     node_rep = TblNodes(
