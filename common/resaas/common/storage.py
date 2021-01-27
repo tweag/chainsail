@@ -2,31 +2,34 @@
 Classes which allow writing out stuff (samples, energies, ...) to
 different locations (local file systems, cloud storage, ...)
 '''
-from abc import abstractmethod, ABCMeta
-from pickle import dump, load
-from io import BytesIO, StringIO
 import os
+from io import BytesIO, StringIO
+from abc import abstractmethod, ABC
+from pickle import dump, load
+from collections import namedtuple
+
+import yaml
+import numpy as np
 
 
-def sanitize_basename(basename):
-    '''Sanitize a basename.
-
-    Currently only makes sure that the basename ends with a '/'.
-    
-    Args:
-      basename: a basename (like '/some/base/name/' or '/some/base/name')
-
-    Returns:
-      str: sanitized basename (ends with '/')
-    '''
-    return basename if basename[-1] == '/' else basename + '/'
+dir_structure = dict(
+    SAMPLES_TEMPLATE='samples/samples_{}_{}-{}.pickle',
+    ENERGIES_TEMPLATE='energies/energies_{}_{}-{}.pickle',
+    INITIAL_TIMESTEPS_FILE_NAME='initial_timesteps.pickle',
+    FINAL_TIMESTEPS_FILE_NAME='final_timesteps.pickle',
+    INITIAL_STATES_FILE_NAME='initial_states.pickle',
+    DOS_FILE_NAME='dos.pickle',
+    SCHEDULE_FILE_NAME='schedule.pickle',
+    CONFIG_FILE_NAME='config.yml')
+DirStructure = namedtuple('DirStructure', dir_structure)
+default_dir_structure = DirStructure(**dir_structure)
 
 
 def make_sure_basename_exists(file_path):
     '''Makes sure the basename of a file path exists.
 
     TODO: log warning if it does.
-    
+
     Args:
       file_path: a (possibly relative) file path
     '''
@@ -48,9 +51,9 @@ def pickle_to_stream(obj):
     return bytes_stream
 
 
-class AbstractStorage(metaclass=ABCMeta):
+class AbstractStorageBackend(ABC):
     @abstractmethod
-    def write(self, data, **kwargs):
+    def write(self, data, file_name):
         '''Write data to some kind of permanent storage.
 
         Args:
@@ -62,166 +65,175 @@ class AbstractStorage(metaclass=ABCMeta):
         '''
         pass
 
-
-class AbstractFileSystemStorage(AbstractStorage):
-    def __init__(self, default_basename, default_mode_flags):
-        '''Writes something to the file system.
-
-        Args:
-          default_basename(str): basename (folder) of location the
-            pickled Python object will be written to
-          default_mode_flags(str): mode flags to pass to open() call
-
-        Returns:
-
-        '''
-        self._default_basename = sanitize_basename(default_basename)
-        self._default_mode_flags = default_mode_flags
+    @abstractmethod
+    def load(self, file_name, data_type='pickle'):
+        pass
 
 
-class FileSystemPickleStorage(AbstractFileSystemStorage):
-    def __init__(self, default_basename):
-        '''Pickles a Python object and writes it to the file system.
-
-        Args:
-          default_basename(str): basename (folder) of location the
-            pickled Python object will be written to
-
-        Returns:
-
-        '''
-        super().__init__(default_basename, 'wb')
-
-    @staticmethod
-    def _make_data_stream(obj):
-        '''Takes a Python object and pickles it to a byte stream.
-        
-        Args:
-          obj: Python object to be pickled
-
-        Returns:
-          BytesIO: byte stream with pickled object
-        '''
-        return pickle_to_stream(obj)
-
-    def write(self, data, file_path, basename=None):
-        '''Pickles a Python object and writes it to a file.
-
-        Args:
-          data(object): data
-          file_path: path of file to write data to
-          basename(str, optional): basename (folder) of location the pickled
-              Python object will be written to (Default value = None)
-        '''
-        if basename:
-            basename = sanitize_basename(basename)
+class LocalStorageBackend(AbstractStorageBackend):
+    def write(self, data, file_name):
+        make_sure_basename_exists(file_name)
+        if type(data) == str:
+            with open(file_name, 'w') as f:
+                f.write(data)
         else:
-            basename = self._default_basename
-        file_path = basename + file_path
-        make_sure_basename_exists(file_path)
-        with open(file_path, self._default_mode_flags) as opf:
-            opf.write(self._make_data_stream(data).getbuffer())
+            with open(file_name, 'wb') as f:
+                dump(data, f)
 
-    def read(self, path):
-        '''Unpickle a file.
-
-        Args:
-          path(str): file to unpickle
-
-        Returns:
-          object: unpickled Python object
-        '''
-        with open(self._default_basename + path, "rb") as ipf:
-            return load(ipf)
+    def load(self, file_name, data_type='pickle'):
+        if data_type == 'pickle':
+            with open(file_name, 'rb') as f:
+                return load(f)
+        if data_type == 'text':
+            with open(file_name, 'r') as f:
+                return f.read()
 
 
-class CloudPickleStorage(AbstractStorage):
-    def __init__(self, driver, container, default_basename):
-        '''Writer that pickles objects and writes them to cloud locations via the
-            libcloud Storage API.
+def bytes_iterator_to_bytesio(stream):
+    bytesio = BytesIO()
+    for chunk in stream:
+        bytesio.write(chunk)
+    bytesio.seek(0)
 
-        Args:
-          driver: libcloud driver instance
-          container: libcloud container
-          default_basename(str): default basename, usually a simulation path
+    return bytesio
+
+
+def bytes_iterator_to_stringio(stream):
+    stringio = StringIO()
+    for chunk in stream:
+        stringio.write(str(chunk, 'ascii'))
+    stringio.seek(0)
+
+    return stringio
+
+
+class CloudStorageBackend(AbstractStorageBackend):
+    def __init__(self, driver, container):
+        '''Cloud storage backend.
+
+        Uses ``libcloud`` to work with different cloud providers.
+
+        driver: libcloud driver instance
+        container: libcloud container
         '''
         self._driver = driver
         self._container = container
-        self._default_basename = default_basename
 
-    @staticmethod
-    def _make_data_stream(obj):
-        '''Takes a Python object and pickles it to a byte stream.
+    def write(self, data, file_name):
+        byte_data = pickle_to_stream(data)
+        self._driver.upload_object_via_stream(
+            byte_data, self._container, file_name)
 
-        Args:
-          obj: Python object to be pickled
-
-        Returns:
-          BytesIO: byte stream with pickled object
-        '''
-        return pickle_to_stream(obj)
-
-    def write(self, data, object_name, basename=None):
-        '''Uploads data to a new "file" in a given container.
-
-        Args:
-          data: data to upload
-          object_name(str): name of new object in the cloud storage
-          basename(str): basename if other than default (Default value = None)
-        '''
-        byte_data = StringIO(data)
-        if basename:
-            basename = sanitize_basename(basename)
+    def read(self, file_name, data_type='pickle'):
+        stream = self._driver.download_object_as_stream(file_name)
+        # TODO: all this stream business stinks
+        if data_type == 'pickle':
+            return load(bytes_iterator_to_bytesio(stream))
+        elif data_type == 'text':
+            return bytes_iterator_to_stringio(stream).read()
         else:
-            basename = self._default_basename
-        object_name = basename + object_name
-        self._driver.upload_object_via_stream(byte_data, self._container,
-                                              object_name)
+            raise ValueError("'data_type' has to be either 'text' or 'pickle'")
 
 
-class FileSystemStringStorage(AbstractStorage):
-    def __init__(self, default_basename, default_mode_flags='a'):
-        '''TODO: test / actually use this
+class SimulationStorage:
+    def __init__(self, basename, sim_path, storage_backend,
+                 dir_structure=default_dir_structure):
+        self._basename = basename
+        self._sim_path = sim_path
+        self._storage_backend = storage_backend
+        self._dir_structure = dir_structure
 
-            Writes a string to the file system.
+    @property
+    def basename(self):
+        return self._basename
 
-        Args:
-          default_basename(str): basename (folder) of location the
-        pickled Python object will be written to
-          mode_flags(str): mode flags to pass to open() call
+    @property
+    def sim_path(self):
+        return self._sim_path
 
-        Returns:
+    @sim_path.setter
+    def sim_path(self, value):
+        # TODO: sanitize / check
+        self._sim_path = value
 
-        '''
-        self._default_basename = default_basename
-        self._default_mode_flags = default_mode_flags
+    @property
+    def config_file_name(self):
+        return os.path.join(self._basename, self._sim_path,
+                            self.dir_structure.CONFIG_FILE_NAME)
 
-    def write(self, data, file_path, basename=None, mode_flags=None):
-        '''Writes a string to a file.
+    @property
+    def dir_structure(self):
+        return self._dir_structure
 
-        Args:
-          data(object): data
-          file_path(str): file path to write to
-          mode_flags(str): mode flags to pass to open()
+    def save(self, data, file_name):
+        self._storage_backend.write(data, os.path.join(
+            self._basename, self.sim_path, file_name))
 
-        Returns:
+    def load(self, file_name, data_type='pickle'):
+        return self._storage_backend.load(os.path.join(self._basename, self.sim_path,
+                                                       file_name), data_type)
 
-        '''
-        mode_flags = mode_flags or self._default_mode_flags
-        basename = sanitize_basename(basename) or self._default_basename
-        file_path = basename + file_path
-        make_sure_basename_exists(file_path)
-        with open(file_path, mode_flags) as opf:
-            opf.write(data)
+    def save_samples(self, samples, replica_name, from_samples, to_samples):
+        self.save(samples, self.dir_structure.SAMPLES_TEMPLATE.format(
+            replica_name, from_samples, to_samples))
 
-    def read(self, path):
-        '''Reads a string from a file.
+    def save_energies(self, energies, replica_name, from_energies,
+                      to_energies):
+        self.save(energies, self.dir_structure.ENERGIES_TEMPLATE.format(
+            replica_name, from_energies, to_energies))
 
-        Args:
-          path(str): path of the file
+    def load_energies(self, replica_name, from_energies, to_energies):
+        return self.load(self.dir_structure.ENERGIES_TEMPLATE.format(
+            replica_name, from_energies, to_energies))
 
-        Returns:
-          str: string read from file
-        '''
-        with open(self._default_basename + path) as ipf:
-            return ipf.read()
+    def load_all_energies(self):
+        config = self.load_config()
+        n_replicas = config['general']['num_replicas']
+        n_samples = config['general']['n_iterations']
+        dump_interval = config['re']['dump_interval']
+        energies = []
+        for r in range(1, n_replicas + 1):
+            r_energies = []
+            for n in range(0, n_samples - dump_interval, dump_interval):
+                energies_batch = self.load_energies(
+                    'replica' + str(r), n, n + dump_interval)
+                r_energies.append(energies_batch)
+            energies.append(np.concatenate(r_energies))
+        return np.array(energies)
+
+    def save_config(self, config_dict):
+        self.save(yaml.dump(config_dict), self.dir_structure.CONFIG_FILE_NAME)
+
+    def load_config(self):
+        return yaml.safe_load(
+            self.load(self.dir_structure.CONFIG_FILE_NAME, data_type='text'))
+
+    def save_dos(self, dos):
+        self.save(dos, self.dir_structure.DOS_FILE_NAME)
+
+    def load_dos(self):
+        return self.load(self.dir_structure.DOS_FILE_NAME)
+
+    def save_schedule(self, schedule):
+        self.save(schedule, self.dir_structure.SCHEDULE_FILE_NAME)
+
+    def load_schedule(self):
+        return self.load(self.dir_structure.SCHEDULE_FILE_NAME)
+
+    def save_initial_timesteps(self, timesteps):
+        self.save(timesteps, self.dir_structure.INITIAL_TIMESTEPS_FILE_NAME)
+
+    def load_initial_timesteps(self):
+        return self.load(self.dir_structure.INITIAL_TIMESTEPS_FILE_NAME)
+
+    def save_final_timesteps(self, timesteps):
+        self.save(timesteps, self.dir_structure.FINAL_TIMESTEPS_FILE_NAME)
+
+    def load_final_timesteps(self):
+        return self.load(self.dir_structure.FINAL_TIMESTEPS_FILE_NAME)
+
+    def save_initial_states(self, initial_states):
+        self.save(initial_states, self.dir_structure.INITIAL_STATES_FILE_NAME)
+
+    def load_initial_states(self):
+        return self.load(self.dir_structure.INITIAL_STATES_FILE_NAME)

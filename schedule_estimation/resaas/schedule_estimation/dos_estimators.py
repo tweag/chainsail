@@ -10,12 +10,11 @@ from resaas.common.util import log_sum_exp
 
 def log(text):
     """Write a log entry.
-    
+
     TODO: we might log to some database or a file instead of stdout
 
     Args:
-      text: 
-tes
+      text:
     Returns:
 
     """
@@ -123,72 +122,70 @@ class BoltzmannEnsemble(Ensemble):
 
 
 class WHAM:
-    def __init__(self, energies, ensemble, parameters, max_iterations=5000,
-                 stopping_threshold=1e-6):
+    def __init__(self, ensemble):
         """Initializes an WHAM object.
 
-        This requires the sampled energies, a function describing the 
+        This requires the sampled energies, a function describing the
         log-ensemble and a dictionary of ensemble parameters which describe
         the ensemble instances from which the energies were sampled.
 
         Args:
-          energies(:class:`np.ndarray`): negative log-probabilities
-              ("energies") of states in their respective ensembles
           ensemble(:class:`Ensemble): the ensemble from which the energies
               were sampled
-          parameters(dict): Parameter values defining the ensemble at different
+        """
+        self._ensemble = ensemble
+
+    def _calculate_log_qs(self, energies, parameters):
+        """Builds up the matrix of the log-probabilities of the energies in all
+        ensembles.
+
+        Args:
+            energies(:class:`np.ndarray`): negative log-probabilities
+              ("energies") of states in their respective ensembles
+            parameters(dict): Parameter values defining the ensemble at different
               "temperatures". The keys are the parameter names and the values
               :class:`np.ndarray`s with the parameter values corresponding to
               the first dimension of the ``energies`` argument
-          max_iterations(int): maximum number of WHAM iterations to perform
-          stopping_threshold(float): relative difference in log-likelihoods
-              of energies which measures convergence of WHAM iterations.
-        """
-        validate_shapes(energies, parameters)
-        self._energies = energies
-        self._ensemble = ensemble
-        self._parameters = parameters
-        self._n_ensembles = energies.shape[0]
-        self._max_iterations = max_iterations
-        self._stopping_threshold = stopping_threshold
-
-    def _calculate_log_qs(self):
-        """Builds up the matrix of the log-probabilities of the energies in all
-        ensembles.
 
         Returns:
           :class:`np.ndarray`: matrix of the log-probabilities of all energies
               in all ensembles.
         """
-        param_dicts = [{param: self._parameters[param][i] for param in
-                        self._parameters} for i in range(self._n_ensembles)]
-        log_qs = np.array([self._ensemble.log_ensemble(self._energies.ravel(),
+        n_ensembles = energies.shape[0]
+        param_dicts = [{param: parameters[param][i] for param in
+                        parameters} for i in range(n_ensembles)]
+        log_qs = np.array([self._ensemble.log_ensemble(energies.ravel(),
                                                        **params)
                            for params in param_dicts])
 
         return log_qs
 
-
-    def estimate_dos(self):
+    def estimate_dos(self, energies, parameters, max_iterations=5000,
+                     stopping_threshold=1e-6):
         """Do multiple histogram reweighting with infinitely fine binning as
         outlined in the paper "Evaluation of marginal likelihoods via the
         density of states" (Habeck, AISTATS 2012)
 
         Args:
-          max_iterations(int): how many WHAM iterations to perform.
-              (Default value = 5000)
-          threshold(float): log-likelihood difference threshold surpassing
-              of which means the iteration converged. (Default value = 1e-6)
+            energies(:class:`np.ndarray`): negative log-probabilities
+              ("energies") of states in their respective ensembles
+            parameters(dict): Parameter values defining the ensemble at different
+              "temperatures". The keys are the parameter names and the values
+              :class:`np.ndarray`s with the parameter values corresponding to
+              the first dimension of the ``energies`` argument
+            max_iterations(int): maximum number of WHAM iterations to perform
+              stopping_threshold(float): relative difference in log-likelihoods
+              of energies which measures convergence of WHAM iterations.
 
         Returns:
-          :class:`np.ndarray`: estimate of the log-DOS evaluated at the sampled
-              energies
+            :class:`np.array`: an estimate of the DOS at the sampled energies
         """
-        f = np.zeros(self._n_ensembles)
-        log_qs = self._calculate_log_qs()
+        validate_shapes(energies, parameters)
+        f = np.zeros(energies.shape[0])
+        log_qs = self._calculate_log_qs(energies, parameters)
 
         # old_log_L = 1e300
-        for i in range(self._max_iterations):
+        for i in range(max_iterations):
             log_gs = -log_sum_exp(log_qs + f[:, None], axis=0)
             log_gs -= log_sum_exp(log_gs)
             f = -log_sum_exp((log_qs + log_gs).T, axis=0)
@@ -197,11 +194,11 @@ class WHAM:
             if i % 50 == 0:
                 log('Likelihood: {}'.format(log_L))
             # TODO: implement working stopping criterion
-            # if self.stopping_criterion(log_L, old_log_L, self._stopping_threshold):
+            # if stopping_criterion(log_L, old_log_L, stopping_threshold):
             #     break
             # old_log_L = log_L
-                
-        if i > 0.8 * self._max_iterations:
+
+        if i > 0.8 * max_iterations:
             log(('More than 80% of max WHAM iterations were required. '
                  'Histogram reweighting might not have converged.'))
 

@@ -1,14 +1,15 @@
 [tool.poetry]
-name = "resaas-common"
+name = "resaas-re-job-controller"
 version = "0.1.0"
-description = "RESAAS code shared between components"
+description = "RESAAS component which, within a job received from the scheduler, manages optimization and final runs"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
-packages = [ { include = "resaas" } ]
+packages = [ { include = 'resaas' } ]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-apache-libcloud = "^3.3.1"
-numpy = "^1.19.5"
+numpy = "*"
+resaas-common = { path = "../common", develop = true }
+resaas-schedule-optimization = { path = "../schedule_estimation", develop = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
@@ -21,6 +22,8 @@ pytest-cov = "^2.10.1"
 isort = "^5.7.0"
 jedi = "*"
 rope = "*"
+pyyaml = "*"
+numpy = "*"
 
 [tool.black]
 line-length = 99

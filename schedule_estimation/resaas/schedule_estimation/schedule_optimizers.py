@@ -45,37 +45,10 @@ class SingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
     distance, ...
     '''
 
-    def __init__(self, dos, energies, optimization_quantity, param_name):
+    def __init__(self, target_value, max_param, min_param, decrement,
+                 optimization_quantity, param_name):
         '''
         Initializes a schedule optimizer.
-
-        Args:
-            dos(:class:`np.ndarray`): estimate of the DOS evaluated at energy
-              samples
-            energies(:class:`np.ndarray`): sampled energies from which the DOS
-              estimate was calculated
-            optimization_quantity(callable): calculates an optimization quantity
-              such as the acceptance rate for two replicas at two different schedule
-              parameter values given a DOS estimate and the corresponding
-              sampled energies. Takes arguments ``(dos, energies, param1, param2)``.
-            param_name(str): name of the schedule parameter to be optimized
-        '''
-        super().__init__(dos, energies)
-        self._optimization_quantity = optimization_quantity
-        self._param_name = param_name
-
-    def optimize(self, target_value, max_param, min_param, decrement):
-        '''
-        Optimizes a Replica Exchange schedule based on some quantity such as an
-        acceptance rate or a cross-entropy.
-
-        Starting at max_param, the parameter value is increasingly lowered and
-        the quantity is calculated for each parameter value. If the
-        quantity, as a function of the previously stored parameter value
-        and the current value is below ``target_value``, the current value is
-        stored and another iteration begins. That way, a parameter schedule is
-        obtained, for which the target quantity between neighboring parameter
-        values is approximately given by ``target_value``.
 
         Args:
             target_value(float): target value for the quantity
@@ -83,16 +56,49 @@ class SingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
             min_param(float): minimum parameter value determining when
               iteration terminates
             decremet(float): parameter value decrement
+            optimization_quantity(callable): calculates an optimization
+              quantity such as the acceptance rate for two replicas at two
+              different schedule parameter values given a DOS estimate and the
+              corresponding sampled energies. Takes arguments
+              ``(dos, energies, param1, param2)``.
+            param_name(str): name of the
+              schedule parameter to be optimized
         '''
-        params = [max_param]
-        delta = decrement
-        while params[-1] >= min_param:
-            est_q = self._optimization_quantity(self._dos, self._energies,
+        self._target_value = target_value
+        self._max_param = max_param
+        self._min_param = min_param
+        self._decrement = decrement
+        self._optimization_quantity = optimization_quantity
+        self._param_name = param_name
+
+    def optimize(self, dos, energies):
+        '''
+        Optimizes a Replica Exchange schedule based on some quantity such as an
+        acceptance rate or a cross-entropy.
+
+        Starting at ``self._max_param``, the parameter value is increasingly
+        lowered and the quantity is calculated for each parameter value. If the
+        quantity, as a function of the previously stored parameter value
+        and the current value is below ``self._target_value``, the current
+        value is stored and another iteration begins. That way, a parameter
+        schedule is obtained, for which the target quantity between neighboring
+        parameter values is approximately given by ``self._target_value``.
+
+        Args:
+            dos(:class:`np.ndarray`): estimate of the DOS evaluated at energy
+              samples
+            energies(:class:`np.ndarray`): sampled energies from which the DOS
+              estimate was calculated
+        '''
+        params = [self._max_param]
+        delta = self._decrement
+        while params[-1] >= self._min_param:
+            est_q = self._optimization_quantity(dos, energies,
                                                 params[-1], params[-1] - delta)
-            if est_q <= target_value:
+            if est_q <= self._target_value:
                 params.append(params[-1] - delta)
-                delta = decrement
+                delta = self._decrement
             else:
-                delta += decrement
+                delta += self._decrement
 
         return {self._param_name: np.array(params)}
