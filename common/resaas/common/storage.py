@@ -124,8 +124,9 @@ class CloudStorageBackend(AbstractStorageBackend):
         self._driver.upload_object_via_stream(
             byte_data, self._container, file_name)
 
-    def read(self, file_name, data_type='pickle'):
-        stream = self._driver.download_object_as_stream(file_name)
+    def load(self, file_name, data_type='pickle'):
+        obj = self._driver.get_object(self._container.name, file_name)
+        stream = self._driver.download_object_as_stream(obj)
         # TODO: all this stream business stinks
         if data_type == 'pickle':
             return load(bytes_iterator_to_bytesio(stream))
