@@ -5,11 +5,16 @@ description = "RESAAS component which, within a job received from the scheduler,
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
 packages = [ { include = 'resaas' } ]
 
+[tool.poetry.scripts]
+resaas-controller = 'resaas.re_job_controller.run:run'
+
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "*"
 resaas-common = { path = "../common", develop = true }
+resaas-re-runners = { path = "../re_runners", develop = true }
 resaas-schedule-optimization = { path = "../schedule_estimation", develop = true }
+click = "^7.1.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

@@ -94,7 +94,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 name = "click"
 version = "7.1.2"
 description = "Composable command line interface toolkit"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -450,6 +450,24 @@ type = "directory"
 url = "../common"
 
 [[package]]
+name = "resaas-re-runners"
+version = "0.1.0"
+description = "RESAAS runners for Replica Exchange sampling"
+category = "main"
+optional = false
+python-versions = "^3.8"
+develop = true
+
+[package.dependencies]
+numpy = "*"
+pyyaml = "*"
+resaas-common = "0.1.0"
+
+[package.source]
+type = "directory"
+url = "../re_runners"
+
+[[package]]
 name = "resaas-schedule-optimization"
 version = "0.1.0"
 description = "Temperature schedule estimation for resaas"
@@ -533,7 +551,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "032cbc74ae0c86d1bb50a14bbc2cc6dd50e619623248284a6fd5dfc88f023fd6"
+content-hash = "f4e2c61ffa43866f57df1c4baf24b2b39fd21c7f7f0c88bfdae0ce24c6f538cd"
 
 [metadata.files]
 apache-libcloud = [
@@ -860,6 +878,7 @@ requests = [
     {file = "requests-2.25.1.tar.gz", hash = "sha256:27973dd4a904a4f13b263a19c866c13b92a39ed1c964655f025f3f8d3d75b804"},
 ]
 resaas-common = []
+resaas-re-runners = []
 resaas-schedule-optimization = []
 rope = [
     {file = "rope-0.18.0.tar.gz", hash = "sha256:786b5c38c530d4846aa68a42604f61b4e69a493390e3ca11b88df0fbfdc3ed04"},
