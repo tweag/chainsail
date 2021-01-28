@@ -7,9 +7,10 @@ from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 from resaas.schedule_estimation.optimization_quantities import acceptance_rate
 from resaas.re_job_controller.initial_schedules import make_geometric_schedule
-from resaas.re_runners import MPIRERunner
+# from resaas.re_runners import MPIRERunner
 from resaas.common.storage import (
     SimulationStorage, default_dir_structure as dir_structure)
+from resaas.common.spec import TemperedDistributionFamily, DistributionSchedule
 from .initial_setup import setup_initial_states, setup_timesteps
 from .util import schedule_length
 
@@ -63,12 +64,26 @@ def storage_backend_factory():
     # TODO: get from environment and get bucket / basename
     # TODO: make storage backend, but where do we get basename / container name
     # from?
-    pass
+    # class MockBackend:
+    #     data = {}
 
+    #     def write(self, data, file_name):
+    #         self.data[filename] = data
+
+    #     def read(self, file_name, data_type='pickle'):
+    #         return self.data[filename]
+        
+    # return MockBackend()
+        
+    from resaas.common.storage import CloudStorageBackend
+    driver = '?'
+    container = '?'
+    return CloudStorageBackend(driver, container)
 
 def runner_factory():
     # TODO: get this from environment
-    return MPIRERunner()
+    from resaas.re_runners import MPIRERunner
+    return MPIRERunner
 
 
 def optimization_objects_from_spec(job_spec):
@@ -91,7 +106,7 @@ def optimization_objects_from_spec(job_spec):
         default_decrement = 0.01
         default_opt_quantity = acceptance_rate
         max_beta = 1.0
-        min_beta = sched_parameters.min_param
+        min_beta = sched_parameters.minimum_beta
 
         dos_estimator = WHAM(BoltzmannEnsemble)
         schedule_optimizer = SingleParameterScheduleOptimizer(
@@ -352,7 +367,7 @@ class AbstractREJobController(ABC):
 
         This comprises schedule optimization and a final production run.
         '''
-        optimization_result = self._optimize_schedule()
+        optimization_result = self.optimize_schedule()
         final_opt_storage, final_schedule = optimization_result
 
         prod_storage = SimulationStorage(self._basename, 'production_run')
