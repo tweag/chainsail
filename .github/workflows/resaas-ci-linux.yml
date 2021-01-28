@@ -21,6 +21,7 @@ jobs:
           pip install poetry
           cd ./scheduler
           poetry install
+      # Python Libs
       - name: Install and test resaas.common
         run: |
           cd ./common
@@ -28,8 +29,25 @@ jobs:
           PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
           # Remove automatically generated lockfile for library
           rm ./poetry.lock
+      - name: Install and test resaas.schedule_estimation
+        run: |
+          cd ./schedule_estimation
+          poetry install
+          PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
+          rm ./poetry.lock
+      - name: Install resaas.re_runners
+        run: |
+          cd ./re_runners
+          poetry install
+          rm ./poetry.lock
+      # Python Applications
       - name: Install and test resaas.scheduler
         run: |
           cd ./scheduler
+          poetry install
+          PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
+      - name: Install and test resaas.re_job_controller
+        run: |
+          cd ./re_job_controller
           poetry install
           PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
