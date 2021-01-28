@@ -18,7 +18,7 @@ class AbstractRERunner(ABC):
 
 class MPIRERunner(AbstractRERunner):
     def run_sampling(self, storage):
-        config = storage.load_config_file()
+        config = storage.load_config()
         n_replicas = config['general']['num_replicas']
         cfg_path = os.path.join(storage.basename, storage.sim_path,
                                 storage.dir_structure.CONFIG_FILE_NAME)
