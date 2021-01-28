@@ -10,14 +10,11 @@ from resaas.re_job_controller import AbstractREJobController
 re_params = dict(num_replicas=8, num_optimization_samples=10,
                  dump_interval=5)
 ls_params = dict(hmc_num_adaption_steps=100)
-job_spec = dict(re_params=re_params,
-                local_sampling_params=ls_params,
-                optimization_params={'max_optimization_runs': 5,
-                                     'target_value': 0.2,
-                                     'max_param': 1.0,
-                                     'min_param': 1.0,
-                                     'decrement': 0.2},
-                initial_schedule_params={})
+opt_params = {'max_optimization_runs': 5,
+              'target_value': 0.2,
+              'max_param': 1.0,
+              'min_param': 1.0,
+              'decrement': 0.2}
 
 
 class MockWham:
@@ -62,13 +59,14 @@ class MockStorageBackend(AbstractStorageBackend):
 
 class testREJobController(unittest.TestCase):
     def setUp(self):
-        opt_params_copy = job_spec['optimization_params'].copy()
+        opt_params_copy = opt_params.copy()
         opt_params_copy.pop('max_optimization_runs')
         optimizer = MockOptimizer(optimization_quantity=None,
                                   param_name='beta', **opt_params_copy)
         initial_schedule = {'beta': np.array([42] * 8)}
         self._controller = MockREJobController(
-            job_spec, MockRERunner(), MockStorageBackend(), optimizer,
+            re_params, ls_params, opt_params,
+            MockRERunner(), MockStorageBackend(), optimizer,
             MockWham(), initial_schedule, basename='/tmp')
 
     def testOptimizeSchedule(self):

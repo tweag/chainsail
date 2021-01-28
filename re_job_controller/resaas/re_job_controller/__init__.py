@@ -1,12 +1,14 @@
 from abc import abstractmethod, ABC
 
 import yaml
-import numpy as np
 
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
+from resaas.schedule_estimation.optimization_quantities import acceptance_rate
+from resaas.re_job_controller.initial_schedules import make_geometric_schedule
 from resaas.common.storage import (
     SimulationStorage, default_dir_structure as dir_structure)
+from resaas.common.spec import TemperedDistributionFamily, DistributionSchedule
 from .initial_setup import setup_initial_states, setup_timesteps
 from .util import schedule_length
 
@@ -56,6 +58,56 @@ def optimization_converged(schedule, previous_schedule):
     return schedule_length(schedule) == schedule_length(previous_schedule)
 
 
+def optimization_objects_from_spec(job_spec):
+    '''
+    Instantiates DOS estimator, schedule optimizer and initial
+    schedule from a job specification.
+
+    Args:
+        job_spec(:class:`JobSpec`): job specification
+    '''
+    dist_family = job_spec.tempered_dist_family
+    sched_parameters = job_spec.initial_schedule_parameters
+    init_num_replicas = job_spec.initial_number_of_replicas
+
+    if (dist_family == TemperedDistributionFamily.BOLTZMANN
+        and type(sched_parameters) == DistributionSchedule):
+
+        # TODO: set these defaults in extended job spec
+        default_acceptance_rate = 0.2
+        default_decrement = 0.01
+        default_opt_quantity = acceptance_rate
+        max_beta = 1.0
+        min_beta = sched_parameters.minimum_beta
+
+        dos_estimator = WHAM(BoltzmannEnsemble)
+        schedule_optimizer = SingleParameterScheduleOptimizer(
+            default_acceptance_rate, max_beta, min_beta, default_decrement,
+            default_opt_quantity, 'beta')
+        initial_schedule = make_geometric_schedule(
+            'beta', init_num_replicas, min_beta, max_beta)
+
+        return dict(dos_estimator=dos_estimator,
+                    schedule_optimizer=schedule_optimizer,
+                    initial_schedule=initial_schedule)
+    else:
+        raise ValueError(
+            ("Incompatible distribution family "
+             "('{}') and initial schedule parameters ('{}')".format(
+                 dist_family, sched_parameters)))
+
+
+def get_default_params():
+    # TODO: get these from an extended job spec
+    re_params = {'num_production_samples': 20000,
+                 'num_optimization_samples': 5000,
+                 'dump_interval': 5000}
+    local_sampling_params = {'hmc_num_adaption_steps': None}
+    optimization_params = {'max_optimization_runs': 5}
+
+    return re_params, local_sampling_params, optimization_params
+
+
 class AbstractREJobController(ABC):
     '''
     Interface for Replica Exchange job controllers. They implement the main
@@ -63,7 +115,8 @@ class AbstractREJobController(ABC):
     initial states for the next simulation, setting it up and running it.
     '''
 
-    def __init__(self, job_spec, re_runner, storage_backend, schedule_optimizer,
+    def __init__(self, re_params, local_sampling_params, optimization_params,
+                 re_runner, storage_backend, schedule_optimizer,
                  dos_estimator, initial_schedule, basename=''):
         '''
         Initializes a Replica Exchange job controller.
@@ -72,7 +125,9 @@ class AbstractREJobController(ABC):
         optimizing schedules.
 
         Args:
-            job_spec(dict): job specifications provided by the user
+            re_params(dict): Replica Exchange-specific parameters
+            local_sampling_params(dict): local sampling-specific parameters
+            optimization_params(dict): schedule optimization-related parameters
             re_runner(:class:`AbstractRERunner`): runner which runs an RE
               simulation (depends on the environment) 
             base_storage(:class:`AbstractStorage`:): storage backend for
@@ -94,9 +149,9 @@ class AbstractREJobController(ABC):
         self._dos_estimator = dos_estimator
         self._storage_backend = storage_backend
         self._basename = basename
-        self._re_params = job_spec['re_params']
-        self._local_sampling_params = job_spec['local_sampling_params']
-        self._optimization_params = job_spec['optimization_params']
+        self._re_params = re_params
+        self._local_sampling_params = local_sampling_params
+        self._optimization_params = optimization_params
 
     @abstractmethod
     def _scale_environment(self, num_replicas):
@@ -193,8 +248,6 @@ class AbstractREJobController(ABC):
             prod(bool): whether this is the production run or not
         '''
         updates = {'local_sampling': {}, 'general': {}, }
-        adapt_limit = self._local_sampling_params['hmc_num_adaption_steps']
-        updates['local_sampling']['timestep_adaption_limit'] = adapt_limit
         if previous_storage is not None:
             updates['local_sampling'] = {
                 'timesteps': dir_structure.INITIAL_TIMESTEPS_FILE_NAME}
@@ -204,6 +257,11 @@ class AbstractREJobController(ABC):
             num_samples = self._re_params['num_production_samples']
         else:
             num_samples = self._re_params['num_optimization_samples']
+
+        adapt_limit = self._local_sampling_params['hmc_num_adaption_steps']
+        adapt_limit = adapt_limit or 0.1 * num_samples
+        updates['local_sampling']['timestep_adaption_limit'] = adapt_limit
+
         updates['general'] = {'n_iterations': num_samples,
                               'output_path': storage.sim_path,
                               'num_replicas': schedule_length(schedule),
@@ -265,7 +323,7 @@ class AbstractREJobController(ABC):
 
         This comprises schedule optimization and a final production run.
         '''
-        optimization_result = self._optimize_schedule()
+        optimization_result = self.optimize_schedule()
         final_opt_storage, final_schedule = optimization_result
 
         prod_storage = SimulationStorage(self._basename, 'production_run')
