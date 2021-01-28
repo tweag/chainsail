@@ -1,13 +1,11 @@
 from abc import abstractmethod, ABC
 
 import yaml
-import numpy as np
 
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 from resaas.schedule_estimation.optimization_quantities import acceptance_rate
 from resaas.re_job_controller.initial_schedules import make_geometric_schedule
-# from resaas.re_runners import MPIRERunner
 from resaas.common.storage import (
     SimulationStorage, default_dir_structure as dir_structure)
 from resaas.common.spec import TemperedDistributionFamily, DistributionSchedule
@@ -60,32 +58,6 @@ def optimization_converged(schedule, previous_schedule):
     return schedule_length(schedule) == schedule_length(previous_schedule)
 
 
-def storage_backend_factory():
-    # TODO: get from environment and get bucket / basename
-    # TODO: make storage backend, but where do we get basename / container name
-    # from?
-    # class MockBackend:
-    #     data = {}
-
-    #     def write(self, data, file_name):
-    #         self.data[filename] = data
-
-    #     def read(self, file_name, data_type='pickle'):
-    #         return self.data[filename]
-        
-    # return MockBackend()
-        
-    from resaas.common.storage import CloudStorageBackend
-    driver = '?'
-    container = '?'
-    return CloudStorageBackend(driver, container)
-
-def runner_factory():
-    # TODO: get this from environment
-    from resaas.re_runners import MPIRERunner
-    return MPIRERunner
-
-
 def optimization_objects_from_spec(job_spec):
     '''
     Instantiates DOS estimator, schedule optimizer and initial
@@ -101,7 +73,7 @@ def optimization_objects_from_spec(job_spec):
     if (dist_family == TemperedDistributionFamily.BOLTZMANN
         and type(sched_parameters) == DistributionSchedule):
 
-        # TODO: set these defaults elsewhere
+        # TODO: set these defaults in extended job spec
         default_acceptance_rate = 0.2
         default_decrement = 0.01
         default_opt_quantity = acceptance_rate
@@ -180,22 +152,6 @@ class AbstractREJobController(ABC):
         self._re_params = re_params
         self._local_sampling_params = local_sampling_params
         self._optimization_params = optimization_params
-
-    @classmethod
-    def from_job_spec(cls, job_spec):
-        '''
-        Instantiates a RE job controller from a job specification.
-
-        Args:
-            job_spec (:class:`JobSpec`): job specification
-        '''
-        re_runner = runner_factory()
-        storage_backend = storage_backend_factory()
-        optimization_objects = optimization_objects_from_spec(job_spec)
-        default_params = get_default_params()
-
-        return cls(*default_params, re_runner, storage_backend, basename='',
-                   **optimization_objects)
 
     @abstractmethod
     def _scale_environment(self, num_replicas):
