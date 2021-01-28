@@ -98,6 +98,10 @@ class AbstractREJobController(ABC):
         self._local_sampling_params = job_spec['local_sampling_params']
         self._optimization_params = job_spec['optimization_params']
 
+    @classmethod
+    def from_job_spec(cls, job_spec):
+        
+
     @abstractmethod
     def _scale_environment(self, num_replicas):
         '''
