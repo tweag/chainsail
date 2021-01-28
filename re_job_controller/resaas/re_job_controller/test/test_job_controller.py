@@ -1,11 +1,11 @@
 import unittest
 
 import numpy as np
-
 from resaas.common.storage import AbstractStorageBackend
-from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
-from resaas.re_job_controller import AbstractREJobController
+from resaas.schedule_estimation.schedule_optimizers import \
+    SingleParameterScheduleOptimizer
 
+from resaas.re_job_controller import AbstractREJobController
 
 re_params = dict(num_replicas=8, num_optimization_samples=10,
                  dump_interval=5)

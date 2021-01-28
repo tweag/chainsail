@@ -1,12 +1,13 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 
-import yaml
 import numpy as np
-
+import yaml
+from resaas.common.storage import SimulationStorage
+from resaas.common.storage import default_dir_structure as dir_structure
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
-from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
-from resaas.common.storage import (
-    SimulationStorage, default_dir_structure as dir_structure)
+from resaas.schedule_estimation.schedule_optimizers import \
+    SingleParameterScheduleOptimizer
+
 from .initial_setup import setup_initial_states, setup_timesteps
 from .util import schedule_length
 
