@@ -58,6 +58,9 @@ class DependencySchema(Schema):
 
 @dataclass
 class DistributionSchedule:
+    # TODO: rename this to BoltzmannDistributionSchedule
+    # or something - there could and will be other kinds of
+    # distributions with their own schedule parameters
     minimum_beta: float
     beta_ratio: float
 
