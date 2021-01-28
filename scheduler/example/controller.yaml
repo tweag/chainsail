@@ -1,5 +1,5 @@
-scaler_address: "127.0.0.1"
-scaler_port: 5000
+scheduler_address: "127.0.0.1"
+scheduler_port: 5000
 storage_backend: cloud
 storage_backend_config:
   local: {}

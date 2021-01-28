@@ -1,7 +1,7 @@
 VALID_CONTROLLER_CONFIG = """
 {
-    "scaler_address": "123.2.12.12",
-    "scaler_port": 1001,
+    "scheduler_address": "123.2.12.12",
+    "scheduler_port": 1001,
     "storage_backend": "cloud",
     "storage_backend_config": {
         "local": {},

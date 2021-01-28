@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import List
 
 
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
@@ -10,6 +11,7 @@ from resaas.common.storage import SimulationStorage, default_dir_structure as di
 from resaas.common.spec import TemperedDistributionFamily, DistributionSchedule
 from resaas.re_job_controller.initial_setup import setup_initial_states, setup_timesteps
 from resaas.re_job_controller.util import schedule_length
+import requests
 
 
 def log(msg):
@@ -128,8 +130,13 @@ class AbstractREJobController(ABC):
     initial states for the next simulation, setting it up and running it.
     """
 
+    SCHEDULER_NODE_ENDPOINT = "/job/{id}/nodes"
+
     def __init__(
         self,
+        job_id,
+        scheduler_address,
+        scheduler_port,
         re_params,
         local_sampling_params,
         optimization_params,
@@ -139,6 +146,7 @@ class AbstractREJobController(ABC):
         dos_estimator,
         initial_schedule,
         basename="",
+        hostsfile="/app/config/hostsfile",
     ):
         """
         Initializes a Replica Exchange job controller.
@@ -147,6 +155,9 @@ class AbstractREJobController(ABC):
         optimizing schedules.
 
         Args:
+            job_id(int): The id of the resaas job to which this controller belongs
+            scheduler_address(str): The address to the scheduler
+            scheduler_port(int): The scheduler's listening port
             re_params(dict): Replica Exchange-specific parameters
             local_sampling_params(dict): local sampling-specific parameters
             optimization_params(dict): schedule optimization-related parameters
@@ -164,7 +175,12 @@ class AbstractREJobController(ABC):
               schedule
             basename(str): optional basename to the simulation storage path
               (required for running locally or when reusing an existing bucket)
+            hostsfile(str): Path at which to read and write the list of host
+                addresses which are participating in the job
         """
+        self.job_id = job_id
+        self.scheduler_address = scheduler_address
+        self.scheduler_port = scheduler_port
         self._re_runner = re_runner
         self._initial_schedule = initial_schedule
         self._schedule_optimizer = schedule_optimizer
@@ -174,6 +190,7 @@ class AbstractREJobController(ABC):
         self._re_params = re_params
         self._local_sampling_params = local_sampling_params
         self._optimization_params = optimization_params
+        self.hostsfile = hostsfile
 
     @abstractmethod
     def _scale_environment(self, num_replicas):
@@ -203,6 +220,26 @@ class AbstractREJobController(ABC):
         schedule = self._schedule_optimizer.optimize(dos, energies)
 
         return schedule
+
+    def _query_hosts(self) -> List[str]:
+        # Query the active nodes for populating the hosts file
+        # TODO: Use https
+        r = requests.get(
+            f"http://{self.scheduler_address}:{self.scheduler_port}{self.SCHEDULER_NODE_ENDPOINT}"
+        )
+        r.raise_for_status()
+        hosts = []
+        for n in r.json():
+            if n["in_use"]:
+                hosts.append(n["address"])
+        return hosts
+
+    def _write_hostsfile(self):
+        # Populate the hostsfile
+        hosts = self._query_hosts()
+        with open("hostsfile", "w") as f:
+            for h in hosts:
+                print(h, file=f)
 
     def optimize_schedule(self):
         """
@@ -367,4 +404,5 @@ class LocalREJobController(AbstractREJobController):
     """
 
     def _scale_environment(self, _):
+        # TODO: overwrite hostsfile after scaling
         pass

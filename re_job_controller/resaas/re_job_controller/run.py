@@ -12,8 +12,12 @@ from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from resaas.common.storage import AbstractStorageBackend, CloudStorageBackend, LocalStorageBackend
 from resaas.re_runners import MPIRERunner
-
-from resaas.re_job_controller import LocalREJobController
+from resaas.common.spec import JobSpecSchema
+from resaas.re_job_controller import (
+    LocalREJobController,
+    optimization_objects_from_spec,
+    get_default_params,
+)
 
 ProcessStatus = Tuple[bool, str]
 
@@ -55,12 +59,18 @@ class ControllerConfig:
     """Resaas controller configurations"""
 
     def __init__(
-        self, scaler_address: str, scaler_port: int, backend_name: str, backend_config: dict
+        self,
+        scheduler_address: str,
+        scheduler_port: int,
+        backend_name: str,
+        backend_config: dict,
+        storage_basename: str,
     ):
-        self.scaler_address = scaler_address
-        self.scaler_port = scaler_port
+        self.scheduler_address = scheduler_address
+        self.scheduler_port = scheduler_port
         self.backend_name = backend_name
         self.backend_config = backend_config
+        self.storage_basename = storage_basename
 
     def get_storage_backend(self) -> AbstractStorageBackend:
         """Create a new storage backend instance using the controller config"""
@@ -85,29 +95,39 @@ BACKEND_SCHEMA_REGISTRY = {"local": LocalBackendConfigSchema, "cloud": CloudBack
 
 
 class ControllerConfigSchema(Schema):
-    scaler_address = fields.String(required=True)
-    scaler_port = fields.Integer(required=True)
+    scheduler_address = fields.String(required=True)
+    scheduler_port = fields.Integer(required=True)
     storage_backend = fields.String(required=True)
     storage_backend_config = fields.Dict(fields.String, fields.Dict, required=True)
+    storage_basename = fields.String()
 
     @post_load
     def make_controller_config(self, data, **kwargs) -> ControllerConfig:
         # Look up the desired backend and attempt to parse its config
         try:
             schema = BACKEND_SCHEMA_REGISTRY[data["storage_backend"]]()
-        except ValueError:
+        except KeyError:
             # TODO: Add a controller exception type here
             raise Exception(f"Unrecognized storage_backend: '{data['storage_backend']}'")
         try:
             specified_config = data["storage_backend_config"][data["storage_backend"]]
-        except ValueError:
+        except KeyError:
             raise Exception(
                 "Did not specify the storage_backend's corresponding config: "
                 f"'{data['storage_backend']}'"
             )
         backend_config = schema.load(specified_config)
+        try:
+            basename = data["storage_basename"]
+        except KeyError:
+            basename = ""
+
         return ControllerConfig(
-            data["scaler_address"], data["scaler_port"], data["storage_backend"], backend_config
+            data["scheduler_address"],
+            data["scheduler_port"],
+            data["storage_backend"],
+            backend_config,
+            basename,
         )
 
 
@@ -120,26 +140,58 @@ def check_status(proc: Process) -> ProcessStatus:
     # TODO: This will be called via gRPC
     pass
 
+    # re_runner = runner_factory()
+    # storage_backend = storage_backend_factory()
+    # optimization_objects = optimization_objects_from_spec(job_spec)
+    # default_params = get_default_params()
+
+    # return cls(*default_params, re_runner, storage_backend, basename='',
+    #            **optimization_objects)
+
 
 @click.command()
-@click.argument("config_file", nargs=1, type=click.Path(exists=True))
-def run(config_file):
+@click.option("--job", required=True, type=int, help="resaas job id")
+@click.option(
+    "--config",
+    required=True,
+    type=click.Path(exists=True),
+    help="path to controller YAML config file",
+)
+@click.option(
+    "--hostsfile", required=True, type=click.Path(exists=True), help="path to job hostsfile"
+)
+@click.option(
+    "--job-spec", required=True, type=click.Path(exists=True), help="path to job spec json file"
+)
+def run(job, config, hostsfile, job_spec):
     """
     The resaas node controller.
-
-    Accepts a path to a YAML CONFIG_FILE.
     """
     # Load the controller configuration file
-    with open(config_file) as f:
+    with open(config) as f:
         config: ControllerConfig = ControllerConfigSchema().load(yaml.load(f))
+    # Load the job spec
+    with open(job_spec) as f:
+        job_spec = JobSpecSchema().loads(f.read())
     # Get storage backend
-    backend = config.get_storage_backend()
+    storage_backend = config.get_storage_backend()
 
-    # TODO: Hard coded this for now
-    runner = MPIRERunner
-    # TODO: Need to add in the appropriate stuff to the constructor here
-    controller = LocalREJobController()
-    controller.run_job
+    # Load the controller
+    # TODO: Hard coded this for now. We can add runner selection logic later.
+    runner = MPIRERunner(hostsfile)
+    optimization_objects = optimization_objects_from_spec(job_spec)
+    default_params = get_default_params()
+
+    controller = LocalREJobController(
+        job,
+        config.scheduler_address,
+        config.scheduler_port,
+        *default_params,
+        runner,
+        storage_backend,
+        basename=config.storage_basename,
+        **optimization_objects,
+    )
 
     # Start controller in another process
     # Poll that process until it exits
