@@ -3,18 +3,25 @@ import traceback
 from typing import IO, List, Optional, Tuple, Union
 
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import (NodeAuthSSHKey, NodeDriver, NodeImage,
-                                   NodeSize)
-from libcloud.compute.deployment import (Deployment, MultiStepDeployment,
-                                         ScriptDeployment, SSHKeyDeployment)
+from libcloud.compute.base import NodeAuthSSHKey, NodeDriver, NodeImage, NodeSize
+from libcloud.compute.deployment import (
+    Deployment,
+    MultiStepDeployment,
+    ScriptDeployment,
+    SSHKeyDeployment,
+)
 from libcloud.compute.types import DeploymentException, NodeState
 
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblJobs, TblNodes
-from resaas.scheduler.errors import (ConfigurationError, MissingNodeError,
-                                     NodeError, ObjectConstructionError)
+from resaas.scheduler.errors import (
+    ConfigurationError,
+    MissingNodeError,
+    NodeError,
+    ObjectConstructionError,
+)
 from resaas.scheduler.nodes.base import Node, NodeStatus
-from resaas.scheduler.spec import Dependencies, JobSpec
+from resaas.common.spec import Dependencies, JobSpec
 
 
 def _deployment_log(deployment: Deployment):

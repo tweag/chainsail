@@ -5,3 +5,6 @@
 **/.pytest_cache/
 .coverage
 *.*~
+
+# No lockfiles for libraries
+common/poetry.lock
