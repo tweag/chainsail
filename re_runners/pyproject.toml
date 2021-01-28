@@ -10,7 +10,6 @@ python = "^3.8"
 numpy = "*"
 pyyaml = "*"
 resaas-common = { path = "../common", develop = true }
-rexfw = { git = "https://github.com/tweag/rexfw.git", branch = "start-script" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
