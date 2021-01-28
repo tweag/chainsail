@@ -37,10 +37,10 @@ def load_storage_backend(backend_name: str, backend_config: dict):
         return LocalStorageBackend()
     elif backend_name == "cloud":
         try:
-            provider = getattr(Provider, backend_config["provider"])
+            provider = getattr(Provider, backend_config["libcloud_provider"])
         except AttributeError:
             raise Exception(
-                f"Unrecognized libcloud provider: {backend_config['provider']}. "
+                f"Unrecognized libcloud provider: {backend_config['libcloud_provider']}. "
                 "See libcloud.storage.types.Provider for a full list of available options."
             )
         driver_cls = get_driver(provider)

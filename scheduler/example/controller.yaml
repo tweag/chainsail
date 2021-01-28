@@ -1,0 +1,11 @@
+scaler_address: "127.0.0.1"
+scaler_port: 5000
+storage_backend: cloud
+storage_backend_config:
+  local: {}
+  cloud:
+    libcloud_provider: S3
+    container_name: "resaas-dev"
+    driver_kwargs:
+      key: xxxxxxxxxxxxxxxxxxxxxxx
+      secret: xxxxxxxxxxxxxxxxxxxx
