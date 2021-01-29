@@ -42,6 +42,9 @@ class MockRERunner:
 
 
 class MockREJobController(AbstractREJobController):
+    def _write_hostsfile(self):
+        pass
+
     def _scale_environment(self, _):
         pass
 

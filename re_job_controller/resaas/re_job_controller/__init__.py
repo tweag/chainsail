@@ -408,5 +408,8 @@ class AbstractREJobController(ABC):
 
 
 class LocalREJobController(AbstractREJobController):
+    def _write_hostsfile(self):
+        pass
+
     def _scale_environment(self, num_replicas):
         pass
