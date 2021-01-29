@@ -134,7 +134,7 @@ export default function Job() {
     const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
     const JOB_CREATION_ENDPOINT = '/job';
     const body = JSON.stringify({
-      //TODO: should be checked in scheduler job schema whether job_name is required
+      name: job_name,
       initial_number_of_replicas,
       max_replicas,
       tempered_dist_family: tempered_distribution_family,
