@@ -216,6 +216,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "mpi4py"
+version = "3.0.3"
+description = "Python bindings for MPI"
+category = "main"
+optional = true
+python-versions = "*"
+
+[[package]]
 name = "mypy"
 version = "0.790"
 description = "Optional static typing for Python"
@@ -450,22 +458,24 @@ type = "directory"
 url = "../common"
 
 [[package]]
-name = "resaas-re-runners"
+name = "resaas-runner-rexfw"
 version = "0.1.0"
-description = "RESAAS runners for Replica Exchange sampling"
+description = "RESAAS runner for Replica Exchange sampling with rexfw"
 category = "main"
-optional = false
+optional = true
 python-versions = "^3.8"
-develop = true
+develop = false
 
 [package.dependencies]
+mpi4py = ">=3.0.3,<4.0.0"
 numpy = "*"
 pyyaml = "*"
 resaas-common = "0.1.0"
+rexfw = "rev start-script"
 
 [package.source]
 type = "directory"
-url = "../re_runners"
+url = "../runners/rexfw"
 
 [[package]]
 name = "resaas-schedule-optimization"
@@ -483,6 +493,25 @@ resaas-common = "0.1.0"
 [package.source]
 type = "directory"
 url = "../schedule_estimation"
+
+[[package]]
+name = "rexfw"
+version = "0.1.0"
+description = "Replica Exchange for computing clusters"
+category = "main"
+optional = true
+python-versions = "^3.8"
+
+[package.dependencies]
+mpi4py = "*"
+numpy = "*"
+pyyaml = "*"
+
+[package.source]
+type = "git"
+url = "https://github.com/tweag/rexfw"
+reference = "start-script"
+resolved_reference = "33e2ddc8573ddaf758e2aeac98b33db5e5a519b1"
 
 [[package]]
 name = "rope"
@@ -548,10 +577,13 @@ category = "dev"
 optional = false
 python-versions = "*"
 
+[extras]
+rexfw = ["resaas-runner-rexfw"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "f4e2c61ffa43866f57df1c4baf24b2b39fd21c7f7f0c88bfdae0ce24c6f538cd"
+content-hash = "5164292ac71dd6adbcffc9625d4144097570f6bbac8bece21dff0f5a7dba5274"
 
 [metadata.files]
 apache-libcloud = [
@@ -698,6 +730,25 @@ marshmallow-enum = [
 mccabe = [
     {file = "mccabe-0.6.1-py2.py3-none-any.whl", hash = "sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42"},
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
+]
+mpi4py = [
+    {file = "mpi4py-3.0.3-cp27-cp27m-win32.whl", hash = "sha256:6445dd41054a90fa97c649d3dc9d70511d129831cc1806bbe9628eab4e72fe30"},
+    {file = "mpi4py-3.0.3-cp27-cp27m-win_amd64.whl", hash = "sha256:f74887a4da0e1b8ea1b393be008da2e1810d08cde899195c927cc8ce40178e86"},
+    {file = "mpi4py-3.0.3-cp33-cp33m-win32.whl", hash = "sha256:1799de61b8b755cd20ab7aca078892ca4f0dc7c96c63c231082dfe7d81644a8c"},
+    {file = "mpi4py-3.0.3-cp33-cp33m-win_amd64.whl", hash = "sha256:31be264534e3b0afb4d1ac8d357424f0742a93a6b604d5ad8c96f6472f62f827"},
+    {file = "mpi4py-3.0.3-cp34-cp34m-win32.whl", hash = "sha256:bf977b5e7f7354b100f74c604035fda467539aa252bdbadec89191c794f40560"},
+    {file = "mpi4py-3.0.3-cp34-cp34m-win_amd64.whl", hash = "sha256:5a533c8c08bbc542fe3e4f0e4ea95e15ee19157a739d84b64ea096a91424e824"},
+    {file = "mpi4py-3.0.3-cp35-cp35m-win32.whl", hash = "sha256:b7ffc1a7b7e4afe9f117aecd0d0cf923add96c821fb652ff99a3368ecea9ddb6"},
+    {file = "mpi4py-3.0.3-cp35-cp35m-win_amd64.whl", hash = "sha256:db8531579b777e2bafb1b004224206685614069d276ff1d9a9f4c6c9b44485d9"},
+    {file = "mpi4py-3.0.3-cp36-cp36m-win32.whl", hash = "sha256:c7f11495188ffbf6550faa1f029d139f155d88fe25efde4def8dff22d4d66376"},
+    {file = "mpi4py-3.0.3-cp36-cp36m-win_amd64.whl", hash = "sha256:d0f2caea8906de62239f34f275306693093d600b23070709713d97a1849edb66"},
+    {file = "mpi4py-3.0.3-cp37-cp37m-win32.whl", hash = "sha256:f46f06eb2230e958bfc24d6509f1679b4843f9f35ef79c89aecede91f3b21842"},
+    {file = "mpi4py-3.0.3-cp37-cp37m-win_amd64.whl", hash = "sha256:3c6b2bfc3eae756142158439d6108d53e208976e3882377afe921e6c60df3034"},
+    {file = "mpi4py-3.0.3-cp38-cp38-win32.whl", hash = "sha256:e9453a5d93df3c687fc1ed214a3981a6721d7fb1f86afd918a72b27556b6f5e1"},
+    {file = "mpi4py-3.0.3-cp38-cp38-win_amd64.whl", hash = "sha256:4faa759cf363752d6a1460922431530d4c40ccf8780e332fb7d3b3990ceda8f5"},
+    {file = "mpi4py-3.0.3-cp39-cp39-win32.whl", hash = "sha256:af1ba4e159a338b91a25bc1d0a009c0c37b095047fd2f6ed74b50ae83be5de7d"},
+    {file = "mpi4py-3.0.3-cp39-cp39-win_amd64.whl", hash = "sha256:844c166813032a9a3b5142e150be6f78dc196eaa3681780fc3e895a7789eb82b"},
+    {file = "mpi4py-3.0.3.tar.gz", hash = "sha256:012d716c8b9ed1e513fcc4b18e5af16a8791f51e6d1716baccf988ad355c5a1f"},
 ]
 mypy = [
     {file = "mypy-0.790-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:bd03b3cf666bff8d710d633d1c56ab7facbdc204d567715cb3b9f85c6e94f669"},
@@ -878,8 +929,9 @@ requests = [
     {file = "requests-2.25.1.tar.gz", hash = "sha256:27973dd4a904a4f13b263a19c866c13b92a39ed1c964655f025f3f8d3d75b804"},
 ]
 resaas-common = []
-resaas-re-runners = []
+resaas-runner-rexfw = []
 resaas-schedule-optimization = []
+rexfw = []
 rope = [
     {file = "rope-0.18.0.tar.gz", hash = "sha256:786b5c38c530d4846aa68a42604f61b4e69a493390e3ca11b88df0fbfdc3ed04"},
 ]

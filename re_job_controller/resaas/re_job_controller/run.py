@@ -8,11 +8,12 @@ import click
 import yaml
 from libcloud.storage.providers import get_driver
 from libcloud.storage.types import Provider
+from resaas.common.runners import AbstractRERunner
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from resaas.common.storage import AbstractStorageBackend, CloudStorageBackend, LocalStorageBackend
-from resaas.re_runners import MPIRERunner
 from resaas.common.spec import JobSpecSchema
+from importlib import import_module
 from resaas.re_job_controller import (
     LocalREJobController,
     optimization_objects_from_spec,
@@ -65,12 +66,14 @@ class ControllerConfig:
         backend_name: str,
         backend_config: dict,
         storage_basename: str,
+        runner: str,
     ):
         self.scheduler_address = scheduler_address
         self.scheduler_port = scheduler_port
         self.backend_name = backend_name
         self.backend_config = backend_config
         self.storage_basename = storage_basename
+        self.runner = runner
 
     def get_storage_backend(self) -> AbstractStorageBackend:
         """Create a new storage backend instance using the controller config"""
@@ -97,6 +100,7 @@ BACKEND_SCHEMA_REGISTRY = {"local": LocalBackendConfigSchema, "cloud": CloudBack
 class ControllerConfigSchema(Schema):
     scheduler_address = fields.String(required=True)
     scheduler_port = fields.Integer(required=True)
+    runner = fields.String(required=True)
     storage_backend = fields.String(required=True)
     storage_backend_config = fields.Dict(fields.String, fields.Dict, required=True)
     storage_basename = fields.String()
@@ -121,19 +125,30 @@ class ControllerConfigSchema(Schema):
             basename = data["storage_basename"]
         except KeyError:
             basename = ""
-
         return ControllerConfig(
             data["scheduler_address"],
             data["scheduler_port"],
             data["storage_backend"],
             backend_config,
             basename,
+            data["runner"]
         )
 
 
 ##############################################################################
 # ENTRYPOINT
 ##############################################################################
+
+
+def load_runner(runner_path: str) -> AbstractRERunner:
+    """Loads a runner class from its module path.
+
+    Args:
+        runner: The path to the runner with the module and class delimited
+            by a colon. e.g. 'some.module:MyRunner'
+    """
+    package, name = runner_path.split(":")
+    return import_module(name, package)
 
 
 def check_status(proc: Process) -> ProcessStatus:
@@ -177,8 +192,7 @@ def run(job, config, hostsfile, job_spec):
     storage_backend = config.get_storage_backend()
 
     # Load the controller
-    # TODO: Hard coded this for now. We can add runner selection logic later.
-    runner = MPIRERunner(hostsfile)
+    runner = load_runner(config.runner)
     optimization_objects = optimization_objects_from_spec(job_spec)
     default_params = get_default_params()
 

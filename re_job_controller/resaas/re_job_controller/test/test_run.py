@@ -2,6 +2,7 @@ VALID_CONTROLLER_CONFIG = """
 {
     "scheduler_address": "123.2.12.12",
     "scheduler_port": 1001,
+    "runner": "some.module:MyRunner",
     "storage_backend": "cloud",
     "storage_backend_config": {
         "local": {},

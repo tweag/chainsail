@@ -5,6 +5,8 @@ description = "RESAAS component which, within a job received from the scheduler,
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
 packages = [ { include = 'resaas' } ]
 
+
+
 [tool.poetry.scripts]
 resaas-controller = 'resaas.re_job_controller.run:run'
 
@@ -12,9 +14,15 @@ resaas-controller = 'resaas.re_job_controller.run:run'
 python = "^3.8"
 numpy = "*"
 resaas-common = { path = "../common", develop = true }
-resaas-re-runners = { path = "../re_runners", develop = true }
+# Default runner
 resaas-schedule-optimization = { path = "../schedule_estimation", develop = true }
 click = "^7.1.2"
+
+# Runners can be installed as extras for convenience
+resaas-runner-rexfw = { path = "../runners/rexfw", optional = true }
+
+[tool.poetry.extras]
+rexfw = ["resaas-runner-rexfw"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
