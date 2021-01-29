@@ -1,8 +1,13 @@
 import os
 import unittest
-from pickle import load
+from pickle import load, dump
+from tempfile import TemporaryDirectory
 
-from resaas.common.storage import SimulationStorage, pickle_to_stream
+
+from resaas.common.storage import (
+    SimulationStorage,
+    pickle_to_stream,
+    LocalStorageBackend)
 
 
 obj = ["a", "list", 42]
@@ -56,3 +61,50 @@ class testSimulationStorage(unittest.TestCase):
         full_fname = os.path.join(self._basename, self._sim_path, fname)
         self._backend.data[full_fname] = obj
         self.assertEqual(self._storage.load(fname), obj)
+
+
+class TestLocalStorage(unittest.TestCase):
+
+    def setUp(self):
+        self._tmp_dir = TemporaryDirectory().name
+        self._backend = LocalStorageBackend()
+
+    def testWrite(self):
+        s = "I'm a string"
+        fname = "somedir/string.txt"
+        full_path = os.path.join(self._tmp_dir, fname)
+        self._backend.write(s, full_path, data_type="text")
+        self.assertTrue(os.path.exists(full_path))
+        with open(full_path) as f:
+            self.assertEqual(s, f.read())
+
+        o = ["I live in a list"]
+        fname = "somedir/list.pickle"
+        full_path = os.path.join(self._tmp_dir, fname)
+        self._backend.write(o, full_path, data_type="pickle")
+        self.assertTrue(os.path.exists(full_path))
+        with open(full_path, "rb") as f:
+            self.assertEqual(o, load(f))
+
+        with self.assertRaises(ValueError):
+            self._backend.write("moo", "a/path", "invalid_data_type")
+
+    def testRead(self):
+        s = "I'm a string"
+        fname = "somedir/string.txt"
+        full_path = os.path.join(self._tmp_dir, fname)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "w") as f:
+            f.write(s)
+        self.assertEqual(self._backend.load(full_path, "text"), s)
+
+        o = ["I live in a list"]
+        fname = "somedir/list.pickle"
+        full_path = os.path.join(self._tmp_dir, fname)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "wb") as f:
+            dump(o, f)
+        self.assertEqual(self._backend.load(full_path, "pickle"), o)
+
+        with self.assertRaises(ValueError):
+            self._backend.load("a/path", "invalid_data_type")
