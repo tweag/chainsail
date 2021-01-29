@@ -44,7 +44,7 @@ const JobsTable = ({ data }) => {
   const TableRow = ({ row }) => (
     <tr className="hover:bg-gray-700 transition duration-100">
       <TableData d={row.id} />
-      <TableData d={row.name} />
+      <TableData d={JSON.parse(row.spec).name} />
       <TableData d={dateFormatter(row.created_at)} />
       <TableData d={dateFormatter(row.started_at_at)} />
       <TableData d={dateFormatter(row.finished_at)} />
