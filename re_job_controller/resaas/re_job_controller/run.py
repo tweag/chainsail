@@ -131,7 +131,7 @@ class ControllerConfigSchema(Schema):
             data["storage_backend"],
             backend_config,
             basename,
-            data["runner"]
+            data["runner"],
         )
 
 
@@ -154,14 +154,6 @@ def load_runner(runner_path: str) -> AbstractRERunner:
 def check_status(proc: Process) -> ProcessStatus:
     # TODO: This will be called via gRPC
     pass
-
-    # re_runner = runner_factory()
-    # storage_backend = storage_backend_factory()
-    # optimization_objects = optimization_objects_from_spec(job_spec)
-    # default_params = get_default_params()
-
-    # return cls(*default_params, re_runner, storage_backend, basename='',
-    #            **optimization_objects)
 
 
 @click.command()
