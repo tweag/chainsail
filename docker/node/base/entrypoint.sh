@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO: The scheduler needs to handle this 
+
 set -ex
 
 mkdir -p /root/.ssh
