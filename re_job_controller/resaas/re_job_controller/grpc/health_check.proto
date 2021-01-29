@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+service health_check {
+  rpc HealthCheck (HealthStateRequest) returns (stream HealthStateResponse) {}
+}
+
+message HealthStateRequest {
+  string health_status = 1;
+}
+
+message HealthStateResponse {
+  string message = 1;
+}
