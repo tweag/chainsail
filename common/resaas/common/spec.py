@@ -7,8 +7,17 @@ from marshmallow import Schema, fields, post_load
 from marshmallow_enum import EnumField
 
 
+class DependenciesType(Enum):
+    PIP = "pip"
+
+
 class Dependencies(ABC):
     """A set of software packages to be installed on a node."""
+
+    @property
+    @abstractmethod
+    def type(self) -> DependenciesType:
+        pass
 
     @property
     @abstractmethod
@@ -20,12 +29,19 @@ class Dependencies(ABC):
     def installation_script(self) -> str:
         pass
 
+    def __eq__(self, other) -> bool:
+        return self.type == other.type and self.packages == other.packages
+
 
 class PipDependencies(Dependencies):
     """PyPI Python packages"""
 
     def __init__(self, requirements: List[str]):
         self._packages = requirements
+    
+    @property
+    def type(self) -> DependenciesType:
+        return DependenciesType.PIP
 
     @property
     def packages(self):
@@ -33,7 +49,10 @@ class PipDependencies(Dependencies):
 
     @property
     def installation_script(self):
-        return f"pip install {' '.join(self.packages)}"
+        if self.packages:
+            return f"pip install {' '.join(self.packages)}"
+        else:
+            return ""
 
 
 def _load_dep(dep_type: str, pkgs: List[str]):
@@ -43,17 +62,16 @@ def _load_dep(dep_type: str, pkgs: List[str]):
         raise ValueError(f"Unknown dependency type: {dep_type}")
 
 
-class DependenciesType(Enum):
-    PIP = "pip"
-
 
 class DependencySchema(Schema):
     type = EnumField(DependenciesType, by_value=True)
-    deps = fields.List(fields.String())
+    packages = fields.List(fields.String(), data_key="deps")
 
     @post_load
     def make_dependencies(self, data, **kwargs):
-        return _load_dep(data["type"], data["deps"])
+        print(data)
+        if data:
+            return _load_dep(data["type"], data["packages"])
 
 
 @dataclass
@@ -84,7 +102,7 @@ class JobSpecSchema(Schema):
     initial_schedule_parameters = fields.Nested(DistributionScheduleSchema)
     max_replicas = fields.Int()
     tempered_dist_family = EnumField(TemperedDistributionFamily, by_value=True)
-    dependencies = fields.List(fields.Nested(DependencySchema))
+    dependencies = fields.Nested(DependencySchema(many=True))
 
     @post_load
     def make_job_spec(self, data, **kwargs):
@@ -114,3 +132,14 @@ class JobSpec:
             self.dependencies = []
         else:
             self.dependencies = dependencies
+
+    def __eq__(self, other: "JobSpec") -> bool:
+        return all([
+                self.probability_definition == other.probability_definition,
+                self.initial_number_of_replicas == other.initial_number_of_replicas,
+                self.initial_schedule_parameters == other.initial_schedule_parameters,
+                self.max_replicas == other.max_replicas,
+                self.tempered_dist_family == other.tempered_dist_family,
+                self.dependencies == other.dependencies
+            ]
+        )
