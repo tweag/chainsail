@@ -96,7 +96,7 @@ class JobSpec:
     def __init__(
         self,
         probability_definition: str,
-        name: Optional[str],
+        name: Optional[str] = None,
         initial_number_of_replicas: int = 10,
         initial_schedule_parameters: Optional[DistributionSchedule] = None,
         max_replicas: int = 100,
