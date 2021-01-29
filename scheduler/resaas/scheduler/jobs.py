@@ -9,7 +9,7 @@ from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import JobError
 from resaas.scheduler.nodes.base import Node, NodeType
 from resaas.scheduler.nodes.registry import NODE_CLS_REGISTRY
-from resaas.scheduler.spec import JobSpec, JobSpecSchema
+from resaas.common.spec import JobSpec, JobSpecSchema
 
 
 class JobStatus(Enum):
