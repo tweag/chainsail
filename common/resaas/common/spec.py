@@ -80,6 +80,7 @@ class TemperedDistributionFamily(Enum):
 
 class JobSpecSchema(Schema):
     probability_definition = fields.String(required=True)
+    name = fields.String()
     initial_number_of_replicas = fields.Int()
     initial_schedule_parameters = fields.Nested(DistributionScheduleSchema)
     max_replicas = fields.Int()
@@ -95,6 +96,7 @@ class JobSpec:
     def __init__(
         self,
         probability_definition: str,
+        name: Optional[str],
         initial_number_of_replicas: int = 10,
         initial_schedule_parameters: Optional[DistributionSchedule] = None,
         max_replicas: int = 100,
@@ -102,6 +104,7 @@ class JobSpec:
         dependencies: Optional[Dependencies] = None,
     ):
         self.probability_definition = probability_definition
+        self.name = name
         self.initial_number_of_replicas = initial_number_of_replicas
         self.max_replicas = max_replicas
         self.tempered_dist_family = tempered_dist_family
