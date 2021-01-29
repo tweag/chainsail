@@ -19,29 +19,22 @@ def log(msg):
     pass
 
 
-cfg_template = {
-    "re": {
-        'swap_interval': None,
-        'status_interval': None,
-        'dump_interval': None,
-        'statistics_update_interval': None,
-        'schedule': None
-    },
-    "general": {
-        "n_iterations": None,
-        "basename": None,
-        "output_path": None,
-        "initial_states": None,
-        "num_replicas": None,
-    },
-    "local_sampling": {
-        "n_steps": 20,
-        "timesteps": None,
-        "timestep_adaption_limit": None,
-        "adaption_uprate": 1.05,
-        "adaption_downrate": 0.95,
-    },
-}
+def config_template_from_params(re_params, local_sampling_params):
+    # TODO: replace this by something like config_template_from_jobspec
+    # as soon as the extended job spec PR is merged
+    re = re_params.copy()
+    re['schedule'] = None
+    re.pop('num_optimization_samples')
+    re.pop('num_production_samples')
+    local_sampling = local_sampling_params.copy()
+    local_sampling['timesteps'] = None
+    general = dict(n_iterations=None,
+                   basename=None,
+                   output_path=None,
+                   initial_states=None,
+                   num_replicas=None)
+
+    return dict(re=re, local_sampling=local_sampling, general=general)
 
 
 def optimization_converged(schedule, previous_schedule):
@@ -89,7 +82,9 @@ def optimization_objects_from_spec(job_spec):
             default_opt_quantity,
             "beta",
         )
-        initial_schedule = make_geometric_schedule("beta", init_num_replicas, min_beta, max_beta)
+
+        initial_schedule = make_geometric_schedule("beta", init_num_replicas,
+                                                   min_beta, max_beta)
 
         return dict(
             dos_estimator=dos_estimator,
@@ -108,16 +103,25 @@ def optimization_objects_from_spec(job_spec):
 
 
 def get_default_params():
-    # TODO: get these from an extended job spec
-    re_params = {
-        "num_production_samples": 20000,
-        "num_optimization_samples": 5000,
-        "dump_interval": 5000,
-    }
-    local_sampling_params = {"hmc_num_adaption_steps": None}
+    # TODO: replace this by something like config_template_from_jobspec
+    # as soon as the extended job spec PR is merged
+    re = dict(
+        dump_interval=1000,
+        dump_step=5,
+        status_interval=100,
+        statistics_update_interval=100,
+        swap_interval=5,
+        num_production_samples=20000,
+        num_optimization_samples=3000)
+    local_sampling = dict(
+        n_steps=20,
+        timesteps_adaption_limit=None,
+        adaption_uprate=1.05,
+        adaption_downrate=0.95)
+
     optimization_params = {"max_optimization_runs": 5}
 
-    return re_params, local_sampling_params, optimization_params
+    return re, local_sampling, optimization_params
 
 
 class AbstractREJobController(ABC):
@@ -391,14 +395,3 @@ class AbstractREJobController(ABC):
         prod_storage = SimulationStorage(self._basename, "production_run")
         self._setup_simulation(prod_storage, final_schedule, final_opt_storage, prod=True)
         self._do_single_run(prod_storage.config_file_name)
-
-
-class LocalREJobController(AbstractREJobController):
-    """
-    Local Replica Exchange job controller, which does not scale up / down
-    the environment.
-    """
-
-    def _scale_environment(self, _):
-        # TODO: overwrite hostsfile after scaling
-        pass
