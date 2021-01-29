@@ -34,7 +34,7 @@ def make_sure_basename_exists(file_path):
     Args:
       file_path: a (possibly relative) file path
     """
-    os.makedirs(file_path[: file_path.rfind("/")], exist_ok=True)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
 
 def pickle_to_stream(obj):
@@ -72,22 +72,26 @@ class AbstractStorageBackend(ABC):
 
 
 class LocalStorageBackend(AbstractStorageBackend):
-    def write(self, data, file_name):
+    def write(self, data, file_name, data_type="pickle"):
         make_sure_basename_exists(file_name)
-        if type(data) == str:
+        if data_type == "pickle":
+            with open(file_name, "wb") as f:
+                dump(data, f)
+        elif data_type == "text":
             with open(file_name, "w") as f:
                 f.write(data)
         else:
-            with open(file_name, "wb") as f:
-                dump(data, f)
+            raise ValueError("'data_type' has to be either 'text' or 'pickle'")
 
     def load(self, file_name, data_type="pickle"):
         if data_type == "pickle":
             with open(file_name, "rb") as f:
                 return load(f)
-        if data_type == "text":
+        elif data_type == "text":
             with open(file_name, "r") as f:
                 return f.read()
+        else:
+            raise ValueError("'data_type' has to be either 'text' or 'pickle'")
 
 
 def bytes_iterator_to_bytesio(stream):
