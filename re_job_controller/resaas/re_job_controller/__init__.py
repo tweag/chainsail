@@ -115,7 +115,7 @@ def get_default_params():
         num_optimization_samples=3000)
     local_sampling = dict(
         n_steps=20,
-        timesteps_adaption_limit=None,
+        timestep_adaption_limit=None,
         adaption_uprate=1.05,
         adaption_downrate=0.95)
 
@@ -302,7 +302,8 @@ class AbstractREJobController(ABC):
 
         return current_storage, final_schedule
 
-    def _fill_config_template(self, storage, previous_storage, schedule, prod=False):
+    def _fill_config_template(self, storage, previous_storage, schedule,
+                              prod=False):
         """
         Fills in the config template with run-specific values.
 
@@ -314,28 +315,37 @@ class AbstractREJobController(ABC):
             schedule(dict): schedule of the current simulation
             prod(bool): whether this is the production run or not
         """
+        cfg_template = config_template_from_params(self._re_params,
+                                                   self._local_sampling_params)
         updates = {
             "local_sampling": {},
             "general": {},
         }
         if previous_storage is not None:
-            updates["local_sampling"] = {"timesteps": dir_structure.INITIAL_TIMESTEPS_FILE_NAME}
-            updates["general"] = {"initial_states": dir_structure.INITIAL_STATES_FILE_NAME}
+            updates["local_sampling"] = {"timesteps":
+                                         dir_structure.INITIAL_TIMESTEPS_FILE_NAME}
+            updates["general"] = {"initial_states":
+                                  dir_structure.INITIAL_STATES_FILE_NAME}
         if prod:
             num_samples = self._re_params.num_production_samples
         else:
             num_samples = self._re_params.num_optimization_samples
 
-        adapt_limit = self._local_sampling_params.timestep_adaption_limit
-        adapt_limit = adapt_limit or 0.1 * num_samples
-        updates['local_sampling']['timestep_adaption_limit'] = adapt_limit
+        adapt_limit = cfg_template['local_sampling']['timestep_adaption_limit']
+        if adapt_limit is None:
+            adapt_limit = 0.1 * num_samples
+        updates["local_sampling"]["timestep_adaption_limit"] = adapt_limit
 
-        updates['general'] = {'n_iterations': num_samples,
-                              'output_path': storage.sim_path,
-                              'num_replicas': schedule_length(schedule),
-                              'basename': storage._basename}
-        updates['re'] = {'schedule': dir_structure.SCHEDULE_FILE_NAME,
-                         'dump_interval': self._re_params.dump_interval}
+        updates["general"] = {
+            "n_iterations": num_samples,
+            "output_path": storage.sim_path,
+            "num_replicas": schedule_length(schedule),
+            "basename": storage._basename,
+        }
+        updates["re"] = {
+            "schedule": dir_structure.SCHEDULE_FILE_NAME,
+            "dump_interval": self._re_params["dump_interval"],
+        }
 
         return updates
 
@@ -395,3 +405,8 @@ class AbstractREJobController(ABC):
         prod_storage = SimulationStorage(self._basename, "production_run")
         self._setup_simulation(prod_storage, final_schedule, final_opt_storage, prod=True)
         self._do_single_run(prod_storage.config_file_name)
+
+
+class LocalREJobController(AbstractREJobController):
+    def _scale_environment(self, num_replicas):
+        pass
