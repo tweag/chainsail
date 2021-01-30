@@ -1,5 +1,6 @@
 import pathlib
 import os
+from subprocess import check_output
 
 from resaas.re_job_controller import (
     LocalREJobController,

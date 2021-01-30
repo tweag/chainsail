@@ -6,5 +6,6 @@ pkgs.mkShell {
     niv.niv
     yarn
     docker-compose
+    openmpi
   ];
 }
