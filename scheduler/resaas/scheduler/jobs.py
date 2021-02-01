@@ -6,8 +6,8 @@ import shortuuid
 
 import asyncio
 from grpclib.client import Channel
-from grcplib.health.v1.health_pb2 import HealthCheckRequest
-from grcplib.health.v1.health_grpc import HealthStub
+from grpclib.health.v1.health_pb2 import HealthCheckRequest
+from grpclib.health.v1.health_grpc import HealthStub
 
 
 from resaas.scheduler.config import SchedulerConfig
