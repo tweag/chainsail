@@ -105,10 +105,6 @@ class CloudBackendConfigSchema(Schema):
     container_name = fields.String(required=True)
     driver_kwargs = fields.Dict(fields.String, fields.String, required=True)
 
-    @post_load
-    def make_backend(self, data, **kwargs) -> "CloudStorageBackend":
-        return CloudStorageBackend()
-
 
 # Registry used for looking up schema during deserialization
 BACKEND_SCHEMA_REGISTRY = {"local": LocalBackendConfigSchema, "cloud": CloudBackendConfigSchema}

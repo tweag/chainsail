@@ -41,7 +41,7 @@ class testStorageBackendConfig(unittest.TestCase):
     def testLoadCloudStorageConfigValid(self):
         from resaas.common.storage import StorageBackendConfigSchema
 
-        StorageBackendConfigSchema().load(LOCAL_STORAGE_CONFIG)
+        StorageBackendConfigSchema().load(CLOUD_STORAGE_CONFIG)
 
 
 class testFunctions(unittest.TestCase):
