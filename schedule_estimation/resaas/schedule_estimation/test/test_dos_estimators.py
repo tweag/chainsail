@@ -35,3 +35,21 @@ class testWHAM(unittest.TestCase):
         Z2_est = np.exp(log_sum_exp(-energies.ravel() * beta2 + est_log_dos))
 
         self.assertTrue(np.fabs(Z1 / Z2 - Z1_est / Z2_est) < 1e-2)
+
+    def testDos(self): 
+        est_log_dos = self.wham.estimate_dos(energies, schedule)
+        rebinned_log_dos, bins = np.histogram(energies.flatten(), weights=np.exp(est_log_dos), bins=100)
+        mean_binned_energy = (bins[:-1] + bins[1:]) / 2
+
+        # Normalize re-binned log DOS
+        rebinned_log_dos = rebinned_log_dos - log_sum_exp(rebinned_log_dos)
+        
+        # Calculate expected log DOS
+        expected_log_dos = np.log(2 / np.sqrt(2 * mean_binned_energy)).flatten()
+        # And normalize
+        expected_log_dos = expected_log_dos - log_sum_exp(expected_log_dos)
+        
+        print(expected_log_dos[:20] - rebinned_log_dos[:20])
+        # TODO: This difference is a bit high
+         # Only compare lower energies since higher energies are not adequately sampled
+        np.testing.assert_almost_equal(expected_log_dos, rebinned_log_dos, decimal=5)
