@@ -14,7 +14,6 @@ resaas-controller = 'resaas.re_job_controller.run:run'
 python = "^3.8"
 numpy = "*"
 resaas-common = { path = "../common", develop = true }
-# Default runner
 resaas-schedule-optimization = { path = "../schedule_estimation", develop = true }
 click = "^7.1.2"
 
