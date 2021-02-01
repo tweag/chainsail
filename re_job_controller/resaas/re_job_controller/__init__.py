@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import List
+from dataclass import asdict
 
 
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
-
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.optimization_quantities import acceptance_rate
 from resaas.re_job_controller.initial_schedules import make_geometric_schedule
 from resaas.common.storage import SimulationStorage, default_dir_structure as dir_structure
-from resaas.common.spec import TemperedDistributionFamily, BoltzmannInitialScheduleParameters
+from resaas.common.spec import TemperedDistributionFamily, BoltzmannInitialScheduleParameters, JobSpec
 from resaas.re_job_controller.initial_setup import setup_initial_states, setup_timesteps
 from resaas.re_job_controller.util import schedule_length
 import requests
@@ -19,14 +19,18 @@ def log(msg):
     pass
 
 
-def config_template_from_params(re_params, local_sampling_params):
-    # TODO: replace this by something like config_template_from_jobspec
-    # as soon as the extended job spec PR is merged
-    re = re_params.copy()
+def _config_template_from_params(re_params, local_sampling_params):
+    """
+    Makes a nested dictionary from parameter dataclasses.
+
+    This dictionary is then completed with run-specific values and serialized
+    to a YAML file.
+    """
+    re = asdict(re_params)
     re['schedule'] = None
     re.pop('num_optimization_samples')
     re.pop('num_production_samples')
-    local_sampling = local_sampling_params.copy()
+    local_sampling = asdict(local_sampling_params)
     local_sampling['timesteps'] = None
     general = dict(n_iterations=None,
                    basename=None,
@@ -35,6 +39,14 @@ def config_template_from_params(re_params, local_sampling_params):
                    num_replicas=None)
 
     return dict(re=re, local_sampling=local_sampling, general=general)
+
+
+def params_from_job_spec(job_spec):
+    re_params = job_spec.replica_exchange_parameters
+    ls_params = job_spec.local_sampling_parameters
+    opt_params = job_spec.optimization_parameters
+
+    return re_params, ls_params, opt_params
 
 
 def optimization_converged(schedule, previous_schedule):
@@ -316,8 +328,8 @@ class AbstractREJobController(ABC):
             schedule(dict): schedule of the current simulation
             prod(bool): whether this is the production run or not
         """
-        cfg_template = config_template_from_params(self._re_params,
-                                                   self._local_sampling_params)
+        cfg_template = _config_template_from_params(
+            self._re_params, self._local_sampling_params)
         updates = {
             "local_sampling": {},
             "general": {},
