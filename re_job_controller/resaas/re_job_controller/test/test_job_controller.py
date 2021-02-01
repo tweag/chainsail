@@ -5,18 +5,7 @@ from resaas.common.storage import AbstractStorageBackend
 from resaas.common.spec import NaiveHMCParameters, ReplicaExchangeParameters, OptimizationParameters
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 
-from resaas.re_job_controller import AbstractREJobController, get_default_params
-
-re_params = dict(num_replicas=8, num_optimization_samples=10,
-                 num_production_samples=20, dump_interval=5)
-ls_params = dict(timestep_adaption_limit=100)
-opt_params = {
-    "max_optimization_runs": 5,
-    "target_value": 0.2,
-    "max_param": 1.0,
-    "min_param": 1.0,
-    "decrement": 0.2,
-}
+from resaas.re_job_controller import AbstractREJobController
 
 
 class MockWham:
@@ -64,6 +53,11 @@ class testREJobController(unittest.TestCase):
     def setUp(self):
         optimizer = MockOptimizer()
         initial_schedule = {'beta': np.array([42] * 8)}
+        re_params = ReplicaExchangeParameters(
+            num_optimization_samples=10,
+            num_production_samples=20, dump_interval=5)
+        opt_params = OptimizationParameters(max_optimization_runs=5)
+        ls_params = NaiveHMCParameters()
         self._controller = MockREJobController(
             1,
             "127.0.0.1",

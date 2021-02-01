@@ -1,14 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import List
-from dataclass import asdict
+from dataclasses import asdict
 
 
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
-from resaas.schedule_estimation.optimization_quantities import acceptance_rate
 from resaas.re_job_controller.initial_schedules import make_geometric_schedule
 from resaas.common.storage import SimulationStorage, default_dir_structure as dir_structure
-from resaas.common.spec import TemperedDistributionFamily, BoltzmannInitialScheduleParameters, JobSpec
+from resaas.common.spec import TemperedDistributionFamily, BoltzmannInitialScheduleParameters
 from resaas.re_job_controller.initial_setup import setup_initial_states, setup_timesteps
 from resaas.re_job_controller.util import schedule_length
 import requests
@@ -76,27 +75,24 @@ def optimization_objects_from_spec(job_spec):
     sched_parameters = job_spec.initial_schedule_parameters
     init_num_replicas = job_spec.initial_number_of_replicas
 
-    if (dist_family == TemperedDistributionFamily.BOLTZMANN
-        and type(sched_parameters) == BoltzmannInitialScheduleParameters):
-        # TODO: set these defaults in extended job spec
-        default_acceptance_rate = 0.2
-        default_decrement = 0.01
-        default_opt_quantity = acceptance_rate
-        max_beta = 1.0
-        min_beta = sched_parameters.minimum_beta
+    if dist_family == TemperedDistributionFamily.BOLTZMANN:
+        if type(sched_parameters) == BoltzmannInitialScheduleParameters:
+            opt_params = job_spec.optimization_parameters
+            dos_estimator = WHAM(BoltzmannEnsemble)
+            schedule_optimizer = SingleParameterScheduleOptimizer(
+                opt_params.optimization_quantity_target,
+                opt_params.max_param,
+                opt_params.min_param,
+                opt_params.decrement,
+                opt_params.optimization_quantity,
+                "beta")
 
-        dos_estimator = WHAM(BoltzmannEnsemble)
-        schedule_optimizer = SingleParameterScheduleOptimizer(
-            default_acceptance_rate,
-            max_beta,
-            min_beta,
-            default_decrement,
-            default_opt_quantity,
-            "beta",
-        )
-
-        initial_schedule = make_geometric_schedule("beta", init_num_replicas,
-                                                   min_beta, max_beta)
+            initial_schedule = make_geometric_schedule(
+                "beta", init_num_replicas, sched_parameters.minimum_beta, 1.0)
+        else:
+            raise ValueError(
+                (f"Initial schedule parameters '{sched_parameters}' not copmatible "
+                 f"with tempered distribution family '{dist_family}'."))
 
         return dict(
             dos_estimator=dos_estimator,
@@ -105,35 +101,7 @@ def optimization_objects_from_spec(job_spec):
         )
     else:
         raise ValueError(
-            (
-                "Incompatible distribution family "
-                "('{}') and initial schedule parameters ('{}')".format(
-                    dist_family, sched_parameters
-                )
-            )
-        )
-
-
-def get_default_params():
-    # TODO: replace this by something like config_template_from_jobspec
-    # as soon as the extended job spec PR is merged
-    re = dict(
-        dump_interval=1000,
-        dump_step=5,
-        status_interval=100,
-        statistics_update_interval=100,
-        swap_interval=5,
-        num_production_samples=20000,
-        num_optimization_samples=3000)
-    local_sampling = dict(
-        n_steps=20,
-        timestep_adaption_limit=None,
-        adaption_uprate=1.05,
-        adaption_downrate=0.95)
-
-    optimization_params = {"max_optimization_runs": 5}
-
-    return re, local_sampling, optimization_params
+            f"Invalid distribution family '{dist_family}'")
 
 
 class AbstractREJobController(ABC):
@@ -357,7 +325,7 @@ class AbstractREJobController(ABC):
         }
         updates["re"] = {
             "schedule": dir_structure.SCHEDULE_FILE_NAME,
-            "dump_interval": self._re_params["dump_interval"],
+            "dump_interval": self._re_params.dump_interval,
         }
 
         for k, v in updates.items():

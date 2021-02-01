@@ -11,9 +11,10 @@ import yaml
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from resaas.common.runners import AbstractRERunner, runner_config
-from resaas.common.spec import JobSpecSchema
+from resaas.common.spec import (JobSpecSchema, ReplicaExchangeParameters,
+                                NaiveHMCParameters, OptimizationParameters)
 from resaas.common.storage import load_storage_config
-from resaas.re_job_controller import (LocalREJobController, get_default_params,
+from resaas.re_job_controller import (LocalREJobController,
                                       optimization_objects_from_spec)
 
 ProcessStatus = Tuple[bool, str]
@@ -113,13 +114,17 @@ def run(job, config, storage, hostsfile, job_spec):
     runner_config["storage_config"] = storage
 
     optimization_objects = optimization_objects_from_spec(job_spec)
-    default_params = get_default_params()
+    re_params = ReplicaExchangeParameters()
+    ls_params = NaiveHMCParameters()
+    opt_params = OptimizationParameters()
 
     controller = LocalREJobController(
         job,
         config.scheduler_address,
         config.scheduler_port,
-        *default_params,
+        re_params,
+        ls_params,
+        opt_params,
         runner,
         storage_backend,
         basename=config.storage_basename,
