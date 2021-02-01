@@ -10,7 +10,7 @@ import click
 import yaml
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
-from resaas.common.runners import AbstractRERunner
+from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.spec import JobSpecSchema
 from resaas.common.storage import load_storage_config
 from resaas.re_job_controller import (
@@ -33,8 +33,8 @@ class ControllerConfig:
 
     scheduler_address: str
     scheduler_port: int
-    storage_basename: str
     runner: str
+    storage_basename: str = ""
 
 
 class ControllerConfigSchema(Schema):
@@ -70,7 +70,7 @@ def check_status(proc: Process) -> ProcessStatus:
 
 
 @click.command()
-@click.option("--job", required=True, type=int, help="resaas job id")
+@click.option("--job", required=True, type=str, help="resaas job id")
 @click.option(
     "--config",
     required=True,
@@ -110,6 +110,10 @@ def run(job, config, storage, hostsfile, job_spec):
 
     # Load the controller
     runner = load_runner(config.runner)
+    # TODO: Hard-coding this for now until we have a need for multiple runners
+    runner_config["hostsfile"] = hostsfile
+    runner_config["run_id"] = job
+
     optimization_objects = optimization_objects_from_spec(job_spec)
     default_params = get_default_params()
 
