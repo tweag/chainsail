@@ -8,3 +8,4 @@
 
 # No lockfiles for libraries
 common/poetry.lock
+runners/**/poetry.lock
