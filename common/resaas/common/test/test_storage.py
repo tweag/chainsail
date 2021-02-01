@@ -9,8 +9,21 @@ from resaas.common.storage import (
     pickle_to_stream,
     LocalStorageBackend)
 
-
 obj = ["a", "list", 42]
+
+
+LOCAL_STORAGE_CONFIG = {"backend": "local", "backend_config": {"local": {}}}
+CLOUD_STORAGE_CONFIG = {
+    "backend": "cloud",
+    "backend_config": {
+        "local": {},
+        "cloud": {
+            "libcloud_provider": "S3",
+            "container_name": "foobar",
+            "driver_kwargs": {"key": "xxxxxxxxxx"},
+        },
+    },
+}
 
 
 class MockStorageBackend:
@@ -22,6 +35,18 @@ class MockStorageBackend:
 
     def load(self, file_name, data_type="pickle"):
         return self.data[file_name]
+
+
+class testStorageBackendConfig(unittest.TestCase):
+    def testLoadLocalStorageConfigValid(self):
+        from resaas.common.storage import StorageBackendConfigSchema
+
+        StorageBackendConfigSchema().load(LOCAL_STORAGE_CONFIG)
+
+    def testLoadCloudStorageConfigValid(self):
+        from resaas.common.storage import StorageBackendConfigSchema
+
+        StorageBackendConfigSchema().load(CLOUD_STORAGE_CONFIG)
 
 
 class testFunctions(unittest.TestCase):

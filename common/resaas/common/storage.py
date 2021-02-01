@@ -3,14 +3,17 @@ Classes which allow writing out stuff (samples, energies, ...) to
 different locations (local file systems, cloud storage, ...)
 """
 import os
-from io import BytesIO, StringIO
-from abc import abstractmethod, ABC
-from pickle import dump, load
+from abc import ABC, abstractmethod
 from collections import namedtuple
+from io import BytesIO, StringIO
+from pickle import dump, load
 
-import yaml
 import numpy as np
-
+import yaml
+from libcloud.storage.providers import get_driver
+from libcloud.storage.types import Provider
+from marshmallow import Schema, fields
+from marshmallow.decorators import post_load
 
 dir_structure = dict(
     SAMPLES_TEMPLATE="samples/samples_{}_{}-{}.pickle",
@@ -50,6 +53,105 @@ def pickle_to_stream(obj):
     dump(obj, bytes_stream)
     bytes_stream.seek(0)
     return bytes_stream
+
+
+def load_storage_backend(backend_name: str, backend_config: dict):
+    """Loads a storage backend using the provided config.
+
+    Args:
+        backend_name: The name of the backend. See `BACKEND_SCHEMA_REGISTRY`. For
+            available options.
+        backend_config: The parameters required to load the specific backend. See
+            the schemas in `BACKEND_SCHEMA_REGISTRY` for a list of configs.
+
+    Raises:
+        Exception: If the backend cloud not be loaded
+    """
+    if backend_name == "local":
+        return LocalStorageBackend()
+    elif backend_name == "cloud":
+        try:
+            provider = getattr(Provider, backend_config["libcloud_provider"])
+        except AttributeError:
+            raise Exception(
+                f"Unrecognized libcloud provider: {backend_config['libcloud_provider']}. "
+                "See libcloud.storage.types.Provider for a full list of available options."
+            )
+        driver_cls = get_driver(provider)
+        driver = driver_cls(**backend_config["driver_kwargs"])
+        container = driver.get_container(container_name=backend_config["container_name"])
+        return CloudStorageBackend(driver, container)
+    else:
+        raise Exception(f"Unrecognized storage backend name: '{backend_name}'.")
+
+
+def load_storage_config(config_file: str) -> "StorageBackendConfig":
+    """Loads storage backend configuration from a YAML config file
+
+    Args:
+        config_file: The path to the config file
+    """
+    with open(config_file) as f:
+        return StorageBackendConfigSchema().load(yaml.load(f))
+
+
+class LocalBackendConfigSchema(Schema):
+    # Local backend requires no config :)
+    pass
+
+
+class CloudBackendConfigSchema(Schema):
+    libcloud_provider = fields.String(required=True)
+    container_name = fields.String(required=True)
+    driver_kwargs = fields.Dict(fields.String, fields.String, required=True)
+
+
+# Registry used for looking up schema during deserialization
+BACKEND_SCHEMA_REGISTRY = {"local": LocalBackendConfigSchema, "cloud": CloudBackendConfigSchema}
+
+
+class StorageBackendConfigSchema(Schema):
+    backend = fields.String(required=True)
+    backend_config = fields.Dict(fields.String, fields.Dict, required=True)
+
+    @post_load
+    def make_backend(self, data, **kwargs) -> "AbstractStorageBackend":
+        # Look up the desired backend and attempt to parse its config
+        try:
+            schema = BACKEND_SCHEMA_REGISTRY[data["backend"]]()
+        except KeyError:
+            # TODO: Add a custom exception type here
+            raise Exception(f"Unrecognized backend: '{data['backend']}'")
+        try:
+            specified_config = data["backend_config"][data["backend"]]
+        except KeyError:
+            raise Exception(
+                "Did not specify the storage_backend's corresponding config: "
+                f"'{data['backend']}'"
+            )
+        backend_config = schema.load(specified_config)
+        return StorageBackendConfig(data["backend"], backend_config)
+
+
+class StorageBackendConfig:
+    """Configuration for storage backlends
+
+    Args:
+        backend: The backend name. See `BACKEND_SCHEMA_REGISTRY` for a list of available options.
+        backend_config: The backend's config
+    """
+
+    def __init__(
+        self,
+        backend: str,
+        backend_config: dict,
+    ):
+        self.backend = backend
+        self.backend_config = backend_config
+
+    def get_storage_backend(self) -> "AbstractStorageBackend":
+        """Create a new storage backend instance using the controller config"""
+        return load_storage_backend(self.backend, self.backend_config)
 
 
 class AbstractStorageBackend(ABC):
