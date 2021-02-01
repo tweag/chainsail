@@ -10,8 +10,13 @@ python = "^3.8"
 numpy = "*"
 pyyaml = "*"
 resaas-common = { path = "../../common", develop = true }
-rexfw = { git = "https://github.com/tweag/rexfw", branch = "start-script" }
+rexfw = { git = "https://github.com/tweag/rexfw", branch = "resaas" }
 mpi4py = "^3.0.3"
+click = "^7.1.2"
+
+
+[tool.poetry.scripts]
+run-rexfw-mpi = 'resaas.runners.rexfw.mpi:run_rexfw_mpi'
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

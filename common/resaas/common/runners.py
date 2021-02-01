@@ -1,4 +1,7 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
+
+# Global for passing runner configurations
+runner_config = {}
 
 
 class AbstractRERunner(ABC):

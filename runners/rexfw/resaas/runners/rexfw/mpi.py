@@ -1,58 +1,53 @@
-import sys
-import os
 from io import BytesIO
 
-import yaml
-
+import click
 import numpy as np
+import yaml
 from mpi4py import MPI
+from resaas.common.storage import SimulationStorage, load_storage_config
 
-from resaas.common.storage import SimulationStorage, LocalStorageBackend, CloudStorageBackend
-
-from rexfw.convenience import setup_default_re_master
-from rexfw.convenience import setup_default_replica
-from rexfw.slaves import Slave
-from rexfw.samplers.rwmc import RWMCSampler
-from rexfw.pdfs.normal import Normal
 from rexfw.communicators.mpi import MPICommunicator
+from rexfw.convenience import setup_default_re_master, setup_default_replica
+from rexfw.pdfs.normal import Normal
+from rexfw.samplers.rwmc import RWMCSampler
+from rexfw.slaves import Slave
 
-# TODO: This function needs to accept inputs for configuring the storage backend
 
-
-def run_rexfw_mpi():
-    # communicators are classes which serve as an interface between, say, MPI
-    # and the rexfw code  other communicators could use, e.g., the Python
-    # multiprocessing module to communicate between the master and the replicas
-
-    # TODO: getting the number of replicas (and that's all the MPI stuff here is
-    # for) should rather be a task of the communicator.
+@click.command()
+@click.option("--name", required=True, type=str, help="output directory name")
+@click.option(
+    "--config",
+    "config_file",
+    required=True,
+    type=click.Path(exists=True),
+    help="path to the rexfw YAML config file",
+)
+@click.option(
+    "--storage",
+    "storage_config",
+    required=True,
+    type=click.Path(exists=True),
+    help="path to storage backend YAML config file",
+)
+def run_rexfw_mpi(name, config_file, storage_config):
     mpicomm = MPI.COMM_WORLD
     rank = mpicomm.Get_rank()
     size = mpicomm.Get_size()
+
+    # Number of replicas is inferred from the MPI environment
     n_replicas = size - 1
 
-    config_file = sys.argv[1]
-    with open(config_file) as ipf:
-        config = yaml.safe_load(ipf.read())
-    # TODO: using a command line argument, we can set whether cloud or file system
-    # storage should be used
-    env = sys.argv[2]
+    with open(config_file) as f:
+        config = yaml.safe_load(f)
 
     # this is where all simulation input data & output (samples, statistics files,
     # etc.) are stored
-    basename = config["general"]["basename"]
-    output_folder = config["general"]["output_path"]
-    # TODO: make statistics writing use RESAAS storage
-    abs_output_folder = os.path.join(basename, output_folder)
-    if env == "local":
-        storage_backend = LocalStorageBackend()
-    elif env == "cloud":
-        # TODO: needs libcloud driver and container
-        storage_backend = CloudStorageBackend()
-    storage = SimulationStorage(basename, output_folder, storage_backend)
-
-    for stats_folder in ("statistics", "works", "heats"):
-        os.makedirs(os.path.join(abs_output_folder, stats_folder), exist_ok=True)
+    storage_backend = load_storage_config(storage_config).get_storage_backend()
+    storage = SimulationStorage(
+        basename=config["general"]["basename"],
+        sim_path=config["general"]["output_path"],
+        storage_backend=storage_backend,
+    )
 
     comm = MPICommunicator()
 
@@ -63,7 +58,7 @@ def run_rexfw_mpi():
 
         # sets up a default RE master object; should be sufficient for all
         # practical purposes
-        master = setup_default_re_master(n_replicas, abs_output_folder, comm)
+        master = setup_default_re_master(n_replicas, name, comm)
         master.run(
             config["general"]["n_iterations"],
             config["re"]["swap_interval"],

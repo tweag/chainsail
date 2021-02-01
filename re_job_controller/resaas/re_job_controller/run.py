@@ -83,6 +83,11 @@ def check_status(proc: Process) -> ProcessStatus:
     type=click.Path(exists=True),
     help="path to storage backend YAML config file",
 )
+# Note: The controller is currently configured to only work with mpi, so this is not
+#  abstracted away. At some point in the future the hostsfile logic could get moved
+#  into its own area. The main thing is that with a master-worker achitecture, the
+#  master process (running the controller in the current case) needs a way of identifying
+#  the workers.
 @click.option(
     "--hostsfile", required=True, type=click.Path(exists=True), help="path to job hostsfile"
 )
