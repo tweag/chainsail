@@ -10,6 +10,8 @@ from libcloud.storage.providers import get_driver
 from libcloud.storage.types import Provider
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
+from grpclib.server import Server
+from grpclib.health.service import Health
 from resaas.common.storage import AbstractStorageBackend, CloudStorageBackend, LocalStorageBackend
 from resaas.re_runners import MPIRERunner
 from resaas.common.spec import JobSpecSchema
@@ -137,8 +139,8 @@ class ControllerConfigSchema(Schema):
 
 
 def check_status(proc: Process) -> ProcessStatus:
-    # TODO: This will be called via gRPC
-    pass
+    server = Server([Health()])
+    server.start()
 
     # re_runner = runner_factory()
     # storage_backend = storage_backend_factory()
