@@ -4,6 +4,12 @@ from typing import Callable, Dict, List, Optional
 
 import shortuuid
 
+import asyncio
+from grpclib.client import Channel
+from grcplib.health.v1.health_pb2 import HealthCheckRequest
+from grcplib.health.v1.health_grpc import HealthStub
+
+
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import JobError
@@ -201,11 +207,18 @@ class Job:
                 self._remove_node(removeable.pop())
         self.sync_representation()
 
-    def watch(self) -> bool:
+    async def watch(self) -> bool:
         # Await control node until it reports exit or dies
         control_node: Node = self.nodes[self.control_node]
         ip = control_node.address
         port = control_node.listening_ports[0]
+        async with Channel(ip, port) as channel:
+            health_checker = HealthStub(channel)
+            reply = await health_checker.Check(HealthCheckRequest())
+            if reply.status != "SERVING":
+                return False
+            else:
+                return True
         # TODO:
         #   - Lauch GRPC client here
         #   - Start health check: https://grpc.github.io/grpc/python/grpc_health_checking.html
