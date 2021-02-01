@@ -2,18 +2,7 @@ VALID_CONTROLLER_CONFIG = """
 {
     "scheduler_address": "123.2.12.12",
     "scheduler_port": 1001,
-    "storage_backend": "cloud",
-    "storage_backend_config": {
-        "local": {},
-        "cloud": {
-            "libcloud_provider": "S3",
-            "container_name": "foobar",
-            "driver_kwargs": {
-                "key": "xxxxxx",
-                "secret": "xxxxxx"
-            }
-        }
-    }
+    "runner": "some.module:MyRunner"
 }
 
 """

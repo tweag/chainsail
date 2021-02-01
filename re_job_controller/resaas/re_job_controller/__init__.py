@@ -8,7 +8,7 @@ from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.optimization_quantities import acceptance_rate
 from resaas.re_job_controller.initial_schedules import make_geometric_schedule
 from resaas.common.storage import SimulationStorage, default_dir_structure as dir_structure
-from resaas.common.spec import TemperedDistributionFamily, DistributionSchedule
+from resaas.common.spec import TemperedDistributionFamily, BoltzmannInitialScheduleParameters
 from resaas.re_job_controller.initial_setup import setup_initial_states, setup_timesteps
 from resaas.re_job_controller.util import schedule_length
 import requests
@@ -21,11 +21,11 @@ def log(msg):
 
 cfg_template = {
     "re": {
-        "swap_interval": 5,
-        "status_interval": 100,
-        "dump_interval": 1000,
-        "statistics_update_interval": 100,
-        "schedule": None,
+        'swap_interval': None,
+        'status_interval': None,
+        'dump_interval': None,
+        'statistics_update_interval': None,
+        'schedule': None
     },
     "general": {
         "n_iterations": None,
@@ -71,11 +71,8 @@ def optimization_objects_from_spec(job_spec):
     sched_parameters = job_spec.initial_schedule_parameters
     init_num_replicas = job_spec.initial_number_of_replicas
 
-    if (
-        dist_family == TemperedDistributionFamily.BOLTZMANN
-        and type(sched_parameters) == DistributionSchedule
-    ):
-
+    if (dist_family == TemperedDistributionFamily.BOLTZMANN
+        and type(sched_parameters) == BoltzmannInitialScheduleParameters):
         # TODO: set these defaults in extended job spec
         default_acceptance_rate = 0.2
         default_decrement = 0.01
@@ -158,9 +155,12 @@ class AbstractREJobController(ABC):
             job_id(int): The id of the resaas job to which this controller belongs
             scheduler_address(str): The address to the scheduler
             scheduler_port(int): The scheduler's listening port
-            re_params(dict): Replica Exchange-specific parameters
-            local_sampling_params(dict): local sampling-specific parameters
-            optimization_params(dict): schedule optimization-related parameters
+            re_params(:class:`ReplicaExchangeParameters`): Replica Exchange-
+              specific parameters
+            local_sampling_params(:class:`NaiveHMCParameters`): local sampling-
+              specific parameters
+            optimization_params(:class:`OptimizationParameters`): schedule
+              optimization-related parameters
             re_runner(:class:`AbstractRERunner`): runner which runs an RE
               simulation (depends on the environment)
             base_storage(:class:`AbstractStorage`:): storage backend for
@@ -258,7 +258,7 @@ class AbstractREJobController(ABC):
         previous_storage = None
         opt_params = self._optimization_params
 
-        max_runs = opt_params["max_optimization_runs"]
+        max_runs = opt_params.max_optimization_runs
         for run_counter in range(max_runs):
             log(
                 "Schedule optimization simulation #{}/{} started".format(run_counter + 1, max_runs)
@@ -318,24 +318,20 @@ class AbstractREJobController(ABC):
             updates["local_sampling"] = {"timesteps": dir_structure.INITIAL_TIMESTEPS_FILE_NAME}
             updates["general"] = {"initial_states": dir_structure.INITIAL_STATES_FILE_NAME}
         if prod:
-            num_samples = self._re_params["num_production_samples"]
+            num_samples = self._re_params.num_production_samples
         else:
-            num_samples = self._re_params["num_optimization_samples"]
+            num_samples = self._re_params.num_optimization_samples
 
-        adapt_limit = self._local_sampling_params["hmc_num_adaption_steps"]
+        adapt_limit = self._local_sampling_params.timestep_adaption_limit
         adapt_limit = adapt_limit or 0.1 * num_samples
-        updates["local_sampling"]["timestep_adaption_limit"] = adapt_limit
+        updates['local_sampling']['timestep_adaption_limit'] = adapt_limit
 
-        updates["general"] = {
-            "n_iterations": num_samples,
-            "output_path": storage.sim_path,
-            "num_replicas": schedule_length(schedule),
-            "basename": storage._basename,
-        }
-        updates["re"] = {
-            "schedule": dir_structure.SCHEDULE_FILE_NAME,
-            "dump_interval": self._re_params["dump_interval"],
-        }
+        updates['general'] = {'n_iterations': num_samples,
+                              'output_path': storage.sim_path,
+                              'num_replicas': schedule_length(schedule),
+                              'basename': storage._basename}
+        updates['re'] = {'schedule': dir_structure.SCHEDULE_FILE_NAME,
+                         'dump_interval': self._re_params.dump_interval}
 
         return updates
 

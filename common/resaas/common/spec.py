@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from marshmallow import Schema, fields, post_load
 from marshmallow_enum import EnumField
+from marshmallow.exceptions import ValidationError
 
 
 class Dependencies(ABC):
@@ -56,38 +57,134 @@ class DependencySchema(Schema):
         return _load_dep(data["type"], data["deps"])
 
 
+class LocalSamplers(Enum):
+    NAIVE_HMC = "naive_hmc"
+
+
 @dataclass
-class DistributionSchedule:
-    # TODO: rename this to BoltzmannDistributionSchedule
-    # or something - there could and will be other kinds of
-    # distributions with their own schedule parameters
+class NaiveHMCParameters:
+    n_steps: int = 20
+    timesteps: Optional[str] = None
+    timestep_adaption_limit: Optional[int] = None
+    adaption_uprate: float = 1.05
+    adaption_downrate: float = 0.95
+
+
+class OptimizationQuantity(Enum):
+    ACCEPTANCE_RATE = "acceptance_rate"
+
+
+@dataclass
+class OptimizationParameters:
+    optimization_quantity_target: float = 0.2
+    optimization_quantity: OptimizationQuantity = OptimizationQuantity.ACCEPTANCE_RATE
+    decrement: float = 0.01
+    max_param: float = 1.0
+    min_param: float = 0.01
+    max_optimization_runs: int = 5
+
+
+@dataclass
+class ReplicaExchangeParameters:
+    num_production_samples: int = 2000
+    num_optimization_samples: int = 5000
+    dump_interval: int = 1000
+    dump_step: int = 5
+    swap_interval: int = 5
+    statistics_update_interval: int = 50
+    status_interval: int = 100
+
+
+@dataclass
+class BoltzmannInitialScheduleParameters:
     minimum_beta: float
-    beta_ratio: float
 
 
-class DistributionScheduleSchema(Schema):
-    minimum_beta = fields.Float()
-    beta_ratio = fields.Float()
+class ReplicaExchangeParametersSchema(Schema):
+    num_production_samples = fields.Int()
+    num_optimization_samples = fields.Int()
+    dump_interval = fields.Int()
+    dump_step = fields.Int()
+    swap_interval = fields.Int()
+    statistics_update_interval = fields.Int()
+    status_interval = fields.Int()
 
     @post_load
-    def make_dist_schedule(self, data, **kwargs):
-        return DistributionSchedule(**data)
+    def make_replica_exchange_parameters(self, data, **kwargs):
+        return ReplicaExchangeParameters(**data)
+
+
+class OptimizationParametersSchema(Schema):
+    optimization_quantity = EnumField(OptimizationQuantity, by_value=True)
+    optimization_quantity_target = fields.Float()
+    decrement = fields.Float()
+    max_param = fields.Float()
+    min_param = fields.Float()
+    max_optimization_runs = fields.Int()
+
+    @post_load
+    def make_optimization_parameters(self, data, **kwargs):
+        return OptimizationParameters(**data)
+
+
+class NaiveHMCParametersSchema(Schema):
+    n_steps = fields.Int()
+    timesteps = fields.Str()
+    timestep_adaption_limit = fields.Int()
+    adaption_uprate = fields.Float()
+    adaption_downrate = fields.Float()
+
+    @post_load
+    def make_hmc_sampling_parameters(self, data, **kwargs):
+        return NaiveHMCParameters(**data)
 
 
 class TemperedDistributionFamily(Enum):
     BOLTZMANN = "boltzmann"
 
 
+class BoltzmannInitialScheduleParametersSchema(Schema):
+    minimum_beta = fields.Float()
+
+    @post_load
+    def make_boltzmann_initial_schedule_parameters(self, data, **kwargs):
+        return BoltzmannInitialScheduleParameters(**data)
+
+
+INITIAL_SCHEDULE_PARAMETERS_SCHEMAS = {
+    TemperedDistributionFamily.BOLTZMANN: BoltzmannInitialScheduleParametersSchema
+    }
+
+
+LOCAL_SAMPLING_PARAMETER_SCHEMAS = {
+    LocalSamplers.NAIVE_HMC: NaiveHMCParametersSchema
+    }
+
+
 class JobSpecSchema(Schema):
     probability_definition = fields.String(required=True)
+    name = fields.String()
     initial_number_of_replicas = fields.Int()
-    initial_schedule_parameters = fields.Nested(DistributionScheduleSchema)
+    initial_schedule_parameters = fields.Dict(fields.String, fields.Float())
+    optimization_parameters = fields.Nested(OptimizationParametersSchema)
+    replica_exchange_parameters = fields.Nested(ReplicaExchangeParametersSchema)
+    hmc_parameters = fields.Nested(NaiveHMCParametersSchema)
     max_replicas = fields.Int()
     tempered_dist_family = EnumField(TemperedDistributionFamily, by_value=True)
     dependencies = fields.List(fields.Nested(DependencySchema))
 
     @post_load
     def make_job_spec(self, data, **kwargs):
+        tempered_dist_family = data.get("tempered_dist_family", TemperedDistributionFamily.BOLTZMANN)
+        if "initial_schedule_parameters" in data:
+            init_sched_params = data["initial_schedule_parameters"]
+            if tempered_dist_family == TemperedDistributionFamily.BOLTZMANN:
+                init_sched_schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[TemperedDistributionFamily.BOLTZMANN]()
+                init_sched_schema.load(init_sched_params)
+                init_sched_params = init_sched_schema.make_boltzmann_initial_schedule_parameters(init_sched_params)
+
+            data['initial_schedule_parameters'] = init_sched_params
+
         return JobSpec(**data)
 
 
@@ -95,21 +192,37 @@ class JobSpec:
     def __init__(
         self,
         probability_definition: str,
-        initial_number_of_replicas: int = 10,
-        initial_schedule_parameters: Optional[DistributionSchedule] = None,
+        name: Optional[str] = None,
+        initial_number_of_replicas: int = 15,
+        initial_schedule_parameters: Optional[Union[BoltzmannInitialScheduleParameters, ]] = BoltzmannInitialScheduleParameters(0.01),
+        optimization_parameters: Optional[OptimizationParameters] = OptimizationParameters(),
+        replica_exchange_parameters: Optional[ReplicaExchangeParameters] = ReplicaExchangeParameters(),
+        local_sampling_parameters: Optional[NaiveHMCParameters] = NaiveHMCParameters(),
         max_replicas: int = 100,
         tempered_dist_family: TemperedDistributionFamily = TemperedDistributionFamily.BOLTZMANN,
         dependencies: Optional[Dependencies] = None,
     ):
         self.probability_definition = probability_definition
+        self.name = name
         self.initial_number_of_replicas = initial_number_of_replicas
         self.max_replicas = max_replicas
         self.tempered_dist_family = tempered_dist_family
-        # TODO: Confirm these default values
         if initial_schedule_parameters is None:
-            self.initial_schedule_parameters = DistributionSchedule(1.0, 0.5)
+            self.initial_schedule_parameters = BoltzmannInitialScheduleParameters(0.01)
         else:
             self.initial_schedule_parameters = initial_schedule_parameters
+        if optimization_parameters is None:
+            self.optimization_parameters = OptimizationParameters()
+        else:
+            self.optimization_parameters = optimization_parameters
+        if replica_exchange_parameters is None:
+            self.replica_exchange_parameters = ReplicaExchangeParameters()
+        else:
+            self.replica_exchange_parameters = replica_exchange_parameters
+        if local_sampling_parameters is None:
+            self.local_sampling_parameters = NaiveHMCParameters()
+        else:
+            self.local_sampling_parameters = local_sampling_parameters
         if dependencies is None:
             self.dependencies = []
         else:

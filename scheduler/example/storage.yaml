@@ -1,0 +1,9 @@
+backend: cloud
+backend_config:
+  local: {}
+  cloud:
+    libcloud_provider: S3
+    container_name: "resaas-dev"
+    driver_kwargs:
+      key: xxxxxxxxxxxxxxxxxxxxxxx
+      secret: xxxxxxxxxxxxxxxxxxxx

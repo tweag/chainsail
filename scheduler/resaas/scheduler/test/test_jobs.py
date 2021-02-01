@@ -240,7 +240,7 @@ def test_vm_job_from_db_representation():
     config.entrypoint = ENTRYPOINT
     config.node_type = NodeType.LIBCLOUD_VM
     config.create_node_driver.return_value = DeployableDummyNodeDriver("test")
-    job_rep = TblJobs(name="test-job", spec=spec, status=JobStatus.RUNNING)
+    job_rep = TblJobs(spec=spec, status=JobStatus.RUNNING)
     for i in range(2):
         job_rep.nodes.append(
             TblNodes(

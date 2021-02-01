@@ -35,11 +35,12 @@ jobs:
           poetry install
           PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
           rm ./poetry.lock
-      - name: Install resaas.re_runners
-        run: |
-          cd ./re_runners
-          poetry install
-          rm ./poetry.lock
+      # Disabled due to mpi dependency
+      # - name: Install resaas.runners.rexfw
+      #   run: |
+      #     cd ./re_runners
+      #     poetry install
+      #     rm ./poetry.lock
       # Python Applications
       - name: Install and test resaas.scheduler
         run: |

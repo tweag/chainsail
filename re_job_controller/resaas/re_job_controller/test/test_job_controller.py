@@ -2,19 +2,19 @@ import unittest
 
 import numpy as np
 from resaas.common.storage import AbstractStorageBackend
+from resaas.common.spec import NaiveHMCParameters, ReplicaExchangeParameters, OptimizationParameters
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 
 from resaas.re_job_controller import AbstractREJobController
 
-re_params = dict(num_replicas=8, num_optimization_samples=10, dump_interval=5)
-ls_params = dict(hmc_num_adaption_steps=100)
-opt_params = {
-    "max_optimization_runs": 5,
-    "target_value": 0.2,
-    "max_param": 1.0,
-    "min_param": 1.0,
-    "decrement": 0.2,
-}
+re_params = ReplicaExchangeParameters(num_optimization_samples=10,
+                                      dump_interval=5)
+ls_params = NaiveHMCParameters(timestep_adaption_limit=100)
+opt_params = OptimizationParameters(max_optimization_runs=5,
+                                    optimization_quantity_target=0.2,
+                                    max_param=1.0,
+                                    min_param=1.0,
+                                    decrement=0.2)
 
 
 class MockWham:
@@ -22,7 +22,7 @@ class MockWham:
         return len(parameters["beta"])
 
 
-class MockOptimizer(SingleParameterScheduleOptimizer):
+class MockOptimizer:
     def optimize(self, dos, energies):
         return {"beta": np.array([42] * (dos - 1))}
 
@@ -57,10 +57,8 @@ class MockStorageBackend(AbstractStorageBackend):
 
 class testREJobController(unittest.TestCase):
     def setUp(self):
-        opt_params_copy = opt_params.copy()
-        opt_params_copy.pop("max_optimization_runs")
-        optimizer = MockOptimizer(optimization_quantity=None, param_name="beta", **opt_params_copy)
-        initial_schedule = {"beta": np.array([42] * 8)}
+        optimizer = MockOptimizer()
+        initial_schedule = {'beta': np.array([42] * 8)}
         self._controller = MockREJobController(
             1,
             "127.0.0.1",
