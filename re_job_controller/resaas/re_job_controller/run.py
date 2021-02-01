@@ -13,11 +13,8 @@ from marshmallow.decorators import post_load
 from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.spec import JobSpecSchema
 from resaas.common.storage import load_storage_config
-from resaas.re_job_controller import (
-    LocalREJobController,
-    get_default_params,
-    optimization_objects_from_spec,
-)
+from resaas.re_job_controller import (LocalREJobController, get_default_params,
+                                      optimization_objects_from_spec)
 
 ProcessStatus = Tuple[bool, str]
 
@@ -113,6 +110,7 @@ def run(job, config, storage, hostsfile, job_spec):
     # TODO: Hard-coding this for now until we have a need for multiple runners
     runner_config["hostsfile"] = hostsfile
     runner_config["run_id"] = job
+    runner_config["storage_config"] = storage
 
     optimization_objects = optimization_objects_from_spec(job_spec)
     default_params = get_default_params()
