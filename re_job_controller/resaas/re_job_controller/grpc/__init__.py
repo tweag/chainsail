@@ -25,7 +25,7 @@ async def run_server(
     with graceful_exit([server]):
         if deploy_env == "prod":
             await server.start()
-        elif deploy_env == "test" or deploy_env == "dev" or deploy_env == "prod":
+        elif deploy_env == "test" or deploy_env == "dev" or deploy_env == "development":
             await server.start(host, port)
             print(f"Serving gRPC on {host}:{port}")
             await server.wait_closed()
