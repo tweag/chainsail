@@ -6,22 +6,26 @@ import os
 from subprocess import check_output
 
 from resaas.common.runners import AbstractRERunner, runner_config
-from resaas.common.storage import AbstractStorageBackend
+from resaas.common.storage import SimulationStorage
 
 
-class MPIRERunner(AbstractRERunner):
+class BaseMPIRERunner(AbstractRERunner):
     """
-    Runs a rexfw sampler which uses openMPI for communication.
+    Runs a rexfw sampler which uses openMPI for communication and which can
+    run locally.
     """
 
     REXFW_SCRIPT = "run-rexfw-mpi"
-    DEFAULT_HOSTSFILE = "hostsfile"
     DEFAULT_STORAGEFILE = "storage.yaml"
 
-    def run_sampling(self, storage: AbstractStorageBackend):
+    def _mpirun_args(self, n_replicas):
+        return ["--oversubscribe",
+                "-n",
+                f"{n_replicas + 1}"]
+
+    def run_sampling(self, storage: SimulationStorage):
         # Get configuration
         run_id = runner_config.get("run_id", default="no-id")
-        hostsfile = runner_config.get("hostsfile", default=self.DEFAULT_HOSTSFILE)
         storage_config = runner_config.get("storage_config", default=self.DEFAULT_STORAGEFILE)
 
         model_config = storage.load_config()
@@ -32,11 +36,7 @@ class MPIRERunner(AbstractRERunner):
         # Spawn an mpi subprocess
         cmd = [
             "mpirun",
-            "--hostsfile",
-            hostsfile,
-            "--oversubscribe",
-            "-n",
-            f"{n_replicas + 1}",
+            *self._mpirun_args(n_replicas),
             self.REXFW_SCRIPT,
             "--id",
             run_id,
@@ -47,3 +47,15 @@ class MPIRERunner(AbstractRERunner):
         ]
 
         check_output(cmd)
+
+
+class CloudMPIRERunner(AbstractRERunner):
+    """
+    Runs a rexfw sampler which uses openMPI for communication.
+    """
+
+    DEFAULT_HOSTSFILE = "hostsfile"
+
+    def _mpirun_args(self, n_replicas):
+        hostfile = runner_config.get("hostsfile", default=self.DEFAULT_HOSTSFILE)
+        return super()._mpirun_args(n_replicas) + ["--hostsfile", hostfile]

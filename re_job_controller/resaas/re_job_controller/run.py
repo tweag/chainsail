@@ -14,7 +14,12 @@ from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.spec import (JobSpec, JobSpecSchema, ReplicaExchangeParameters,
                                 NaiveHMCParameters, OptimizationParameters)
 from resaas.common.storage import load_storage_config
+<<<<<<< HEAD
 from resaas.re_job_controller import (LocalREJobController,
+=======
+from resaas.re_job_controller import (MPICloudREJobController,
+                                      get_default_params,
+>>>>>>> a5842f7... Refactor job controller and runner to allow local running
                                       optimization_objects_from_spec)
 
 ProcessStatus = Tuple[bool, str]
@@ -114,7 +119,8 @@ def run(job, config, storage, hostsfile, job_spec):
     runner_config["storage_config"] = storage
 
     optimization_objects = optimization_objects_from_spec(job_spec)
-    controller = LocalREJobController(
+
+    controller = MPICloudREJobController(
         job,
         config.scheduler_address,
         config.scheduler_port,

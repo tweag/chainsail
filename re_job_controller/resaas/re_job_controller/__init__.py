@@ -104,20 +104,15 @@ def optimization_objects_from_spec(job_spec):
             f"Invalid distribution family '{dist_family}'")
 
 
-class AbstractREJobController(ABC):
+class BaseREJobController:
     """
     Interface for Replica Exchange job controllers. They implement the main
     loop of running a simulation, optimizing the schedule, determining new
     initial states for the next simulation, setting it up and running it.
     """
 
-    SCHEDULER_NODE_ENDPOINT = "/job/{id}/nodes"
-
     def __init__(
         self,
-        job_id,
-        scheduler_address,
-        scheduler_port,
         re_params,
         local_sampling_params,
         optimization_params,
@@ -127,18 +122,15 @@ class AbstractREJobController(ABC):
         dos_estimator,
         initial_schedule,
         basename="",
-        hostsfile="/app/config/hostsfile",
     ):
         """
-        Initializes a Replica Exchange job controller.
+        Initializes a basic Replica Exchange job controller, which can be used
+        locally independently from the scheduler and other RESAAS components. 
 
         Arguments contain everything required for running simulations and
         optimizing schedules.
 
         Args:
-            job_id(int): The id of the resaas job to which this controller belongs
-            scheduler_address(str): The address to the scheduler
-            scheduler_port(int): The scheduler's listening port
             re_params(:class:`ReplicaExchangeParameters`): Replica Exchange-
               specific parameters
             local_sampling_params(:class:`NaiveHMCParameters`): local sampling-
@@ -159,12 +151,7 @@ class AbstractREJobController(ABC):
               schedule
             basename(str): optional basename to the simulation storage path
               (required for running locally or when reusing an existing bucket)
-            hostsfile(str): Path at which to read and write the list of host
-                addresses which are participating in the job
         """
-        self.job_id = job_id
-        self.scheduler_address = scheduler_address
-        self.scheduler_port = scheduler_port
         self._re_runner = re_runner
         self._initial_schedule = initial_schedule
         self._schedule_optimizer = schedule_optimizer
@@ -174,17 +161,6 @@ class AbstractREJobController(ABC):
         self._re_params = re_params
         self._local_sampling_params = local_sampling_params
         self._optimization_params = optimization_params
-        self.hostsfile = hostsfile
-
-    @abstractmethod
-    def _scale_environment(self, num_replicas):
-        """
-        Scale up / down the environment to the given numer of replicas.
-
-        Args:
-            num_replicas(int): number of replicas
-        """
-        pass
 
     def _calculate_schedule_from_dos(self, previous_storage, dos):
         """
@@ -204,26 +180,6 @@ class AbstractREJobController(ABC):
         schedule = self._schedule_optimizer.optimize(dos, energies)
 
         return schedule
-
-    def _query_hosts(self) -> List[str]:
-        # Query the active nodes for populating the hosts file
-        # TODO: Use https
-        r = requests.get(
-            f"http://{self.scheduler_address}:{self.scheduler_port}{self.SCHEDULER_NODE_ENDPOINT}"
-        )
-        r.raise_for_status()
-        hosts = []
-        for n in r.json():
-            if n["in_use"]:
-                hosts.append(n["address"])
-        return hosts
-
-    def _write_hostsfile(self):
-        # Populate the hostsfile
-        hosts = self._query_hosts()
-        with open("hostsfile", "w") as f:
-            for h in hosts:
-                print(h, file=f)
 
     def optimize_schedule(self):
         """
@@ -391,9 +347,173 @@ class AbstractREJobController(ABC):
         self._do_single_run(prod_storage.config_file_name)
 
 
-class LocalREJobController(AbstractREJobController):
-    def _write_hostsfile(self):
-        pass
+class AbstractCloudREJobController(BaseREJobController):
+    SCHEDULER_NODE_ENDPOINT = "/job/{id}/nodes"
+
+    def __init__(
+        self,
+        job_id,
+        scheduler_address,
+        scheduler_port,
+        re_params,
+        local_sampling_params,
+        optimization_params,
+        re_runner,
+        storage_backend,
+        schedule_optimizer,
+        dos_estimator,
+        initial_schedule,
+        basename="",
+    ):
+        """
+        Initializes a Replica Exchange job controller which runs within a
+        cloud-deployed RESAAS service.
+
+        Arguments contain everything required for running simulations and
+        optimizing schedules.
+
+        Args:
+            job_id(int): The id of the resaas job to which this controller belongs
+            scheduler_address(str): The address to the scheduler
+            scheduler_port(int): The scheduler's listening port
+            re_params(:class:`ReplicaExchangeParameters`): Replica Exchange-
+              specific parameters
+            local_sampling_params(:class:`NaiveHMCParameters`): local sampling-
+              specific parameters
+            optimization_params(:class:`OptimizationParameters`): schedule
+              optimization-related parameters
+            re_runner(:class:`AbstractRERunner`): runner which runs an RE
+              simulation (depends on the environment)
+            base_storage(:class:`AbstractStorage`:): storage backend for
+              reading / writing strings from / to permanent simulation storage
+            schedule_optimizer(:class:`AbstractScheduleOptimizer`): schedule
+              optimizer which calculates a new schedule based on
+              an estimate for the density of states
+            dos_estimator(:class:`WHAM`): WHAM object which estimates the
+              density of states from samples of a previous simulation
+            initial_schedule(dict`): initial parameter schedule
+              maker object which calculates a very first Replica Exchange
+              schedule
+            basename(str): optional basename to the simulation storage path
+              (required for running locally or when reusing an existing bucket)
+        """
+        super().__init__(
+            re_params,
+            local_sampling_params,
+            optimization_params,
+            re_runner,
+            storage_backend,
+            schedule_optimizer,
+            dos_estimator,
+            initial_schedule,
+            basename="")
+        self.job_id = job_id
+        self.scheduler_address = scheduler_address
+        self.scheduler_port = scheduler_port
 
     def _scale_environment(self, num_replicas):
+        """
+        Scale up / down the environment to the given numer of replicas.
+
+        Args:
+            num_replicas(int): number of replicas
+        """
         pass
+
+
+class MPICloudREJobController(AbstractCloudREJobController):
+    def __init__(
+        self,
+        job_id,
+        scheduler_address,
+        scheduler_port,
+        re_params,
+        local_sampling_params,
+        optimization_params,
+        re_runner,
+        storage_backend,
+        schedule_optimizer,
+        dos_estimator,
+        initial_schedule,
+        basename="",
+        hostsfile="/app/config/hostsfile",
+    ):
+        """
+        Initializes a Replica Exchange job controller which runs within a
+        cloud-deployed RESAAS service and whose runner uses MPI for
+        communication.
+
+        Arguments contain everything required for running simulations and
+        optimizing schedules.
+
+        Args:
+            job_id(int): The id of the resaas job to which this controller belongs
+            scheduler_address(str): The address to the scheduler
+            scheduler_port(int): The scheduler's listening port
+            re_params(:class:`ReplicaExchangeParameters`): Replica Exchange-
+              specific parameters
+            local_sampling_params(:class:`NaiveHMCParameters`): local sampling-
+              specific parameters
+            optimization_params(:class:`OptimizationParameters`): schedule
+              optimization-related parameters
+            re_runner(:class:`AbstractRERunner`): runner which runs an RE
+              simulation (depends on the environment)
+            base_storage(:class:`AbstractStorage`:): storage backend for
+              reading / writing strings from / to permanent simulation storage
+            schedule_optimizer(:class:`AbstractScheduleOptimizer`): schedule
+              optimizer which calculates a new schedule based on
+              an estimate for the density of states
+            dos_estimator(:class:`WHAM`): WHAM object which estimates the
+              density of states from samples of a previous simulation
+            initial_schedule(dict`): initial parameter schedule
+              maker object which calculates a very first Replica Exchange
+              schedule
+            basename(str): optional basename to the simulation storage path
+              (required for running locally or when reusing an existing bucket)
+            hostsfile(str): Path at which to read and write the list of host
+                addresses which are participating in the job
+        """
+        super().__init__(
+            re_params,
+            local_sampling_params,
+            optimization_params,
+            re_runner,
+            storage_backend,
+            schedule_optimizer,
+            dos_estimator,
+            initial_schedule,
+            basename="")
+        self.job_id = job_id
+        self.scheduler_address = scheduler_address
+        self.scheduler_port = scheduler_port
+        self.hostsfile = hostsfile
+
+    def _scale_environment(self, num_replicas):
+        """
+        Scale up / down the environment to the given numer of replicas.
+
+        Args:
+            num_replicas(int): number of replicas
+        """
+        # TODO
+        pass
+
+    def _query_hosts(self) -> List[str]:
+        # Query the active nodes for populating the hosts file
+        # TODO: Use https
+        r = requests.get(
+            f"http://{self.scheduler_address}:{self.scheduler_port}{self.SCHEDULER_NODE_ENDPOINT}"
+        )
+        r.raise_for_status()
+        hosts = []
+        for n in r.json():
+            if n["in_use"]:
+                hosts.append(n["address"])
+        return hosts
+
+    def _write_hostsfile(self):
+        # Populate the hostsfile
+        hosts = self._query_hosts()
+        with open("hostsfile", "w") as f:
+            for h in hosts:
+                print(h, file=f)
