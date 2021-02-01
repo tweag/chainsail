@@ -162,6 +162,15 @@ class BaseREJobController:
         self._local_sampling_params = local_sampling_params
         self._optimization_params = optimization_params
 
+    def _scale_environment(self, num_replicas):
+        """
+        Scale up / down the environment to the given numer of replicas.
+
+        Args:
+            num_replicas(int): number of replicas
+        """
+        pass
+
     def _calculate_schedule_from_dos(self, previous_storage, dos):
         """
         Calculates an optimized schedule given a previous simulation and its
@@ -411,6 +420,7 @@ class AbstractCloudREJobController(BaseREJobController):
         self.scheduler_address = scheduler_address
         self.scheduler_port = scheduler_port
 
+    @abstractmethod
     def _scale_environment(self, num_replicas):
         """
         Scale up / down the environment to the given numer of replicas.
