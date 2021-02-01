@@ -20,7 +20,7 @@ from resaas.re_job_controller import (
 )
 
 import asyncio
-from resaas.re_job_controller.grpc import run_server
+from .grpc import run_server
 
 ProcessStatus = Tuple[bool, str]
 
