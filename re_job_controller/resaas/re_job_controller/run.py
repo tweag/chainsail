@@ -19,6 +19,9 @@ from resaas.re_job_controller import (
     get_default_params,
 )
 
+import asyncio
+from resaas.re_job_controller.grpc import run_server
+
 ProcessStatus = Tuple[bool, str]
 
 
@@ -137,16 +140,7 @@ class ControllerConfigSchema(Schema):
 
 
 def check_status(proc: Process) -> ProcessStatus:
-    # TODO: This will be called via gRPC
-    pass
-
-    # re_runner = runner_factory()
-    # storage_backend = storage_backend_factory()
-    # optimization_objects = optimization_objects_from_spec(job_spec)
-    # default_params = get_default_params()
-
-    # return cls(*default_params, re_runner, storage_backend, basename='',
-    #            **optimization_objects)
+    asyncio.run(run_server())
 
 
 @click.command()
