@@ -305,7 +305,8 @@ class AbstractREJobController(ABC):
     def _fill_config_template(self, storage, previous_storage, schedule,
                               prod=False):
         """
-        Fills in the config template with run-specific values.
+        Makes a config template template and updates it with run-specific
+        values.
 
         Args:
             current_storage(:class:`SimulationStorage`): storage for simulation
@@ -347,7 +348,10 @@ class AbstractREJobController(ABC):
             "dump_interval": self._re_params["dump_interval"],
         }
 
-        return updates
+        for k, v in updates.items():
+            cfg_template[k].update(**v)
+
+        return cfg_template
 
     def _setup_simulation(self, current_storage, schedule, previous_storage=None, prod=False):
         """
