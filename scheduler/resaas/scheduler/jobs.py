@@ -213,11 +213,11 @@ class Job:
             stub = HealthStub(channel)
             while True:
                 response = stub.Check(HealthCheckRequest(service=""))
-                if response.status is not "SERVING":
+                if response.status != "SERVING":
                     break
                 else:
                     time.sleep(1)
-        if response.status is "FINISHED":
+        if response.status == "FINISHED":
             return True
         else:
             return False
