@@ -32,6 +32,8 @@ class MPIRERunner(AbstractRERunner):
         # Spawn an mpi subprocess
         cmd = [
             "mpirun",
+            # For running in docker
+            "--allow-run-as-root",
             "--hostsfile",
             hostsfile,
             "--oversubscribe",
