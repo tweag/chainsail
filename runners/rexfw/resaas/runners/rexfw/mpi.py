@@ -11,7 +11,6 @@ from rexfw.convenience import setup_default_re_master, setup_default_replica
 from rexfw.pdfs.normal import Normal
 from rexfw.samplers.rwmc import RWMCSampler
 from rexfw.slaves import Slave
-from rexfw.statistics.logged_quantities import SamplerStepsize
 
 
 @click.command()
@@ -74,8 +73,15 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         )
 
         # write final step sizes to simulation storage
+        # The sampling statistics holds objects which internally keep a time
+        # series of quantities such as the step size
         timestep_quantities = filter(lambda x: x.name == 'stepsize',
                                      master.sampling_statistics.elements)
+        # Such a quantity x has a field "origins" which holds strings
+        # identifying to which sampling objects this quantity is related.
+        # Such a string is, in this case, "replicaXX", where XX enumerates
+        # the replicas. We thus sort by the XXses to get the time steps
+        # in the right order.
         sorted_timestep_quantities = sorted(
             timestep_quantities,
             key=lambda x: int(x.origins[0][len('replica'):]))
