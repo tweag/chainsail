@@ -19,6 +19,7 @@ click = "^7.1.2"
 
 # Runners can be installed as extras for convenience
 resaas-runner-rexfw = { path = "../runners/rexfw", optional = true, develop = true }
+grpcio = "^1.35.0"
 
 [tool.poetry.extras]
 rexfw = ["resaas-runner-rexfw"]
