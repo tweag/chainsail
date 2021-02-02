@@ -92,7 +92,7 @@ def load_storage_config(config_file: str) -> "StorageBackendConfig":
         config_file: The path to the config file
     """
     with open(config_file) as f:
-        return StorageBackendConfigSchema().load(yaml.load(f))
+        return StorageBackendConfigSchema().load(yaml.safe_load(f))
 
 
 class LocalBackendConfigSchema(Schema):

@@ -11,8 +11,9 @@ import yaml
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from resaas.common.runners import AbstractRERunner, runner_config
-from resaas.common.spec import (JobSpec, JobSpecSchema, ReplicaExchangeParameters,
-                                NaiveHMCParameters, OptimizationParameters)
+from resaas.common.spec import (JobSpec, JobSpecSchema, NaiveHMCParameters,
+                                OptimizationParameters,
+                                ReplicaExchangeParameters)
 from resaas.common.storage import load_storage_config
 from resaas.re_job_controller import (LocalREJobController,
                                       optimization_objects_from_spec)
@@ -108,7 +109,7 @@ def run(job, config, storage, hostsfile, job_spec):
     storage_backend = backend_config.get_storage_backend()
 
     # Load the controller
-    runner = load_runner(config.runner)
+    runner = load_runner(config.runner)()
     # TODO: Hard-coding this for now until we have a need for multiple runners
     runner_config["hostsfile"] = hostsfile
     runner_config["run_id"] = job

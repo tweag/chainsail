@@ -16,11 +16,16 @@ from rexfw.slaves import Slave
 @click.command()
 @click.option("--name", required=True, type=str, help="output directory name")
 @click.option(
-    "--config",
-    "config_file",
+    "--basename",
     required=True,
-    type=click.Path(exists=True),
-    help="path to the rexfw YAML config file",
+    type=str,
+    help="Storage backend basename",
+)
+@click.option(
+    "--path",
+    required=True,
+    type=str,
+    help="Subdirectory in which the storage backend should write data",
 )
 @click.option(
     "--storage",
@@ -29,7 +34,7 @@ from rexfw.slaves import Slave
     type=click.Path(exists=True),
     help="path to storage backend YAML config file",
 )
-def run_rexfw_mpi(name, config_file, storage_config):
+def run_rexfw_mpi(name, basename, path, storage_config):
     mpicomm = MPI.COMM_WORLD
     rank = mpicomm.Get_rank()
     size = mpicomm.Get_size()
@@ -37,17 +42,15 @@ def run_rexfw_mpi(name, config_file, storage_config):
     # Number of replicas is inferred from the MPI environment
     n_replicas = size - 1
 
-    with open(config_file) as f:
-        config = yaml.safe_load(f)
-
     # this is where all simulation input data & output (samples, statistics files,
     # etc.) are stored
     storage_backend = load_storage_config(storage_config).get_storage_backend()
     storage = SimulationStorage(
-        basename=config["general"]["basename"],
-        sim_path=config["general"]["output_path"],
+        basename=basename,
+        sim_path=path,
         storage_backend=storage_backend,
     )
+    config = storage.load_config()
 
     comm = MPICommunicator()
 
@@ -58,7 +61,7 @@ def run_rexfw_mpi(name, config_file, storage_config):
 
         # sets up a default RE master object; should be sufficient for all
         # practical purposes
-        master = setup_default_re_master(n_replicas, name, comm)
+        master = setup_default_re_master(n_replicas, path, storage_backend, comm)
         master.run(
             config["general"]["n_iterations"],
             config["re"]["swap_interval"],
