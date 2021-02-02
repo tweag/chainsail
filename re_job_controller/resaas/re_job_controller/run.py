@@ -13,13 +13,11 @@ import yaml
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from resaas.common.runners import AbstractRERunner, runner_config
-from resaas.common.spec import (
-    JobSpec,
-    JobSpecSchema,
-    ReplicaExchangeParameters,
-    NaiveHMCParameters,
-    OptimizationParameters,
-)
+
+from resaas.common.spec import (JobSpec, JobSpecSchema, NaiveHMCParameters,
+                                OptimizationParameters,
+                                ReplicaExchangeParameters)
+
 from resaas.common.storage import load_storage_config
 from resaas.re_job_controller import LocalREJobController, optimization_objects_from_spec
 from resaas.common.grpc import Health, add_HealthServicer_to_server
@@ -65,8 +63,9 @@ def load_runner(runner_path: str) -> AbstractRERunner:
         runner: The path to the runner with the module and class delimited
             by a colon. e.g. 'some.module:MyRunner'
     """
-    package, name = runner_path.split(":")
-    return import_module(name, package)
+    module, runner_name = runner_path.split(":")
+    module = import_module(module)
+    return getattr(module, runner_name)
 
 
 def check_status(proc: Process) -> ProcessStatus:
@@ -109,7 +108,7 @@ def run(job, config, storage, hostsfile, job_spec):
     """
     # Load the controller configuration file
     with open(config) as f:
-        config: ControllerConfig = ControllerConfigSchema().load(yaml.load(f))
+        config: ControllerConfig = ControllerConfigSchema().load(yaml.safe_load(f))
     # Load the job spec
     with open(job_spec) as f:
         job_spec: JobSpec = JobSpecSchema().loads(f.read())
@@ -118,7 +117,7 @@ def run(job, config, storage, hostsfile, job_spec):
     storage_backend = backend_config.get_storage_backend()
 
     # Load the controller
-    runner = load_runner(config.runner)
+    runner = load_runner(config.runner)()
     # TODO: Hard-coding this for now until we have a need for multiple runners
     runner_config["hostsfile"] = hostsfile
     runner_config["run_id"] = job

@@ -2,7 +2,6 @@
 Runners which launch a rexfw simulation.
 """
 
-import os
 from subprocess import check_output
 
 from resaas.common.runners import AbstractRERunner, runner_config
@@ -20,30 +19,31 @@ class MPIRERunner(AbstractRERunner):
 
     def run_sampling(self, storage: AbstractStorageBackend):
         # Get configuration
-        run_id = runner_config.get("run_id", default="no-id")
-        hostsfile = runner_config.get("hostsfile", default=self.DEFAULT_HOSTSFILE)
-        storage_config = runner_config.get("storage_config", default=self.DEFAULT_STORAGEFILE)
+        run_id = runner_config.get("run_id", "no-id")
+        hostsfile = runner_config.get("hostsfile", self.DEFAULT_HOSTSFILE)
+        storage_config = runner_config.get("storage_config", self.DEFAULT_STORAGEFILE)
 
         model_config = storage.load_config()
         n_replicas = model_config["general"]["num_replicas"]
-        cfg_path = os.path.join(
-            storage.basename, storage.sim_path, storage.dir_structure.CONFIG_FILE_NAME
-        )
         # Spawn an mpi subprocess
         cmd = [
             "mpirun",
-            "--hostsfile",
+            # For running in docker
+            "--allow-run-as-root",
+            "--hostfile",
             hostsfile,
             "--oversubscribe",
             "-n",
             f"{n_replicas + 1}",
             self.REXFW_SCRIPT,
-            "--id",
+            "--name",
             run_id,
-            "--config",
-            cfg_path,
             "--storage",
             storage_config,
+            "--basename",
+            storage.basename,
+            "--path",
+            storage.sim_path,
         ]
 
         check_output(cmd)
