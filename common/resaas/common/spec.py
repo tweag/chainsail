@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional, Set, Union
 
 from marshmallow import Schema, fields, post_dump, post_load, pre_dump
 from marshmallow.exceptions import ValidationError
@@ -23,7 +23,7 @@ class Dependencies(ABC):
 
     @property
     @abstractmethod
-    def packages(self) -> str:
+    def packages(self) -> Set[str]:
         pass
 
     @property
@@ -38,7 +38,7 @@ class Dependencies(ABC):
 class PipDependencies(Dependencies):
     """PyPI Python packages"""
 
-    def __init__(self, requirements: List[str]):
+    def __init__(self, requirements: Set[str]):
         self._packages = requirements
 
     @property
@@ -59,7 +59,7 @@ class PipDependencies(Dependencies):
 
 def _load_dep(dep_type: str, pkgs: List[str]):
     if dep_type == DependenciesType.PIP:
-        return PipDependencies(pkgs)
+        return PipDependencies(set(pkgs))
     else:
         raise ValueError(f"Unknown dependency type: {dep_type}")
 
