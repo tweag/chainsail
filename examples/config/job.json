@@ -3,7 +3,7 @@
     "max_replicas": 2,
     "initial_number_of_replicas": 2,
     "initial_schedule_parameters": {
-        "minimum_beta": 1
+        "minimum_beta": 0.1
     },
     "dependencies": [
         {
