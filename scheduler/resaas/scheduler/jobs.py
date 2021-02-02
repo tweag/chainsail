@@ -214,10 +214,7 @@ class Job:
         async with Channel(ip, port) as channel:
             health_checker = HealthStub(channel)
             reply = await health_checker.Check(HealthCheckRequest())
-            if reply.status != HealthCheckResponse.SERVING:
-                return False
-            else:
-                return True
+            print(reply.status)
         # TODO:
         #   - Lauch GRPC client here
         #   - Start health check: https://grpc.github.io/grpc/python/grpc_health_checking.html
