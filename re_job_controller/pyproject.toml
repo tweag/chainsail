@@ -15,6 +15,9 @@ resaas-common = { path = "../common", develop = true }
 resaas-re-runners = { path = "../re_runners", develop = true }
 resaas-schedule-optimization = { path = "../schedule_estimation", develop = true }
 click = "^7.1.2"
+asyncio = "^3.4.3"
+grpclib = "^0.4.1"
+protobuf = "^3.14.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
