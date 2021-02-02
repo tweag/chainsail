@@ -83,7 +83,7 @@ COPY --from=builder /app /app
 # Extra configuration
 ADD docker/node/.openmpi /root/.openmpi
 ADD docker/node/ssh/known_hosts /etc/ssh/ssh_config
-ADD docker/node/base/entrypoint.sh /app/entrypoint.sh
+ADD docker/node/entrypoint.sh /app/entrypoint.sh
 
 
 # Append OpenMPI installation path

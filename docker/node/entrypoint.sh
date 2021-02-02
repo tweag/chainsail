@@ -14,12 +14,14 @@ else
     echo "No ssh public keys found for server."
 fi
 
-# if [ -z "$USER_DATA_URL" ]
-# then
-#       echo 'USER_DATA_URL not specified. Not fetching any data.'
-# else
-#       echo "Downloading user data from $USER_DATA_URL"
-#       curl -L 
-# fi
+# Allow for the specification of an additional install script
+# for fetching and installing user dependencies.
+if [ -z "$USER_INSTALL_SCRIPT" ]
+then
+      echo 'USER_INSTALL_SCRIPT not specified. No extra install steps.'
+else
+      echo "Executing additional install script at $USER_INSTALL_SCRIPT"
+      bash "$USER_INSTALL_SCRIPT"
+fi
 
 exec "$@"
