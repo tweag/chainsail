@@ -70,8 +70,12 @@ def load_runner(runner_path: str) -> AbstractRERunner:
 
 
 def check_status(proc: Process) -> ProcessStatus:
-    # TODO: This will be called via gRPC
-    pass
+    if proc.exitcode is None:
+        return (True, "SERVING")
+    elif proc.exitcode < 0:
+        return (False, "FAILURE")
+    else:
+        return (True, "FINISHED")
 
 
 @click.command()
