@@ -1,14 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import List
+from dataclasses import asdict
 
 
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
-
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
-from resaas.schedule_estimation.optimization_quantities import acceptance_rate
 from resaas.re_job_controller.initial_schedules import make_geometric_schedule
 from resaas.common.storage import SimulationStorage, default_dir_structure as dir_structure
-from resaas.common.spec import TemperedDistributionFamily, DistributionSchedule
+from resaas.common.spec import TemperedDistributionFamily, BoltzmannInitialScheduleParameters
 from resaas.re_job_controller.initial_setup import setup_initial_states, setup_timesteps
 from resaas.re_job_controller.util import schedule_length
 import requests
@@ -19,29 +18,34 @@ def log(msg):
     pass
 
 
-cfg_template = {
-    "re": {
-        "swap_interval": 5,
-        "status_interval": 100,
-        "dump_interval": 1000,
-        "statistics_update_interval": 100,
-        "schedule": None,
-    },
-    "general": {
-        "n_iterations": None,
-        "basename": None,
-        "output_path": None,
-        "initial_states": None,
-        "num_replicas": None,
-    },
-    "local_sampling": {
-        "n_steps": 20,
-        "timesteps": None,
-        "timestep_adaption_limit": None,
-        "adaption_uprate": 1.05,
-        "adaption_downrate": 0.95,
-    },
-}
+def _config_template_from_params(re_params, local_sampling_params):
+    """
+    Makes a nested dictionary from parameter dataclasses.
+
+    This dictionary is then completed with run-specific values and serialized
+    to a YAML file.
+    """
+    re = asdict(re_params)
+    re['schedule'] = None
+    re.pop('num_optimization_samples')
+    re.pop('num_production_samples')
+    local_sampling = asdict(local_sampling_params)
+    local_sampling['timesteps'] = None
+    general = dict(n_iterations=None,
+                   basename=None,
+                   output_path=None,
+                   initial_states=None,
+                   num_replicas=None)
+
+    return dict(re=re, local_sampling=local_sampling, general=general)
+
+
+def params_from_job_spec(job_spec):
+    re_params = job_spec.replica_exchange_parameters
+    ls_params = job_spec.local_sampling_parameters
+    opt_params = job_spec.optimization_parameters
+
+    return re_params, ls_params, opt_params
 
 
 def optimization_converged(schedule, previous_schedule):
@@ -71,28 +75,24 @@ def optimization_objects_from_spec(job_spec):
     sched_parameters = job_spec.initial_schedule_parameters
     init_num_replicas = job_spec.initial_number_of_replicas
 
-    if (
-        dist_family == TemperedDistributionFamily.BOLTZMANN
-        and type(sched_parameters) == DistributionSchedule
-    ):
+    if dist_family == TemperedDistributionFamily.BOLTZMANN:
+        if type(sched_parameters) == BoltzmannInitialScheduleParameters:
+            opt_params = job_spec.optimization_parameters
+            dos_estimator = WHAM(BoltzmannEnsemble)
+            schedule_optimizer = SingleParameterScheduleOptimizer(
+                opt_params.optimization_quantity_target,
+                opt_params.max_param,
+                opt_params.min_param,
+                opt_params.decrement,
+                opt_params.optimization_quantity,
+                "beta")
 
-        # TODO: set these defaults in extended job spec
-        default_acceptance_rate = 0.2
-        default_decrement = 0.01
-        default_opt_quantity = acceptance_rate
-        max_beta = 1.0
-        min_beta = sched_parameters.minimum_beta
-
-        dos_estimator = WHAM(BoltzmannEnsemble)
-        schedule_optimizer = SingleParameterScheduleOptimizer(
-            default_acceptance_rate,
-            max_beta,
-            min_beta,
-            default_decrement,
-            default_opt_quantity,
-            "beta",
-        )
-        initial_schedule = make_geometric_schedule("beta", init_num_replicas, min_beta, max_beta)
+            initial_schedule = make_geometric_schedule(
+                "beta", init_num_replicas, sched_parameters.minimum_beta, 1.0)
+        else:
+            raise ValueError(
+                (f"Initial schedule parameters '{sched_parameters}' not copmatible "
+                 f"with tempered distribution family '{dist_family}'."))
 
         return dict(
             dos_estimator=dos_estimator,
@@ -101,26 +101,7 @@ def optimization_objects_from_spec(job_spec):
         )
     else:
         raise ValueError(
-            (
-                "Incompatible distribution family "
-                "('{}') and initial schedule parameters ('{}')".format(
-                    dist_family, sched_parameters
-                )
-            )
-        )
-
-
-def get_default_params():
-    # TODO: get these from an extended job spec
-    re_params = {
-        "num_production_samples": 20000,
-        "num_optimization_samples": 5000,
-        "dump_interval": 5000,
-    }
-    local_sampling_params = {"hmc_num_adaption_steps": None}
-    optimization_params = {"max_optimization_runs": 5}
-
-    return re_params, local_sampling_params, optimization_params
+            f"Invalid distribution family '{dist_family}'")
 
 
 class AbstractREJobController(ABC):
@@ -158,9 +139,12 @@ class AbstractREJobController(ABC):
             job_id(int): The id of the resaas job to which this controller belongs
             scheduler_address(str): The address to the scheduler
             scheduler_port(int): The scheduler's listening port
-            re_params(dict): Replica Exchange-specific parameters
-            local_sampling_params(dict): local sampling-specific parameters
-            optimization_params(dict): schedule optimization-related parameters
+            re_params(:class:`ReplicaExchangeParameters`): Replica Exchange-
+              specific parameters
+            local_sampling_params(:class:`NaiveHMCParameters`): local sampling-
+              specific parameters
+            optimization_params(:class:`OptimizationParameters`): schedule
+              optimization-related parameters
             re_runner(:class:`AbstractRERunner`): runner which runs an RE
               simulation (depends on the environment)
             base_storage(:class:`AbstractStorage`:): storage backend for
@@ -258,7 +242,7 @@ class AbstractREJobController(ABC):
         previous_storage = None
         opt_params = self._optimization_params
 
-        max_runs = opt_params["max_optimization_runs"]
+        max_runs = opt_params.max_optimization_runs
         for run_counter in range(max_runs):
             log(
                 "Schedule optimization simulation #{}/{} started".format(run_counter + 1, max_runs)
@@ -298,9 +282,11 @@ class AbstractREJobController(ABC):
 
         return current_storage, final_schedule
 
-    def _fill_config_template(self, storage, previous_storage, schedule, prod=False):
+    def _fill_config_template(self, storage, previous_storage, schedule,
+                              prod=False):
         """
-        Fills in the config template with run-specific values.
+        Makes a config template template and updates it with run-specific
+        values.
 
         Args:
             current_storage(:class:`SimulationStorage`): storage for simulation
@@ -310,20 +296,25 @@ class AbstractREJobController(ABC):
             schedule(dict): schedule of the current simulation
             prod(bool): whether this is the production run or not
         """
+        cfg_template = _config_template_from_params(
+            self._re_params, self._local_sampling_params)
         updates = {
             "local_sampling": {},
             "general": {},
         }
         if previous_storage is not None:
-            updates["local_sampling"] = {"timesteps": dir_structure.INITIAL_TIMESTEPS_FILE_NAME}
-            updates["general"] = {"initial_states": dir_structure.INITIAL_STATES_FILE_NAME}
+            updates["local_sampling"] = {"timesteps":
+                                         dir_structure.INITIAL_TIMESTEPS_FILE_NAME}
+            updates["general"] = {"initial_states":
+                                  dir_structure.INITIAL_STATES_FILE_NAME}
         if prod:
-            num_samples = self._re_params["num_production_samples"]
+            num_samples = self._re_params.num_production_samples
         else:
-            num_samples = self._re_params["num_optimization_samples"]
+            num_samples = self._re_params.num_optimization_samples
 
-        adapt_limit = self._local_sampling_params["hmc_num_adaption_steps"]
-        adapt_limit = adapt_limit or 0.1 * num_samples
+        adapt_limit = cfg_template['local_sampling']['timestep_adaption_limit']
+        if adapt_limit is None:
+            adapt_limit = 0.1 * num_samples
         updates["local_sampling"]["timestep_adaption_limit"] = adapt_limit
 
         updates["general"] = {
@@ -334,10 +325,13 @@ class AbstractREJobController(ABC):
         }
         updates["re"] = {
             "schedule": dir_structure.SCHEDULE_FILE_NAME,
-            "dump_interval": self._re_params["dump_interval"],
+            "dump_interval": self._re_params.dump_interval,
         }
 
-        return updates
+        for k, v in updates.items():
+            cfg_template[k].update(**v)
+
+        return cfg_template
 
     def _setup_simulation(self, current_storage, schedule, previous_storage=None, prod=False):
         """
@@ -398,11 +392,8 @@ class AbstractREJobController(ABC):
 
 
 class LocalREJobController(AbstractREJobController):
-    """
-    Local Replica Exchange job controller, which does not scale up / down
-    the environment.
-    """
+    def _write_hostsfile(self):
+        pass
 
-    def _scale_environment(self, _):
-        # TODO: overwrite hostsfile after scaling
+    def _scale_environment(self, num_replicas):
         pass

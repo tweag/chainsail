@@ -1,4 +1,5 @@
 import pytest
+from marshmallow.exceptions import ValidationError
 
 
 def test_pip_deps_eq():
@@ -9,6 +10,7 @@ def test_pip_deps_eq():
 
     assert dep_1 == dep_2
 
+
 def test_pip_deps_not_eq():
     from resaas.common.spec import PipDependencies
 
@@ -16,7 +18,6 @@ def test_pip_deps_not_eq():
     dep_2 = PipDependencies(["numpy>1.15", "scipy"])
 
     assert not (dep_1 == dep_2)
-
 
 
 def test_spec_eq():
@@ -39,7 +40,6 @@ def test_spec_not_eq():
 
 def test_parse_job_spec_extra_fields():
     from marshmallow.exceptions import ValidationError
-
     from resaas.common.spec import JobSpecSchema
 
     data = """
@@ -61,8 +61,7 @@ def test_parse_partial_job_spec():
         "probability_definition": "gs://bucket/sub/path/script_and_data",
         "max_replicas": 2,
         "initial_schedule_parameters": {
-            "minimum_beta": 1,
-            "beta_ratio": 0.5
+            "minimum_beta": 1
         },
         "dependencies": [
             {
