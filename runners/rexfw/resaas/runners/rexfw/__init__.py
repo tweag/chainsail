@@ -6,26 +6,22 @@ import os
 from subprocess import check_output
 
 from resaas.common.runners import AbstractRERunner, runner_config
-from resaas.common.storage import SimulationStorage
+from resaas.common.storage import AbstractStorageBackend
 
 
-class BaseMPIRERunner(AbstractRERunner):
+class MPIRERunner(AbstractRERunner):
     """
-    Runs a rexfw sampler which uses openMPI for communication and which can
-    run locally.
+    Runs a rexfw sampler which uses openMPI for communication.
     """
 
     REXFW_SCRIPT = "run-rexfw-mpi"
+    DEFAULT_HOSTSFILE = "hostsfile"
     DEFAULT_STORAGEFILE = "storage.yaml"
 
-    def _mpirun_args(self, n_replicas):
-        return ["--oversubscribe",
-                "-n",
-                f"{n_replicas + 1}"]
-
-    def run_sampling(self, storage: SimulationStorage):
+    def run_sampling(self, storage: AbstractStorageBackend):
         # Get configuration
         run_id = runner_config.get("run_id", default="no-id")
+        hostsfile = runner_config.get("hostsfile", default=self.DEFAULT_HOSTSFILE)
         storage_config = runner_config.get("storage_config", default=self.DEFAULT_STORAGEFILE)
 
         model_config = storage.load_config()
@@ -36,7 +32,11 @@ class BaseMPIRERunner(AbstractRERunner):
         # Spawn an mpi subprocess
         cmd = [
             "mpirun",
-            *self._mpirun_args(n_replicas),
+            "--hostsfile",
+            hostsfile,
+            "--oversubscribe",
+            "-n",
+            f"{n_replicas + 1}",
             self.REXFW_SCRIPT,
             "--id",
             run_id,
@@ -47,15 +47,3 @@ class BaseMPIRERunner(AbstractRERunner):
         ]
 
         check_output(cmd)
-
-
-class CloudMPIRERunner(AbstractRERunner):
-    """
-    Runs a rexfw sampler which uses openMPI for communication.
-    """
-
-    DEFAULT_HOSTSFILE = "hostsfile"
-
-    def _mpirun_args(self, n_replicas):
-        hostfile = runner_config.get("hostsfile", default=self.DEFAULT_HOSTSFILE)
-        return super()._mpirun_args(n_replicas) + ["--hostsfile", hostfile]

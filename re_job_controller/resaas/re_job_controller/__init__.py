@@ -356,7 +356,7 @@ class BaseREJobController:
         self._do_single_run(prod_storage.config_file_name)
 
 
-class AbstractCloudREJobController(BaseREJobController):
+class CloudREJobController(BaseREJobController):
     SCHEDULER_NODE_ENDPOINT = "/job/{id}/nodes"
 
     def __init__(
@@ -372,6 +372,7 @@ class AbstractCloudREJobController(BaseREJobController):
         schedule_optimizer,
         dos_estimator,
         initial_schedule,
+        node_updater,
         basename="",
     ):
         """
@@ -403,6 +404,8 @@ class AbstractCloudREJobController(BaseREJobController):
             initial_schedule(dict`): initial parameter schedule
               maker object which calculates a very first Replica Exchange
               schedule
+            node_updater(callable): function which updates information on the
+              available nodes after rescaling, e.g., writes a MPI host file
             basename(str): optional basename to the simulation storage path
               (required for running locally or when reusing an existing bucket)
         """
@@ -415,88 +418,12 @@ class AbstractCloudREJobController(BaseREJobController):
             schedule_optimizer,
             dos_estimator,
             initial_schedule,
+            node_updater,
             basename="")
         self.job_id = job_id
         self.scheduler_address = scheduler_address
         self.scheduler_port = scheduler_port
-
-    @abstractmethod
-    def _scale_environment(self, num_replicas):
-        """
-        Scale up / down the environment to the given numer of replicas.
-
-        Args:
-            num_replicas(int): number of replicas
-        """
-        pass
-
-
-class MPICloudREJobController(AbstractCloudREJobController):
-    def __init__(
-        self,
-        job_id,
-        scheduler_address,
-        scheduler_port,
-        re_params,
-        local_sampling_params,
-        optimization_params,
-        re_runner,
-        storage_backend,
-        schedule_optimizer,
-        dos_estimator,
-        initial_schedule,
-        basename="",
-        hostsfile="/app/config/hostsfile",
-    ):
-        """
-        Initializes a Replica Exchange job controller which runs within a
-        cloud-deployed RESAAS service and whose runner uses MPI for
-        communication.
-
-        Arguments contain everything required for running simulations and
-        optimizing schedules.
-
-        Args:
-            job_id(int): The id of the resaas job to which this controller belongs
-            scheduler_address(str): The address to the scheduler
-            scheduler_port(int): The scheduler's listening port
-            re_params(:class:`ReplicaExchangeParameters`): Replica Exchange-
-              specific parameters
-            local_sampling_params(:class:`NaiveHMCParameters`): local sampling-
-              specific parameters
-            optimization_params(:class:`OptimizationParameters`): schedule
-              optimization-related parameters
-            re_runner(:class:`AbstractRERunner`): runner which runs an RE
-              simulation (depends on the environment)
-            base_storage(:class:`AbstractStorage`:): storage backend for
-              reading / writing strings from / to permanent simulation storage
-            schedule_optimizer(:class:`AbstractScheduleOptimizer`): schedule
-              optimizer which calculates a new schedule based on
-              an estimate for the density of states
-            dos_estimator(:class:`WHAM`): WHAM object which estimates the
-              density of states from samples of a previous simulation
-            initial_schedule(dict`): initial parameter schedule
-              maker object which calculates a very first Replica Exchange
-              schedule
-            basename(str): optional basename to the simulation storage path
-              (required for running locally or when reusing an existing bucket)
-            hostsfile(str): Path at which to read and write the list of host
-                addresses which are participating in the job
-        """
-        super().__init__(
-            re_params,
-            local_sampling_params,
-            optimization_params,
-            re_runner,
-            storage_backend,
-            schedule_optimizer,
-            dos_estimator,
-            initial_schedule,
-            basename="")
-        self.job_id = job_id
-        self.scheduler_address = scheduler_address
-        self.scheduler_port = scheduler_port
-        self.hostsfile = hostsfile
+        self._node_updater = node_updater
 
     def _scale_environment(self, num_replicas):
         """
@@ -505,25 +432,33 @@ class MPICloudREJobController(AbstractCloudREJobController):
         Args:
             num_replicas(int): number of replicas
         """
-        # TODO
+        # TODO: sent blocking http request to scheduler to scale up / down
+        # the node cluster.
+
+        # self._node_updater()
+
         pass
 
-    def _query_hosts(self) -> List[str]:
-        # Query the active nodes for populating the hosts file
-        # TODO: Use https
-        r = requests.get(
-            f"http://{self.scheduler_address}:{self.scheduler_port}{self.SCHEDULER_NODE_ENDPOINT}"
-        )
-        r.raise_for_status()
-        hosts = []
-        for n in r.json():
-            if n["in_use"]:
-                hosts.append(n["address"])
-        return hosts
 
-    def _write_hostsfile(self):
-        # Populate the hostsfile
-        hosts = self._query_hosts()
-        with open("hostsfile", "w") as f:
-            for h in hosts:
-                print(h, file=f)
+def update_nodes_mpi(hostfile_path):
+    """
+    Writes an updated hostfile which is required by the MPI runner.
+
+    hostfile_path(str): Path at which to read and write the list of host
+      addresses which are participating in the job
+    """
+    # Query the active nodes for populating the hosts file
+    # TODO: Use https
+    r = requests.get(
+        f"http://{self.scheduler_address}:{self.scheduler_port}{self.SCHEDULER_NODE_ENDPOINT}"
+    )
+    r.raise_for_status()
+    hosts = []
+    for n in r.json():
+        if n["in_use"]:
+            hosts.append(n["address"])
+
+    # Populate the hostsfile
+    with open(hostfile_path, "w") as f:
+        for h in hosts:
+            print(h, file=f)
