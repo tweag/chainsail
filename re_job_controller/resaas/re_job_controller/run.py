@@ -5,17 +5,24 @@ from dataclasses import dataclass
 from importlib import import_module
 from multiprocessing import Process
 from typing import Tuple
+import futures
+import grpc
 
 import click
 import yaml
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from resaas.common.runners import AbstractRERunner, runner_config
-from resaas.common.spec import (JobSpec, JobSpecSchema, ReplicaExchangeParameters,
-                                NaiveHMCParameters, OptimizationParameters)
+from resaas.common.spec import (
+    JobSpec,
+    JobSpecSchema,
+    ReplicaExchangeParameters,
+    NaiveHMCParameters,
+    OptimizationParameters,
+)
 from resaas.common.storage import load_storage_config
-from resaas.re_job_controller import (LocalREJobController,
-                                      optimization_objects_from_spec)
+from resaas.re_job_controller import LocalREJobController, optimization_objects_from_spec
+from resaas.common.grpc import Health, add_HealthServicer_to_server
 
 ProcessStatus = Tuple[bool, str]
 
@@ -132,12 +139,18 @@ def run(job, config, storage, hostsfile, job_spec):
     controller_proc = Process(target=controller.run_job, daemon=True)
     controller_proc.start()
 
-    # TODO: Start gRPC server and bind gRPC endpoint to a function which checks whether
-    #   controller_proc is still alive. If it is not alive, then
-    #   we need to see if any exceptions were raised.
+    def controller_state():
+        return check_status(controller_proc)
+
+    # Start gRPC server
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    add_HealthServicer_to_server(Health(callback=controller_state), server)
+    server.add_insecure_port("[::]:50051")
+    server.start()
 
     # Await controller_proc, then teardown gRPC server gracefully
     controller_proc.join()
+    server.wait_for_termination()
 
 
 if __name__ == "__main__":
