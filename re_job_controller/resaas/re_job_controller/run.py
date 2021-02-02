@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from importlib import import_module
 from multiprocessing import Process
 from typing import Tuple
+from functools import partial
 
 import click
 import yaml
@@ -15,7 +16,8 @@ from resaas.common.spec import (JobSpec, JobSpecSchema, NaiveHMCParameters,
                                 OptimizationParameters,
                                 ReplicaExchangeParameters)
 from resaas.common.storage import load_storage_config
-from resaas.re_job_controller import (LocalREJobController,
+from resaas.re_job_controller import (CloudREJobController,
+                                      update_nodes_mpi,
                                       optimization_objects_from_spec)
 
 ProcessStatus = Tuple[bool, str]
@@ -116,7 +118,8 @@ def run(job, config, storage, hostsfile, job_spec):
     runner_config["storage_config"] = storage
 
     optimization_objects = optimization_objects_from_spec(job_spec)
-    controller = LocalREJobController(
+
+    controller = CloudREJobController(
         job,
         config.scheduler_address,
         config.scheduler_port,
@@ -125,6 +128,7 @@ def run(job, config, storage, hostsfile, job_spec):
         job_spec.optimization_parameters,
         runner,
         storage_backend,
+        node_updater=partial(update_nodes_mpi, hostsfile),
         basename=config.storage_basename,
         **optimization_objects,
     )

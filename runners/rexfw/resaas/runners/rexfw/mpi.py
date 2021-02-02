@@ -101,7 +101,7 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         else:
             init_state = storage.load_initial_states()[rank - 1]
 
-        if timesteps_path := config["local_sampling"]["timesteps"] is not None:
+        if config["local_sampling"]["timesteps"] is not None:
             timestep = storage.load_initial_timesteps()[rank - 1]
         else:
             timestep = 1
