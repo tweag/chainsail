@@ -1,8 +1,7 @@
-from io import BytesIO
+from abc import ABC, abstractmethod
 
 import click
 import numpy as np
-import yaml
 from mpi4py import MPI
 from resaas.common.storage import SimulationStorage, load_storage_config
 
@@ -11,6 +10,32 @@ from rexfw.convenience import setup_default_re_master, setup_default_replica
 from rexfw.pdfs.normal import Normal
 from rexfw.samplers.rwmc import RWMCSampler
 from rexfw.slaves import Slave
+
+
+# TODO: put these classes some place where they belongs
+class AbstractPdf(ABC):
+    @abstractmethod
+    def log_prob(self, x):
+        pass
+
+    @abstractmethod
+    def gradient(self, x):
+        pass
+
+
+class BoltzmannTemperedDistribution(AbstractPdf):
+    def __init__(self, pdf, beta=1.0):
+        self.bare_pdf = pdf
+        self.beta = beta
+
+    def log_prob(self, x):
+        return self.beta * self.bare_pdf.log_prob(x)
+
+    def gradient(self, x):
+        return self.beta * self.bare_pdf.gradient(x)
+
+    def bare_log_prob(self, x):
+        return self.bare_pdf.log_prob(x)
 
 
 @click.command()
@@ -90,14 +115,18 @@ def run_rexfw_mpi(name, basename, path, storage_config):
 
         # For now, we sample from a normal distribution, but here would eventually
         # be the user code imported
-        pdf = Normal(sigma=1 / np.sqrt(schedule["beta"][rank - 1]))
+        bare_pdf = Normal()
+
+        # Turn it into a Boltzmann distribution
+        tempered_pdf = BoltzmannTemperedDistribution(
+            bare_pdf, schedule["beta"][rank - 1])
 
         # TODO: this is currently a bit annoying: we don't know the number of
         # variables. Either the user provides it in the pdf object or they have to
         # provide initial states, which might not be a bad idea, actually.
-        pdf.n_variables = 1
+        tempered_pdf.n_variables = 1
         if config["general"]["initial_states"] is None:
-            init_state = np.random.normal(pdf.n_variables)
+            init_state = np.random.normal(tempered_pdf.n_variables)
         else:
             init_state = storage.load_initial_states()[rank - 1]
 
@@ -110,7 +139,8 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         # being the step size
         sampler_params = {"stepsize": timestep}
         replica = setup_default_replica(
-            init_state, pdf, RWMCSampler, sampler_params, storage, comm, rank
+            init_state, tempered_pdf, RWMCSampler, sampler_params, storage,
+            comm, rank
         )
 
         # the slaves are relicts; originally I thought them to pass on
