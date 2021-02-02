@@ -14,9 +14,13 @@ from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from resaas.common.runners import AbstractRERunner, runner_config
 
-from resaas.common.spec import (JobSpec, JobSpecSchema, NaiveHMCParameters,
-                                OptimizationParameters,
-                                ReplicaExchangeParameters)
+from resaas.common.spec import (
+    JobSpec,
+    JobSpecSchema,
+    NaiveHMCParameters,
+    OptimizationParameters,
+    ReplicaExchangeParameters,
+)
 
 from resaas.common.storage import load_storage_config
 from resaas.re_job_controller import LocalREJobController, optimization_objects_from_spec
@@ -72,7 +76,7 @@ def check_status(proc: Process) -> ProcessStatus:
     if proc.exitcode is None:
         return (True, "SERVING")
     elif proc.exitcode < 0:
-        return (False, "FAILURE")
+        return (False, "UNKNOWN")
     else:
         return (True, "FINISHED")
 
@@ -143,7 +147,7 @@ def run(job, config, storage, hostsfile, job_spec):
     controller_proc.start()
 
     def controller_state():
-        return check_status(controller_proc)
+        return check_status(controller_proc)[1]
 
     # Start gRPC server
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
