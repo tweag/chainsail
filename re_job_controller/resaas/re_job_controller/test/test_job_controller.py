@@ -7,15 +7,6 @@ from resaas.schedule_estimation.schedule_optimizers import SingleParameterSchedu
 
 from resaas.re_job_controller import AbstractREJobController
 
-re_params = ReplicaExchangeParameters(num_optimization_samples=10,
-                                      dump_interval=5)
-ls_params = NaiveHMCParameters(timestep_adaption_limit=100)
-opt_params = OptimizationParameters(max_optimization_runs=5,
-                                    optimization_quantity_target=0.2,
-                                    max_param=1.0,
-                                    min_param=1.0,
-                                    decrement=0.2)
-
 
 class MockWham:
     def estimate_dos(self, energies, parameters):
@@ -40,6 +31,9 @@ class MockRERunner:
 
 
 class MockREJobController(AbstractREJobController):
+    def _write_hostsfile(self):
+        pass
+
     def _scale_environment(self, _):
         pass
 
@@ -59,6 +53,11 @@ class testREJobController(unittest.TestCase):
     def setUp(self):
         optimizer = MockOptimizer()
         initial_schedule = {'beta': np.array([42] * 8)}
+        re_params = ReplicaExchangeParameters(
+            num_optimization_samples=10,
+            num_production_samples=20, dump_interval=5)
+        opt_params = OptimizationParameters(max_optimization_runs=5)
+        ls_params = NaiveHMCParameters()
         self._controller = MockREJobController(
             1,
             "127.0.0.1",
