@@ -12,44 +12,45 @@ services:
       - mpi-node-1
       - mpi-node-2
     volumes:
-      - $PWD/docker/node/ssh/known_hosts:/etc/ssh/ssh_config
-      - $HOME/.ssh/dorran-resaas-pair.pem:/root/.ssh/dorran-resaas-pair.pem
+      - $HOME/.ssh/dorran-resaas-pair.pem:/root/.ssh/id.pem
       - $HOME/.ssh/dorran-resaas-pair.pub:/app/config/ssh/authorized_keys
-      - $PWD/osu_latency.py:/osu_latency.py
-      - $PWD/normal.py:/normal.py
+      - $HOME/Desktop/resaas:/resaas
     command:
-      - /usr/sbin/sshd
-      - -D
-      # - /app/deps/openmpi/bin/mpirun
-      # - --allow-run-as-root
-      # - --host
-      # - mpi_node
-      # - /app/deps/rexfw/bin/python
-      # - /osu_latency.py
+      - resaas-controller
+      - --job
+      - testing
+      - --storage
+      - /resaas/storage.yaml
+      - --hostsfile
+      - /resaas/hostsfile
+      - --job-spec
+      - /resaas/job.json
+      - --config
+      - /resaas/controller.yaml
     depends_on: [mpi-node-1, mpi-node-2]
+
   mpi-node-1:
     build:
       context: .
       dockerfile: docker/node/base/Dockerfile
     ports:
-      - "22"
+      - "26"
     volumes:
       - $HOME/.ssh/dorran-resaas-pair.pub:/app/config/ssh/authorized_keys
-      - $PWD/osu_latency.py:/osu_latency.py
-      - $PWD/normal.py:/normal.py
+      - $HOME/resaas:/resaas
     command:
       - /usr/sbin/sshd
       - -D
+
   mpi-node-2:
     ports:
-      - "22"
+      - "26"
     build:
       context: .
       dockerfile: docker/node/base/Dockerfile
     volumes:
       - $HOME/.ssh/dorran-resaas-pair.pub:/app/config/ssh/authorized_keys
-      - $PWD/osu_latency.py:/osu_latency.py
-      - $PWD/normal.py:/normal.py
+      - $HOME/resaas:/resaas
     command:
       - /usr/sbin/sshd
       - -D
