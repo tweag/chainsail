@@ -1,16 +1,21 @@
 from abc import ABC, abstractmethod
-from typing import List
 from dataclasses import asdict
+from typing import List
 
-
-from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
-from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
-from resaas.re_job_controller.initial_schedules import make_geometric_schedule
-from resaas.common.storage import SimulationStorage, default_dir_structure as dir_structure
-from resaas.common.spec import TemperedDistributionFamily, BoltzmannInitialScheduleParameters
-from resaas.re_job_controller.initial_setup import setup_initial_states, setup_timesteps
-from resaas.re_job_controller.util import schedule_length
 import requests
+from resaas.common.spec import (BoltzmannInitialScheduleParameters,
+                                TemperedDistributionFamily)
+from resaas.common.storage import SimulationStorage
+from resaas.common.storage import default_dir_structure as dir_structure
+from resaas.re_job_controller.initial_schedules import make_geometric_schedule
+from resaas.re_job_controller.initial_setup import (setup_initial_states,
+                                                    setup_timesteps)
+from resaas.re_job_controller.util import schedule_length
+from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
+from resaas.schedule_estimation.optimization_quantities import \
+    get_quantity_function
+from resaas.schedule_estimation.schedule_optimizers import \
+    SingleParameterScheduleOptimizer
 
 
 def log(msg):
@@ -84,7 +89,7 @@ def optimization_objects_from_spec(job_spec):
                 opt_params.max_param,
                 opt_params.min_param,
                 opt_params.decrement,
-                opt_params.optimization_quantity,
+                get_quantity_function(opt_params.optimization_quantity),
                 "beta")
 
             initial_schedule = make_geometric_schedule(

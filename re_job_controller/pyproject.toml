@@ -18,7 +18,7 @@ resaas-schedule-optimization = { path = "../schedule_estimation", develop = true
 click = "^7.1.2"
 
 # Runners can be installed as extras for convenience
-resaas-runner-rexfw = { path = "../runners/rexfw", optional = true }
+resaas-runner-rexfw = { path = "../runners/rexfw", optional = true, develop = true }
 
 [tool.poetry.extras]
 rexfw = ["resaas-runner-rexfw"]
