@@ -6,9 +6,8 @@ import shortuuid
 
 import asyncio
 from grpclib.client import Channel
-from grpclib.health.v1.health_pb2 import HealthCheckRequest
+from grpclib.health.v1.health_pb2 import HealthCheckRequest, HealthCheckResponse
 from grpclib.health.v1.health_grpc import HealthStub
-
 
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblJobs, TblNodes
@@ -215,7 +214,7 @@ class Job:
         async with Channel(ip, port) as channel:
             health_checker = HealthStub(channel)
             reply = await health_checker.Check(HealthCheckRequest())
-            if reply.status != "SERVING":
+            if reply.status != HealthCheckResponse.SERVING:
                 return False
             else:
                 return True
