@@ -11,6 +11,7 @@ from rexfw.convenience import setup_default_re_master, setup_default_replica
 from rexfw.pdfs.normal import Normal
 from rexfw.samplers.rwmc import RWMCSampler
 from rexfw.slaves import Slave
+from rexfw.statistics.logged_quantities import SamplerStepsize
 
 
 @click.command()
@@ -72,11 +73,14 @@ def run_rexfw_mpi(name, basename, path, storage_config):
             config["re"]["statistics_update_interval"],
         )
 
-        # copy over final step sizes
-        mcmc_stats_path = "statistics/mcmc_stats.txt"
-        mcmc_stats_buffer = storage.load(mcmc_stats_path, data_type="text")
-        timesteps = np.loadtxt(BytesIO(bytes(mcmc_stats_buffer, "ascii")), dtype=float)[-1, 2::2]
-        storage.save_final_timesteps(timesteps)
+        # write final step sizes to simulation storage
+        timestep_quantities = filter(lambda x: x.name == 'stepsize',
+                                     master.sampling_statistics.elements)
+        sorted_timestep_quantities = sorted(
+            timestep_quantities,
+            key=lambda x: int(x.origins[0][len('replica'):]))
+        storage.save_final_timesteps(
+            np.array([x.current_value for x in sorted_timestep_quantities]))
 
         # send kill request to break from infinite message receiving loop in
         # replicas
