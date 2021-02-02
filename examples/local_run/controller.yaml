@@ -1,0 +1,4 @@
+scheduler_address: "127.0.0.1"
+scheduler_port: 5000
+runner: "resaas.runners.rexfw:MPIRERunner"
+storage_basename: "/tmp/yippie"
