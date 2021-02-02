@@ -82,8 +82,7 @@ def test_parse_job_spec_empty_dependencies():
         "probability_definition": "gs://bucket/sub/path/script_and_data",
         "max_replicas": 2,
         "initial_schedule_parameters": {
-            "minimum_beta": 1,
-            "beta_ratio": 0.5
+            "minimum_beta": 1
         },
         "dependencies": []
     }
@@ -93,7 +92,23 @@ def test_parse_job_spec_empty_dependencies():
     assert spec.dependencies == []
 
 
+def test_parse_wrong_initial_schedule_params_job_spec():
+    from resaas.common.spec import JobSpecSchema
+
+    data = """
+    {
+        "probability_definition": "gs://bucket/sub/path/script_and_data",
+        "initial_schedule_parameters": {
+            "minimum_gamma": 1
+        }
+    }
+    """
+    with pytest.raises(ValidationError):
+        JobSpecSchema().loads(data)
+
+
 def test_job_spec_serialization_round_trip():
+
     from resaas.common.spec import JobSpecSchema
 
     data = """
@@ -101,8 +116,7 @@ def test_job_spec_serialization_round_trip():
         "probability_definition": "gs://bucket/sub/path/script_and_data",
         "max_replicas": 2,
         "initial_schedule_parameters": {
-            "minimum_beta": 1,
-            "beta_ratio": 0.5
+            "minimum_beta": 1
         },
         "dependencies": [
             {

@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional, Union
 
-from marshmallow import Schema, fields, post_load
-from marshmallow_enum import EnumField
+from marshmallow import Schema, fields, post_dump, post_load, pre_dump
 from marshmallow.exceptions import ValidationError
+from marshmallow_enum import EnumField
 
 
 class DependenciesType(Enum):
@@ -39,7 +40,7 @@ class PipDependencies(Dependencies):
 
     def __init__(self, requirements: List[str]):
         self._packages = requirements
-    
+
     @property
     def type(self) -> DependenciesType:
         return DependenciesType.PIP
@@ -63,14 +64,12 @@ def _load_dep(dep_type: str, pkgs: List[str]):
         raise ValueError(f"Unknown dependency type: {dep_type}")
 
 
-
 class DependencySchema(Schema):
     type = EnumField(DependenciesType, by_value=True)
     packages = fields.List(fields.String(), data_key="deps")
 
     @post_load
     def make_dependencies(self, data, **kwargs):
-        print(data)
         if data:
             return _load_dep(data["type"], data["packages"])
 
@@ -171,17 +170,12 @@ class BoltzmannInitialScheduleParametersSchema(Schema):
 
 INITIAL_SCHEDULE_PARAMETERS_SCHEMAS = {
     TemperedDistributionFamily.BOLTZMANN: BoltzmannInitialScheduleParametersSchema
-    }
-
-
-LOCAL_SAMPLING_PARAMETER_SCHEMAS = {
-    LocalSamplers.NAIVE_HMC: NaiveHMCParametersSchema
-    }
+}
 
 
 class JobSpecSchema(Schema):
     probability_definition = fields.String(required=True)
-    name = fields.String()
+    name = fields.String(required=False)
     initial_number_of_replicas = fields.Int()
     initial_schedule_parameters = fields.Dict(fields.String, fields.Float())
     optimization_parameters = fields.Nested(OptimizationParametersSchema)
@@ -191,18 +185,30 @@ class JobSpecSchema(Schema):
     tempered_dist_family = EnumField(TemperedDistributionFamily, by_value=True)
     dependencies = fields.Nested(DependencySchema(many=True))
 
+    @pre_dump
+    def convert_initial_schedule(self, obj, *args, **kwargs):
+        # Required to handle the "union" nature of the initial_schedule_parameters field
+        new_obj = deepcopy(obj)
+        schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[new_obj.tempered_dist_family]()
+        new_obj.initial_schedule_parameters = schema.dump(new_obj.initial_schedule_parameters)
+        return new_obj
+
+    @post_dump
+    def remove_nulls(self, data, *args, **kwargs):
+        # remove all nullable (i.e. Optional) fields which have a default of None.
+        if data["name"] is None:
+            data.pop("name")
+        return data
+
     @post_load
     def make_job_spec(self, data, **kwargs):
-        tempered_dist_family = data.get("tempered_dist_family", TemperedDistributionFamily.BOLTZMANN)
+        tempered_dist_family = data.get(
+            "tempered_dist_family", TemperedDistributionFamily.BOLTZMANN
+        )
         if "initial_schedule_parameters" in data:
             init_sched_params = data["initial_schedule_parameters"]
-            if tempered_dist_family == TemperedDistributionFamily.BOLTZMANN:
-                init_sched_schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[TemperedDistributionFamily.BOLTZMANN]()
-                init_sched_schema.load(init_sched_params)
-                init_sched_params = init_sched_schema.make_boltzmann_initial_schedule_parameters(init_sched_params)
-
-            data['initial_schedule_parameters'] = init_sched_params
-
+            init_sched_schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[tempered_dist_family]()
+            data["initial_schedule_parameters"] = init_sched_schema.load(init_sched_params)
         return JobSpec(**data)
 
 
@@ -212,10 +218,14 @@ class JobSpec:
         probability_definition: str,
         name: Optional[str] = None,
         initial_number_of_replicas: int = 15,
-        initial_schedule_parameters: Optional[Union[BoltzmannInitialScheduleParameters, ]] = BoltzmannInitialScheduleParameters(0.01),
-        optimization_parameters: Optional[OptimizationParameters] = OptimizationParameters(),
-        replica_exchange_parameters: Optional[ReplicaExchangeParameters] = ReplicaExchangeParameters(),
-        local_sampling_parameters: Optional[NaiveHMCParameters] = NaiveHMCParameters(),
+        initial_schedule_parameters: Optional[
+            Union[
+                BoltzmannInitialScheduleParameters,
+            ]
+        ] = None,
+        optimization_parameters: Optional[OptimizationParameters] = None,
+        replica_exchange_parameters: Optional[ReplicaExchangeParameters] = None,
+        local_sampling_parameters: Optional[NaiveHMCParameters] = None,
         max_replicas: int = 100,
         tempered_dist_family: TemperedDistributionFamily = TemperedDistributionFamily.BOLTZMANN,
         dependencies: Optional[Dependencies] = None,
@@ -247,12 +257,13 @@ class JobSpec:
             self.dependencies = dependencies
 
     def __eq__(self, other: "JobSpec") -> bool:
-        return all([
+        return all(
+            [
                 self.probability_definition == other.probability_definition,
                 self.initial_number_of_replicas == other.initial_number_of_replicas,
                 self.initial_schedule_parameters == other.initial_schedule_parameters,
                 self.max_replicas == other.max_replicas,
                 self.tempered_dist_family == other.tempered_dist_family,
-                self.dependencies == other.dependencies
+                self.dependencies == other.dependencies,
             ]
         )
