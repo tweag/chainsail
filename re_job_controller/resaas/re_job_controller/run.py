@@ -10,8 +10,11 @@ from libcloud.storage.providers import get_driver
 from libcloud.storage.types import Provider
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
+
 from grpclib.server import Server
 from grpclib.health.service import Health
+from grpclib.health.check import ServiceCheck
+
 from resaas.common.storage import AbstractStorageBackend, CloudStorageBackend, LocalStorageBackend
 from resaas.re_runners import MPIRERunner
 from resaas.common.spec import JobSpecSchema
@@ -139,8 +142,24 @@ class ControllerConfigSchema(Schema):
 
 
 def check_status(proc: Process) -> ProcessStatus:
-    server = Server([Health()])
-    server.start()
+    # server = Server([Health()])
+    # server.start()
+
+    # if exitcode is None => proc is running
+    # if exitcode is 0 => proc is successful
+    # else proc had a failure
+
+    #
+
+
+
+
+    def _check_proc
+
+    # to check status of a function
+    return ServiceCheck(proc.exitcode)
+
+    # Health ([proc1: ServiceCheck(proc.exitcode)])
 
     # re_runner = runner_factory()
     # storage_backend = storage_backend_factory()
@@ -203,6 +222,7 @@ def run(job, config, hostsfile, job_spec):
     # TODO: Start gRPC server and bind gRPC endpoint to a function which checks whether
     #   controller_proc is still alive. If it is not alive, then
     #   we need to see if any exceptions were raised.
+    # RUNNING GRPC SERVER
 
     # Await controller_proc, then teardown gRPC server gracefully
     controller_proc.join()
