@@ -37,7 +37,7 @@ RUN apt-get update && apt-get install -y wget unzip git build-essential libffi-d
 RUN pip install --upgrade pip && pip install "poetry~=1.1"
 
 ##############################################################################
-FROM builder-common as builder-rexfw
+FROM builder-common as builder
 
 # Open-MPI
 ENV OPENMPI_VERSION 3.1.6
@@ -57,75 +57,43 @@ RUN mkdir /tmp/openmpi && \
 ENV PATH=$PATH:/app/deps/openmpi/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/app/deps/openmpi/lib
 
-# Add ssh entry for Github
-# See: https://help.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
-RUN echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUD\
-    bO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfO\
-    LX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4E\
-    VVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf\
-    9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvd\
-    sjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8V\
-    JiS5ap43JXiUFFAaQ==" \
-    >> /etc/ssh/ssh_known_hosts
 
-# Install rexfw. Need to clone instead of fetching the zip archive
-# to ensure that we can also check out the required submodules.
-ARG REXFW_BRANCH="start-script"
-ARG REXFW_COMMIT="01e7b035ad4b41aeda03b31701253de075b99a59"
-RUN cd /app/deps && \
-    git clone --recurse-submodules git@github.com:tweag/rexfw.git && \
-    cd /app/deps/rexfw && \
-    echo $(ls -lah /app/deps/rexfw/resaas/ ) && \
-    git checkout "${REXFW_BRANCH}" && \
+# Install the controller
+COPY ./common /app/common
+COPY ./schedule_estimation /app/schedule_estimation
+COPY ./runners /app/runners
+COPY ./re_job_controller /app/re_job_controller
+
+# --extras input for poetry install
+ARG RUNNERS="rexfw"
+
+RUN cd /app/re_job_controller && \
     poetry config virtualenvs.in-project true && \
     poetry run pip install --upgrade pip && \
-    poetry install
+    poetry install --no-dev --extras ${RUNNERS}
+
+
 ##############################################################################
-# FROM system-deps as base-node 
+# FINAL
+##############################################################################
+FROM system-deps as app
 
-# # COPY --from=builder /app/code/pipelines/dag-triggers/.venv /app/venv
-# # COPY --from=builder /app/code/mlinfra /app/code/mlinfra
-# # Open-MPI
+COPY --from=builder /app /app
 
-# # The rexfw app
-# COPY --from=builder-rexfw /app /app
-
-# # Extra configuration
-# ADD docker/node/.openmpi /root/.openmpi
-
-# EXPOSE 22
-
-# # Append OpenMPI installation path
-# ENV PATH=$PATH:/app/deps/openmpi/bin
-# ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/app/deps/openmpi/lib
-
-# # TODO move this above
+# Extra configuration
+ADD docker/node/.openmpi /root/.openmpi
+ADD docker/node/ssh/known_hosts /etc/ssh/ssh_config
+ADD docker/node/base/entrypoint.sh /app/entrypoint.sh
 
 
-# COPY docker/node/base/entrypoint.sh /entrypoint.sh
+# Append OpenMPI installation path
+ENV PATH=$PATH:/app/deps/openmpi/bin
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/app/deps/openmpi/lib
+ENV PATH=$PATH:/app/re_job_controller/.venv/bin
 
-# ENTRYPOINT ["/entrypoint.sh"]
+# For SSH. Using non-default ssh port.
+EXPOSE 26
 
-# # rexfw executable and modeling virtual environment. User defined functions are built here
+WORKDIR /app
 
-# # # Note: we need to build in the app dir to ensure the eggs for the local dependencies
-# # #   match our final environment.
-# # RUN mkdir /app/code
-# # COPY code /app/code
-
-# # WORKDIR /app/code/pipelines/dag-triggers
-# # RUN poetry config virtualenvs.in-project true && poetry run pip install --upgrade pip
-# # RUN poetry install
-# RUN poetry config virtualenvs.in-project true && poetry run pip install --upgrade pip
-# RUN poetry install
-
-# ##############################################################################
-# # OUTPUT
-# ##############################################################################
-# FROM system-deps as final
-# RUN mkdir /app/venv && mkdir -p /app/code/mlinfra
-# COPY --from=builder /app/code/pipelines/dag-triggers/.venv /app/venv
-# COPY --from=builder /app/code/mlinfra /app/code/mlinfra
-
-# WORKDIR /app
-# ENV PATH=/app/venv/bin:$PATH
+ENTRYPOINT ["/app/entrypoint.sh"]
