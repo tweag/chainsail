@@ -1,16 +1,75 @@
-from io import BytesIO
+from abc import ABC, abstractmethod
 
 import click
 import numpy as np
-import yaml
 from mpi4py import MPI
 from resaas.common.storage import SimulationStorage, load_storage_config
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
+from rexfw.pdfs import AbstractPDF
 from rexfw.pdfs.normal import Normal
 from rexfw.samplers.rwmc import RWMCSampler
 from rexfw.slaves import Slave
+
+
+class BoltzmannTemperedDistribution(AbstractPDF):
+    """
+    This wraps an object representing a probability density into a Boltzmann
+    ensemble.
+
+    For a physical system with potential energy E, the configurational part
+    (meaning, independent from the momenta) of the Boltzmann distribution is
+    given by q(E|beta) \propto exp(-beta * E). Here, beta is, up to a constant,
+    the inverse temperature of the system of a heat bath the system is assumed
+    to be coupled to. For any probability distribution p(x), we can define a
+    pseudo-energy E(x) by E(x) = -log p(x). We can thus use the Boltzmann
+    distribution to modify the "ruggedness" (height of modes) of p(x) via beta:
+    for beta = 0; q(E(x)) becomes a uniform distribution, while for beta = 1,
+    q(E(x)) = p(x). Intermediate beta values can thus be used to create a
+    sequence of distributions that are increasingly easier to sample.
+    """
+
+    def __init__(self, pdf, beta=1.0):
+        """
+        Initalizes a Boltzmann distribution for a fake physical system defined
+        by a probability density.
+
+        Args:
+            pdf(AbstractPdf): object representing a probability distribution
+            beta(float): inverse temperature in the range 0 < beta <= 1
+        """
+        self.bare_pdf = pdf
+        self.beta = beta
+
+    def log_prob(self, x):
+        """
+        Log-probability of the Boltzmann distribution.
+
+        Args:
+            x: variate(s) of the underlying PDF
+        """
+        return self.beta * self.bare_pdf.log_prob(x)
+
+    def gradient(self, x):
+        """
+        Gradient of the Boltzmann distribution's log-probability.
+
+        Args:
+            x: variate(s) of the underlying PDF
+        """
+        return self.beta * self.bare_pdf.gradient(x)
+
+    def bare_log_prob(self, x):
+        """
+        Log-probability of the underlying probability density.
+
+        This is required for multiple histogram reweighting.
+
+        Args:
+            x: variate(s) of the underlying PDF
+        """
+        return self.bare_pdf.log_prob(x)
 
 
 @click.command()
@@ -100,14 +159,18 @@ def run_rexfw_mpi(name, basename, path, storage_config):
 
         # For now, we sample from a normal distribution, but here would eventually
         # be the user code imported
-        pdf = Normal(sigma=1 / np.sqrt(schedule["beta"][rank - 1]))
+        bare_pdf = Normal()
+
+        # Turn it into a Boltzmann distribution
+        tempered_pdf = BoltzmannTemperedDistribution(
+            bare_pdf, schedule["beta"][rank - 1])
 
         # TODO: this is currently a bit annoying: we don't know the number of
         # variables. Either the user provides it in the pdf object or they have to
         # provide initial states, which might not be a bad idea, actually.
-        pdf.n_variables = 1
+        tempered_pdf.n_variables = 1
         if config["general"]["initial_states"] is None:
-            init_state = np.random.normal(pdf.n_variables)
+            init_state = np.random.normal(tempered_pdf.n_variables)
         else:
             init_state = storage.load_initial_states()[rank - 1]
 
@@ -120,7 +183,8 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         # being the step size
         sampler_params = {"stepsize": timestep}
         replica = setup_default_replica(
-            init_state, pdf, RWMCSampler, sampler_params, storage, comm, rank
+            init_state, tempered_pdf, RWMCSampler, sampler_params, storage,
+            comm, rank
         )
 
         # the slaves are relicts; originally I thought them to pass on
