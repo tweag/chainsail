@@ -3,9 +3,8 @@ import unittest
 import numpy as np
 from resaas.common.storage import AbstractStorageBackend
 from resaas.common.spec import NaiveHMCParameters, ReplicaExchangeParameters, OptimizationParameters
-from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 
-from resaas.re_job_controller import AbstractREJobController
+from resaas.re_job_controller import BaseREJobController
 
 
 class MockWham:
@@ -30,14 +29,6 @@ class MockRERunner:
                 storage.save_energies([1.0], "replica{}".format(r), s, s + di)
 
 
-class MockREJobController(AbstractREJobController):
-    def _write_hostsfile(self):
-        pass
-
-    def _scale_environment(self, _):
-        pass
-
-
 class MockStorageBackend(AbstractStorageBackend):
     def __init__(self):
         self._data = {}
@@ -58,10 +49,7 @@ class testREJobController(unittest.TestCase):
             num_production_samples=20, dump_interval=5)
         opt_params = OptimizationParameters(max_optimization_runs=5)
         ls_params = NaiveHMCParameters()
-        self._controller = MockREJobController(
-            1,
-            "127.0.0.1",
-            1234,
+        self._controller = BaseREJobController(
             re_params,
             ls_params,
             opt_params,

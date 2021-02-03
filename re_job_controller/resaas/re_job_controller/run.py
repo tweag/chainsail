@@ -2,18 +2,19 @@
 Main entrypoint to the resaas controller
 """
 from dataclasses import dataclass
+from functools import partial
 from importlib import import_module
 from multiprocessing import Process
 from typing import Tuple
-import futures
-import grpc
 
 import click
+import futures
+import grpc
 import yaml
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
+from resaas.common.grpc import Health, add_HealthServicer_to_server
 from resaas.common.runners import AbstractRERunner, runner_config
-
 from resaas.common.spec import (
     JobSpec,
     JobSpecSchema,
@@ -21,10 +22,13 @@ from resaas.common.spec import (
     OptimizationParameters,
     ReplicaExchangeParameters,
 )
-
 from resaas.common.storage import load_storage_config
-from resaas.re_job_controller import LocalREJobController, optimization_objects_from_spec
-from resaas.common.grpc import Health, add_HealthServicer_to_server
+from resaas.re_job_controller import (
+    CloudREJobController,
+    LocalREJobController,
+    optimization_objects_from_spec,
+    update_nodes_mpi,
+)
 
 ProcessStatus = Tuple[bool, str]
 
@@ -128,7 +132,8 @@ def run(job, config, storage, hostsfile, job_spec):
     runner_config["storage_config"] = storage
 
     optimization_objects = optimization_objects_from_spec(job_spec)
-    controller = LocalREJobController(
+
+    controller = CloudREJobController(
         job,
         config.scheduler_address,
         config.scheduler_port,
@@ -137,6 +142,7 @@ def run(job, config, storage, hostsfile, job_spec):
         job_spec.optimization_parameters,
         runner,
         storage_backend,
+        node_updater=partial(update_nodes_mpi, hostsfile),
         basename=config.storage_basename,
         **optimization_objects,
     )
