@@ -356,9 +356,11 @@ class BaseREJobController:
         optimization_result = self.optimize_schedule()
         final_opt_storage, final_schedule = optimization_result
 
-        prod_storage = SimulationStorage(self._basename, "production_run")
-        self._setup_simulation(prod_storage, final_schedule, final_opt_storage, prod=True)
-        self._do_single_run(prod_storage.config_file_name)
+        prod_storage = SimulationStorage(
+            self._basename, "production_run", self._storage_backend)
+        self._setup_simulation(
+            prod_storage, final_schedule, final_opt_storage, prod=True)
+        self._do_single_run(prod_storage)
 
 
 class CloudREJobController(BaseREJobController):
