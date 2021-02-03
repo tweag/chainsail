@@ -18,7 +18,7 @@ jobs:
       - name: Install poetry and system deps
         run: |
           python -m pip install --upgrade pip
-          # Required for grpc
+          pip install poetry
           sudo apt-get install -y protobuf-compiler
       # Python Libs
       - name: Install and test resaas.common
