@@ -1,13 +1,9 @@
 """
 Runners which launch a rexfw simulation.
 """
-<<<<<<< HEAD
 import sys
 import subprocess
 import time
-=======
-import subprocess
->>>>>>> 33440dc... Redirect MPI subprocess stdout / stderr to controller process stdout
 
 from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.storage import AbstractStorageBackend
