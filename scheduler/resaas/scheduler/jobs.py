@@ -1,15 +1,17 @@
+import time
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from typing import Callable, Dict, List, Optional
 
+import grpc
 import shortuuid
-
+from resaas.common.spec import JobSpec, JobSpecSchema
+from resaas.grpc import HealthCheckRequest, HealthStub
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import JobError
 from resaas.scheduler.nodes.base import Node, NodeType
 from resaas.scheduler.nodes.registry import NODE_CLS_REGISTRY
-from resaas.common.spec import JobSpec, JobSpecSchema
 
 
 class JobStatus(Enum):
@@ -206,12 +208,18 @@ class Job:
         control_node: Node = self.nodes[self.control_node]
         ip = control_node.address
         port = control_node.listening_ports[0]
-        # TODO:
-        #   - Lauch GRPC client here
-        #   - Start health check: https://grpc.github.io/grpc/python/grpc_health_checking.html
-        #   - Return a boolean indicating whether the control node had a
-        #     healthy exit or returned an error (or the connection was permanently lost)
-        raise NotImplementedError
+        with grpc.insecure_channel(f"{ip}:{port}") as channel:
+            stub = HealthStub(channel)
+            while True:
+                response = stub.Check(HealthCheckRequest(service=""))
+                if response.status != "SERVING":
+                    break
+                else:
+                    time.sleep(1)
+        if response.status == "SUCCESS":
+            return True
+        else:
+            return False
 
     def sync_representation(self) -> None:
         """

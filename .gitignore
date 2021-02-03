@@ -9,3 +9,5 @@
 # No lockfiles for libraries
 common/poetry.lock
 runners/**/poetry.lock
+schedule_estimation/poetry.lock
+grpc/poetry.lock

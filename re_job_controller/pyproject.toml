@@ -14,11 +14,13 @@ resaas-controller = 'resaas.re_job_controller.run:run'
 python = "^3.8"
 numpy = "*"
 resaas-common = { path = "../common", develop = true }
+resaas-grpc = { path = "../grpc", develop = true }
 resaas-schedule-optimization = { path = "../schedule_estimation", develop = true }
 click = "^7.1.2"
 
 # Runners can be installed as extras for convenience
 resaas-runner-rexfw = { path = "../runners/rexfw", optional = true, develop = true }
+grpcio = "^1.35.0"
 
 [tool.poetry.extras]
 rexfw = ["resaas-runner-rexfw"]

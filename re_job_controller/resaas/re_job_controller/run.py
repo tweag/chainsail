@@ -1,24 +1,27 @@
 """
 Main entrypoint to the resaas controller
 """
+from concurrent import futures
 from dataclasses import dataclass
+from functools import partial
 from importlib import import_module
 from multiprocessing import Process
 from typing import Tuple
-from functools import partial
 
 import click
+import grpc
 import yaml
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from resaas.common.runners import AbstractRERunner, runner_config
-from resaas.common.spec import (JobSpec, JobSpecSchema, NaiveHMCParameters,
-                                OptimizationParameters,
-                                ReplicaExchangeParameters)
+from resaas.common.spec import JobSpec, JobSpecSchema
 from resaas.common.storage import load_storage_config
-from resaas.re_job_controller import (CloudREJobController,
-                                      update_nodes_mpi,
-                                      optimization_objects_from_spec)
+from resaas.grpc import Health, add_HealthServicer_to_server
+from resaas.re_job_controller import (
+    CloudREJobController,
+    optimization_objects_from_spec,
+    update_nodes_mpi,
+)
 
 ProcessStatus = Tuple[bool, str]
 
@@ -36,6 +39,8 @@ class ControllerConfig:
     scheduler_port: int
     runner: str
     storage_basename: str = ""
+    port: int = 50051
+    n_threads: int = 10
 
 
 class ControllerConfigSchema(Schema):
@@ -43,6 +48,8 @@ class ControllerConfigSchema(Schema):
     scheduler_port = fields.Integer(required=True)
     runner = fields.String(required=True)
     storage_basename = fields.String()
+    port = fields.Integer()
+    n_threads = fields.Integer()
 
     @post_load
     def make_controller_config(self, data, **kwargs) -> ControllerConfig:
@@ -67,8 +74,12 @@ def load_runner(runner_path: str) -> AbstractRERunner:
 
 
 def check_status(proc: Process) -> ProcessStatus:
-    # TODO: This will be called via gRPC
-    pass
+    if proc.exitcode is None:
+        return (True, "SERVING")
+    elif proc.exitcode != 0:
+        return (False, "FAILED")
+    else:
+        return (True, "SUCCESS")
 
 
 @click.command()
@@ -134,16 +145,20 @@ def run(job, config, storage, hostsfile, job_spec):
     )
 
     # Start controller in another process
-    # Poll that process until it exits
     controller_proc = Process(target=controller.run_job, daemon=True)
     controller_proc.start()
 
-    # TODO: Start gRPC server and bind gRPC endpoint to a function which checks whether
-    #   controller_proc is still alive. If it is not alive, then
-    #   we need to see if any exceptions were raised.
+    # Gets the status of the controller process
+    def controller_state():
+        return check_status(controller_proc)[1]
 
-    # Await controller_proc, then teardown gRPC server gracefully
-    controller_proc.join()
+    # Start gRPC server
+    with futures.ThreadPoolExecutor(max_workers=config.n_threads) as ex:
+        server = grpc.server(ex)
+        add_HealthServicer_to_server(Health(callback=controller_state), server)
+        server.add_insecure_port(f"[::]:{config.port}")
+        server.start()
+        server.wait_for_termination()
 
 
 if __name__ == "__main__":
