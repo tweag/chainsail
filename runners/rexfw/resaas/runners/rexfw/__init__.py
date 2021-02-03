@@ -1,9 +1,13 @@
 """
 Runners which launch a rexfw simulation.
 """
+<<<<<<< HEAD
 import sys
 import subprocess
 import time
+=======
+import subprocess
+>>>>>>> 33440dc... Redirect MPI subprocess stdout / stderr to controller process stdout
 
 from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.storage import AbstractStorageBackend
@@ -49,7 +53,6 @@ class MPIRERunner(AbstractRERunner):
 
         # run in subprocess, but capture both stdout and stderr and
         # redirect them to the parent's process stdout
-        # subprocess.check_output(cmd)
 
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
