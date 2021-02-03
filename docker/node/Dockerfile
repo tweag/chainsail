@@ -63,6 +63,8 @@ COPY ./common /app/common
 COPY ./schedule_estimation /app/schedule_estimation
 COPY ./runners /app/runners
 COPY ./re_job_controller /app/re_job_controller
+COPY ./grpc /app/re_job_controller
+
 
 # --extras input for poetry install
 ARG RUNNERS="rexfw"

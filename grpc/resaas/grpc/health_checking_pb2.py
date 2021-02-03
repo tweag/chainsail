@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x15health-checking.proto\"%\n\x12HealthCheckRequest\x12\x0f\n\x07service\x18\x01 \x01(\t\"\x93\x01\n\x13HealthCheckResponse\x12\x32\n\x06status\x18\x01 \x01(\x0e\x32\".HealthCheckResponse.ServingStatus\"H\n\rServingStatus\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x0b\n\x07SERVING\x10\x01\x12\x0f\n\x0bNOT_SERVING\x10\x02\x12\x0c\n\x08\x46INISHED\x10\x03\x32r\n\x06Health\x12\x32\n\x05\x43heck\x12\x13.HealthCheckRequest\x1a\x14.HealthCheckResponse\x12\x34\n\x05Watch\x12\x13.HealthCheckRequest\x1a\x14.HealthCheckResponse0\x01\x62\x06proto3'
+  serialized_pb=b'\n\x15health-checking.proto\"%\n\x12HealthCheckRequest\x12\x0f\n\x07service\x18\x01 \x01(\t\"\x9e\x01\n\x13HealthCheckResponse\x12\x32\n\x06status\x18\x01 \x01(\x0e\x32\".HealthCheckResponse.ServingStatus\"S\n\rServingStatus\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x0b\n\x07SERVING\x10\x01\x12\x0f\n\x0bNOT_SERVING\x10\x02\x12\x0b\n\x07SUCCESS\x10\x03\x12\n\n\x06\x46\x41ILED\x10\x04\x32r\n\x06Health\x12\x32\n\x05\x43heck\x12\x13.HealthCheckRequest\x1a\x14.HealthCheckResponse\x12\x34\n\x05Watch\x12\x13.HealthCheckRequest\x1a\x14.HealthCheckResponse0\x01\x62\x06proto3'
 )
 
 
@@ -47,7 +47,12 @@ _HEALTHCHECKRESPONSE_SERVINGSTATUS = _descriptor.EnumDescriptor(
       type=None,
       create_key=_descriptor._internal_create_key),
     _descriptor.EnumValueDescriptor(
-      name='FINISHED', index=3, number=3,
+      name='SUCCESS', index=3, number=3,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='FAILED', index=4, number=4,
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
@@ -55,7 +60,7 @@ _HEALTHCHECKRESPONSE_SERVINGSTATUS = _descriptor.EnumDescriptor(
   containing_type=None,
   serialized_options=None,
   serialized_start=140,
-  serialized_end=212,
+  serialized_end=223,
 )
 _sym_db.RegisterEnumDescriptor(_HEALTHCHECKRESPONSE_SERVINGSTATUS)
 
@@ -121,7 +126,7 @@ _HEALTHCHECKRESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=65,
-  serialized_end=212,
+  serialized_end=223,
 )
 
 _HEALTHCHECKRESPONSE.fields_by_name['status'].enum_type = _HEALTHCHECKRESPONSE_SERVINGSTATUS
@@ -153,8 +158,8 @@ _HEALTH = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=214,
-  serialized_end=328,
+  serialized_start=225,
+  serialized_end=339,
   methods=[
   _descriptor.MethodDescriptor(
     name='Check',

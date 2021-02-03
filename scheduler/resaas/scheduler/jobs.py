@@ -1,18 +1,17 @@
+import time
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from typing import Callable, Dict, List, Optional
-import time
+
 import grpc
-
 import shortuuid
-
+from resaas.common.spec import JobSpec, JobSpecSchema
+from resaas.grpc import HealthCheckRequest, HealthStub
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import JobError
 from resaas.scheduler.nodes.base import Node, NodeType
 from resaas.scheduler.nodes.registry import NODE_CLS_REGISTRY
-from resaas.common.spec import JobSpec, JobSpecSchema
-from resaas.common.grpc import HealthStub, HealthCheckRequest
 
 
 class JobStatus(Enum):
@@ -217,7 +216,7 @@ class Job:
                     break
                 else:
                     time.sleep(1)
-        if response.status == "FINISHED":
+        if response.status == "SUCCESS":
             return True
         else:
             return False
