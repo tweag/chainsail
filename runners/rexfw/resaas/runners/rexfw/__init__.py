@@ -1,8 +1,8 @@
 """
 Runners which launch a rexfw simulation.
 """
-
-from subprocess import check_output
+import sys
+import subprocess
 
 from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.storage import AbstractStorageBackend
@@ -46,4 +46,9 @@ class MPIRERunner(AbstractRERunner):
             storage.sim_path,
         ]
 
-        check_output(cmd)
+        # run in subprocess, but capture both stdout and stderr and
+        # redirect them to the parent's process stdout
+        process = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        for c in iter(lambda: process.stdout.read(1), ''):
+            sys.stdout.write(str(c, 'ascii'))

@@ -42,7 +42,7 @@ def interpolate_timesteps(schedule, old_schedule, old_timesteps):
     '''
     # TODO: somehow interpolate timesteps from old simulation, e.g., by
     # fitting spline or just simple linear interpolation
-    return np.array([0.001] * schedule_length(schedule))
+    return np.array([1] * schedule_length(schedule))
 
 
 def draw_initial_states(schedule, previous_storage, dos):
