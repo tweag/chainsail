@@ -72,11 +72,21 @@ def run_rexfw_mpi(name, basename, path, storage_config):
             config["re"]["statistics_update_interval"],
         )
 
-        # copy over final step sizes
-        mcmc_stats_path = "statistics/mcmc_stats.txt"
-        mcmc_stats_buffer = storage.load(mcmc_stats_path, data_type="text")
-        timesteps = np.loadtxt(BytesIO(bytes(mcmc_stats_buffer, "ascii")), dtype=float)[-1, 2::2]
-        storage.save_final_timesteps(timesteps)
+        # write final step sizes to simulation storage
+        # The sampling statistics holds objects which internally keep a time
+        # series of quantities such as the step size
+        timestep_quantities = filter(lambda x: x.name == 'stepsize',
+                                     master.sampling_statistics.elements)
+        # Such a quantity x has a field "origins" which holds strings
+        # identifying to which sampling objects this quantity is related.
+        # Such a string is, in this case, "replicaXX", where XX enumerates
+        # the replicas. We thus sort by the XXses to get the time steps
+        # in the right order.
+        sorted_timestep_quantities = sorted(
+            timestep_quantities,
+            key=lambda x: int(x.origins[0][len('replica'):]))
+        storage.save_final_timesteps(
+            np.array([x.current_value for x in sorted_timestep_quantities]))
 
         # send kill request to break from infinite message receiving loop in
         # replicas
