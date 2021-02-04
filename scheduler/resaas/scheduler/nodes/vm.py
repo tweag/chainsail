@@ -1,27 +1,21 @@
 import json
 import traceback
-from typing import IO, List, Optional, Tuple, Union
+from typing import IO, Callable, List, Optional, Tuple, Union
 
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import NodeAuthSSHKey, NodeDriver, NodeImage, NodeSize
-from libcloud.compute.deployment import (
-    Deployment,
-    MultiStepDeployment,
-    ScriptDeployment,
-    SSHKeyDeployment,
-)
+from libcloud.compute.base import (NodeAuthSSHKey, NodeDriver, NodeImage,
+                                   NodeSize)
+from libcloud.compute.deployment import (Deployment, FileDeployment,
+                                         MultiStepDeployment, ScriptDeployment,
+                                         SSHKeyDeployment)
 from libcloud.compute.types import DeploymentException, NodeState
-
-from resaas.scheduler.config import SchedulerConfig
-from resaas.scheduler.db import TblJobs, TblNodes
-from resaas.scheduler.errors import (
-    ConfigurationError,
-    MissingNodeError,
-    NodeError,
-    ObjectConstructionError,
-)
-from resaas.scheduler.nodes.base import Node, NodeStatus
 from resaas.common.spec import Dependencies, JobSpec
+from resaas.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
+                                     VMNodeConfig)
+from resaas.scheduler.db import TblJobs, TblNodes
+from resaas.scheduler.errors import (ConfigurationError, MissingNodeError,
+                                     NodeError, ObjectConstructionError)
+from resaas.scheduler.nodes.base import Node, NodeStatus
 
 
 def _deployment_log(deployment: Deployment):
@@ -35,38 +29,73 @@ def _deployment_log(deployment: Deployment):
     return log
 
 
+# # https://resaas-public-data.s3.eu-central-1.amazonaws.com/test_prob_def.zip
+
+# INSTALL_TEMPLATE = """
+# #!/usr/bin/env bash
+
+# set -ex
+
+# # Install dependencies (if any are provided)
+# {dep_install_commands}
+# """
+
+
+# # ssh pub
+# # ssh pem
+# # user_install_script
+
+# deployment_steps = [ScriptDeployment(dep.installation_script) for dep in self.deps] + [
+#     ScriptDeployment(self.entrypoint)
+# ]
+
+
+def get_image(driver, image_id: str) -> NodeImage:
+    # Constructing the image directly since image lookups take so long on most providers
+    return NodeImage(id=image_id, name="unknown", driver=driver)
+
+
+def lookup_size(driver, size_name: str) -> NodeSize:
+    size = [s for s in driver.list_sizes() if s.name == size_name]
+    if not size:
+        raise ConfigurationError(
+            f"Failed to find node size with name '{size_name}' in driver "
+            f"'{driver.__class__}'. Please update your configuration file with "
+            f"a valid image name for this driver."
+        )
+    return size[0]
+
+
+IPSelector = Callable[[LibcloudNode], Optional[str]]
+
+
+def default_select_address(node: LibcloudNode) -> Optional[str]:
+    # By default we select the first private IP
+    if node.private_ips:
+        return node.private_ips[0]
+    else:
+        return None
+
+
 class VMNode(Node):
 
     NODE_TYPE = "LibcloudVM"
-
-    # loading from db
-    #   - retrieve driver using node_type
-    #   - retrieve size/image using driver + node name query
-    #   - create object
-    #
-    # k8s example:
-    #   - retrieve k8s "driver" using node_type
-    #   - fetch pod yaml from k8s using driver + node name
 
     def __init__(
         self,
         name: str,
         driver: NodeDriver,
-        size: NodeSize,
         image: NodeImage,
-        entrypoint: str,
-        ssh_user: str,
-        # Private key file for provisioning
-        ssh_key_file: str,
-        # Public key content
-        ssh_pub: str,
+        size: NodeSize,
+        config: GeneralNodeConfig,
+        vm_config: VMNodeConfig,
+        deps: Optional[List[Dependencies]] = None,
+        # If creating from an existing node, can specify the libcloud object,
+        # database row, etc.
         libcloud_node: Optional[LibcloudNode] = None,
         representation: Optional[TblNodes] = None,
-        deps: Optional[List[Dependencies]] = None,
-        listening_ports: Optional[List[int]] = None,
         status: Optional[NodeStatus] = None,
-        ssh_password: Optional[str] = None,
-        create_kwargs: Optional[dict] = None,
+        address_selector: IPSelector = default_select_address,
     ):
         if "create_node" not in driver.features or "ssh_key" not in driver.features["create_node"]:
             raise ValueError(
@@ -74,36 +103,27 @@ class VMNode(Node):
                 "Please consult the libcloud documentation for a list of cloud providers which "
                 f"support this method. Current driver: {driver}"
             )
-        # TODO: Assert that the driver supports create_node method with "ssh_key" feature
-        self._driver = driver
-        self._size = size
-        self._image = image
-        self._node = libcloud_node
-        self._ssh_user = ssh_user
-        self._ssh_key_file = ssh_key_file
-        self._ssh_pub = ssh_pub
-        self._ssh_password = ssh_password
-        self._representation = representation
-
         self._name = name
-        self._address = None
-        if listening_ports:
-            self._listening_ports = listening_ports
+        self._driver = driver
+        self._image = image
+        self._size = size
+        self._config = config
+        self._vm_config = vm_config
+        self._node = libcloud_node
+        self._address_selector = address_selector
+        if self._node:
+            self._address = self._address_selector(self._node)
         else:
-            self._listening_ports = []
+            self._address = None
+        self._representation = representation
         if deps:
             self.deps = deps
         else:
             self.deps = []
-        self._entrypoint = entrypoint
         if not status:
             self._status = NodeStatus.INITIALIZED
         else:
             self._status = status
-        if create_kwargs is None:
-            self.create_kwargs = {}
-        else:
-            self.create_kwargs = create_kwargs
         self.sync_representation()
 
     def create(self) -> Tuple[bool, str]:
@@ -118,15 +138,14 @@ class VMNode(Node):
                 name=self.name,
                 size=self._size,
                 image=self._image,
-                ssh_username=self._ssh_user,
+                ssh_username=self._vm_config.ssh_user,
                 # Some common fallback options for username
                 ssh_alternate_usernames=["root", "ubuntu", "resaas"],
                 deploy=MultiStepDeployment(deployment_steps),
-                auth=NodeAuthSSHKey(self._ssh_pub),
-                ssh_key=self._ssh_key_file,
-                ssh_key_password=self._ssh_password,
+                auth=NodeAuthSSHKey(self._vm_config.ssh_public_key),
+                ssh_key=self._vm_config.ssh_private_key_path,
                 wait_period=30,
-                **self.create_kwargs,
+                **self._vm_config.libcloud_create_node_inputs,
             )
         except DeploymentException as e:
             self._status = NodeStatus.FAILED
@@ -144,8 +163,8 @@ class VMNode(Node):
             return (False, logs)
         else:
             logs = _deployment_log(d for d in deployment_steps)
-            if self._node.private_ips:
-                self._address = self._node.private_ips[0]
+            if self._node:
+                self._address = self._address_selector(self._node)
             self.refresh_status()
             self.sync_representation()
             return (True, logs)
@@ -183,7 +202,11 @@ class VMNode(Node):
 
     @property
     def entrypoint(self):
-        return self._entrypoint
+        if self._config.args:
+            args = " " + " ".join(self._config.args)
+        else:
+            args = ""
+        return f"{self._config.cmd}{args}"
 
     @entrypoint.setter
     def entrypoint(self, value):
@@ -191,7 +214,7 @@ class VMNode(Node):
 
     @property
     def listening_ports(self):
-        return self._listening_ports
+        return self._config.ports
 
     @property
     def address(self):
@@ -226,17 +249,26 @@ class VMNode(Node):
 
     @classmethod
     def from_representation(
-        cls, spec: JobSpec, node_rep: TblNodes, config: SchedulerConfig
+        cls,
+        spec: JobSpec,
+        node_rep: TblNodes,
+        scheduler_config: SchedulerConfig,
+        is_controller=False,
     ) -> "Node":
 
-        driver: NodeDriver = config.create_node_driver()
+        driver: NodeDriver = scheduler_config.create_node_driver()
+        node_config: VMNodeConfig = scheduler_config.node_config
+        if is_controller:
+            config = scheduler_config.controller
+        else:
+            config = scheduler_config.worker
         # If the node has only been initialized, no actual compute resource
         # has been created yet
         if node_rep.status == NodeStatus.INITIALIZED:
             node = None
-            size = None  # TODO: need to look these up in config
-            image = None
-            name = None
+            image = get_image(driver, node_config.vm_image_id)
+            size = lookup_size(driver, node_config.vm_size)
+            name = node_rep.name
         # Otherwise we can look up the compute resource using the driver
         else:
             node = [n for n in driver.list_nodes() if n.name == node_rep.name]
@@ -249,24 +281,17 @@ class VMNode(Node):
             size = node.size
             image = node.image
             name = node.name
-        if node_rep.ports:
-            ports = json.loads(node_rep.ports)
-        else:
-            ports = []
+
         return cls(
             name=name,
             driver=driver,
+            config=config,
+            vm_config=node_config,
             libcloud_node=node,
             size=size,
             image=image,
             deps=spec.dependencies,
-            entrypoint=node_rep.entrypoint,
-            listening_ports=ports,
             status=NodeStatus(node_rep.status),
-            ssh_user=config.ssh_user,
-            ssh_pub=config.ssh_public_key,
-            ssh_key_file=config.ssh_private_key_path,
-            create_kwargs=config.extra_creation_kwargs,
             representation=node_rep,
         )
 
@@ -274,24 +299,24 @@ class VMNode(Node):
     def from_config(
         cls,
         name: str,
-        config: SchedulerConfig,
+        scheduler_config: SchedulerConfig,
         spec: JobSpec,
         job_rep: Optional[TblJobs] = None,
+        is_controller=False,
     ) -> "Node":
 
-        driver: NodeDriver = config.create_node_driver()
+        driver: NodeDriver = scheduler_config.create_node_driver()
+        vm_config: VMNodeConfig = scheduler_config.node_config
+        if is_controller:
+            config = scheduler_config.controller
+        else:
+            config = scheduler_config.worker
+
         # Note: constructing NodeImage directly due to performance
         # limitations of the list_images() method.
-        image = NodeImage(id=config.image, name="unknown", driver=driver)
-        # image = [i for i in driver.list_images() if i.name == config.image]
-        size = [s for s in driver.list_sizes() if s.name == config.size]
+        image = get_image(driver, vm_config.vm_image_id)
+        size = lookup_size(driver, vm_config.vm_size)
 
-        if not size:
-            raise ConfigurationError(
-                f"Failed to find node size with name '{config.size}' in driver "
-                f"'{driver.__class__}'. Please update your configuration file with "
-                f"a valid image name for this driver."
-            )
         # Bind the new node to a database record if a job record was specified
         if job_rep:
             node_rep = TblNodes(in_use=True)
@@ -302,15 +327,11 @@ class VMNode(Node):
         node = cls(
             name=name,
             driver=driver,
-            size=size[0],
+            size=size,
+            config=config,
+            vm_config=vm_config,
             image=image,
             deps=spec.dependencies,
-            entrypoint=config.node_entrypoint,
-            listening_ports=config.node_ports,
-            ssh_user=config.ssh_user,
-            ssh_pub=config.ssh_public_key,
-            ssh_key_file=config.ssh_private_key_path,
-            create_kwargs=config.extra_creation_kwargs,
             representation=node_rep,
         )
         # Sync over the various fields

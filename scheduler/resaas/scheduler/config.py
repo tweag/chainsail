@@ -8,8 +8,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import yaml
 from libcloud.compute.base import NodeDriver
-from libcloud.compute.drivers.ec2 import EC2NodeDriver
-from libcloud.compute.drivers.gce import GCENodeDriver
 from libcloud.compute.providers import Provider, get_driver
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
@@ -46,7 +44,7 @@ def lookup_driver_cls(provider_name: str) -> type:
 
 class HasDriver(ABC):
     @abstractmethod
-    def create_node_driver(self):
+    def create_node_driver(self) -> Any:
         """Creates a driver object which can be used to run a node"""
         pass
 
@@ -62,6 +60,7 @@ class VMNodeConfig(HasDriver):
     ssh_private_key_path: str
     libcloud_driver: NodeDriver
     libcloud_driver_inputs: Dict
+    libcloud_create_node_inputs: Dict
 
     def create_node_driver(self):
         return self.libcloud_driver(**self.libcloud_driver_inputs)
@@ -82,11 +81,17 @@ class VMNodeConfigSchema(Schema):
     libcloud_provider = fields.String(required=True)
     # The inputs to the driver's constructor
     libcloud_driver_inputs = fields.Dict(keys=fields.String)
+    # Additional provider-specific inputs to pass to the driver's create node method
+    libcloud_create_node_inputs = fields.Dict(keys=fields.String)
 
     @post_load
     def make_vm_node_config(self, data, **kwargs):
         # Look up the libcloud driver
         data["libcloud_driver"] = lookup_driver_cls(data.pop("libcloud_provider"))
+        if "libcloud_driver_inputs" not in data:
+            data["libcloud_driver_inputs"] = {}
+        if "libcloud_create_node_inputs" not in data:
+            data["libcloud_create_node_inputs"] = {}
         return VMNodeConfig(**data)
 
 

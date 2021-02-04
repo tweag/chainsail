@@ -2,13 +2,12 @@ import functools
 from unittest.mock import Mock
 
 import pytest
-
+from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from resaas.scheduler.nodes.base import NodeStatus, NodeType
 from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 
 FAILURE_LOG = "deployment failed for some reason..."
 SUCCESS_LOG = "deployment succeeded"
-ENTRYPOINT = "bash -c 'echo foo'"
 
 
 def mock_create(node: Mock, fails: bool):
@@ -62,7 +61,6 @@ def mk_mock_node_cls(
     def from_config(name, config, spec, job_rep=None):
         node = node_cls()
         node.name = name
-        node.entrypoint = config.entrypoint
         node.address = "127.0.0.1"
         node.listening_ports = [8080]
         node.status = NodeStatus.INITIALIZED
@@ -77,9 +75,21 @@ def mk_mock_node_cls(
 
 @pytest.fixture
 def mock_config():
-    config = Mock()
-    config.entrypoint = ENTRYPOINT
-    config.node_type = "mock"
+    config = SchedulerConfig(
+        controller=GeneralNodeConfig(image="foo:latest", cmd="echo", args=["bar"], ports=[8080]),
+        worker=GeneralNodeConfig(image="foo:latest", cmd="echo", args=["bar"], ports=[8080]),
+        node_type="mock",
+        node_config=VMNodeConfig(
+            "Ubuntu 9.10",
+            "Small",
+            "ubuntu",
+            "xxxxxxxxxxxxx",
+            "path/to/key.pem",
+            DeployableDummyNodeDriver,
+            {"creds": "test"},
+            {},
+        ),
+    )
     return config
 
 
@@ -224,7 +234,7 @@ def test_scale_non_running_job_raises(mock_config, mock_spec):
         job.scale_to(2)
 
 
-def test_vm_job_from_db_representation():
+def test_vm_job_from_db_representation(mock_config):
     # Note: this test uses a concrete Node implementation with a *Mock*
     # node driver.
     from resaas.scheduler.db import TblJobs, TblNodes
@@ -236,10 +246,7 @@ def test_vm_job_from_db_representation():
         "probability_definition": "gs://bucket/sub/path/script_and_data"
     }
     """
-    config = Mock()
-    config.entrypoint = ENTRYPOINT
-    config.node_type = NodeType.LIBCLOUD_VM
-    config.create_node_driver.return_value = DeployableDummyNodeDriver("test")
+    mock_config.node_type = NodeType.LIBCLOUD_VM
     job_rep = TblJobs(spec=spec, status=JobStatus.RUNNING)
     for i in range(2):
         job_rep.nodes.append(
@@ -254,6 +261,6 @@ def test_vm_job_from_db_representation():
             )
         )
 
-    job = Job.from_representation(job_rep, config)
+    job = Job.from_representation(job_rep, mock_config)
     assert job.representation
     assert all([node.representation is not None for node in job.nodes])
