@@ -18,12 +18,15 @@ class MockWham:
 
 class MockOptimizer:
     def optimize(self, dos, energies):
-        return {"beta": np.array([42] * (dos - 1))}
+        return {"beta": np.arange(dos-1, 0, -1)}
 
 
 class MockRERunner:
     def run_sampling(self, storage):
-        storage.save_final_timesteps(np.array([1, 2, 3]))
+        sched = storage.load_schedule()
+        # make nonsense timesteps with same length as schedule
+        mock_timesteps = np.ones(len(list(sched.values())[0]))
+        storage.save_final_timesteps(mock_timesteps)
 
 
 class MockStorageBackend(AbstractStorageBackend):
@@ -51,7 +54,7 @@ class testREJobController(unittest.TestCase):
         self.addCleanup(load_all_energies_patcher.stop)
 
         optimizer = MockOptimizer()
-        initial_schedule = {'beta': np.array([42] * 8)}
+        initial_schedule = {'beta': np.arange(7, 0, -1)}
         re_params = ReplicaExchangeParameters(
             num_optimization_samples=10,
             num_production_samples=20, dump_interval=5)
@@ -74,5 +77,5 @@ class testREJobController(unittest.TestCase):
         res_dos = res_storage.load_dos()
 
         self.assertEqual(res_storage.sim_path, "optimization_run4")
-        self.assertTrue(all(res_sched["beta"] == np.array([42] * 3)))
-        self.assertEqual(res_dos, 4)
+        self.assertTrue(np.all(res_sched["beta"] == np.arange(2, 0, -1)))
+        self.assertEqual(res_dos, 3)

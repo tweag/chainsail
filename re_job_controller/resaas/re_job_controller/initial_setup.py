@@ -4,7 +4,7 @@ Logic to set up initial states and values for Replica Exchange simulations
 import numpy as np
 
 from resaas.common.util import log_sum_exp
-from .util import schedule_length
+from resaas.re_job_controller.util import schedule_length
 
 
 def setup_timesteps(current_storage, schedule, previous_storage=None):
@@ -33,17 +33,36 @@ def interpolate_timesteps(schedule, old_schedule, old_timesteps):
     Interpolates time steps from a previous simulation.
 
     Given time steps from a previous simulation and its schedule,
-    this interpolates between these time steps to a new schedule
-    length.
+    this linearly interpolates new timesteps for the new schedule.
+    Works only for single, monotonously decreasing schedule parameters!
 
     Args:
         schedule(dict): current parameter schedule
         old_schedule(dict): previous parameter schedule
         old_timesteps(dict): previous set of time steps
     '''
-    # TODO: somehow interpolate timesteps from old simulation, e.g., by
-    # fitting spline or just simple linear interpolation
-    return np.array([1] * schedule_length(schedule))
+    if len(schedule) > 1 or len(old_schedule) > 1:
+        raise ValueError(("Time steps can be interpolated only for "
+                          "single-parameter schedules"))
+    new_params = list(schedule.values())[0]
+    old_params = list(old_schedule.values())[0]
+
+    err_msg = "{} schedule parameters must be a decreasing sequence"
+    if not np.all(np.diff(new_params) < 0):
+        raise ValueError(err_msg.format("New"))
+    if not np.all(np.diff(old_params) < 0):
+        raise ValueError(err_msg.format("Old"))
+    if len(old_params) != len(old_timesteps):
+        raise ValueError(
+            "Old schedule parameters and old timesteps must have same length")
+
+    # np.interp() expects the sequence of x values to increase, but
+    # our schedules always have the highest inverse temperature first,
+    # so we have to reverse everything and later reverse the result back
+    interpolated_timesteps = np.interp(
+        new_params[::-1], old_params[::-1], old_timesteps[::-1])
+
+    return interpolated_timesteps[::-1]
 
 
 def draw_initial_states(schedule, previous_storage, dos):

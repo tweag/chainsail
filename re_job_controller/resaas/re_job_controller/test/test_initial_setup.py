@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
-from resaas.re_job_controller.initial_setup import draw_initial_states
+from resaas.re_job_controller.initial_setup import (draw_initial_states,
+                                                    interpolate_timesteps)
 
 
 class MockStorage:
@@ -71,3 +72,36 @@ class TestDrawInitialTimesteps(unittest.TestCase):
         # transform from standard deviations back to inverse temperatures
         reweighted_betas = 1 / reweighted_stds ** 2
         self.assertTrue(np.allclose(reweighted_betas, new_betas, atol=0.05))
+
+
+class TestTimestepInterpolation(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_interpolate_timesteps(self):
+        old_schedule = {'beta': [1.0, 0.8, 0.6, 0.4, 0.2]}
+        old_timesteps = [2, 4, 6, 8, 10]
+        new_schedule = {'beta': [1.0, 0.7, 0.3]}
+
+        new_timesteps = interpolate_timesteps(
+            new_schedule, old_schedule, old_timesteps)
+        expected = [2, 5, 9]
+        self.assertTrue(np.allclose(new_timesteps, expected))
+
+        bad_old_schedule = {'beta': [1.0, 3.0, 0.6, 0.4, 0.2]}
+        old_timesteps = [2, 4, 6, 8, 10]
+        new_schedule = {'beta': [1.0, 0.7, 0.3]}
+
+        # non-monotonously decreasing parameter
+        with self.assertRaises(ValueError):
+            interpolate_timesteps(new_schedule, bad_old_schedule,
+                                  old_timesteps)
+        bad_new_schedule = {'beta': [1.0, 1.0, 0.3]}
+        with self.assertRaises(ValueError):
+            interpolate_timesteps(bad_new_schedule, old_schedule,
+                                  old_timesteps)
+        # non-equal number of parameters and time steps
+        bad_timesteps = [0.9, 3]
+        with self.assertRaises(ValueError):
+            interpolate_timesteps(new_schedule, old_schedule,
+                                  bad_timesteps)
