@@ -318,7 +318,8 @@ class BaseREJobController:
             setup_timesteps(current_storage, schedule, previous_storage)
             setup_initial_states(current_storage, schedule, previous_storage)
 
-        config_dict = self._fill_config_template(current_storage, previous_storage, schedule, prod)
+        config_dict = self._fill_config_template(
+            current_storage, previous_storage, schedule, prod)
         current_storage.save_config(config_dict)
         current_storage.save_schedule(schedule)
         self._scale_environment(schedule_length(schedule))
@@ -335,7 +336,6 @@ class BaseREJobController:
         Returns:
           :class:`np.array`: density of states estimate
         """
-        print("Running single run")
         self._re_runner.run_sampling(storage)
         energies = storage.load_all_energies()
         schedule = storage.load_schedule()
