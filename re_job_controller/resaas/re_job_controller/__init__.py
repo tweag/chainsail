@@ -3,19 +3,15 @@ from dataclasses import asdict
 from typing import List
 
 import requests
-from resaas.common.spec import (BoltzmannInitialScheduleParameters,
-                                TemperedDistributionFamily)
+from resaas.common.spec import BoltzmannInitialScheduleParameters, TemperedDistributionFamily
 from resaas.common.storage import SimulationStorage
 from resaas.common.storage import default_dir_structure as dir_structure
 from resaas.re_job_controller.initial_schedules import make_geometric_schedule
-from resaas.re_job_controller.initial_setup import (setup_initial_states,
-                                                    setup_timesteps)
+from resaas.re_job_controller.initial_setup import setup_initial_states, setup_timesteps
 from resaas.re_job_controller.util import schedule_length
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
-from resaas.schedule_estimation.optimization_quantities import \
-    get_quantity_function
-from resaas.schedule_estimation.schedule_optimizers import \
-    SingleParameterScheduleOptimizer
+from resaas.schedule_estimation.optimization_quantities import get_quantity_function
+from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 
 
 def log(msg):
@@ -31,16 +27,14 @@ def _config_template_from_params(re_params, local_sampling_params):
     to a YAML file.
     """
     re = asdict(re_params)
-    re['schedule'] = None
-    re.pop('num_optimization_samples')
-    re.pop('num_production_samples')
+    re["schedule"] = None
+    re.pop("num_optimization_samples")
+    re.pop("num_production_samples")
     local_sampling = asdict(local_sampling_params)
-    local_sampling['timesteps'] = None
-    general = dict(n_iterations=None,
-                   basename=None,
-                   output_path=None,
-                   initial_states=None,
-                   num_replicas=None)
+    local_sampling["timesteps"] = None
+    general = dict(
+        n_iterations=None, basename=None, output_path=None, initial_states=None, num_replicas=None
+    )
 
     return dict(re=re, local_sampling=local_sampling, general=general)
 
@@ -90,14 +84,19 @@ def optimization_objects_from_spec(job_spec):
                 opt_params.min_param,
                 opt_params.decrement,
                 get_quantity_function(opt_params.optimization_quantity),
-                "beta")
+                "beta",
+            )
 
             initial_schedule = make_geometric_schedule(
-                "beta", init_num_replicas, sched_parameters.minimum_beta, 1.0)
+                "beta", init_num_replicas, sched_parameters.minimum_beta, 1.0
+            )
         else:
             raise ValueError(
-                (f"Initial schedule parameters '{sched_parameters}' not copmatible "
-                 f"with tempered distribution family '{dist_family}'."))
+                (
+                    f"Initial schedule parameters '{sched_parameters}' not copmatible "
+                    f"with tempered distribution family '{dist_family}'."
+                )
+            )
 
         return dict(
             dos_estimator=dos_estimator,
@@ -105,8 +104,7 @@ def optimization_objects_from_spec(job_spec):
             initial_schedule=initial_schedule,
         )
     else:
-        raise ValueError(
-            f"Invalid distribution family '{dist_family}'")
+        raise ValueError(f"Invalid distribution family '{dist_family}'")
 
 
 class BaseREJobController:
@@ -130,7 +128,7 @@ class BaseREJobController:
     ):
         """
         Initializes a basic Replica Exchange job controller, which can be used
-        locally independently from the scheduler and other RESAAS components. 
+        locally independently from the scheduler and other RESAAS components.
 
         Arguments contain everything required for running simulations and
         optimizing schedules.
@@ -252,8 +250,7 @@ class BaseREJobController:
 
         return current_storage, final_schedule
 
-    def _fill_config_template(self, storage, previous_storage, schedule,
-                              prod=False):
+    def _fill_config_template(self, storage, previous_storage, schedule, prod=False):
         """
         Makes a config template template and updates it with run-specific
         values.
@@ -266,23 +263,20 @@ class BaseREJobController:
             schedule(dict): schedule of the current simulation
             prod(bool): whether this is the production run or not
         """
-        cfg_template = _config_template_from_params(
-            self._re_params, self._local_sampling_params)
+        cfg_template = _config_template_from_params(self._re_params, self._local_sampling_params)
         updates = {
             "local_sampling": {},
             "general": {},
         }
         if previous_storage is not None:
-            updates["local_sampling"] = {"timesteps":
-                                         dir_structure.INITIAL_TIMESTEPS_FILE_NAME}
-            updates["general"] = {"initial_states":
-                                  dir_structure.INITIAL_STATES_FILE_NAME}
+            updates["local_sampling"] = {"timesteps": dir_structure.INITIAL_TIMESTEPS_FILE_NAME}
+            updates["general"] = {"initial_states": dir_structure.INITIAL_STATES_FILE_NAME}
         if prod:
             num_samples = self._re_params.num_production_samples
         else:
             num_samples = self._re_params.num_optimization_samples
 
-        adapt_limit = cfg_template['local_sampling']['timestep_adaption_limit']
+        adapt_limit = cfg_template["local_sampling"]["timestep_adaption_limit"]
         if adapt_limit is None:
             adapt_limit = 0.1 * num_samples
         updates["local_sampling"]["timestep_adaption_limit"] = adapt_limit
@@ -341,6 +335,7 @@ class BaseREJobController:
         Returns:
           :class:`np.array`: density of states estimate
         """
+        print("Running single run")
         self._re_runner.run_sampling(storage)
         energies = storage.load_all_energies()
         schedule = storage.load_schedule()
@@ -423,8 +418,8 @@ class CloudREJobController(BaseREJobController):
             schedule_optimizer,
             dos_estimator,
             initial_schedule,
-            node_updater,
-            basename="")
+            basename=basename,
+        )
         self.job_id = job_id
         self.scheduler_address = scheduler_address
         self.scheduler_port = scheduler_port

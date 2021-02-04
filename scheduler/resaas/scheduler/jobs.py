@@ -6,7 +6,7 @@ from typing import Callable, Dict, List, Optional
 import grpc
 import shortuuid
 from resaas.common.spec import JobSpec, JobSpecSchema
-from resaas.grpc import HealthCheckRequest, HealthStub
+from resaas.grpc import HealthCheckRequest, HealthCheckResponse, HealthStub
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import JobError
@@ -212,11 +212,11 @@ class Job:
             stub = HealthStub(channel)
             while True:
                 response = stub.Check(HealthCheckRequest(service=""))
-                if response.status != "SERVING":
+                if response.status != HealthCheckResponse.SERVING:
                     break
                 else:
                     time.sleep(1)
-        if response.status == "SUCCESS":
+        if response.status == HealthCheckResponse.SUCCESS:
             return True
         else:
             return False
