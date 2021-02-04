@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 mkdir -p /root/.ssh
 
@@ -12,6 +12,21 @@ if [ -f /app/config/ssh/authorized_keys ]; then
     chmod 600 /root/.ssh/authorized_keys
 else
     echo "No ssh public keys found for server."
+fi
+
+# Allow for fetching of user-defined zip file with data / PDF 
+if [ -z "$USER_PROB_URL" ]
+then
+      echo 'USER_PROB_URL not specified. No user defined data to fetch.'
+else
+      echo "Fetching user probability definition zipfile at $USER_PROB_URL"
+      mkdir -p /probability
+      wget -O /probability/prob_def.zip "$USER_PROB_URL"
+      # Flattening directory structure (-j flag) on unzip for initial prototype. This
+      # means that nested directory structures in the zipfile are NOT 
+      # supported.
+      echo $(ls -lah /probability)
+      unzip -j /probability/prob_def.zip -d /probability
 fi
 
 # Allow for the specification of an additional install script
