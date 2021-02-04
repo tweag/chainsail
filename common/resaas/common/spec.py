@@ -198,6 +198,8 @@ class JobSpecSchema(Schema):
         # remove all nullable (i.e. Optional) fields which have a default of None.
         if data["name"] is None:
             data.pop("name")
+        for lsp in ("timestep_adaption_limit", "timesteps"):
+            data["local_sampling_parameters"].pop(lsp)
         return data
 
     @post_load
