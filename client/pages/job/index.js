@@ -50,8 +50,8 @@ const Descs = ({ activeField }) => {
         Beta min: the minimum inverse temperature (beta) which determines the flatness of the
         flattest distribution
       </FieldDescription>
-      <FieldDescription activeField={activeField} name="initial_schedule_beta_ratio" math="\alpha">
-        Initial schedule beta ratio: the ratio defining (approximately) the geometric progression
+      <FieldDescription activeField={activeField} name="target_acceptance_rate" math="\rho">
+        Target acceptance rate: the plausible acceptance rate that the algorithm aims to achieve
       </FieldDescription>
       <FieldDescription activeField={activeField} name="probability_definition" icon="fas fa-link">
         Probability definition: URL to archive including importable Python module providing the log
@@ -120,7 +120,7 @@ export default function Job() {
   const [initial_number_of_replicas, setInitNReplicas] = useState(1);
   const [tempered_distribution_family, setTemperedDist] = useState('boltzmann');
   const [minimum_beta, setMinBeta] = useState(0.01);
-  const [initial_schedule_beta_ratio, setInitScheduleBetaRatio] = useState(1);
+  const [target_acceptance_rate, setTargetAcceptanceRate] = useState(0.2);
   const [probability_definition, setProbDef] = useState('');
   const [dependencies, setDeps] = useState([]);
 
@@ -140,7 +140,9 @@ export default function Job() {
       tempered_dist_family: tempered_distribution_family,
       initial_schedule_parameters: {
         minimum_beta,
-        beta_ratio: initial_schedule_beta_ratio,
+      },
+      optimization_parameters: {
+        optimization_quantity_target: target_acceptance_rate,
       },
       probability_definition,
       dependencies: [{ type: 'pip', deps: dependencies }],
@@ -260,12 +262,15 @@ export default function Job() {
                           onChange={(e) => setMinBeta(e.target.value)}
                         />
                         <FormField
-                          label="Initial schedule beta ratio"
-                          inputName="initial_schedule_beta_ratio"
-                          inputType="text"
+                          label="Target acceptance rate"
+                          inputName="target_acceptance_rate"
+                          inputType="number"
+                          minNumber={0}
+                          maxNumber={1}
+                          stepNumber={0.1}
                           setActiveField={setActiveField}
-                          value={initial_schedule_beta_ratio}
-                          onChange={(e) => setInitScheduleBetaRatio(e.target.value)}
+                          value={target_acceptance_rate}
+                          onChange={(e) => setTargetAcceptanceRate(e.target.value)}
                         />
                       </FlexRow>
                       <FormField
