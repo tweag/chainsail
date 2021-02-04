@@ -4,14 +4,24 @@ import { Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components
 
 const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
 
-const StartJobButton = ({ jobId, isShown }) => {
+const JobButton = ({ jobId, jobStatus }) => {
+  const isInitialized = jobStatus === 'initialized';
+  const isRunning = jobStatus === 'running';
+  const isShown = isInitialized || isRunning;
   return (
     <div
-      className={`py-1 text-center bg-purple-900 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700 text-white
-	      ${isShown ? 'visible' : 'invisible'}`}
-      onClick={() => startJob(jobId)}
+      className={`py-1 text-center rounded-lg cursor-pointer lg:transition lg:duration-100 text-white
+	      ${isInitialized ? 'bg-green-600 hover:bg-purple-400' : ''}
+	      ${isRunning ? 'bg-red-600 hover:bg-red-400' : ''}
+	      ${isShown ? 'visible' : 'invisible'}
+	      `}
+      onClick={() => {
+        if (isInitialized) startJob(jobId);
+        if (isRunning) stopJob(jobId);
+      }}
     >
-      START
+      {isInitialized && 'START'}
+      {isRunning && 'STOP'}
     </div>
   );
 };
@@ -23,6 +33,15 @@ const startJob = (jobId) => {
     headers: { 'Content-Type': 'application/json' },
   };
   fetch(`${FLASK_URL}${JOB_START_ENDPOINT}`, requestOptions);
+};
+
+const stopJob = (jobId) => {
+  const JOB_STOP_ENDPOINT = `/job/${jobId}/stop`;
+  const requestOptions = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  };
+  fetch(`${FLASK_URL}${JOB_STOP_ENDPOINT}`, requestOptions);
 };
 
 const JobsTable = ({ data }) => {
@@ -50,7 +69,7 @@ const JobsTable = ({ data }) => {
       <TableData d={dateFormatter(row.finished_at)} />
       <TableData d={row.status} />
       <TableData>
-        <StartJobButton jobId={row.id} isShown={row.status === 'initialized'} />
+        <JobButton jobId={row.id} jobStatus={row.status} />
       </TableData>
     </tr>
   );
