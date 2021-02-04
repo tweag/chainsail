@@ -141,7 +141,9 @@ export default function Job() {
       initial_schedule_parameters: {
         minimum_beta,
       },
-      target_acceptance_rate,
+      optimization_parameters: {
+        optimization_quantity_target: target_acceptance_rate,
+      },
       probability_definition,
       dependencies: [{ type: 'pip', deps: dependencies }],
     });
