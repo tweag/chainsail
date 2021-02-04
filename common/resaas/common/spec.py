@@ -180,7 +180,7 @@ class JobSpecSchema(Schema):
     initial_schedule_parameters = fields.Dict(fields.String, fields.Float())
     optimization_parameters = fields.Nested(OptimizationParametersSchema)
     replica_exchange_parameters = fields.Nested(ReplicaExchangeParametersSchema)
-    hmc_parameters = fields.Nested(NaiveHMCParametersSchema)
+    local_sampling_parameters = fields.Nested(NaiveHMCParametersSchema)
     max_replicas = fields.Int()
     tempered_dist_family = EnumField(TemperedDistributionFamily, by_value=True)
     dependencies = fields.Nested(DependencySchema(many=True))
