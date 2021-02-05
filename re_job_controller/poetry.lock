@@ -554,7 +554,7 @@ pyyaml = "*"
 type = "git"
 url = "https://github.com/tweag/rexfw"
 reference = "resaas"
-resolved_reference = "5cd589aad8ea54031cef913652b9b2d56c6b3554"
+resolved_reference = "12831110a6b921a338e14e9231ec3f7f61a104d3"
 
 [[package]]
 name = "rope"
