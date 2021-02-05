@@ -122,7 +122,7 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         # practical purposes
         master = setup_default_re_master(n_replicas, path, storage_backend, comm)
         master.run(
-            config["general"]["n_iterations"],
+            config["general"]["n_iterations"] + 1,
             config["re"]["swap_interval"],
             config["re"]["status_interval"],
             config["re"]["dump_interval"],
