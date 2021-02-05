@@ -1,8 +1,10 @@
 import os
 import unittest
+from unittest.mock import patch
 from pickle import load, dump
 from tempfile import TemporaryDirectory
 
+import numpy as np
 
 from resaas.common.storage import (
     SimulationStorage,
@@ -58,10 +60,19 @@ class testFunctions(unittest.TestCase):
 
 class testSimulationStorage(unittest.TestCase):
     def setUp(self):
+        mock_config = {'general': {'num_replicas': 2, 'n_iterations': 10},
+                       're': {'dump_interval': 5}}
+        patcher = patch(
+            'resaas.common.storage.SimulationStorage.load_config',
+            return_value=mock_config)
+        patcher.start()
+        self.addCleanup(patcher, patcher.stop)
+
         self._basename = "/some/base"
         self._sim_path = "/sim/path"
         self._backend = MockStorageBackend()
-        self._storage = SimulationStorage(self._basename, self._sim_path, self._backend)
+        self._storage = SimulationStorage(
+            self._basename, self._sim_path, self._backend)
 
     def testWrite(self):
         fname = "a_file.pickle"
@@ -87,6 +98,21 @@ class testSimulationStorage(unittest.TestCase):
         self._backend.data[full_fname] = obj
         self.assertEqual(self._storage.load(fname), obj)
 
+    def testLoadAll(self):
+        for what in ("samples", "energies"):
+            template = os.path.join(self._basename, self._sim_path,
+                                    f"{what}/{what}")
+            template += "_replica{}_{}-{}.pickle"
+            self._backend.data[template.format(1, 0, 5)] = [1]
+            self._backend.data[template.format(1, 5, 10)] = [2]
+            self._backend.data[template.format(2, 0, 5)] = [3]
+            self._backend.data[template.format(2, 5, 10)] = [4]
+
+        samples = self._storage._load_all('samples')
+        energies = self._storage._load_all('energies')
+        expected = np.array([[1, 2], [3, 4]])
+        self.assertTrue(np.all(samples == expected))
+        self.assertTrue(np.all(energies == expected))
 
 class TestLocalStorage(unittest.TestCase):
 

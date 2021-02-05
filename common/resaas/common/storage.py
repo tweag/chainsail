@@ -308,7 +308,7 @@ class SimulationStorage:
         things = []
         for r in range(1, n_replicas + 1):
             r_things = []
-            for n in range(0, n_samples - dump_interval, dump_interval):
+            for n in range(0, n_samples, dump_interval):
                 if what == 'energies':
                     things_batch = self.load_energies("replica" + str(r), n, n + dump_interval)
                 elif what == 'samples':
