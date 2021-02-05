@@ -12,7 +12,8 @@
     },
     "replica_exchange_parameters": {
 	"num_optimization_samples": 2500,
-	"dump_interval": 500
+	"dump_interval": 500,
+	"status_interval": 500
     },
     "dependencies": [
         {
