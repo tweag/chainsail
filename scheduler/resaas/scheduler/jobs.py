@@ -89,11 +89,21 @@ class Job:
         self.status = JobStatus.STARTING
         with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
             try:
-                for created, logs in ex.map(lambda n: n.create(), self.nodes):
+                # Create worker nodes first
+                for created, logs in ex.map(
+                    lambda n: n.create(),
+                    [n for i, n in enumerate(self.nodes) if i != self.control_node],
+                ):
                     if not created:
                         raise JobError(
                             f"Failed to start node for job {id}. Deployment logs: \n" + logs
                         )
+                # Then create control node
+                created, logs = self.nodes[self.control_node].create()
+                if not created:
+                    raise JobError(
+                        f"Failed to start node for job {id}. Deployment logs: \n" + logs
+                    )
             except Exception as e:
                 # Cleanup created nodes on failure
                 for n in self.nodes:
