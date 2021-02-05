@@ -286,10 +286,42 @@ class SimulationStorage:
         )
 
     def save_samples(self, samples, replica_name, from_samples, to_samples):
-        self.save(
-            samples,
-            self.dir_structure.SAMPLES_TEMPLATE.format(replica_name, from_samples, to_samples),
-        )
+        self.save(samples, self.dir_structure.SAMPLES_TEMPLATE.format(
+            replica_name, from_samples, to_samples))
+
+    def load_samples(self, replica_name, from_sample_num, to_sample_num):
+        return self.load(self.dir_structure.SAMPLES_TEMPLATE.format(
+            replica_name, from_sample_num, to_sample_num))
+
+    def _load_all(self, what):
+        """
+        Loads any kind of quantity that is written out as a sort of "trace",
+        meaning for every sample.
+
+        Args:
+          what(str): what to load; supported values are 'energies' and 'samples'
+        """
+        config = self.load_config()
+        n_replicas = config["general"]["num_replicas"]
+        n_samples = config["general"]["n_iterations"]
+        dump_interval = config["re"]["dump_interval"]
+        things = []
+        for r in range(1, n_replicas + 1):
+            r_things = []
+            for n in range(0, n_samples - dump_interval, dump_interval):
+                if what == 'energies':
+                    things_batch = self.load_energies("replica" + str(r), n, n + dump_interval)
+                elif what == 'samples':
+                    things_batch = self.load_samples("replica" + str(r), n, n + dump_interval)
+                else:
+                    raise ValueError(
+                        f"'what' argument has to be either 'energies' or 'samples', not {what}")
+                r_things.append(things_batch)
+            things.append(np.concatenate(r_things))
+        return np.array(things)
+
+    def load_all_samples(self):
+        return self._load_all('samples')
 
     def save_energies(self, energies, replica_name, from_energies, to_energies):
         self.save(
@@ -303,18 +335,7 @@ class SimulationStorage:
         )
 
     def load_all_energies(self):
-        config = self.load_config()
-        n_replicas = config["general"]["num_replicas"]
-        n_samples = config["general"]["n_iterations"]
-        dump_interval = config["re"]["dump_interval"]
-        energies = []
-        for r in range(1, n_replicas + 1):
-            r_energies = []
-            for n in range(0, n_samples - dump_interval, dump_interval):
-                energies_batch = self.load_energies("replica" + str(r), n, n + dump_interval)
-                r_energies.append(energies_batch)
-            energies.append(np.concatenate(r_energies))
-        return np.array(energies)
+        return self._load_all('energies')
 
     def save_config(self, config_dict):
         self.save(yaml.dump(config_dict), self.dir_structure.CONFIG_FILE_NAME, data_type="text")
