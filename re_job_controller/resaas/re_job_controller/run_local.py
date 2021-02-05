@@ -31,7 +31,7 @@ def check_status(proc: Process) -> ProcessStatus:
 
 @click.command()
 @click.option(
-    "--basename", required=True, type=click.Path(exists=True), help="basename for simulation output"
+    "--basename", required=True, type=click.Path(), help="basename for simulation output"
 )
 @click.option(
     "--job-spec", required=True, type=click.Path(exists=True), help="path to job spec json file"
