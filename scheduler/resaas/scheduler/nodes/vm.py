@@ -1,20 +1,28 @@
 import json
+import os
 import traceback
+from tempfile import TemporaryDirectory
 from typing import IO, Callable, List, Optional, Tuple, Union
 
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import (NodeAuthSSHKey, NodeDriver, NodeImage,
-                                   NodeSize)
-from libcloud.compute.deployment import (Deployment, FileDeployment,
-                                         MultiStepDeployment, ScriptDeployment,
-                                         SSHKeyDeployment)
+from libcloud.compute.base import NodeAuthSSHKey, NodeDriver, NodeImage, NodeSize
+from libcloud.compute.deployment import (
+    Deployment,
+    FileDeployment,
+    MultiStepDeployment,
+    ScriptDeployment,
+    SSHKeyDeployment,
+)
 from libcloud.compute.types import DeploymentException, NodeState
-from resaas.common.spec import Dependencies, JobSpec
-from resaas.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
-                                     VMNodeConfig)
+from resaas.common.spec import Dependencies, JobSpec, JobSpecSchema
+from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from resaas.scheduler.db import TblJobs, TblNodes
-from resaas.scheduler.errors import (ConfigurationError, MissingNodeError,
-                                     NodeError, ObjectConstructionError)
+from resaas.scheduler.errors import (
+    ConfigurationError,
+    MissingNodeError,
+    NodeError,
+    ObjectConstructionError,
+)
 from resaas.scheduler.nodes.base import Node, NodeStatus
 
 
@@ -29,25 +37,113 @@ def _deployment_log(deployment: Deployment):
     return log
 
 
-# # https://resaas-public-data.s3.eu-central-1.amazonaws.com/test_prob_def.zip
+DEP_INSTALL_TEMPLATE = """
+#!/usr/bin/env bash
 
-# INSTALL_TEMPLATE = """
-# #!/usr/bin/env bash
+set -ex
 
-# set -ex
+# Install dependencies (if any are provided)
+{dep_install_commands}
+"""
 
-# # Install dependencies (if any are provided)
-# {dep_install_commands}
-# """
+COMMAND_TEMPLATE = """
+#!/usr/bin/env bash
+
+set -ex
+
+docker run -d \
+    -e "USER_PROD_URL={prob_def}" \
+    -e "USER_INSTALL_SCRIPT={install_script}" \
+    -v {config_dir}:/resaas \
+    -v {authorized_keys}:/app/config/ssh/authorized_keys \
+    -v {pem_file}:/root/.ssh/id.pem \
+    {image} {cmd}
+"""
 
 
-# # ssh pub
-# # ssh pem
-# # user_install_script
+DeploymentPreparer = Callable[..., MultiStepDeployment]
 
-# deployment_steps = [ScriptDeployment(dep.installation_script) for dep in self.deps] + [
-#     ScriptDeployment(self.entrypoint)
-# ]
+
+def prepare_deployment(
+    vm_node: "VMNode", staging_dir: str, install_dir: str = ""
+) -> MultiStepDeployment:
+    """Prepares deployment steps, writing intermediate files to staging_dir
+
+    Args:
+        staging_dir: Path to a temporary staging directory in which to write generated files for
+            `FileDeployment` steps.
+        install_dir: Path on remote host in which to install configuration files. This path
+            is relative to the home directory of the ssh user libcloud is using and will be created
+            if it does not already exist.
+
+    Returns:
+        The combined deployment steps
+    """
+    # Prepare installer script
+    install_commands = "\n".join([d.installation_script for d in vm_node.spec.dependencies])
+    install_script_name = "install_job_deps.sh"
+    install_script_src = os.path.join(staging_dir, install_script_name)
+    install_script_target = os.path.join(install_dir, install_script_name)
+    with open(install_script_src, "w") as f:
+        f.write(DEP_INSTALL_TEMPLATE.format(dep_install_commands=install_commands))
+
+    # Serialize job spec to copy it to the various nodes
+    spec_file_name = "job.json"
+    spec_file_src = os.path.join(staging_dir, spec_file_name)
+    spec_file_target = os.path.join(install_dir, spec_file_name)
+    with open(spec_file_src, "w") as f:
+        f.write(JobSpecSchema().dumps(vm_node.spec))
+
+    # Private key path
+    ssh_private_key_src = vm_node._vm_config.ssh_private_key_path
+    ssh_private_key_target = os.path.join(install_dir, os.path.basename(ssh_private_key_src))
+
+    # Final command to start up the main process
+    # Format the command + args into a single string
+    container_cmd = vm_node._config.cmd
+    if vm_node._config.args:
+        container_cmd += " ".join([a for a in vm_node._config.args])
+    command = COMMAND_TEMPLATE.format(
+        prob_def=vm_node.spec.probability_definition,
+        install_script=install_script_target,
+        config_dir=install_dir,
+        # This is where libcloud installs public keys to
+        authorized_keys="$HOME/.ssh/authorized_keys",
+        pem_file=ssh_private_key_target,
+        image=vm_node._config.image,
+        cmd=container_cmd,
+    )
+
+    steps = [
+        # Prepare config directory
+        ScriptDeployment(f"mkdir -p {install_dir}"),
+        # Installer script
+        FileDeployment(
+            install_script_src,
+            install_script_target,
+        ),
+        # Job spec
+        FileDeployment(
+            spec_file_src,
+            spec_file_target,
+        ),
+        # Storage backend config
+        FileDeployment(
+            vm_node._vm_config.storage_config_path,
+            os.path.join(install_dir, os.path.basename(vm_node._vm_config.storage_config_path)),
+        ),
+        # private ssh key for openmpi to use
+        FileDeployment(
+            ssh_private_key_src,
+            ssh_private_key_target,
+        ),
+        # public ssh key for openmpi and general use
+        SSHKeyDeployment(vm_node._vm_config.ssh_public_key),
+        # Start the main process. This is expected to return immediately after the process starts
+        ScriptDeployment(command),
+    ]
+
+    return steps
 
 
 def get_image(driver, image_id: str) -> NodeImage:
@@ -89,13 +185,14 @@ class VMNode(Node):
         size: NodeSize,
         config: GeneralNodeConfig,
         vm_config: VMNodeConfig,
-        deps: Optional[List[Dependencies]] = None,
+        spec: JobSpec,
         # If creating from an existing node, can specify the libcloud object,
         # database row, etc.
         libcloud_node: Optional[LibcloudNode] = None,
         representation: Optional[TblNodes] = None,
         status: Optional[NodeStatus] = None,
         address_selector: IPSelector = default_select_address,
+        deployment: DeploymentPreparer = prepare_deployment,
     ):
         if "create_node" not in driver.features or "ssh_key" not in driver.features["create_node"]:
             raise ValueError(
@@ -111,15 +208,13 @@ class VMNode(Node):
         self._vm_config = vm_config
         self._node = libcloud_node
         self._address_selector = address_selector
+        self._deployment = deployment
         if self._node:
             self._address = self._address_selector(self._node)
         else:
             self._address = None
         self._representation = representation
-        if deps:
-            self.deps = deps
-        else:
-            self.deps = []
+        self.spec = spec
         if not status:
             self._status = NodeStatus.INITIALIZED
         else:
@@ -130,44 +225,43 @@ class VMNode(Node):
         if self._status != NodeStatus.INITIALIZED:
             raise NodeError("Attempted to created a node which has already been created")
         self._status = NodeStatus.CREATING
-        deployment_steps = [ScriptDeployment(dep.installation_script) for dep in self.deps] + [
-            ScriptDeployment(self.entrypoint)
-        ]
-        try:
-            self._node = self._driver.deploy_node(
-                name=self.name,
-                size=self._size,
-                image=self._image,
-                ssh_username=self._vm_config.ssh_user,
-                # Some common fallback options for username
-                ssh_alternate_usernames=["root", "ubuntu", "resaas"],
-                deploy=MultiStepDeployment(deployment_steps),
-                auth=NodeAuthSSHKey(self._vm_config.ssh_public_key),
-                ssh_key=self._vm_config.ssh_private_key_path,
-                wait_period=30,
-                **self._vm_config.libcloud_create_node_inputs,
-            )
-        except DeploymentException as e:
-            self._status = NodeStatus.FAILED
-            logs = (
-                traceback.format_exc()
-                + "\n"
-                + "\n".join([_deployment_log(d) for d in deployment_steps])
-            )
-            if e.node:
-                if not e.node.destroy():
-                    # Keep node reference to enable later
-                    # destroy attempts
-                    self._node = e.node
-            self.sync_representation()
-            return (False, logs)
-        else:
-            logs = _deployment_log(d for d in deployment_steps)
-            if self._node:
-                self._address = self._address_selector(self._node)
-            self.refresh_status()
-            self.sync_representation()
-            return (True, logs)
+        with TemporaryDirectory() as tmpdir:
+            deployment_steps = self._deployment(self, tmpdir, "resaas")
+            try:
+                self._node = self._driver.deploy_node(
+                    name=self.name,
+                    size=self._size,
+                    image=self._image,
+                    ssh_username=self._vm_config.ssh_user,
+                    # Some common fallback options for username
+                    ssh_alternate_usernames=["root", "ubuntu", "resaas"],
+                    deploy=MultiStepDeployment(deployment_steps),
+                    auth=NodeAuthSSHKey(self._vm_config.ssh_public_key),
+                    ssh_key=self._vm_config.ssh_private_key_path,
+                    wait_period=30,
+                    **self._vm_config.libcloud_create_node_inputs,
+                )
+            except DeploymentException as e:
+                self._status = NodeStatus.FAILED
+                logs = (
+                    traceback.format_exc()
+                    + "\n"
+                    + "\n".join([_deployment_log(d) for d in deployment_steps])
+                )
+                if e.node:
+                    if not e.node.destroy():
+                        # Keep node reference to enable later
+                        # destroy attempts
+                        self._node = e.node
+                self.sync_representation()
+                return (False, logs)
+            else:
+                logs = _deployment_log(d for d in deployment_steps)
+                if self._node:
+                    self._address = self._address_selector(self._node)
+                self.refresh_status()
+                self.sync_representation()
+                return (True, logs)
 
     def restart(self) -> bool:
         if not self._node:
@@ -290,7 +384,7 @@ class VMNode(Node):
             libcloud_node=node,
             size=size,
             image=image,
-            deps=spec.dependencies,
+            spec=spec,
             status=NodeStatus(node_rep.status),
             representation=node_rep,
         )
@@ -331,7 +425,7 @@ class VMNode(Node):
             config=config,
             vm_config=vm_config,
             image=image,
-            deps=spec.dependencies,
+            spec=spec,
             representation=node_rep,
         )
         # Sync over the various fields
