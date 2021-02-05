@@ -1,8 +1,8 @@
 import unittest
+from itertools import cycle
 
 import numpy as np
 
-from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.re_job_controller.initial_setup import (draw_initial_states,
                                                     interpolate_timesteps)
 
@@ -27,28 +27,17 @@ class TestDrawInitialTimesteps(unittest.TestCase):
         """
         Uses the physicist's best friend, the harmonic oscillator, a.k.a. the
         normal distribution, to test drawing reweighted samples.
-
-        This currently draws samples, calculates the DOS using WHAM and feeds
-        the result into draw_initial_timesteps.
-        TODO: use analytical DOS and circumvent need for WHAM here.
         """
-        n_samples = 2000
-        betas = np.arange(1.0, 0.1, -0.1)
-        # Assuming a Boltzmann ensemble, a harmonic oscillator (HO) at inverse
-        # temperature beta corresponds to a normal distribution with standard
-        # deviation sigma = 1 / np.sqrt(beta). We can thus draw samples from the
-        # normal distribution instead and avoid actual simulation of the HO.
-        samples = np.array(
-            [np.random.normal(scale=1 / np.sqrt(beta), size=n_samples)
-             for beta in betas])
-        # potential energy of a harmonic oscillator with force constant 1 and
-        # equilibrium position 0
-        energies = 0.5 * samples ** 2
-
-        # estimate microcanonical density of states (DOS) from energies
-        wham = WHAM(BoltzmannEnsemble)
-        dos = wham.estimate_dos(energies, {'beta': betas}, 500)
-
+        # create equidistant energies
+        energies = np.arange(0.001, 50, 0.001)
+        # get analytical log-density of states
+        dos = np.log(2 / np.sqrt(2 * energies))
+        # Here's the fun part: now that we have energies, we need to get
+        # "samples". So because E = 0.5 * x ** 2, for each energy we have two
+        # possible samples x = +/- \sqrt(2 * E). So we alternate between
+        # generating "+" samples and "-" samples.
+        c = cycle((-1, 1))
+        samples = np.array([next(c) * np.sqrt(2 * e) for e in energies])
         # new inverse temperatures for which we want to draw states by
         # reweighting the previous ones. We could also draw samples from
         # outside the previous range, say, at beta=0.05, at the risk of worse
@@ -56,7 +45,7 @@ class TestDrawInitialTimesteps(unittest.TestCase):
         new_betas = np.arange(1.0, 0.1, -0.2)
         storage = MockStorage(energies, samples)
         # we can draw more reweighted samples than we had original samples
-        n_reweighted_samples = 2 * n_samples
+        n_reweighted_samples = 2000
         # each call of draw_initial_states produces one sample for each inverse
         # temperature beta. So we run this many times.
         dos_reweighted_samples = np.array(
@@ -71,7 +60,7 @@ class TestDrawInitialTimesteps(unittest.TestCase):
         reweighted_stds = dos_reweighted_samples.std(0)
         # transform from standard deviations back to inverse temperatures
         reweighted_betas = 1 / reweighted_stds ** 2
-        self.assertTrue(np.allclose(reweighted_betas, new_betas, atol=0.05))
+        self.assertTrue(np.allclose(reweighted_betas, new_betas, atol=0.075))
 
 
 class TestTimestepInterpolation(unittest.TestCase):
