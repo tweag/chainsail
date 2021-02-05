@@ -7,10 +7,12 @@
     },
     "optimization_parameters": {
         "optimization_quantity_target": 0.85,
-	"decrement": 0.025
+	"decrement": 0.025,
+	"min_param": 0.1
     },
     "replica_exchange_parameters": {
-	"num_optimization_samples": 2500
+	"num_optimization_samples": 2500,
+	"dump_interval": 500
     },
     "dependencies": [
         {
