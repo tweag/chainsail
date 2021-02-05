@@ -7,9 +7,6 @@ Make sure you are within the Nix shell provided in the directory root.
 $ cd ../../re_job_controller
 $ poetry install --extras rexfw
 $ poetry run resaas-controller-local \
-  --job 123 \
-  --config ../examples/local_run/controller.yaml \
-  --storage ../examples/local_run/storage.yaml \
-  --hostsfile ../examples/local_run/hostsfile \
+  --basename /tmp/test_simulation \
   --job-spec ../examples/local_run/job.json
 ```
