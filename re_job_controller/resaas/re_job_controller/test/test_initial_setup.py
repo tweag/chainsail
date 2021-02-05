@@ -3,12 +3,8 @@ import unittest
 import numpy as np
 
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
-<<<<<<< HEAD
 from resaas.re_job_controller.initial_setup import (draw_initial_states,
                                                     interpolate_timesteps)
-=======
-from resaas.re_job_controller.initial_setup import draw_initial_states
->>>>>>> 829c754... Forgot to git add the test
 
 
 class MockStorage:
