@@ -58,6 +58,7 @@ class VMNodeConfig(HasDriver):
     ssh_user: str
     ssh_public_key: str
     ssh_private_key_path: str
+    controller_config_path: str
     storage_config_path: str
     libcloud_driver: NodeDriver
     libcloud_driver_inputs: Dict
@@ -78,6 +79,8 @@ class VMNodeConfigSchema(Schema):
     ssh_public_key = fields.String(required=True)
     # The path to the ssh private key to use for connecting to the VM
     ssh_private_key_path = fields.String(required=True)
+    # The path to the controller.yaml controller config file
+    controller_config_path = fields.String(required=True)
     # The path to the storage.yaml storage backend config file
     storage_config_path = fields.String(required=True)
     # The libcloud driver name

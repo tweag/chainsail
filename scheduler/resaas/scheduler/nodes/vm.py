@@ -26,9 +26,16 @@ from resaas.scheduler.errors import (
 from resaas.scheduler.nodes.base import Node, NodeStatus
 
 
+def _raise_for_exit_status(node: LibcloudNode, deployment: Deployment):
+    if hasattr(deployment, "exit_status"):
+        status = deployment.exit_status
+        if status != 0:
+            raise DeploymentException(node)
+
+
 def _deployment_log(deployment: Deployment):
     stdout = getattr(deployment, "stdout", None)
-    stderr = getattr(deployment, "stdout", None)
+    stderr = getattr(deployment, "stderr", None)
     log = ""
     if stdout:
         log += stdout
@@ -37,8 +44,7 @@ def _deployment_log(deployment: Deployment):
     return log
 
 
-DEP_INSTALL_TEMPLATE = """
-#!/usr/bin/env bash
+DEP_INSTALL_TEMPLATE = """#!/usr/bin/env bash
 
 set -ex
 
@@ -46,20 +52,26 @@ set -ex
 {dep_install_commands}
 """
 
-COMMAND_TEMPLATE = """
-#!/usr/bin/env bash
+COMMAND_TEMPLATE = """#!/usr/bin/env bash
 
 set -ex
 
 docker run -d \
     -e "USER_PROD_URL={prob_def}" \
     -e "USER_INSTALL_SCRIPT={install_script}" \
+    --network host \
     -v {config_dir}:/resaas \
     -v {authorized_keys}:/app/config/ssh/authorized_keys \
     -v {pem_file}:/root/.ssh/id.pem \
     {image} {cmd}
 """
 
+MK_TARGET_TEMPLATE = """#!/usr/bin/env bash
+set -ex
+
+mkdir -p '{target_dir}'
+
+"""
 
 DeploymentPreparer = Callable[..., MultiStepDeployment]
 
@@ -72,9 +84,9 @@ def prepare_deployment(
     Args:
         staging_dir: Path to a temporary staging directory in which to write generated files for
             `FileDeployment` steps.
-        install_dir: Path on remote host in which to install configuration files. This path
-            is relative to the home directory of the ssh user libcloud is using and will be created
-            if it does not already exist.
+        install_dir: Path on remote host in which to install configuration files. You should only
+            pass **absolute paths** here since libcloud's ssh client has undefined behavior for
+            MultiStepDeployments which rely on relative paths.
 
     Returns:
         The combined deployment steps
@@ -86,6 +98,28 @@ def prepare_deployment(
     install_script_target = os.path.join(install_dir, install_script_name)
     with open(install_script_src, "w") as f:
         f.write(DEP_INSTALL_TEMPLATE.format(dep_install_commands=install_commands))
+
+    # Prepare initial hostfile with known peers
+    hosts = ["localhost"]
+    if vm_node._representation:
+        # Note: assuming that we are already within a session context
+        job: TblJobs = vm_node._representation.job
+        for node in job.nodes:
+            node: TblNodes
+            # Note: nodes at this stage don't generally have a database ID
+            #   so we compare on name.
+            if node.name == vm_node._representation.name:
+                # Don't add yourself as a peer since we define localhost above
+                continue
+            if node.in_use and node.address:
+                print("Adding node to hostfile")
+                hosts.append(node.address)
+    hostfile_name = "hostfile"
+    hostfile_src = os.path.join(staging_dir, hostfile_name)
+    hostfile_target = os.path.join(install_dir, hostfile_name)
+    with open(hostfile_src, "w") as f:
+        for h in hosts:
+            print(h, file=f)
 
     # Serialize job spec to copy it to the various nodes
     spec_file_name = "job.json"
@@ -113,35 +147,50 @@ def prepare_deployment(
         image=vm_node._config.image,
         cmd=container_cmd,
     )
-
-    steps = [
-        # Prepare config directory
-        ScriptDeployment(f"mkdir -p {install_dir}"),
-        # Installer script
-        FileDeployment(
-            install_script_src,
-            install_script_target,
-        ),
-        # Job spec
-        FileDeployment(
-            spec_file_src,
-            spec_file_target,
-        ),
-        # Storage backend config
-        FileDeployment(
-            vm_node._vm_config.storage_config_path,
-            os.path.join(install_dir, os.path.basename(vm_node._vm_config.storage_config_path)),
-        ),
-        # private ssh key for openmpi to use
-        FileDeployment(
-            ssh_private_key_src,
-            ssh_private_key_target,
-        ),
-        # public ssh key for openmpi and general use
-        SSHKeyDeployment(vm_node._vm_config.ssh_public_key),
-        # Start the main process. This is expected to return immediately after the process starts
-        ScriptDeployment(command),
-    ]
+    steps = MultiStepDeployment(
+        [
+            # public ssh key for openmpi and general use
+            SSHKeyDeployment(vm_node._vm_config.ssh_public_key),
+            # Prepare config directory
+            ScriptDeployment(MK_TARGET_TEMPLATE.format(target_dir=install_dir)),
+            # Installer script
+            FileDeployment(
+                install_script_src,
+                install_script_target,
+            ),
+            # Hostfile
+            FileDeployment(
+                hostfile_src,
+                hostfile_target,
+            ),
+            # Job spec
+            FileDeployment(
+                spec_file_src,
+                spec_file_target,
+            ),
+            # Storage backend config
+            FileDeployment(
+                vm_node._vm_config.storage_config_path,
+                os.path.join(
+                    install_dir, os.path.basename(vm_node._vm_config.storage_config_path)
+                ),
+            ),
+            # Controller config
+            FileDeployment(
+                vm_node._vm_config.controller_config_path,
+                os.path.join(
+                    install_dir, os.path.basename(vm_node._vm_config.controller_config_path)
+                ),
+            ),
+            # private ssh key for openmpi to use
+            FileDeployment(
+                ssh_private_key_src,
+                ssh_private_key_target,
+            ),
+            # Start the main process. This is expected to return immediately after the process starts
+            ScriptDeployment(command),
+        ]
+    )
 
     return steps
 
@@ -226,7 +275,11 @@ class VMNode(Node):
             raise NodeError("Attempted to created a node which has already been created")
         self._status = NodeStatus.CREATING
         with TemporaryDirectory() as tmpdir:
-            deployment_steps = self._deployment(self, tmpdir, "resaas")
+            deployment_steps = self._deployment(
+                self, tmpdir, install_dir=f"/home/{self._vm_config.ssh_user}/resaas"
+            )
+            for s in deployment_steps.steps:
+                print(s)
             try:
                 self._node = self._driver.deploy_node(
                     name=self.name,
@@ -235,18 +288,21 @@ class VMNode(Node):
                     ssh_username=self._vm_config.ssh_user,
                     # Some common fallback options for username
                     ssh_alternate_usernames=["root", "ubuntu", "resaas"],
-                    deploy=MultiStepDeployment(deployment_steps),
+                    deploy=deployment_steps,
                     auth=NodeAuthSSHKey(self._vm_config.ssh_public_key),
                     ssh_key=self._vm_config.ssh_private_key_path,
-                    wait_period=30,
+                    wait_period=10,
                     **self._vm_config.libcloud_create_node_inputs,
                 )
+                for s in deployment_steps.steps:
+                    # Ensure that scripts all exited successfully
+                    _raise_for_exit_status(self._node, s)
             except DeploymentException as e:
                 self._status = NodeStatus.FAILED
                 logs = (
                     traceback.format_exc()
                     + "\n"
-                    + "\n".join([_deployment_log(d) for d in deployment_steps])
+                    + "\n".join([_deployment_log(d) for d in deployment_steps.steps])
                 )
                 if e.node:
                     if not e.node.destroy():
@@ -256,7 +312,7 @@ class VMNode(Node):
                 self.sync_representation()
                 return (False, logs)
             else:
-                logs = _deployment_log(d for d in deployment_steps)
+                logs = _deployment_log(d for d in deployment_steps.steps)
                 if self._node:
                     self._address = self._address_selector(self._node)
                 self.refresh_status()
