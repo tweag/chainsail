@@ -75,11 +75,13 @@ class Node(ABC):
 
     @classmethod
     @abstractmethod
-    def from_representation(cls, spec, node_rep, config) -> "Node":
+    def from_representation(cls, spec, node_rep, config, is_controller=False) -> "Node":
         pass
 
     @classmethod
-    def from_config(cls, name, config, spec, job_rep: Optional[TblJobs] = None) -> "Node":
+    def from_config(
+        cls, name, config, spec, job_rep: Optional[TblJobs] = None, is_controller=False
+    ) -> "Node":
         pass
 
     def sync_representation(self) -> None:
