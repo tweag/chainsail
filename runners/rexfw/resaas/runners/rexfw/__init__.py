@@ -1,8 +1,9 @@
 """
 Runners which launch a rexfw simulation.
 """
-
-from subprocess import check_output
+import sys
+import subprocess
+import time
 
 from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.storage import AbstractStorageBackend
@@ -46,4 +47,23 @@ class MPIRERunner(AbstractRERunner):
             storage.sim_path,
         ]
 
-        check_output(cmd)
+        # run in subprocess, but capture both stdout and stderr and
+        # redirect them to the parent's process stdout
+        # subprocess.check_output(cmd)
+
+        process = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        # https://stackoverflow.com/a/53830668/1656472
+        while True:
+            rd = process.stdout.readline()
+            print(rd.decode("ascii"), end="")
+            if not rd:  # EOF
+                return_code = process.poll()
+                if return_code is not None:
+                    break
+                time.sleep(0.1)  # cmd closed stdout, but not exited yet
+
+        if return_code != 0:
+            raise Exception(
+                f"MPI subprocess exited with return code {return_code}")
