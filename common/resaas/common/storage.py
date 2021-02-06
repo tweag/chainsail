@@ -322,7 +322,7 @@ class SimulationStorage:
             things.append(np.concatenate(r_things))
         return np.array(things)
 
-    def load_all_samples(self, from_sample=3000, step=10):
+    def load_all_samples(self, from_sample=0, step=1):
         return self._load_all('samples', from_sample, step)
 
     def save_energies(self, energies, replica_name, from_energies, to_energies):
@@ -336,7 +336,7 @@ class SimulationStorage:
             self.dir_structure.ENERGIES_TEMPLATE.format(replica_name, from_energies, to_energies)
         )
 
-    def load_all_energies(self, from_sample=3000, step=10):
+    def load_all_energies(self, from_sample=0, step=1):
         return self._load_all('energies', from_sample, step)
 
     def save_config(self, config_dict):
