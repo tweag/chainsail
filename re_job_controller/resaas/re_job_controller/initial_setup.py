@@ -86,7 +86,9 @@ def draw_initial_states(schedule, previous_storage, dos):
           simulation
     '''
     betas = schedule['beta']
-    energies = previous_storage.load_all_energies().ravel()
+    energies = previous_storage.load_all_energies()
+    n_states = energies.shape[1]
+    energies = energies.ravel()
 
     # calculate the probability weights of the old samples for the new
     # inverse temperatures.
@@ -101,8 +103,11 @@ def draw_initial_states(schedule, previous_storage, dos):
     old_samples = previous_storage.load_all_samples()
     # choose new samples from categorical distribution over old samples
     # with the above calculated weights
+    ensemble_flattened_samples = old_samples.reshape(-1, *old_samples.shape[2:])
+
+    rng = np.random.default_rng()
     new_samples = np.array([
-        np.random.choice(old_samples.ravel(), p=np.exp(log_p))
+        rng.choice(ensemble_flattened_samples, axis=0, p=np.exp(log_p))
         for log_p, beta in zip(log_ps, betas)])
 
     return new_samples

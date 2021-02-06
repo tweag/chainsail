@@ -100,5 +100,8 @@ class SingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
                 delta = self._decrement
             else:
                 delta += self._decrement
+            if params[-1] < 0:
+                params[-1] = self._min_param
+                break
 
         return {self._param_name: np.array(params)}

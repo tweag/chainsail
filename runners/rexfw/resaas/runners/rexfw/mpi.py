@@ -170,7 +170,7 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         # provide initial states, which might not be a bad idea, actually.
         tempered_pdf.n_variables = 1
         if config["general"]["initial_states"] is None:
-            init_state = np.random.normal(tempered_pdf.n_variables)
+            init_state = np.random.normal(size=tempered_pdf.n_variables)
         else:
             init_state = storage.load_initial_states()[rank - 1]
 
