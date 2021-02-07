@@ -85,6 +85,7 @@ def optimization_objects_from_spec(job_spec):
                 opt_params.decrement,
                 get_quantity_function(opt_params.optimization_quantity),
                 "beta",
+                job_spec.max_replicas
             )
 
             initial_schedule = make_geometric_schedule(
@@ -351,7 +352,6 @@ class BaseREJobController:
         burnin_percentage = self._optimization_params.dos_burnin_percentage
         thinning_step = self._optimization_params.dos_thinning_step
         from_samples = int(burnin_percentage * num_samples)
-
         return from_samples, thinning_step
 
     def run_job(self):
