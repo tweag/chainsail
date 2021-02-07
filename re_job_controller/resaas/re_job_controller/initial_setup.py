@@ -65,7 +65,8 @@ def interpolate_timesteps(schedule, old_schedule, old_timesteps):
     return interpolated_timesteps[::-1]
 
 
-def draw_initial_states(schedule, previous_storage, dos):
+def draw_initial_states(schedule, previous_storage, dos, dos_burnin,
+                        dos_thinning_step):
     '''
     Draw initial states using the density of states.
 
@@ -84,10 +85,14 @@ def draw_initial_states(schedule, previous_storage, dos):
           access the previous simulation's results
         dos(:class:`np.array`): density of states estimate of previous
           simulation
+        dos_burnin(int): number of burnin samples used when density of
+          states was calculated
+        dos_thinning_step(int): sample thinning step used when density of
+          states was calculated
     '''
     betas = schedule['beta']
-    energies = previous_storage.load_all_energies()
-    n_states = energies.shape[1]
+    energies = previous_storage.load_all_energies(from_sample=dos_burnin,
+                                                  step=dos_thinning_step)
     energies = energies.ravel()
 
     # calculate the probability weights of the old samples for the new
@@ -100,7 +105,8 @@ def draw_initial_states(schedule, previous_storage, dos):
     # the above are the unnormalized weights, now we normalize them
     log_ps -= log_sum_exp(log_ps.T, axis=0).T[:, None]
 
-    old_samples = previous_storage.load_all_samples()
+    old_samples = previous_storage.load_all_samples(from_sample=dos_burnin,
+                                                    step=dos_thinning_step)
     # choose new samples from categorical distribution over old samples
     # with the above calculated weights
     ensemble_flattened_samples = old_samples.reshape(-1, *old_samples.shape[2:])
@@ -113,7 +119,8 @@ def draw_initial_states(schedule, previous_storage, dos):
     return new_samples
 
 
-def setup_initial_states(current_storage, schedule, previous_storage=None):
+def setup_initial_states(current_storage, schedule, previous_storage,
+                         dos_from_samples, dos_thinning_step):
     '''
     Sets up initial states.
 
@@ -126,9 +133,14 @@ def setup_initial_states(current_storage, schedule, previous_storage=None):
         schedule(dict): current paramter schedule
         previous_storage(:class:`SimulationStorage`): storage for previous
           simulation
+        dos_from_sample(int): number of burnin samples used when density of
+          states was calculated
+        dos_thinning_step(int): sample thinning step used when density of
+          states was calculated
     '''
     if previous_storage is not None:
         dos = previous_storage.load_dos()
         initial_states = draw_initial_states(
-            schedule, previous_storage, dos)
+            schedule, previous_storage, dos, dos_from_samples,
+            dos_thinning_step)
         current_storage.save_initial_states(initial_states)

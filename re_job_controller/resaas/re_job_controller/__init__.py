@@ -188,7 +188,8 @@ class BaseREJobController:
         Returns:
             dict: optimized schedule
         """
-        energies = previous_storage.load_all_energies()
+        energies = previous_storage.load_all_energies(
+            *self._get_dos_subsample_params(previous_storage))
         schedule = self._schedule_optimizer.optimize(dos, energies)
 
         return schedule
@@ -316,7 +317,9 @@ class BaseREJobController:
         """
         if previous_storage is not None:
             setup_timesteps(current_storage, schedule, previous_storage)
-            setup_initial_states(current_storage, schedule, previous_storage)
+            setup_initial_states(
+                current_storage, schedule, previous_storage,
+                *self._get_dos_subsample_params(previous_storage))
 
         config_dict = self._fill_config_template(
             current_storage, previous_storage, schedule, prod)
@@ -337,10 +340,19 @@ class BaseREJobController:
           :class:`np.array`: density of states estimate
         """
         self._re_runner.run_sampling(storage)
-        energies = storage.load_all_energies()
+        energies = storage.load_all_energies(
+            *self._get_dos_subsample_params(storage))
         schedule = storage.load_schedule()
         dos = self._dos_estimator.estimate_dos(energies, schedule)
         storage.save_dos(dos)
+
+    def _get_dos_subsample_params(self, storage):
+        num_samples = storage.load_config()['general']['n_iterations']
+        burnin_percentage = self._optimization_params.dos_burnin_percentage
+        thinning_step = self._optimization_params.dos_thinning_step
+        from_samples = int(burnin_percentage * num_samples)
+
+        return from_samples, thinning_step
 
     def run_job(self):
         """
