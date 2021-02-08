@@ -49,7 +49,6 @@ class MPIRERunner(AbstractRERunner):
 
         # run in subprocess, but capture both stdout and stderr and
         # redirect them to the parent's process stdout
-        # subprocess.check_output(cmd)
 
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

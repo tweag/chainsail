@@ -16,7 +16,7 @@ from resaas.schedule_estimation.schedule_optimizers import SingleParameterSchedu
 
 def log(msg):
     # TODO
-    pass
+    print(msg)
 
 
 def _config_template_from_params(re_params, local_sampling_params):
