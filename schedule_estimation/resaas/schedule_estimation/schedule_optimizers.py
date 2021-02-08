@@ -92,7 +92,7 @@ class SingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
         sampling_points = np.linspace(0, n_params, n_sampling_points)
         interpolated_params = np.interp(
             sampling_points, np.arange(len(parameters)), parameters)
-        squeezed_params = interpolated_params[::n_sampling_points/max_replicas]
+        squeezed_params = interpolated_params[::n_params * 100]
         return squeezed_params
 
     def optimize(self, dos, energies):
