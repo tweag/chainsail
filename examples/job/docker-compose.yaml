@@ -39,7 +39,7 @@ services:
     command:
       - /usr/sbin/sshd
       - -D
-
+    depends_on: [graphite]
   mpi-node-2:
     ports:
       - '26'
