@@ -12,6 +12,7 @@ numpy = "^1.19.5"
 PyYAML = "^5.4.1"
 marshmallow = "^3.10.0"
 marshmallow-enum = "^1.5.1"
+cryptography = "^3.4.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

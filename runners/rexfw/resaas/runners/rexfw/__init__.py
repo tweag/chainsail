@@ -2,6 +2,7 @@
 Runners which launch a rexfw simulation.
 """
 
+import shutil
 from subprocess import check_output
 
 from resaas.common.runners import AbstractRERunner, runner_config
@@ -35,7 +36,10 @@ class MPIRERunner(AbstractRERunner):
             "--oversubscribe",
             "-n",
             f"{n_replicas + 1}",
-            self.REXFW_SCRIPT,
+            shutil.which("python"),
+            "-m",
+            "mpi4py",
+            shutil.which(self.REXFW_SCRIPT),
             "--name",
             run_id,
             "--storage",
