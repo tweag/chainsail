@@ -52,6 +52,7 @@ services:
     command:
       - /usr/sbin/sshd
       - -D
+    depends_on: [graphite]
 
   graphite:
     image: 'graphiteapp/graphite-statsd'
