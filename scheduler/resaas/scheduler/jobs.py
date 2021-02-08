@@ -98,6 +98,7 @@ class Job:
                         raise JobError(
                             f"Failed to start node for job {id}. Deployment logs: \n" + logs
                         )
+                self.sync_representation()
                 # Then create control node
                 created, logs = self.nodes[self.control_node].create()
                 if not created:
@@ -140,10 +141,11 @@ class Job:
         i_new_node = len(self.nodes)
         self.nodes.append(
             self._node_cls.from_config(
-                f"node-{shortuuid.uuid()}",
+                f"node-{shortuuid.uuid()}".lower(),
                 self.config,
                 self.spec,
                 job_rep=self.representation,
+                is_controller=(i_new_node == self.control_node),
             )
         )
         self.sync_representation()

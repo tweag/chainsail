@@ -11,6 +11,7 @@ from libcloud.compute.deployment import (
     FileDeployment,
     MultiStepDeployment,
     ScriptDeployment,
+    ScriptFileDeployment,
     SSHKeyDeployment,
 )
 from libcloud.compute.types import DeploymentException, NodeState
@@ -58,7 +59,7 @@ set -ex
 
 docker run -d \
     -e "USER_PROD_URL={prob_def}" \
-    -e "USER_INSTALL_SCRIPT={install_script}" \
+    -e "USER_INSTALL_SCRIPT=/resaas/{install_script}" \
     --network host \
     -v {config_dir}:/resaas \
     -v {authorized_keys}:/app/config/ssh/authorized_keys \
@@ -69,6 +70,7 @@ docker run -d \
 MK_TARGET_TEMPLATE = """#!/usr/bin/env bash
 set -ex
 
+mkdir -p $HOME/.ssh
 mkdir -p '{target_dir}'
 
 """
@@ -136,10 +138,12 @@ def prepare_deployment(
     # Format the command + args into a single string
     container_cmd = vm_node._config.cmd
     if vm_node._config.args:
+        # Extra leading whitespace
+        container_cmd += " "
         container_cmd += " ".join([a for a in vm_node._config.args])
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
-        install_script=install_script_target,
+        install_script=os.path.basename(install_script_target),
         config_dir=install_dir,
         # This is where libcloud installs public keys to
         authorized_keys="$HOME/.ssh/authorized_keys",
@@ -147,12 +151,16 @@ def prepare_deployment(
         image=vm_node._config.image,
         cmd=container_cmd,
     )
+
     steps = MultiStepDeployment(
         [
-            # public ssh key for openmpi and general use
-            SSHKeyDeployment(vm_node._vm_config.ssh_public_key),
+            # The very first thing to do is run the initialization script to ensure
+            # that credential helpers, etc. are initialized.
+            ScriptDeployment(vm_node._vm_config.init_script),
             # Prepare config directory
             ScriptDeployment(MK_TARGET_TEMPLATE.format(target_dir=install_dir)),
+            # public ssh key for openmpi and general use
+            SSHKeyDeployment(vm_node._vm_config.ssh_public_key),
             # Installer script
             FileDeployment(
                 install_script_src,
@@ -195,9 +203,22 @@ def prepare_deployment(
     return steps
 
 
+# TODO: Add caching here
 def get_image(driver, image_id: str) -> NodeImage:
     # Constructing the image directly since image lookups take so long on most providers
-    return NodeImage(id=image_id, name="unknown", driver=driver)
+    # return NodeImage(id=image_id, name="unknown", driver=driver)
+    img = None
+    for i in driver.list_images():
+        if i.id == image_id:
+            img = i
+            break
+    if not img:
+        raise ConfigurationError(
+            f"Failed to find node image with id '{image_id}' in driver "
+            f"'{driver.__class__}'. Please update your configuration file with "
+            f"a valid image name for this driver."
+        )
+    return img
 
 
 def lookup_size(driver, size_name: str) -> NodeSize:
@@ -223,6 +244,11 @@ def default_select_address(node: LibcloudNode) -> Optional[str]:
 
 
 class VMNode(Node):
+    """A resaas node implementation which creates a VM for each node using libcloud.
+
+    Requires that docker is installed in the provided `image`
+
+    """
 
     NODE_TYPE = "LibcloudVM"
 
@@ -289,7 +315,7 @@ class VMNode(Node):
                     # Some common fallback options for username
                     ssh_alternate_usernames=["root", "ubuntu", "resaas"],
                     deploy=deployment_steps,
-                    auth=NodeAuthSSHKey(self._vm_config.ssh_public_key),
+                    # auth=NodeAuthSSHKey(self._vm_config.ssh_public_key),
                     ssh_key=self._vm_config.ssh_private_key_path,
                     wait_period=10,
                     **self._vm_config.libcloud_create_node_inputs,
@@ -297,6 +323,7 @@ class VMNode(Node):
                 for s in deployment_steps.steps:
                     # Ensure that scripts all exited successfully
                     _raise_for_exit_status(self._node, s)
+
             except DeploymentException as e:
                 self._status = NodeStatus.FAILED
                 logs = (
@@ -309,6 +336,8 @@ class VMNode(Node):
                         # Keep node reference to enable later
                         # destroy attempts
                         self._node = e.node
+                    else:
+                        self._node = None
                 self.sync_representation()
                 return (False, logs)
             else:

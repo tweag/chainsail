@@ -63,6 +63,7 @@ class VMNodeConfig(HasDriver):
     libcloud_driver: NodeDriver
     libcloud_driver_inputs: Dict
     libcloud_create_node_inputs: Dict
+    init_script: str = ""
 
     def create_node_driver(self):
         return self.libcloud_driver(**self.libcloud_driver_inputs)
@@ -89,6 +90,9 @@ class VMNodeConfigSchema(Schema):
     libcloud_driver_inputs = fields.Dict(keys=fields.String)
     # Additional provider-specific inputs to pass to the driver's create node method
     libcloud_create_node_inputs = fields.Dict(keys=fields.String)
+    # An initialization bash script which will be run on startup. Use for things
+    # like initializing credential helpers, etc.
+    init_script = fields.String()
 
     @post_load
     def make_vm_node_config(self, data, **kwargs):
