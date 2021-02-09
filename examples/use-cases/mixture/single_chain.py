@@ -2,6 +2,8 @@ import sys
 import importlib
 
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 from rexfw.samplers.rwmc import RWMCSampler
@@ -22,6 +24,11 @@ for i in range(n_samples):
         print("Samples: {}/{} ### acceptance rate: {:.2f}".format(
             i, n_samples, accepted / i))
 
-
+fig, (ax1, ax2) = plt.subplots(1,2)
+plot_true_distribution(ax1)
+plot_samples_histogram(ax2, np.array(samples), 'single chain')
+fig.tight_layout()
+plt.show()
 
 np.save('sc_samples.npy', np.array(samples))
+
