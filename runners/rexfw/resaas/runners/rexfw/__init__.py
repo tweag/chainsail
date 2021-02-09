@@ -1,8 +1,7 @@
 """
 Runners which launch a rexfw simulation.
 """
-
-import shutil
+import os
 from subprocess import check_output
 
 from resaas.common.runners import AbstractRERunner, runner_config
@@ -26,6 +25,9 @@ class MPIRERunner(AbstractRERunner):
 
         model_config = storage.load_config()
         n_replicas = model_config["general"]["num_replicas"]
+
+        PATH = os.environ["PATH"]
+        PYTHONPATH = os.environ["PYTHONPATH"]
         # Spawn an mpi subprocess
         cmd = [
             "mpirun",
@@ -36,16 +38,18 @@ class MPIRERunner(AbstractRERunner):
             "--oversubscribe",
             "-n",
             f"{n_replicas + 1}",
-            shutil.which("python"),
-            "-m",
-            "mpi4py",
-            shutil.which(self.REXFW_SCRIPT),
-            "--name",
-            run_id,
+            # Note: ssh will by default wipe the environment variables when
+            # entering remote nodes if they are running in a container. To handle
+            # these cases we explicitely send the PATH and PYTHONPATH variables from the
+            # controller.
+            # "--mca",
+            # "mca_base_env_list",
+            # f"PATH='{PATH}',PYTHONPATH='{PYTHONPATH}'",
+            self.REXFW_SCRIPT,
             "--storage",
             storage_config,
             "--basename",
-            storage.basename,
+            f"{storage.basename}/{run_id}",
             "--path",
             storage.sim_path,
         ]

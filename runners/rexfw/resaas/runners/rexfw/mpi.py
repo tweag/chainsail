@@ -1,6 +1,11 @@
+"""
+MPI-based rexfw runner script. Must be called from within an mpi context.
+"""
+import sys
 from abc import ABC, abstractmethod
 
 import click
+import mpi4py.rc
 import numpy as np
 from mpi4py import MPI
 from resaas.common.storage import SimulationStorage, load_storage_config
@@ -11,6 +16,31 @@ from rexfw.pdfs import AbstractPDF
 from rexfw.pdfs.normal import Normal
 from rexfw.samplers.rwmc import RWMCSampler
 from rexfw.slaves import Slave
+
+# Disable finalization hook in global mpi4py config
+mpi4py.rc.finalize = False
+
+mpicomm = MPI.COMM_WORLD
+
+
+# Define a custom hook which will **kill** all mpi processes on the
+# first failure
+# See https://stackoverflow.com/questions/49868333/fail-fast-with-mpi4py
+def mpiabort_excepthook(type, value, traceback):
+    print((type, value, traceback))
+    mpicomm.Abort()
+    sys.__excepthook__(type, value, traceback)
+
+
+def ensure_mpi_failure(func):
+    def wrapper(*args, **kwargs):
+        # Add the mpi abort hook
+        sys.excepthook = mpiabort_excepthook
+        func(*args, **kwargs)
+        # If the program has not exited, continue on with the default hook
+        sys.excepthook = sys.__excepthook__
+
+    return wrapper
 
 
 class BoltzmannTemperedDistribution(AbstractPDF):
@@ -73,7 +103,6 @@ class BoltzmannTemperedDistribution(AbstractPDF):
 
 
 @click.command()
-@click.option("--name", required=True, type=str, help="output directory name")
 @click.option(
     "--basename",
     required=True,
@@ -93,8 +122,8 @@ class BoltzmannTemperedDistribution(AbstractPDF):
     type=click.Path(exists=True),
     help="path to storage backend YAML config file",
 )
-def run_rexfw_mpi(name, basename, path, storage_config):
-    mpicomm = MPI.COMM_WORLD
+@ensure_mpi_failure
+def run_rexfw_mpi(basename, path, storage_config):
     rank = mpicomm.Get_rank()
     size = mpicomm.Get_size()
 
@@ -134,18 +163,20 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         # write final step sizes to simulation storage
         # The sampling statistics holds objects which internally keep a time
         # series of quantities such as the step size
-        timestep_quantities = filter(lambda x: x.name == 'stepsize',
-                                     master.sampling_statistics.elements)
+        timestep_quantities = filter(
+            lambda x: x.name == "stepsize", master.sampling_statistics.elements
+        )
         # Such a quantity x has a field "origins" which holds strings
         # identifying to which sampling objects this quantity is related.
         # Such a string is, in this case, "replicaXX", where XX enumerates
         # the replicas. We thus sort by the XXses to get the time steps
         # in the right order.
         sorted_timestep_quantities = sorted(
-            timestep_quantities,
-            key=lambda x: int(x.origins[0][len('replica'):]))
+            timestep_quantities, key=lambda x: int(x.origins[0][len("replica") :])
+        )
         storage.save_final_timesteps(
-            np.array([x.current_value for x in sorted_timestep_quantities]))
+            np.array([x.current_value for x in sorted_timestep_quantities])
+        )
 
         # send kill request to break from infinite message receiving loop in
         # replicas
@@ -162,15 +193,14 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         bare_pdf = Normal()
 
         # Turn it into a Boltzmann distribution
-        tempered_pdf = BoltzmannTemperedDistribution(
-            bare_pdf, schedule["beta"][rank - 1])
+        tempered_pdf = BoltzmannTemperedDistribution(bare_pdf, schedule["beta"][rank - 1])
 
         # TODO: this is currently a bit annoying: we don't know the number of
         # variables. Either the user provides it in the pdf object or they have to
         # provide initial states, which might not be a bad idea, actually.
         tempered_pdf.n_variables = 1
         if config["general"]["initial_states"] is None:
-            init_state = np.random.normal(tempered_pdf.n_variables)
+            init_state = np.random.normal(size=(tempered_pdf.n_variables,))
         else:
             init_state = storage.load_initial_states()[rank - 1]
 
@@ -183,8 +213,7 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         # being the step size
         sampler_params = {"stepsize": timestep}
         replica = setup_default_replica(
-            init_state, tempered_pdf, RWMCSampler, sampler_params, storage,
-            comm, rank
+            init_state, tempered_pdf, RWMCSampler, sampler_params, storage, comm, rank
         )
 
         # the slaves are relicts; originally I thought them to pass on
