@@ -58,7 +58,7 @@ COMMAND_TEMPLATE = """#!/usr/bin/env bash
 set -ex
 
 docker run -d \
-    -e "USER_PROD_URL={prob_def}" \
+    -e "USER_PROB_URL={prob_def}" \
     -e "USER_INSTALL_SCRIPT=/resaas/{install_script}" \
     --network host \
     -v {config_dir}:/resaas \
@@ -102,7 +102,7 @@ def prepare_deployment(
         f.write(DEP_INSTALL_TEMPLATE.format(dep_install_commands=install_commands))
 
     # Prepare initial hostfile with known peers
-    hosts = ["localhost"]
+    hosts = []
     if vm_node._representation:
         # Note: assuming that we are already within a session context
         job: TblJobs = vm_node._representation.job
@@ -111,7 +111,6 @@ def prepare_deployment(
             # Note: nodes at this stage don't generally have a database ID
             #   so we compare on name.
             if node.name == vm_node._representation.name:
-                # Don't add yourself as a peer since we define localhost above
                 continue
             if node.in_use and node.address:
                 print("Adding node to hostfile")
