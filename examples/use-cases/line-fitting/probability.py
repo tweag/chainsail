@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 
@@ -9,20 +11,6 @@ def rn_average(r, n):
     return np.sum(np.array(r) ** (-n), axis=-1) ** (-1/n)
 
 
-def log_likelihood(params, sigma, x, y, n=6):
-    mock_y = line(params[:, 0][:, None], params[:, 1][:, None], x)
-    return -0.5 * np.sum(rn_average(np.fabs(y - mock_y), 6) ** 2) / sigma / sigma
-
-
-def log_prior(params, sigma):
-    inv_cov = np.eye(len(params)) / sigma / sigma
-    return (-0.5 * params.T @ inv_cov @ params).sum()
-
-
-def log_posterior(params, x, y, sigma_l, sigma_p, n):
-    return log_likelihood(params, x, y, sigma_l, n) + log_prior(params, sigma_p)
-
-
 class Posterior:
     def __init__(self, sigma_l, sigma_p, n, data_x, data_y):
         self.sigma_l = sigma_l
@@ -31,12 +19,23 @@ class Posterior:
         self.data_x = data_x
         self.data_y = data_y
 
+    def log_prior(self, x):
+        x = x.reshape(-1, 2)
+        inv_cov = np.eye(len(x)) / self.sigma_p / self.sigma_p
+        return (-0.5 * x.T @ inv_cov @ x).sum()
+
+    def log_likelihood(self, x):
+        x = x.reshape(-1, 2)
+        mock_y = line(x[:, 0][:, None], x[:, 1][:, None], self.data_x)
+        return -0.5 * np.sum(rn_average(np.fabs(self.data_y - mock_y), 6) ** 2) \
+          / self.sigma_l / self.sigma_l
+
     def log_prob(self, x):
-        log_l = log_likelihood(x, self.sigma_l, self.data_x, self.data_y, self.n)
-        log_p = log_prior(x, self.sigma_p)
-        return log_l + log_p
+        x = x.reshape(-1, 2)
+        return self.log_likelihood(x) + self.log_prior(x)
 
 
-x_data, y_data = np.loadtxt('data.txt').T
-
+path = os.path.dirname(__file__)
+x_data, y_data = np.loadtxt(os.path.join(path, 'data.txt')).T
 pdf = Posterior(1, 5, 6, x_data, y_data)
+initial_state = np.random.uniform(-5, 5, (1, 2)).ravel()
