@@ -60,8 +60,6 @@ class TestDrawInitialTimesteps(unittest.TestCase):
         reweighted_stds = dos_reweighted_samples.std(0)
         # transform from standard deviations back to inverse temperatures
         reweighted_betas = 1 / reweighted_stds ** 2
-        print(reweighted_betas)
-        print(new_betas)
         self.assertTrue(np.allclose(reweighted_betas, new_betas, atol=0.1))
 
 
