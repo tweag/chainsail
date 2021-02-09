@@ -10,6 +10,7 @@ import mpi4py.rc
 import numpy as np
 from mpi4py import MPI
 from resaas.common.storage import SimulationStorage, load_storage_config
+from resaas.common.tempered_distributions import BoltzmannTemperedDistribution
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
@@ -63,65 +64,6 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
         )
         raise e
     return (pdf, initial_states)
-
-
-class BoltzmannTemperedDistribution(AbstractPDF):
-    """
-    This wraps an object representing a probability density into a Boltzmann
-    ensemble.
-
-    For a physical system with potential energy E, the configurational part
-    (meaning, independent from the momenta) of the Boltzmann distribution is
-    given by q(E|beta) \propto exp(-beta * E). Here, beta is, up to a constant,
-    the inverse temperature of the system of a heat bath the system is assumed
-    to be coupled to. For any probability distribution p(x), we can define a
-    pseudo-energy E(x) by E(x) = -log p(x). We can thus use the Boltzmann
-    distribution to modify the "ruggedness" (height of modes) of p(x) via beta:
-    for beta = 0; q(E(x)) becomes a uniform distribution, while for beta = 1,
-    q(E(x)) = p(x). Intermediate beta values can thus be used to create a
-    sequence of distributions that are increasingly easier to sample.
-    """
-
-    def __init__(self, pdf, beta=1.0):
-        """
-        Initalizes a Boltzmann distribution for a fake physical system defined
-        by a probability density.
-
-        Args:
-            pdf(AbstractPdf): object representing a probability distribution
-            beta(float): inverse temperature in the range 0 < beta <= 1
-        """
-        self.bare_pdf = pdf
-        self.beta = beta
-
-    def log_prob(self, x):
-        """
-        Log-probability of the Boltzmann distribution.
-
-        Args:
-            x: variate(s) of the underlying PDF
-        """
-        return self.beta * self.bare_pdf.log_prob(x)
-
-    def gradient(self, x):
-        """
-        Gradient of the Boltzmann distribution's log-probability.
-
-        Args:
-            x: variate(s) of the underlying PDF
-        """
-        return self.beta * self.bare_pdf.gradient(x)
-
-    def bare_log_prob(self, x):
-        """
-        Log-probability of the underlying probability density.
-
-        This is required for multiple histogram reweighting.
-
-        Args:
-            x: variate(s) of the underlying PDF
-        """
-        return self.bare_pdf.log_prob(x)
 
 
 @click.command()
@@ -215,11 +157,13 @@ def run_rexfw_mpi(basename, path, storage_config):
 
         # Turn user-defined pdf into a Boltzmann distribution
         tempered_pdf = BoltzmannTemperedDistribution(bare_pdf, schedule["beta"][rank - 1])
+        if config["general"]["initial_states"] is not None:
+            init_state = storage.load_initial_states()[rank - 1]
 
         if config["local_sampling"]["timesteps"] is not None:
             timestep = storage.load_initial_timesteps()[rank - 1]
         else:
-            timestep = 1
+            timestep = 0.1
 
         # We use a simple Metropolis-Hastings sampler
         ls_params = config["local_sampling"]
