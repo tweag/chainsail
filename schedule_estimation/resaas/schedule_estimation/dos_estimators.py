@@ -43,15 +43,15 @@ def validate_shapes(energies, parameters):
     param_shapes = {}
     for key, val in parameters.items():
         if val.shape[0] == 0:
-            raise ValueError(('Parameter arrays need to have at least '
-                              'length 1'))
+            raise ValueError(("Parameter arrays need to have at least " "length 1"))
         param_shapes[key] = val.shape[0]
     if not len(set(param_shapes)) == 1:
-        raise ValueError('Parameter array shapes are not equal')
+        raise ValueError("Parameter array shapes are not equal")
     param_shape = val.shape[0]
     if energies.shape[0] != param_shape:
-        raise ValueError(('First dimension of energies array needs to be '
-                          'of same length as parameter arrays'))
+        raise ValueError(
+            ("First dimension of energies array needs to be " "of same length as parameter arrays")
+        )
 
 
 def calculate_log_L(f, log_g):
@@ -71,12 +71,13 @@ def calculate_log_L(f, log_g):
 
 
 class Ensemble(ABC):
-    '''
+    """
     Interface for classes implementing statistical ensembles.
 
     An ensemble is essentially a function q(E) which maps an energy
     E to a probability q. It might be parameterized.
-    '''
+    """
+
     @staticmethod
     @abstractmethod
     def log_ensemble(energy, **parameters):
@@ -141,16 +142,16 @@ class WHAM:
               in all ensembles.
         """
         n_ensembles = energies.shape[0]
-        param_dicts = [{param: parameters[param][i] for param in
-                        parameters} for i in range(n_ensembles)]
-        log_qs = np.array([self._ensemble.log_ensemble(energies.ravel(),
-                                                       **params)
-                           for params in param_dicts])
+        param_dicts = [
+            {param: parameters[param][i] for param in parameters} for i in range(n_ensembles)
+        ]
+        log_qs = np.array(
+            [self._ensemble.log_ensemble(energies.ravel(), **params) for params in param_dicts]
+        )
 
         return log_qs
 
-    def estimate_dos(self, energies, parameters, max_iterations=5000,
-                     stopping_threshold=1e-6):
+    def estimate_dos(self, energies, parameters, max_iterations=5000, stopping_threshold=1e-6):
         """Do multiple histogram reweighting with infinitely fine binning as
         outlined in the paper "Evaluation of marginal likelihoods via the
         density of states" (Habeck, AISTATS 2012)
@@ -181,14 +182,18 @@ class WHAM:
 
             log_L = calculate_log_L(f, log_gs)
             if i % 50 == 0:
-                logger.info('Likelihood: {}'.format(log_L))
+                logger.info("Likelihood: {}".format(log_L))
             # TODO: implement working stopping criterion
             # if stopping_criterion(log_L, old_log_L, stopping_threshold):
             #     break
             # old_log_L = log_L
 
         if i > 0.8 * max_iterations:
-            logger.info(('More than 80% of max WHAM iterations were required. '
-                 'Histogram reweighting might not have converged.'))
+            logger.warning(
+                (
+                    "More than 80% of max WHAM iterations were required. "
+                    "Histogram reweighting might not have converged."
+                )
+            )
 
         return log_gs
