@@ -1,6 +1,7 @@
 """
 MPI-based rexfw runner script. Must be called from within an mpi context.
 """
+import logging
 import sys
 from abc import ABC, abstractmethod
 
@@ -17,6 +18,8 @@ from rexfw.pdfs.normal import Normal
 from rexfw.samplers.rwmc import RWMCSampler
 from rexfw.slaves import Slave
 
+logger = logging.getLogger(__name__)
+
 # Disable finalization hook in global mpi4py config
 mpi4py.rc.finalize = False
 
@@ -26,10 +29,13 @@ mpicomm = MPI.COMM_WORLD
 # Define a custom hook which will **kill** all mpi processes on the
 # first failure
 # See https://stackoverflow.com/questions/49868333/fail-fast-with-mpi4py
-def mpiabort_excepthook(type, value, traceback):
-    print((type, value, traceback))
+def mpiabort_excepthook(exc_type, exc_value, exc_traceback):
+    logger.error(
+        "MPI process encountered an unchecked exception.",
+        exc_info=(exc_type, exc_value, exc_traceback),
+    )
     mpicomm.Abort()
-    sys.__excepthook__(type, value, traceback)
+    sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
 
 def ensure_mpi_failure(func):
@@ -210,12 +216,12 @@ def run_rexfw_mpi(basename, path, storage_config):
             timestep = 1
 
         # We use a simple Metropolis-Hastings sampler
-        ls_params = config['local_sampling']
+        ls_params = config["local_sampling"]
         sampler_params = {
             "stepsize": timestep,
-            "timestep_adaption_limit": ls_params['timestep_adaption_limit'],
-            "adaption_uprate": ls_params['adaption_uprate'],
-            "adaption_downrate": ls_params['adaption_downrate']
+            "timestep_adaption_limit": ls_params["timestep_adaption_limit"],
+            "adaption_uprate": ls_params["adaption_uprate"],
+            "adaption_downrate": ls_params["adaption_downrate"],
         }
         replica = setup_default_replica(
             init_state, tempered_pdf, RWMCSampler, sampler_params, storage, comm, rank

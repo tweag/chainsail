@@ -5,25 +5,19 @@ from tempfile import TemporaryDirectory
 from typing import IO, Callable, List, Optional, Tuple, Union
 
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import NodeAuthSSHKey, NodeDriver, NodeImage, NodeSize
-from libcloud.compute.deployment import (
-    Deployment,
-    FileDeployment,
-    MultiStepDeployment,
-    ScriptDeployment,
-    ScriptFileDeployment,
-    SSHKeyDeployment,
-)
+from libcloud.compute.base import (NodeAuthSSHKey, NodeDriver, NodeImage,
+                                   NodeSize)
+from libcloud.compute.deployment import (Deployment, FileDeployment,
+                                         MultiStepDeployment, ScriptDeployment,
+                                         ScriptFileDeployment,
+                                         SSHKeyDeployment)
 from libcloud.compute.types import DeploymentException, NodeState
 from resaas.common.spec import Dependencies, JobSpec, JobSpecSchema
-from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
+from resaas.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
+                                     VMNodeConfig)
 from resaas.scheduler.db import TblJobs, TblNodes
-from resaas.scheduler.errors import (
-    ConfigurationError,
-    MissingNodeError,
-    NodeError,
-    ObjectConstructionError,
-)
+from resaas.scheduler.errors import (ConfigurationError, MissingNodeError,
+                                     NodeError, ObjectConstructionError)
 from resaas.scheduler.nodes.base import Node, NodeStatus
 
 
@@ -140,6 +134,12 @@ def prepare_deployment(
         # Extra leading whitespace
         container_cmd += " "
         container_cmd += " ".join([a for a in vm_node._config.args])
+    
+    if vm_node._representation:
+        job_id = vm_node._representation.job_id
+    else:
+        job_id = "job"
+    container_cmd.format(job_id=job_id)
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
         install_script=os.path.basename(install_script_target),

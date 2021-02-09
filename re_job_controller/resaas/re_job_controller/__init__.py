@@ -14,10 +14,7 @@ from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.optimization_quantities import get_quantity_function
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 
-
-def log(msg):
-    # TODO
-    print(msg)
+logger = logging.getLogger(__name__)
 
 
 def _config_template_from_params(re_params, local_sampling_params):
@@ -213,7 +210,7 @@ class BaseREJobController:
 
         max_runs = opt_params.max_optimization_runs
         for run_counter in range(max_runs):
-            log(
+            logger.info(
                 "Schedule optimization simulation #{}/{} started".format(run_counter + 1, max_runs)
             )
             current_storage = SimulationStorage(
@@ -225,7 +222,7 @@ class BaseREJobController:
                 msg_part2 = "{}/{} with {} replicas".format(
                     run_counter, max_runs, schedule_length(schedule)
                 )
-                log(msg_part1 + msg_part2)
+                logger.info(msg_part1 + msg_part2)
             else:
                 schedule = self._initial_schedule
 
@@ -241,7 +238,7 @@ class BaseREJobController:
             previous_storage = current_storage
             previous_schedule = schedule
         else:
-            log(
+            logger.info(
                 (
                     "Maximum number of optimization runs reached. "
                     "Schedule optimization might not have converged"

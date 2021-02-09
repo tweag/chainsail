@@ -1,14 +1,14 @@
 """
 Runners which launch a rexfw simulation.
 """
-import os
+import logging
 import subprocess
-import sys
 import time
-from subprocess import check_output
 
 from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.storage import AbstractStorageBackend
+
+logger = logging.getLogger(__name__)
 
 
 class MPIRERunner(AbstractRERunner):
@@ -22,15 +22,12 @@ class MPIRERunner(AbstractRERunner):
 
     def run_sampling(self, storage: AbstractStorageBackend):
         # Get configuration
-        run_id = runner_config.get("run_id", "no-id")
         hostsfile = runner_config.get("hostsfile", self.DEFAULT_HOSTSFILE)
         storage_config = runner_config.get("storage_config", self.DEFAULT_STORAGEFILE)
 
         model_config = storage.load_config()
         n_replicas = model_config["general"]["num_replicas"]
 
-        PATH = os.environ["PATH"]
-        PYTHONPATH = os.environ["PYTHONPATH"]
         # Spawn an mpi subprocess
         cmd = [
             "mpirun",
@@ -41,31 +38,24 @@ class MPIRERunner(AbstractRERunner):
             "--oversubscribe",
             "-n",
             f"{n_replicas + 1}",
-            # Note: ssh will by default wipe the environment variables when
-            # entering remote nodes if they are running in a container. To handle
-            # these cases we explicitely send the PATH and PYTHONPATH variables from the
-            # controller.
-            # "--mca",
-            # "mca_base_env_list",
-            # f"PATH='{PATH}',PYTHONPATH='{PYTHONPATH}'",
             self.REXFW_SCRIPT,
             "--storage",
             storage_config,
             "--basename",
-            f"{storage.basename}/{run_id}",
+            f"{storage.basename}",
             "--path",
             storage.sim_path,
         ]
 
+        logger.debug(f"Calling mpirun with: {cmd}")
         # run in subprocess, but capture both stdout and stderr and
         # redirect them to the parent's process stdout
-
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # https://stackoverflow.com/a/53830668/1656472
         while True:
             rd = process.stdout.readline()
-            print(rd.decode("ascii"), end="")
+            logger.info(rd.decode("ascii"))
             if not rd:  # EOF
                 return_code = process.poll()
                 if return_code is not None:

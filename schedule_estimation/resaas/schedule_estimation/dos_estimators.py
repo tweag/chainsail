@@ -2,24 +2,13 @@
 Classes which estimate the density of states (DOS) from MCMC samples from a
 distribution at different "temperatures".
 """
-import numpy as np
-from abc import abstractmethod, ABC
+import logging
+from abc import ABC, abstractmethod
 
+import numpy as np
 from resaas.common.util import log_sum_exp
 
-
-def log(text):
-    """Write a log entry.
-
-    TODO: we might log to some database or a file instead of stdout
-
-    Args:
-      text:
-    Returns:
-
-    """
-    # print(text)
-    pass
+logger = logging.getLogger(__name__)
 
 
 def stopping_criterion(self, log_L, previous_log_L, termination_threshold):
@@ -192,14 +181,14 @@ class WHAM:
 
             log_L = calculate_log_L(f, log_gs)
             if i % 50 == 0:
-                log('Likelihood: {}'.format(log_L))
+                logger.info('Likelihood: {}'.format(log_L))
             # TODO: implement working stopping criterion
             # if stopping_criterion(log_L, old_log_L, stopping_threshold):
             #     break
             # old_log_L = log_L
 
         if i > 0.8 * max_iterations:
-            log(('More than 80% of max WHAM iterations were required. '
+            logger.info(('More than 80% of max WHAM iterations were required. '
                  'Histogram reweighting might not have converged.'))
 
         return log_gs
