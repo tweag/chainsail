@@ -5,19 +5,25 @@ from tempfile import TemporaryDirectory
 from typing import IO, Callable, List, Optional, Tuple, Union
 
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import (NodeAuthSSHKey, NodeDriver, NodeImage,
-                                   NodeSize)
-from libcloud.compute.deployment import (Deployment, FileDeployment,
-                                         MultiStepDeployment, ScriptDeployment,
-                                         ScriptFileDeployment,
-                                         SSHKeyDeployment)
+from libcloud.compute.base import NodeAuthSSHKey, NodeDriver, NodeImage, NodeSize
+from libcloud.compute.deployment import (
+    Deployment,
+    FileDeployment,
+    MultiStepDeployment,
+    ScriptDeployment,
+    ScriptFileDeployment,
+    SSHKeyDeployment,
+)
 from libcloud.compute.types import DeploymentException, NodeState
 from resaas.common.spec import Dependencies, JobSpec, JobSpecSchema
-from resaas.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
-                                     VMNodeConfig)
+from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from resaas.scheduler.db import TblJobs, TblNodes
-from resaas.scheduler.errors import (ConfigurationError, MissingNodeError,
-                                     NodeError, ObjectConstructionError)
+from resaas.scheduler.errors import (
+    ConfigurationError,
+    MissingNodeError,
+    NodeError,
+    ObjectConstructionError,
+)
 from resaas.scheduler.nodes.base import Node, NodeStatus
 
 
@@ -134,7 +140,7 @@ def prepare_deployment(
         # Extra leading whitespace
         container_cmd += " "
         container_cmd += " ".join([a for a in vm_node._config.args])
-    
+
     if vm_node._representation:
         job_id = vm_node._representation.job_id
     else:
@@ -265,8 +271,8 @@ class VMNode(Node):
         libcloud_node: Optional[LibcloudNode] = None,
         representation: Optional[TblNodes] = None,
         status: Optional[NodeStatus] = None,
-        address_selector: IPSelector = default_select_address,
-        deployment: DeploymentPreparer = prepare_deployment,
+        address_selector: Optional[IPSelector] = None,
+        deployment: Optional[DeploymentPreparer] = None,
     ):
         if "create_node" not in driver.features or "ssh_key" not in driver.features["create_node"]:
             raise ValueError(
@@ -281,8 +287,14 @@ class VMNode(Node):
         self._config = config
         self._vm_config = vm_config
         self._node = libcloud_node
-        self._address_selector = address_selector
-        self._deployment = deployment
+        if not address_selector:
+            self._address_selector = default_select_address
+        else:
+            self._address_selector = address_selector
+        if not deployment:
+            self._deployment = prepare_deployment
+        else:
+            self._deployment = deployment
         if self._node:
             self._address = self._address_selector(self._node)
         else:

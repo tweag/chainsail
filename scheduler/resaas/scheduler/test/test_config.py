@@ -7,6 +7,8 @@ VM_NODE_CONFIG = {
     "ssh_user": "ubuntu",
     "ssh_public_key": "notARealKey",
     "ssh_private_key_path": "/home/someone/.ssh/key.pem",
+    "controller_config_path": "/foo/bar/controller.yaml",
+    "storage_config_path": "/foo/bar/storage.yaml",
     "libcloud_provider": "EC2",
     "libcloud_driver_inputs": {
         "key": "XXXXXXXXXXX",
@@ -21,6 +23,8 @@ VM_NODE_CONFIG_RESAAS_DRIVER = {
     "ssh_user": "ubuntu",
     "ssh_public_key": "notARealKey",
     "ssh_private_key_path": "/home/someone/.ssh/key.pem",
+    "controller_config_path": "/foo/bar/controller.yaml",
+    "storage_config_path": "/foo/bar/storage.yaml",
     "libcloud_provider": "RESAAS_DUMMY",
     "libcloud_driver_inputs": {"creds": "foobar"},
 }

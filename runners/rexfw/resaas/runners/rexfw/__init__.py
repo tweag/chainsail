@@ -42,7 +42,7 @@ class MPIRERunner(AbstractRERunner):
             "--storage",
             storage_config,
             "--basename",
-            f"{storage.basename}",
+            storage.basename,
             "--path",
             storage.sim_path,
         ]
