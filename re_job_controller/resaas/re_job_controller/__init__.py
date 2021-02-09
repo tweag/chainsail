@@ -16,7 +16,7 @@ from resaas.schedule_estimation.schedule_optimizers import SingleParameterSchedu
 
 def log(msg):
     # TODO
-    pass
+    print(msg)
 
 
 def _config_template_from_params(re_params, local_sampling_params):
@@ -335,7 +335,6 @@ class BaseREJobController:
         Returns:
           :class:`np.array`: density of states estimate
         """
-        print("Running single run")
         self._re_runner.run_sampling(storage)
         energies = storage.load_all_energies()
         schedule = storage.load_schedule()
@@ -353,7 +352,7 @@ class BaseREJobController:
 
         prod_storage = SimulationStorage(self._basename, "production_run", self._storage_backend)
         self._setup_simulation(prod_storage, final_schedule, final_opt_storage, prod=True)
-        self._do_single_run(prod_storage.config_file_name)
+        self._do_single_run(prod_storage)
 
 
 class CloudREJobController(BaseREJobController):

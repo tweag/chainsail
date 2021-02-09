@@ -209,9 +209,14 @@ def run_rexfw_mpi(basename, path, storage_config):
         else:
             timestep = 1
 
-        # We use a simple Metropolis-Hastings sampler with its only parameter
-        # being the step size
-        sampler_params = {"stepsize": timestep}
+        # We use a simple Metropolis-Hastings sampler
+        ls_params = config['local_sampling']
+        sampler_params = {
+            "stepsize": timestep,
+            "timestep_adaption_limit": ls_params['timestep_adaption_limit'],
+            "adaption_uprate": ls_params['adaption_uprate'],
+            "adaption_downrate": ls_params['adaption_downrate']
+        }
         replica = setup_default_replica(
             init_state, tempered_pdf, RWMCSampler, sampler_params, storage, comm, rank
         )

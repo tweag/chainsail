@@ -1,4 +1,4 @@
-version: "3.5"
+version: '3.5'
 services:
   control-node:
     build:
@@ -32,17 +32,17 @@ services:
       context: ../..
       dockerfile: docker/node/Dockerfile
     ports:
-      - "26"
+      - '26'
     volumes:
       - $HOME/.ssh/your-resaas-key.pub:/app/config/ssh/authorized_keys
       - $PWD/config:/resaas
     command:
       - /usr/sbin/sshd
       - -D
-
+    depends_on: [graphite]
   mpi-node-2:
     ports:
-      - "26"
+      - '26'
     build:
       context: ../..
       dockerfile: docker/node/Dockerfile
@@ -52,3 +52,14 @@ services:
     command:
       - /usr/sbin/sshd
       - -D
+    depends_on: [graphite]
+
+  graphite:
+    image: 'graphiteapp/graphite-statsd'
+    restart: 'always'
+    ports:
+      - '80:80'
+      - '2003-2004:2003-2004'
+      - '2023-2024:2023-2024'
+      - '8125:8125/udp'
+      - '8126:8126'

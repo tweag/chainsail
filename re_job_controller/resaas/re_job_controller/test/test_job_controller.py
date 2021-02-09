@@ -1,10 +1,14 @@
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 from resaas.common.storage import AbstractStorageBackend
 from resaas.common.spec import NaiveHMCParameters, ReplicaExchangeParameters, OptimizationParameters
-
 from resaas.re_job_controller import BaseREJobController
+
+
+def mock_setup_initial_states(current_storage, schedule, previous_storage):
+    return np.array([0.01] * len(list(schedule.values())[0]))
 
 
 class MockWham:
@@ -14,19 +18,15 @@ class MockWham:
 
 class MockOptimizer:
     def optimize(self, dos, energies):
-        return {"beta": np.array([42] * (dos - 1))}
+        return {"beta": np.arange(dos-1, 0, -1)}
 
 
 class MockRERunner:
     def run_sampling(self, storage):
-        storage.save_final_timesteps(np.array([1, 2, 3]))
-        cfg = storage.load_config()
-        # save fake energies b/c I'm too stupid to mock
-        # StorageWriter.load_all_energies()
-        di = cfg["re"]["dump_interval"]
-        for r in range(1, cfg["general"]["num_replicas"] + 1):
-            for s in range(0, cfg["general"]["n_iterations"], di):
-                storage.save_energies([1.0], "replica{}".format(r), s, s + di)
+        sched = storage.load_schedule()
+        # make nonsense timesteps with same length as schedule
+        mock_timesteps = np.ones(len(list(sched.values())[0]))
+        storage.save_final_timesteps(mock_timesteps)
 
 
 class MockStorageBackend(AbstractStorageBackend):
@@ -42,8 +42,19 @@ class MockStorageBackend(AbstractStorageBackend):
 
 class testREJobController(unittest.TestCase):
     def setUp(self):
+        initial_states_patcher = patch(
+            'resaas.re_job_controller.setup_initial_states')
+        initial_states_patcher.start()
+        self.addCleanup(initial_states_patcher.stop)
+
+        load_all_energies_patcher = patch(
+            'resaas.common.storage.SimulationStorage.load_all_energies',
+            return_value=3)
+        load_all_energies_patcher.start()
+        self.addCleanup(load_all_energies_patcher.stop)
+
         optimizer = MockOptimizer()
-        initial_schedule = {'beta': np.array([42] * 8)}
+        initial_schedule = {'beta': np.arange(7, 0, -1)}
         re_params = ReplicaExchangeParameters(
             num_optimization_samples=10,
             num_production_samples=20, dump_interval=5)
@@ -66,5 +77,5 @@ class testREJobController(unittest.TestCase):
         res_dos = res_storage.load_dos()
 
         self.assertEqual(res_storage.sim_path, "optimization_run4")
-        self.assertTrue(all(res_sched["beta"] == np.array([42] * 3)))
-        self.assertEqual(res_dos, 4)
+        self.assertTrue(np.all(res_sched["beta"] == np.arange(2, 0, -1)))
+        self.assertEqual(res_dos, 3)

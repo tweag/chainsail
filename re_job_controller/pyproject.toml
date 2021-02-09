@@ -9,6 +9,7 @@ packages = [ { include = 'resaas' } ]
 
 [tool.poetry.scripts]
 resaas-controller = 'resaas.re_job_controller.run:run'
+resaas-controller-local = 'resaas.re_job_controller.run_local:run'
 
 [tool.poetry.dependencies]
 python = "^3.8"

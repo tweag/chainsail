@@ -1,0 +1,24 @@
+{
+    "probability_definition": "gs://bucket/sub/path/script_and_data",
+    "max_replicas": 8,
+    "initial_number_of_replicas": 5,
+    "initial_schedule_parameters": {
+        "minimum_beta": 0.1
+    },
+    "optimization_parameters": {
+        "optimization_quantity_target": 0.85,
+	"decrement": 0.025,
+	"min_param": 0.1
+    },
+    "replica_exchange_parameters": {
+	"num_optimization_samples": 2500,
+	"dump_interval": 500,
+	"status_interval": 500
+    },
+    "dependencies": [
+        {
+            "type": "pip",
+            "deps": ["numpy==1.19.5", "pandas==1.0.0"]
+        }
+    ]
+}
