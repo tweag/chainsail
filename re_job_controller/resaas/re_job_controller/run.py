@@ -1,6 +1,7 @@
 """
 Main entrypoint to the resaas controller
 """
+import logging
 from concurrent import futures
 from dataclasses import dataclass
 from functools import partial
@@ -26,6 +27,7 @@ from resaas.re_job_controller import (
 ProcessStatus = Tuple[bool, str]
 
 
+logger = logging.getLogger("resaas.re_job_controller")
 ##############################################################################
 # CONFIG
 ##############################################################################
@@ -41,6 +43,7 @@ class ControllerConfig:
     storage_basename: str = ""
     port: int = 50051
     n_threads: int = 10
+    log_level: str = "INFO"
 
 
 class ControllerConfigSchema(Schema):
@@ -114,6 +117,11 @@ def run(job, config, storage, hostsfile, job_spec):
     # Load the controller configuration file
     with open(config) as f:
         config: ControllerConfig = ControllerConfigSchema().load(yaml.safe_load(f))
+    # Configure logging
+    logger.setLevel(logging.getLevelName(config.log_level))
+    basicHandler = logging.StreamHandler()
+    logger.addHandler(basicHandler)
+
     # Load the job spec
     with open(job_spec) as f:
         job_spec: JobSpec = JobSpecSchema().loads(f.read())
