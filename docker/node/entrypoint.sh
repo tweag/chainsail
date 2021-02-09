@@ -26,7 +26,7 @@ else
       # means that nested directory structures in the zipfile are NOT 
       # supported.
       echo $(ls -lah /probability)
-      unzip -j /probability/prob_def.zip -d /probability
+      unzip -o -j /probability/prob_def.zip -d /probability
 fi
 
 # Allow for the specification of an additional install script
