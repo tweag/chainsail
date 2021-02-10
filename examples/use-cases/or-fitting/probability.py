@@ -6,9 +6,8 @@ import numpy as np
 def line(a, b, x): return a * x + b
 
 
-def rn_average(r, n):
-    r = r.T
-    return np.sum(np.array(r) ** (-n), axis=-1) ** (-1/n)
+def rn_average(r, n, axis):
+    return np.sum(np.array(r) ** (-n), axis=axis) ** (-1/n)
 
 
 class Posterior:
@@ -20,22 +19,19 @@ class Posterior:
         self.data_y = data_y
 
     def log_prior(self, x):
-        x = x.reshape(-1, 2)
         inv_cov = np.eye(len(x)) / self.sigma_p / self.sigma_p
         return (-0.5 * x.T @ inv_cov @ x).sum()
 
     def log_likelihood(self, x):
-        x = x.reshape(-1, 2)
-        mock_y = line(x[:, 0][:, None], x[:, 1][:, None], self.data_x)
-        return -0.5 * np.sum(rn_average(np.fabs(self.data_y - mock_y), 6) ** 2) \
+        mock_y = line(x[0], x[1], self.data_x)
+        return -0.5 * np.sum(rn_average(np.fabs(self.data_y - mock_y[:, None]), 6, axis=1) ** 2) \
           / self.sigma_l / self.sigma_l
 
     def log_prob(self, x):
-        x = x.reshape(-1, 2)
         return self.log_likelihood(x) + self.log_prior(x)
 
 
 path = os.path.dirname(__file__)
-x_data, y_data = np.loadtxt(os.path.join(path, 'data.txt')).T
-pdf = Posterior(1, 5, 4, x_data, y_data)
-initial_state = np.random.uniform(-5, 5, (2, 2)).ravel()
+data = np.loadtxt(os.path.join(path, 'data.txt'))
+pdf = Posterior(1, 5, 6, data[:,0], data[:,1:])
+initial_state = np.random.uniform(-5, 5, size=2).ravel()
