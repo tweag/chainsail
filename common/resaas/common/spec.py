@@ -154,6 +154,13 @@ class NaiveHMCParametersSchema(Schema):
     adaption_uprate = fields.Float()
     adaption_downrate = fields.Float()
 
+    @post_dump
+    def remove_nulls(self, data, *args, **kwargs):
+        # remove all nullable (i.e. Optional) fields which have a default of None.
+        for nullable_field in ("timestep_adaption_limit", "timesteps"):
+            if data[nullable_field] is None:
+                data.pop(nullable_field)
+
     @post_load
     def make_hmc_sampling_parameters(self, data, **kwargs):
         return NaiveHMCParameters(**data)
@@ -183,7 +190,7 @@ class JobSpecSchema(Schema):
     initial_schedule_parameters = fields.Dict(fields.String, fields.Float())
     optimization_parameters = fields.Nested(OptimizationParametersSchema)
     replica_exchange_parameters = fields.Nested(ReplicaExchangeParametersSchema)
-    hmc_parameters = fields.Nested(NaiveHMCParametersSchema)
+    local_sampling_parameters = fields.Nested(NaiveHMCParametersSchema)
     max_replicas = fields.Int()
     tempered_dist_family = EnumField(TemperedDistributionFamily, by_value=True)
     dependencies = fields.Nested(DependencySchema(many=True))
@@ -199,8 +206,11 @@ class JobSpecSchema(Schema):
     @post_dump
     def remove_nulls(self, data, *args, **kwargs):
         # remove all nullable (i.e. Optional) fields which have a default of None.
-        if data["name"] is None:
-            data.pop("name")
+        nullables = ("name", "local_sampling_parameters",
+                     "replica_exchange_parameters", "optimization_parameters")
+        for nullable_field in nullables:
+            if data[nullable_field] is None:
+                data.pop(nullable_field)
         return data
 
     @post_load
