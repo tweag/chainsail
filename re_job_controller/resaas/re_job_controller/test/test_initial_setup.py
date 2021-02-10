@@ -12,10 +12,10 @@ class MockStorage:
         self._energies = energies
         self._states = states
 
-    def load_all_energies(self):
+    def load_all_energies(self, from_sample, step):
         return self._energies
 
-    def load_all_samples(self):
+    def load_all_samples(self, from_sample, step):
         return self._states
 
 
@@ -49,7 +49,7 @@ class TestDrawInitialTimesteps(unittest.TestCase):
         # each call of draw_initial_states produces one sample for each inverse
         # temperature beta. So we run this many times.
         dos_reweighted_samples = np.array(
-            [draw_initial_states({'beta': new_betas}, storage, dos)
+            [draw_initial_states({'beta': new_betas}, storage, dos, 0, 1)
              for _ in range(n_reweighted_samples)])
 
         expected_means = np.zeros(len(new_betas))

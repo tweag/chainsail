@@ -1,5 +1,3 @@
-from abc import ABC, abstractmethod
-
 import click
 import numpy as np
 from mpi4py import MPI
@@ -165,12 +163,10 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         tempered_pdf = BoltzmannTemperedDistribution(
             bare_pdf, schedule["beta"][rank - 1])
 
-        # TODO: this is currently a bit annoying: we don't know the number of
-        # variables. Either the user provides it in the pdf object or they have to
-        # provide initial states, which might not be a bad idea, actually.
-        tempered_pdf.n_variables = 1
         if config["general"]["initial_states"] is None:
-            init_state = np.random.normal(tempered_pdf.n_variables)
+            # later:
+            # init_state = probability.initial_state
+            init_state = np.random.normal(size=1)
         else:
             init_state = storage.load_initial_states()[rank - 1]
 

@@ -102,21 +102,37 @@ class testSimulationStorage(unittest.TestCase):
         template = os.path.join(self._basename, self._sim_path,
                                 f"{what}/{what}")
         template += "_replica{}_{}-{}.pickle"
-        self._backend.data[template.format(1, 0, 5)] = [1]
-        self._backend.data[template.format(1, 5, 10)] = [2]
-        self._backend.data[template.format(2, 0, 5)] = [3]
-        self._backend.data[template.format(2, 5, 10)] = [4]
+        self._backend.data[template.format(1, 0, 5)] = [1, 2, 3]
+        self._backend.data[template.format(1, 5, 10)] = [4, 5, 6]
+        self._backend.data[template.format(2, 0, 5)] = [7, 8, 9]
+        self._backend.data[template.format(2, 5, 10)] = [10, 11, 12]
 
     def testLoadAllEnergies(self):
         self._write_fake_all_quantities("energies")
         energies = self._storage.load_all_energies()
-        expected = np.array([[1, 2], [3, 4]])
+        expected = np.array([[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]])
+        self.assertTrue(np.all(energies == expected))
+
+        energies = self._storage.load_all_energies(from_sample=5)
+        expected = np.array([[4, 5, 6], [10, 11, 12]])
+        self.assertTrue(np.all(energies == expected))
+
+        energies = self._storage.load_all_energies(from_sample=5, step=2)
+        expected = np.array([[4, 6], [10, 12]])
         self.assertTrue(np.all(energies == expected))
 
     def testLoadAllSamples(self):
         self._write_fake_all_quantities("samples")
         samples = self._storage.load_all_samples()
-        expected = np.array([[1, 2], [3, 4]])
+        expected = np.array([[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]])
+        self.assertTrue(np.all(samples == expected))
+
+        samples = self._storage.load_all_samples(from_sample=5)
+        expected = np.array([[4, 5, 6], [10, 11, 12]])
+        self.assertTrue(np.all(samples == expected))
+
+        samples = self._storage.load_all_samples(from_sample=5, step=2)
+        expected = np.array([[4, 6], [10, 12]])
         self.assertTrue(np.all(samples == expected))
 
 
