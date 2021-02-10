@@ -24,4 +24,4 @@ fig, ax = plt.subplots()
 plot_data_samples(ax, samples[::100], "single chain")
 plt.show()
 
-np.save('sc_samples.txt', samples)
+np.save('sc_samples.npy', samples)
