@@ -4,6 +4,7 @@ MPI-based rexfw runner script. Must be called from within an mpi context.
 import logging
 import sys
 from abc import ABC, abstractmethod
+from typing import Tuple
 
 import click
 import mpi4py.rc
@@ -47,6 +48,23 @@ def ensure_mpi_failure(func):
         sys.excepthook = sys.__excepthook__
 
     return wrapper
+
+
+def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
+    """
+    Imports a user-defined pdf and corresponding initial states from
+    module `probability`.
+    """
+    try:
+        from probability import initial_states, pdf
+    except ImportError as e:
+        logging.exception(
+            "Failed to import user-defined pdf and initial_states. Does "
+            "the `probability` module exist on the PYTHONPATH? "
+            f"PYTHONPATH={sys.path}"
+        )
+        raise e
+    return (pdf, initial_states)
 
 
 class BoltzmannTemperedDistribution(AbstractPDF):
@@ -136,6 +154,9 @@ def run_rexfw_mpi(basename, path, storage_config):
     # Number of replicas is inferred from the MPI environment
     n_replicas = size - 1
 
+    logging.info("Attempting to load user-defined pdf and initial state")
+    bare_pdf, init_state = import_from_user()
+
     # this is where all simulation input data & output (samples, statistics files,
     # etc.) are stored
     storage_backend = load_storage_config(storage_config).get_storage_backend()
@@ -194,21 +215,8 @@ def run_rexfw_mpi(basename, path, storage_config):
 
         schedule = storage.load_schedule()
 
-        # For now, we sample from a normal distribution, but here would eventually
-        # be the user code imported
-        bare_pdf = Normal()
-
-        # Turn it into a Boltzmann distribution
+        # Turn user-defined pdf into a Boltzmann distribution
         tempered_pdf = BoltzmannTemperedDistribution(bare_pdf, schedule["beta"][rank - 1])
-
-        # TODO: this is currently a bit annoying: we don't know the number of
-        # variables. Either the user provides it in the pdf object or they have to
-        # provide initial states, which might not be a bad idea, actually.
-        tempered_pdf.n_variables = 1
-        if config["general"]["initial_states"] is None:
-            init_state = np.random.normal(size=(tempered_pdf.n_variables,))
-        else:
-            init_state = storage.load_initial_states()[rank - 1]
 
         if config["local_sampling"]["timesteps"] is not None:
             timestep = storage.load_initial_timesteps()[rank - 1]
