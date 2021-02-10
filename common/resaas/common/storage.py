@@ -303,7 +303,7 @@ class SimulationStorage:
             )
         )
 
-    def _load_all(self, what):
+    def _load_all(self, what, from_sample=0, step=1):
         """
         Loads any kind of quantity that is written out as a sort of "trace",
         meaning for every sample.
@@ -319,10 +319,16 @@ class SimulationStorage:
         for r in range(1, n_replicas + 1):
             r_things = []
             for n in range(0, n_samples, dump_interval):
+                if n < from_sample:
+                    continue
                 if what == "energies":
-                    things_batch = self.load_energies("replica" + str(r), n, n + dump_interval)
+                    things_batch = self.load_energies("replica" + str(r), n, n + dump_interval)[
+                        ::step
+                    ]
                 elif what == "samples":
-                    things_batch = self.load_samples("replica" + str(r), n, n + dump_interval)
+                    things_batch = self.load_samples("replica" + str(r), n, n + dump_interval)[
+                        ::step
+                    ]
                 else:
                     raise ValueError(
                         f"'what' argument has to be either 'energies' or 'samples', not {what}"
@@ -331,8 +337,8 @@ class SimulationStorage:
             things.append(np.concatenate(r_things))
         return np.array(things)
 
-    def load_all_samples(self):
-        return self._load_all("samples")
+    def load_all_samples(self, from_sample=0, step=1):
+        return self._load_all("samples", from_sample, step)
 
     def save_energies(self, energies, replica_name, from_energies, to_energies):
         self.save(
@@ -345,8 +351,8 @@ class SimulationStorage:
             self.dir_structure.ENERGIES_TEMPLATE.format(replica_name, from_energies, to_energies)
         )
 
-    def load_all_energies(self):
-        return self._load_all("energies")
+    def load_all_energies(self, from_sample=0, step=1):
+        return self._load_all("energies", from_sample, step)
 
     def save_config(self, config_dict):
         self.save(yaml.dump(config_dict), self.dir_structure.CONFIG_FILE_NAME, data_type="text")

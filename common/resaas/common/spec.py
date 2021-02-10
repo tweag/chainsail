@@ -5,7 +5,6 @@ from enum import Enum
 from typing import List, Optional, Set, Union
 
 from marshmallow import Schema, fields, post_dump, post_load, pre_dump
-from marshmallow.exceptions import ValidationError
 from marshmallow_enum import EnumField
 
 
@@ -99,6 +98,8 @@ class OptimizationParameters:
     max_param: float = 1.0
     min_param: float = 0.01
     max_optimization_runs: int = 5
+    dos_burnin_percentage: float = 0.2
+    dos_thinning_step: int = 20
 
 
 @dataclass
@@ -138,6 +139,8 @@ class OptimizationParametersSchema(Schema):
     max_param = fields.Float()
     min_param = fields.Float()
     max_optimization_runs = fields.Int()
+    dos_burnin_percentage = fields.Float()
+    dos_thinning_step = fields.Int()
 
     @post_load
     def make_optimization_parameters(self, data, **kwargs):
@@ -150,6 +153,13 @@ class NaiveHMCParametersSchema(Schema):
     timestep_adaption_limit = fields.Int()
     adaption_uprate = fields.Float()
     adaption_downrate = fields.Float()
+
+    @post_dump
+    def remove_nulls(self, data, *args, **kwargs):
+        # remove all nullable (i.e. Optional) fields which have a default of None.
+        for nullable_field in ("timestep_adaption_limit", "timesteps"):
+            if data[nullable_field] is None:
+                data.pop(nullable_field)
 
     @post_load
     def make_hmc_sampling_parameters(self, data, **kwargs):
@@ -180,7 +190,7 @@ class JobSpecSchema(Schema):
     initial_schedule_parameters = fields.Dict(fields.String, fields.Float())
     optimization_parameters = fields.Nested(OptimizationParametersSchema)
     replica_exchange_parameters = fields.Nested(ReplicaExchangeParametersSchema)
-    hmc_parameters = fields.Nested(NaiveHMCParametersSchema)
+    local_sampling_parameters = fields.Nested(NaiveHMCParametersSchema)
     max_replicas = fields.Int()
     tempered_dist_family = EnumField(TemperedDistributionFamily, by_value=True)
     dependencies = fields.Nested(DependencySchema(many=True))
@@ -196,8 +206,11 @@ class JobSpecSchema(Schema):
     @post_dump
     def remove_nulls(self, data, *args, **kwargs):
         # remove all nullable (i.e. Optional) fields which have a default of None.
-        if data["name"] is None:
-            data.pop("name")
+        nullables = ("name", "local_sampling_parameters",
+                     "replica_exchange_parameters", "optimization_parameters")
+        for nullable_field in nullables:
+            if data[nullable_field] is None:
+                data.pop(nullable_field)
         return data
 
     @post_load

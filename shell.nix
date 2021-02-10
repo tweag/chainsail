@@ -7,5 +7,6 @@ pkgs.mkShell {
     yarn
     docker-compose
     openmpi
+    python38Packages.tkinter
   ];
 }
