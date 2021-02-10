@@ -3,6 +3,7 @@ import moment from 'moment';
 import { Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
 
 const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
+const GRAPHITE_URL = process.env.GRAPHITE_URL || 'http://127.0.0.1';
 
 const JobButton = ({ jobId, jobStatus }) => {
   const isInitialized = jobStatus === 'initialized';
@@ -60,19 +61,26 @@ const JobsTable = ({ data }) => {
     else return '---';
   };
   const TableHeader = ({ children }) => <th className="px-4 py-2 text-left ">{children}</th>;
-  const TableRow = ({ row }) => (
-    <tr className="hover:bg-gray-700 transition duration-100">
-      <TableData d={row.id} />
-      <TableData d={JSON.parse(row.spec).name} />
-      <TableData d={dateFormatter(row.created_at)} />
-      <TableData d={dateFormatter(row.started_at_at)} />
-      <TableData d={dateFormatter(row.finished_at)} />
-      <TableData d={row.status} />
-      <TableData>
-        <JobButton jobId={row.id} jobStatus={row.status} />
-      </TableData>
-    </tr>
-  );
+  const TableRow = ({ row }) => {
+    const job_name = JSON.parse(row.spec).name;
+    const graphite_link = `${GRAPHITE_URL}/render?target=${job_name}.*&height=800&width=800&from=-5min`;
+    return (
+      <tr className="hover:bg-gray-700 transition duration-100">
+        <TableData d={row.id} />
+        <TableData d={job_name} />
+        <TableData d={dateFormatter(row.created_at)} />
+        <TableData d={dateFormatter(row.started_at_at)} />
+        <TableData d={dateFormatter(row.finished_at)} />
+        <TableData d={row.status} />
+        <TableData>
+          <a href={graphite_link}>SEE PLOTS!</a>
+        </TableData>
+        <TableData>
+          <JobButton jobId={row.id} jobStatus={row.status} />
+        </TableData>
+      </tr>
+    );
+  };
   const TableData = ({ d, children }) => (
     <td className="px-4 py-2 border-t-2 transition duration-100">{d ? d : children}</td>
   );
