@@ -155,7 +155,8 @@ class NaiveHMCParametersSchema(Schema):
     def remove_nulls(self, data, *args, **kwargs):
         # remove all nullable (i.e. Optional) fields which have a default of None.
         for nullable_field in ("timestep_adaption_limit", "timesteps"):
-            data.pop(nullable_field)
+            if data[nullable_field] is None:
+                data.pop(nullable_field)
 
     @post_load
     def make_hmc_sampling_parameters(self, data, **kwargs):
@@ -202,7 +203,7 @@ class JobSpecSchema(Schema):
     @post_dump
     def remove_nulls(self, data, *args, **kwargs):
         # remove all nullable (i.e. Optional) fields which have a default of None.
-        nullables = ("name", "dependencies", "local_sampling_parameters",
+        nullables = ("name", "local_sampling_parameters",
                      "replica_exchange_parameters", "optimization_parameters")
         for nullable_field in nullables:
             if data[nullable_field] is None:
