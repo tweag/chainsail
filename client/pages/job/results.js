@@ -12,7 +12,7 @@ const JobButton = ({ jobId, jobStatus }) => {
   return (
     <div
       className={`py-1 text-center rounded-lg lg:transition lg:duration-100 text-white w-20
-	      ${isInitialized ? 'bg-green-600 hover:bg-purple-400 cursor-pointer' : ''}
+	      ${isInitialized ? 'bg-green-600 hover:bg-green-400 cursor-pointer' : ''}
 	      ${isRunning ? 'bg-red-600 hover:bg-red-400 cursor-pointer' : ''}
 	      ${isPending ? 'bg-yellow-400' : ''}
 	      `}
@@ -75,7 +75,9 @@ const JobsTable = ({ data }) => {
         <TableData d={dateFormatter(row.finished_at)} />
         <TableData d={row.status} />
         <TableData>
-          <a href={graphite_link}>SEE PLOTS!</a>
+          <div className="py-1 text-center rounded-lg lg:transition lg:duration-100 text-white w-20 bg-purple-600 hover:bg-purple-400 cursor-pointer">
+            <a href={graphite_link}>SEE PLOTS!</a>
+          </div>
         </TableData>
         <TableData>
           <JobButton jobId={row.id} jobStatus={row.status} />
