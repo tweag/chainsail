@@ -11,10 +11,10 @@ const JobButton = ({ jobId, jobStatus }) => {
   const isPending = !(isInitialized || isRunning);
   return (
     <div
-      className={`py-1 text-center rounded-lg cursor-pointer lg:transition lg:duration-100 text-white w-20
-	      ${isInitialized ? 'bg-green-600 hover:bg-purple-400' : ''}
-	      ${isRunning ? 'bg-red-600 hover:bg-red-400' : ''}
-	      ${isPending ? 'bg-yellow-600 hover:bg-yellow-400' : ''}
+      className={`py-1 text-center rounded-lg lg:transition lg:duration-100 text-white w-20
+	      ${isInitialized ? 'bg-green-600 hover:bg-purple-400 cursor-pointer' : ''}
+	      ${isRunning ? 'bg-red-600 hover:bg-red-400 cursor-pointer' : ''}
+	      ${isPending ? 'bg-yellow-400' : ''}
 	      `}
       onClick={() => {
         if (isInitialized) startJob(jobId);
