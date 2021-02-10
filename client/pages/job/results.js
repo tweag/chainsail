@@ -8,13 +8,13 @@ const GRAPHITE_URL = process.env.GRAPHITE_URL || 'http://127.0.0.1';
 const JobButton = ({ jobId, jobStatus }) => {
   const isInitialized = jobStatus === 'initialized';
   const isRunning = jobStatus === 'running';
-  const isShown = isInitialized || isRunning;
+  const isPending = !(isInitialized || isRunning);
   return (
     <div
-      className={`py-1 text-center rounded-lg cursor-pointer lg:transition lg:duration-100 text-white
+      className={`py-1 text-center rounded-lg cursor-pointer lg:transition lg:duration-100 text-white w-20
 	      ${isInitialized ? 'bg-green-600 hover:bg-purple-400' : ''}
 	      ${isRunning ? 'bg-red-600 hover:bg-red-400' : ''}
-	      ${isShown ? 'visible' : 'invisible'}
+	      ${isPending ? 'bg-yellow-600 hover:bg-yellow-400' : ''}
 	      `}
       onClick={() => {
         if (isInitialized) startJob(jobId);
@@ -23,6 +23,7 @@ const JobButton = ({ jobId, jobStatus }) => {
     >
       {isInitialized && 'START'}
       {isRunning && 'STOP'}
+      {isPending && 'PENDING...'}
     </div>
   );
 };
@@ -54,6 +55,7 @@ const JobsTable = ({ data }) => {
     'Started at',
     //'spec' //TODO: should be checked if it's a good option to hide spec
     'Status',
+    '',
     '',
   ];
   const dateFormatter = (d) => {
