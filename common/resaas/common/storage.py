@@ -2,6 +2,7 @@
 Classes which allow writing out stuff (samples, energies, ...) to
 different locations (local file systems, cloud storage, ...)
 """
+import logging
 import os
 from abc import ABC, abstractmethod
 from collections import namedtuple
@@ -14,6 +15,8 @@ from libcloud.storage.providers import get_driver
 from libcloud.storage.types import Provider
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
+
+logger = logging.getLogger(__name__)
 
 dir_structure = dict(
     SAMPLES_TEMPLATE="samples/samples_{}_{}-{}.pickle",
@@ -68,8 +71,10 @@ def load_storage_backend(backend_name: str, backend_config: dict):
         Exception: If the backend cloud not be loaded
     """
     if backend_name == "local":
+        logger.info("Initializing local storage backend")
         return LocalStorageBackend()
     elif backend_name == "cloud":
+        logger.info("Initializing cloud storage backend")
         try:
             provider = getattr(Provider, backend_config["libcloud_provider"])
         except AttributeError:
@@ -286,12 +291,17 @@ class SimulationStorage:
         )
 
     def save_samples(self, samples, replica_name, from_samples, to_samples):
-        self.save(samples, self.dir_structure.SAMPLES_TEMPLATE.format(
-            replica_name, from_samples, to_samples))
+        self.save(
+            samples,
+            self.dir_structure.SAMPLES_TEMPLATE.format(replica_name, from_samples, to_samples),
+        )
 
     def load_samples(self, replica_name, from_sample_num, to_sample_num):
-        return self.load(self.dir_structure.SAMPLES_TEMPLATE.format(
-            replica_name, from_sample_num, to_sample_num))
+        return self.load(
+            self.dir_structure.SAMPLES_TEMPLATE.format(
+                replica_name, from_sample_num, to_sample_num
+            )
+        )
 
     def _load_all(self, what, from_sample=0, step=1):
         """
@@ -311,19 +321,24 @@ class SimulationStorage:
             for n in range(0, n_samples, dump_interval):
                 if n < from_sample:
                     continue
-                if what == 'energies':
-                    things_batch = self.load_energies("replica" + str(r), n, n + dump_interval)[::step]
-                elif what == 'samples':
-                    things_batch = self.load_samples("replica" + str(r), n, n + dump_interval)[::step]
+                if what == "energies":
+                    things_batch = self.load_energies("replica" + str(r), n, n + dump_interval)[
+                        ::step
+                    ]
+                elif what == "samples":
+                    things_batch = self.load_samples("replica" + str(r), n, n + dump_interval)[
+                        ::step
+                    ]
                 else:
                     raise ValueError(
-                        f"'what' argument has to be either 'energies' or 'samples', not {what}")
+                        f"'what' argument has to be either 'energies' or 'samples', not {what}"
+                    )
                 r_things.append(things_batch)
             things.append(np.concatenate(r_things))
         return np.array(things)
 
     def load_all_samples(self, from_sample=0, step=1):
-        return self._load_all('samples', from_sample, step)
+        return self._load_all("samples", from_sample, step)
 
     def save_energies(self, energies, replica_name, from_energies, to_energies):
         self.save(
@@ -337,7 +352,7 @@ class SimulationStorage:
         )
 
     def load_all_energies(self, from_sample=0, step=1):
-        return self._load_all('energies', from_sample, step)
+        return self._load_all("energies", from_sample, step)
 
     def save_config(self, config_dict):
         self.save(yaml.dump(config_dict), self.dir_structure.CONFIG_FILE_NAME, data_type="text")

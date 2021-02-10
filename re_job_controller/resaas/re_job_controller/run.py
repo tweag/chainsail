@@ -1,6 +1,7 @@
 """
 Main entrypoint to the resaas controller
 """
+import logging
 from concurrent import futures
 from dataclasses import dataclass
 from functools import partial
@@ -26,6 +27,7 @@ from resaas.re_job_controller import (
 ProcessStatus = Tuple[bool, str]
 
 
+logger = logging.getLogger("resaas.re_job_controller")
 ##############################################################################
 # CONFIG
 ##############################################################################
@@ -41,6 +43,7 @@ class ControllerConfig:
     storage_basename: str = ""
     port: int = 50051
     n_threads: int = 10
+    log_level: str = "INFO"
 
 
 class ControllerConfigSchema(Schema):
@@ -50,6 +53,7 @@ class ControllerConfigSchema(Schema):
     storage_basename = fields.String()
     port = fields.Integer()
     n_threads = fields.Integer()
+    log_level = fields.String()
 
     @post_load
     def make_controller_config(self, data, **kwargs) -> ControllerConfig:
@@ -114,6 +118,14 @@ def run(job, config, storage, hostsfile, job_spec):
     # Load the controller configuration file
     with open(config) as f:
         config: ControllerConfig = ControllerConfigSchema().load(yaml.safe_load(f))
+    # Configure logging
+    base_logger = logging.getLogger("resaas")
+    base_logger.setLevel(logging.getLevelName(config.log_level))
+    basic_handler = logging.StreamHandler()
+    basic_formatter = logging.Formatter("[%(levelname)s] %(asctime)s - %(name)s - %(message)s")
+    basic_handler.setFormatter(basic_formatter)
+    base_logger.addHandler(basic_handler)
+
     # Load the job spec
     with open(job_spec) as f:
         job_spec: JobSpec = JobSpecSchema().loads(f.read())
@@ -127,6 +139,7 @@ def run(job, config, storage, hostsfile, job_spec):
     runner_config["hostsfile"] = hostsfile
     runner_config["run_id"] = job
     runner_config["storage_config"] = storage
+    logger.debug(repr(runner_config))
 
     optimization_objects = optimization_objects_from_spec(job_spec)
 
@@ -140,7 +153,7 @@ def run(job, config, storage, hostsfile, job_spec):
         runner,
         storage_backend,
         node_updater=partial(update_nodes_mpi, hostsfile),
-        basename=config.storage_basename,
+        basename=f"{config.storage_basename}/{job}",
         **optimization_objects,
     )
 

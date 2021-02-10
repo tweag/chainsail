@@ -26,26 +26,12 @@ class JobStatus(Enum):
 
 
 N_CREATION_THREADS = 10
+_DEFAULT_CONTROL_NODE = 0
 
 
 # ---------------- BEGIN REXFW IMPLEMENTATION SPECIFIC STUFF ----------------
 # The index of the control node. The job will use this to query for
 # the health of the job node's main process.
-_DEFAULT_CONTROL_NODE = 0
-
-
-def assign_entrypoints(entrypoint: str, control_node_index: int, n_nodes: int) -> List[str]:
-    """Assign node entrypoints according to the logic required by rexfw"""
-    entrypoints = []
-    for i in range(n_nodes):
-        if i == control_node_index:
-            entrypoints.append(entrypoint)
-        else:
-            # Non-master nodes don't need to run anything for rexfw's MPI implementation
-            entrypoints.append("")
-    return entrypoints
-
-
 def n_replicas_to_nodes(n_replicas: int):
     """Compute the number of nodes required to run N replicas"""
     # N replicas + 1 control node
@@ -53,6 +39,11 @@ def n_replicas_to_nodes(n_replicas: int):
 
 
 # ---------------------------------------------------------------------
+
+# Three TODO items:
+# 1. during start, the control node should be started LAST
+# 2. for provisioning, some steps only need to happen on the control node
+# 3. Need steps for
 
 
 class Job:
@@ -63,7 +54,6 @@ class Job:
         config: SchedulerConfig,
         nodes=None,
         node_registry: Dict[NodeType, Node] = NODE_CLS_REGISTRY,
-        entrypoint_assigner: Callable[[str, int, int], List[str]] = assign_entrypoints,
         representation: Optional[TblJobs] = None,
         status: JobStatus = JobStatus.INITIALIZED,
     ):
@@ -76,7 +66,6 @@ class Job:
             self.nodes = []
         else:
             self.nodes = nodes
-        self.entrypoint_assigner = entrypoint_assigner
         self.control_node: Optional[int] = None
         self.status = status
         self._node_cls = node_registry[self.config.node_type]
@@ -100,11 +89,22 @@ class Job:
         self.status = JobStatus.STARTING
         with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
             try:
-                for created, logs in ex.map(lambda n: n.create(), self.nodes):
+                # Create worker nodes first
+                for created, logs in ex.map(
+                    lambda n: n.create(),
+                    [n for i, n in enumerate(self.nodes) if i != self.control_node],
+                ):
                     if not created:
                         raise JobError(
                             f"Failed to start node for job {id}. Deployment logs: \n" + logs
                         )
+                self.sync_representation()
+                # Then create control node
+                created, logs = self.nodes[self.control_node].create()
+                if not created:
+                    raise JobError(
+                        f"Failed to start node for job {id}. Deployment logs: \n" + logs
+                    )
             except Exception as e:
                 # Cleanup created nodes on failure
                 for n in self.nodes:
@@ -141,22 +141,13 @@ class Job:
         i_new_node = len(self.nodes)
         self.nodes.append(
             self._node_cls.from_config(
-                f"node-{shortuuid.uuid()}",
+                f"node-{shortuuid.uuid()}".lower(),
                 self.config,
                 self.spec,
                 job_rep=self.representation,
+                is_controller=(i_new_node == self.control_node),
             )
         )
-        # Since the model implementation may require different entrypoints for
-        # different nodes, we update them here. If in the future model execution allows
-        # for a single entrypoint script then the assigned can just generate a list of
-        # the same entrypoint.
-        for i, entrypoint in enumerate(
-            self.entrypoint_assigner(
-                self.config.node_entrypoint, self.control_node, len(self.nodes)
-            )
-        ):
-            self.nodes[i].entrypoint = entrypoint
         self.sync_representation()
         return i_new_node
 
@@ -240,7 +231,6 @@ class Job:
         job_rep: TblJobs,
         config: SchedulerConfig,
         node_registry: Dict[NodeType, Node] = NODE_CLS_REGISTRY,
-        entrypoint_assigner: Callable[[str, int, int], List[str]] = assign_entrypoints,
     ) -> "Job":
         spec = JobSpecSchema().loads(job_rep.spec)
         nodes = []
@@ -257,7 +247,6 @@ class Job:
             config=config,
             nodes=nodes,
             node_registry=node_registry,
-            entrypoint_assigner=entrypoint_assigner,
             representation=job_rep,
             status=JobStatus(job_rep.status),
         )

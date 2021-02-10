@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict
 from typing import List
@@ -13,10 +14,7 @@ from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.optimization_quantities import get_quantity_function
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 
-
-def log(msg):
-    # TODO
-    print(msg)
+logger = logging.getLogger(__name__)
 
 
 def _config_template_from_params(re_params, local_sampling_params):
@@ -214,7 +212,7 @@ class BaseREJobController:
 
         max_runs = opt_params.max_optimization_runs
         for run_counter in range(max_runs):
-            log(
+            logger.info(
                 "Schedule optimization simulation #{}/{} started".format(run_counter + 1, max_runs)
             )
             current_storage = SimulationStorage(
@@ -226,7 +224,7 @@ class BaseREJobController:
                 msg_part2 = "{}/{} with {} replicas".format(
                     run_counter, max_runs, schedule_length(schedule)
                 )
-                log(msg_part1 + msg_part2)
+                logger.info(msg_part1 + msg_part2)
             else:
                 schedule = self._initial_schedule
 
@@ -242,7 +240,7 @@ class BaseREJobController:
             previous_storage = current_storage
             previous_schedule = schedule
         else:
-            log(
+            logger.info(
                 (
                     "Maximum number of optimization runs reached. "
                     "Schedule optimization might not have converged"
@@ -322,8 +320,7 @@ class BaseREJobController:
                 current_storage, schedule, previous_storage,
                 *self._get_dos_subsample_params(previous_storage))
 
-        config_dict = self._fill_config_template(
-            current_storage, previous_storage, schedule, prod)
+        config_dict = self._fill_config_template(current_storage, previous_storage, schedule, prod)
         current_storage.save_config(config_dict)
         current_storage.save_schedule(schedule)
         self._scale_environment(schedule_length(schedule))
@@ -363,10 +360,8 @@ class BaseREJobController:
         optimization_result = self.optimize_schedule()
         final_opt_storage, final_schedule = optimization_result
 
-        prod_storage = SimulationStorage(
-            self._basename, "production_run", self._storage_backend)
-        self._setup_simulation(
-            prod_storage, final_schedule, final_opt_storage, prod=True)
+        prod_storage = SimulationStorage(self._basename, "production_run", self._storage_backend)
+        self._setup_simulation(prod_storage, final_schedule, final_opt_storage, prod=True)
         self._do_single_run(prod_storage)
 
 

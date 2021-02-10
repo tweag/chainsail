@@ -1,4 +1,16 @@
+<<<<<<< HEAD
+"""
+MPI-based rexfw runner script. Must be called from within an mpi context.
+"""
+import logging
+import sys
+from abc import ABC, abstractmethod
+from typing import Tuple
+
+=======
+>>>>>>> main
 import click
+import mpi4py.rc
 import numpy as np
 from mpi4py import MPI
 from resaas.common.storage import SimulationStorage, load_storage_config
@@ -9,6 +21,53 @@ from rexfw.pdfs import AbstractPDF
 from rexfw.pdfs.normal import Normal
 from rexfw.samplers.rwmc import RWMCSampler
 from rexfw.slaves import Slave
+
+logger = logging.getLogger(__name__)
+
+# Disable finalization hook in global mpi4py config
+mpi4py.rc.finalize = False
+
+mpicomm = MPI.COMM_WORLD
+
+
+# Define a custom hook which will **kill** all mpi processes on the
+# first failure
+# See https://stackoverflow.com/questions/49868333/fail-fast-with-mpi4py
+def mpiabort_excepthook(exc_type, exc_value, exc_traceback):
+    logger.error(
+        "MPI process encountered an unchecked exception.",
+        exc_info=(exc_type, exc_value, exc_traceback),
+    )
+    mpicomm.Abort()
+    sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+
+def ensure_mpi_failure(func):
+    def wrapper(*args, **kwargs):
+        # Add the mpi abort hook
+        sys.excepthook = mpiabort_excepthook
+        func(*args, **kwargs)
+        # If the program has not exited, continue on with the default hook
+        sys.excepthook = sys.__excepthook__
+
+    return wrapper
+
+
+def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
+    """
+    Imports a user-defined pdf and corresponding initial states from
+    module `probability`.
+    """
+    try:
+        from probability import initial_states, pdf
+    except ImportError as e:
+        logging.exception(
+            "Failed to import user-defined pdf and initial_states. Does "
+            "the `probability` module exist on the PYTHONPATH? "
+            f"PYTHONPATH={sys.path}"
+        )
+        raise e
+    return (pdf, initial_states)
 
 
 class BoltzmannTemperedDistribution(AbstractPDF):
@@ -71,7 +130,6 @@ class BoltzmannTemperedDistribution(AbstractPDF):
 
 
 @click.command()
-@click.option("--name", required=True, type=str, help="output directory name")
 @click.option(
     "--basename",
     required=True,
@@ -91,13 +149,16 @@ class BoltzmannTemperedDistribution(AbstractPDF):
     type=click.Path(exists=True),
     help="path to storage backend YAML config file",
 )
-def run_rexfw_mpi(name, basename, path, storage_config):
-    mpicomm = MPI.COMM_WORLD
+@ensure_mpi_failure
+def run_rexfw_mpi(basename, path, storage_config):
     rank = mpicomm.Get_rank()
     size = mpicomm.Get_size()
 
     # Number of replicas is inferred from the MPI environment
     n_replicas = size - 1
+
+    logging.info("Attempting to load user-defined pdf and initial state")
+    bare_pdf, init_state = import_from_user()
 
     # this is where all simulation input data & output (samples, statistics files,
     # etc.) are stored
@@ -132,18 +193,20 @@ def run_rexfw_mpi(name, basename, path, storage_config):
         # write final step sizes to simulation storage
         # The sampling statistics holds objects which internally keep a time
         # series of quantities such as the step size
-        timestep_quantities = filter(lambda x: x.name == 'stepsize',
-                                     master.sampling_statistics.elements)
+        timestep_quantities = filter(
+            lambda x: x.name == "stepsize", master.sampling_statistics.elements
+        )
         # Such a quantity x has a field "origins" which holds strings
         # identifying to which sampling objects this quantity is related.
         # Such a string is, in this case, "replicaXX", where XX enumerates
         # the replicas. We thus sort by the XXses to get the time steps
         # in the right order.
         sorted_timestep_quantities = sorted(
-            timestep_quantities,
-            key=lambda x: int(x.origins[0][len('replica'):]))
+            timestep_quantities, key=lambda x: int(x.origins[0][len("replica") :])
+        )
         storage.save_final_timesteps(
-            np.array([x.current_value for x in sorted_timestep_quantities]))
+            np.array([x.current_value for x in sorted_timestep_quantities])
+        )
 
         # send kill request to break from infinite message receiving loop in
         # replicas
@@ -155,20 +218,8 @@ def run_rexfw_mpi(name, basename, path, storage_config):
 
         schedule = storage.load_schedule()
 
-        # For now, we sample from a normal distribution, but here would eventually
-        # be the user code imported
-        bare_pdf = Normal()
-
-        # Turn it into a Boltzmann distribution
-        tempered_pdf = BoltzmannTemperedDistribution(
-            bare_pdf, schedule["beta"][rank - 1])
-
-        if config["general"]["initial_states"] is None:
-            # later:
-            # init_state = probability.initial_state
-            init_state = np.random.normal(size=1)
-        else:
-            init_state = storage.load_initial_states()[rank - 1]
+        # Turn user-defined pdf into a Boltzmann distribution
+        tempered_pdf = BoltzmannTemperedDistribution(bare_pdf, schedule["beta"][rank - 1])
 
         if config["local_sampling"]["timesteps"] is not None:
             timestep = storage.load_initial_timesteps()[rank - 1]
@@ -176,16 +227,15 @@ def run_rexfw_mpi(name, basename, path, storage_config):
             timestep = 1
 
         # We use a simple Metropolis-Hastings sampler
-        ls_params = config['local_sampling']
+        ls_params = config["local_sampling"]
         sampler_params = {
             "stepsize": timestep,
-            "timestep_adaption_limit": ls_params['timestep_adaption_limit'],
-            "adaption_uprate": ls_params['adaption_uprate'],
-            "adaption_downrate": ls_params['adaption_downrate']
+            "timestep_adaption_limit": ls_params["timestep_adaption_limit"],
+            "adaption_uprate": ls_params["adaption_uprate"],
+            "adaption_downrate": ls_params["adaption_downrate"],
         }
         replica = setup_default_replica(
-            init_state, tempered_pdf, RWMCSampler, sampler_params, storage,
-            comm, rank
+            init_state, tempered_pdf, RWMCSampler, sampler_params, storage, comm, rank
         )
 
         # the slaves are relicts; originally I thought them to pass on

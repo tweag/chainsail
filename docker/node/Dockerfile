@@ -13,7 +13,7 @@ WORKDIR /app
 FROM base as system-deps
 
 RUN apt-get update && \
-    apt-get install -y curl openssh-client openssh-server && \
+    apt-get install -y curl wget unzip openssh-client openssh-server && \
     rm -rf /var/lib/apt/lists/*
 
 # Global SSH configurations
@@ -87,15 +87,24 @@ ADD docker/node/.openmpi /root/.openmpi
 ADD docker/node/ssh/known_hosts /etc/ssh/ssh_config
 ADD docker/node/entrypoint.sh /app/entrypoint.sh
 
+# Directory for user data
+RUN mkdir -p /probability
 
 # Append OpenMPI installation path
 ENV PATH=$PATH:/app/deps/openmpi/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/app/deps/openmpi/lib
-ENV PATH=$PATH:/app/re_job_controller/.venv/bin
+
+# User-defined functions and data
+ENV PATH=$PATH:/probability
+ENV PYTHONPATH=$PYTHONPATH:/probability
+
+# Adding the app venv bin to the front of path so it is the default pip, etc.
+ENV PATH=/app/re_job_controller/.venv/bin:$PATH
+
 
 # For SSH. Using non-default ssh port.
 EXPOSE 26
 
-WORKDIR /app
+WORKDIR /probability
 
 ENTRYPOINT ["/app/entrypoint.sh"]
