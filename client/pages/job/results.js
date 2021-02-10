@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import moment from 'moment';
-import { Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
+import { AnimatedPing, Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
 
 const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
 const GRAPHITE_URL = process.env.GRAPHITE_URL || 'http://127.0.0.1';
@@ -8,13 +8,13 @@ const GRAPHITE_URL = process.env.GRAPHITE_URL || 'http://127.0.0.1';
 const JobButton = ({ jobId, jobStatus }) => {
   const isInitialized = jobStatus === 'initialized';
   const isRunning = jobStatus === 'running';
-  const isPending = !(isInitialized || isRunning);
+  const isPending = jobStatus === 'starting';
   return (
     <div
-      className={`py-1 text-center rounded-lg lg:transition lg:duration-100 text-white w-20
-	      ${isInitialized ? 'bg-green-600 hover:bg-green-400 cursor-pointer' : ''}
-	      ${isRunning ? 'bg-red-600 hover:bg-red-400 cursor-pointer' : ''}
-	      ${isPending ? 'bg-yellow-400' : ''}
+      className={`py-1 text-center rounded-lg lg:transition lg:duration-100 text-white w-32
+	      ${isInitialized ? 'bg-green-800 hover:bg-green-900 cursor-pointer' : ''}
+	      ${isRunning ? 'bg-red-800 hover:bg-red-900 cursor-pointer' : ''}
+	      ${isPending ? 'bg-yellow-800' : ''}
 	      `}
       onClick={() => {
         if (isInitialized) startJob(jobId);
@@ -23,7 +23,12 @@ const JobButton = ({ jobId, jobStatus }) => {
     >
       {isInitialized && 'START'}
       {isRunning && 'STOP'}
-      {isPending && 'PENDING...'}
+      {isPending && (
+        <div>
+          <div className="inline-block mr-3">PENDING</div>
+          <AnimatedPing />
+        </div>
+      )}
     </div>
   );
 };
@@ -47,17 +52,7 @@ const stopJob = (jobId) => {
 };
 
 const JobsTable = ({ data }) => {
-  const headersName = [
-    'Id',
-    'Name',
-    'Created at',
-    'Finished at',
-    'Started at',
-    //'spec' //TODO: should be checked if it's a good option to hide spec
-    'Status',
-    '',
-    '',
-  ];
+  const headersName = ['Id', 'Name', 'Created at', 'Finished at', 'Started at', 'Status', '', ''];
   const dateFormatter = (d) => {
     if (d) return moment(d).format('d MMM hh:mm');
     else return '---';
@@ -67,26 +62,31 @@ const JobsTable = ({ data }) => {
     const job_name = JSON.parse(row.spec).name;
     const graphite_link = `${GRAPHITE_URL}/render?target=${job_name}.*&height=800&width=800&from=-5min`;
     return (
-      <tr className="hover:bg-gray-700 transition duration-100">
+      <tr className="hover:bg-gray-800 transition duration-100">
         <TableData d={row.id} />
         <TableData d={job_name} />
         <TableData d={dateFormatter(row.created_at)} />
         <TableData d={dateFormatter(row.started_at_at)} />
         <TableData d={dateFormatter(row.finished_at)} />
-        <TableData d={row.status} />
-        <TableData>
-          <div className="py-1 text-center rounded-lg lg:transition lg:duration-100 text-white w-20 bg-purple-600 hover:bg-purple-400 cursor-pointer">
+        <TableData d={row.status} className="w-40" />
+        <TableData className="w-48">
+          <div className="w-32 py-1 text-center text-white bg-purple-600 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700">
             <a href={graphite_link}>SEE PLOTS!</a>
           </div>
         </TableData>
-        <TableData>
+        <TableData className="w-48">
           <JobButton jobId={row.id} jobStatus={row.status} />
         </TableData>
       </tr>
     );
   };
-  const TableData = ({ d, children }) => (
-    <td className="px-4 py-2 border-t-2 transition duration-100">{d ? d : children}</td>
+  const TableData = ({ d, children, className }) => (
+    <td
+      className={`px-4 py-2 border-t-2 transition duration-100
+		  ${className}`}
+    >
+      {d ? d : children}
+    </td>
   );
   return (
     <div className="w-full overflow-hidden text-white bg-gray-900 rounded-lg shadow-xl">
@@ -121,7 +121,7 @@ export default function Job() {
           <Navbar />
           <FlexCenter className="py-5 md:py-32">
             {error && <div>Failed to load. Please refresh the page.</div>}
-            {(data == undefined || data.length == 0) && <div>Loading</div>}
+            {!error && (data == undefined || data.length == 0) && <div>Loading...</div>}
             {data != undefined && data.length > 0 && <JobsTable data={data} />}
           </FlexCenter>
         </FlexCol>
