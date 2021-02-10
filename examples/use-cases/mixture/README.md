@@ -1,0 +1,3 @@
+# Sampling a 2D Gaussian mixture with a single chain and RESAAS
+This use case demonstrates that sampling a mixture of four two-dimensional Gaussian distributions cannot easily be sampled with a single Markov chain (currently, a simple random walk Metropolis sampler).  
+The mixture is defined in `probability.py`. Run `python single_chain.py` to run a single Markov chain and plot the samples. After you have run a RESAAS simulation, use the `resaas_results.py` script one level up to load the results from the simulation and save a pickle of all Replica Exchange samples to this directory. Finally, run `python compare.py` to plot a comparison of the single chain- and the RESAAS samples.
