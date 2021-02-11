@@ -4,6 +4,7 @@ import { AnimatedPing, Layout, FlexCol, FlexCenter, Navbar, Container } from '..
 
 const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
 const GRAPHITE_URL = process.env.GRAPHITE_URL || 'http://127.0.0.1';
+const GRAPHITE_PORT = process.env.GRAPHITE_PORT || '8080';
 
 const JobButton = ({ jobId, jobStatus }) => {
   const isInitialized = jobStatus === 'initialized';
@@ -60,7 +61,7 @@ const JobsTable = ({ data }) => {
   const TableHeader = ({ children }) => <th className="px-4 py-2 text-left ">{children}</th>;
   const TableRow = ({ row }) => {
     const job_name = JSON.parse(row.spec).name;
-    const graphite_link = `${GRAPHITE_URL}/render?target=${job_name}.*&height=800&width=800&from=-5min`;
+    const graphite_link = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=${job_name}.*&height=800&width=800&from=-5min`;
     return (
       <tr className="hover:bg-gray-800 transition duration-100">
         <TableData d={row.id} />
