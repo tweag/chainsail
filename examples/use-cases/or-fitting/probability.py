@@ -34,4 +34,4 @@ class Posterior:
 path = os.path.dirname(__file__)
 data = np.loadtxt(os.path.join(path, 'data.txt'))
 pdf = Posterior(1, 5, 6, data[:,0], data[:,1:])
-initial_state = np.random.uniform(-5, 5, size=2).ravel()
+initial_states = np.random.uniform(-5, 5, size=2).ravel()
