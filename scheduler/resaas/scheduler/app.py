@@ -51,9 +51,8 @@ def start_job(job_id):
         (job_id,),
         {},
         link=watch_job_task.si(job_id).set(
-            link=stop_job_task.si(
-                job_id, exit_status="SUCCESS"
-            )  # , link_error=stop_job_task.si(job_id)
+            link=stop_job_task.si(job_id, exit_status="success"),
+            link_error=stop_job_task.si(job_id, exit_status="failed"),
         ),
     )
     return ("ok", 200)
