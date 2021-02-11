@@ -131,8 +131,8 @@ export default function Job() {
 
   // Form fields state variables
   const [job_name, setJobName] = useState('');
-  const [max_replicas, setMaxReplicas] = useState(1);
-  const [initial_number_of_replicas, setInitNReplicas] = useState(1);
+  const [max_replicas, setMaxReplicas] = useState(2);
+  const [initial_number_of_replicas, setInitNReplicas] = useState(2);
   const [tempered_distribution_family, setTemperedDist] = useState('boltzmann');
   const [num_production_samples, setNumProductionSamples] = useState(2000);
   const [num_optimization_samples, setNumOptimizationSamples] = useState(5000);
@@ -241,7 +241,7 @@ export default function Job() {
                           inputName="initial_number_of_replicas"
                           inputType="number"
                           setActiveField={setActiveField}
-                          minNumber={1}
+                          minNumber={2}
                           value={initial_number_of_replicas}
                           onChange={(e) => setInitNReplicas(e.target.value)}
                         />
@@ -250,7 +250,7 @@ export default function Job() {
                           inputName="max_replicas"
                           inputType="number"
                           setActiveField={setActiveField}
-                          minNumber={1}
+                          minNumber={2}
                           value={max_replicas}
                           onChange={(e) => setMaxReplicas(e.target.value)}
                         />
