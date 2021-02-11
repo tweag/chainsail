@@ -15,7 +15,7 @@ import {
 const FieldDescription = ({ children, name, activeField, icon, math }) => (
   <div
     className={`${
-      activeField === name ? 'text-blue-400' : ''
+      name.includes(activeField) ? 'text-blue-400' : ''
     } transition duration-200 my-1 lg:my-0`}
   >
     {icon && <i className={`${icon} mr-5`}></i>}
@@ -31,33 +31,48 @@ const FieldDescription = ({ children, name, activeField, icon, math }) => (
 const Descs = ({ activeField }) => {
   return (
     <FlexCol between className="w-full h-full">
-      <FieldDescription activeField={activeField} name="job_name" icon="fas fa-bars">
+      <FieldDescription activeField={activeField} name={['job_name']} icon="fas fa-bars">
         Job name: a unique key id for your job.
-      </FieldDescription>
-      <FieldDescription activeField={activeField} name="max_replicas" icon="fas fa-cloud">
-        Max N° replicas: maximum number of replicas to use. Specifics of the environment in which
-        these are created is configured on the scheduler itself
       </FieldDescription>
       <FieldDescription
         activeField={activeField}
-        name="tempered_distribution_family"
+        name={['max_replicas', 'initial_number_of_replicas']}
+        icon="fas fa-cloud"
+      >
+        Max/Initial N° replicas: maximum/initial number of replicas to use. Specifics of the
+        environment in which these are created is configured on the scheduler itself
+      </FieldDescription>
+      <FieldDescription
+        activeField={activeField}
+        name={['num_production_samples', 'num_optimization_samples']}
+        icon="fas fa-stream"
+      >
+        N° production/optimization samples: number of MCMC samples in production/optimization runs
+      </FieldDescription>
+      <FieldDescription
+        activeField={activeField}
+        name={['tempered_distribution_family']}
         math="\{\mathbb{P}\}"
       >
         Tempered distribution family: the family of tempered distributions to use. For now, the only
         valid value is "Boltzmann"
       </FieldDescription>
-      <FieldDescription activeField={activeField} name="minimum_beta" math="\beta_{min}">
+      <FieldDescription activeField={activeField} name={['minimum_beta']} math="\beta_{min}">
         Beta min: the minimum inverse temperature (beta) which determines the flatness of the
         flattest distribution
       </FieldDescription>
-      <FieldDescription activeField={activeField} name="target_acceptance_rate" math="\rho">
+      <FieldDescription activeField={activeField} name={['target_acceptance_rate']} math="\rho">
         Target acceptance rate: the plausible acceptance rate that the algorithm aims to achieve
       </FieldDescription>
-      <FieldDescription activeField={activeField} name="probability_definition" icon="fas fa-link">
+      <FieldDescription
+        activeField={activeField}
+        name={['probability_definition']}
+        icon="fas fa-link"
+      >
         Probability definition: URL to archive including importable Python module providing the log
         probability
       </FieldDescription>
-      <FieldDescription activeField={activeField} name="dependencies" icon="fas fa-bolt">
+      <FieldDescription activeField={activeField} name={['dependencies']} icon="fas fa-bolt">
         Dependencies: list of dependencies to install on compute nodes
       </FieldDescription>
     </FlexCol>
