@@ -12,7 +12,7 @@ services:
       - mpi-node-1
       - mpi-node-2
     environment:
-      - USER_PROB_URL=https://resaas-public-data.s3.eu-central-1.amazonaws.com/test_prob_def.zip
+      - USER_PROB_URL=https://resaas-public-data.s3.eu-central-1.amazonaws.com/probability.zip
     volumes:
       # Note: only the control node needs private key to spawn mpi processes
       # on other nodes via ssh.
@@ -38,6 +38,8 @@ services:
     build:
       context: ../..
       dockerfile: docker/node/Dockerfile
+    environment:
+      - USER_PROB_URL=https://resaas-public-data.s3.eu-central-1.amazonaws.com/probability.zip
     ports:
       - "26"
     volumes:
@@ -55,7 +57,7 @@ services:
       context: ../..
       dockerfile: docker/node/Dockerfile
     environment:
-      - USER_PROB_URL=https://resaas-public-data.s3.eu-central-1.amazonaws.com/test_prob_def.zip
+      - USER_PROB_URL=https://resaas-public-data.s3.eu-central-1.amazonaws.com/probability.zip
     volumes:
       - $HOME/.ssh/dorran-resaas-pair.pub:/app/config/ssh/authorized_keys
       - $HOME/Desktop/resaas:/resaas
@@ -69,7 +71,7 @@ services:
     image: "graphiteapp/graphite-statsd"
     restart: "always"
     ports:
-      - "80:80"
+      # - "80:80"
       - "2003-2004:2003-2004"
       - "2023-2024:2023-2024"
       - "8125:8125/udp"

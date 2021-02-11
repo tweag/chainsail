@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 MPI-based rexfw runner script. Must be called from within an mpi context.
 """
@@ -7,8 +6,6 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Tuple
 
-=======
->>>>>>> main
 import click
 import mpi4py.rc
 import numpy as np

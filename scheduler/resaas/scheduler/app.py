@@ -4,13 +4,12 @@ Scheduler REST API and endpoint specifications
 from datetime import datetime
 
 from flask import abort, jsonify, request
-
+from resaas.common.spec import JobSpecSchema
 from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import app, db
 from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.jobs import JobStatus
-from resaas.common.spec import JobSpecSchema
-from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task
+from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task, watch_job_task
 
 config = load_scheduler_config()
 
@@ -46,7 +45,17 @@ def start_job(job_id):
         abort(404, "job does not exist")
     job.status = JobStatus.STARTING.value
     db.session.commit()
-    start_job_task.apply_async((job_id,), {})
+    # Starts the watch process once the job is successfully started
+    # The watch process will stop the job once it either succeeds or fails.
+    start_job_task.apply_async(
+        (job_id,),
+        {},
+        link=watch_job_task.si(job_id).set(
+            link=stop_job_task.si(
+                job_id, exit_status="SUCCESS"
+            )  # , link_error=stop_job_task.si(job_id)
+        ),
+    )
     return ("ok", 200)
 
 
