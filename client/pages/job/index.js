@@ -213,7 +213,7 @@ export default function Job() {
                 between
                 responsive
                 media="lg"
-                className="w-full lg:px-20 lg:h-3/5 lg:space-x-20"
+                className="w-full lg:px-20 lg:h-4/5 lg:space-x-20"
               >
                 <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0">
                   <form
