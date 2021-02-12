@@ -51,8 +51,7 @@ def run(basename, job_spec):
     tempdir = TemporaryDirectory()
     hostsfile = os.path.join(tempdir.name, "hostsfile")
     with open(hostsfile, "w") as f:
-        for _ in range(job_spec.max_replicas):
-            f.write("localhost\n")
+        f.write("localhost")
     storage = os.path.join(tempdir.name, "storage.yaml")
     with open(storage, "w") as f:
         yaml.dump({"backend": "local", "backend_config": {"local": {}}}, f)

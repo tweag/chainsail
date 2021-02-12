@@ -39,6 +39,8 @@ class ControllerConfig:
 
     scheduler_address: str
     scheduler_port: int
+    metrics_address: str
+    metrics_port: int
     runner: str
     storage_basename: str = ""
     port: int = 50051
@@ -49,6 +51,8 @@ class ControllerConfig:
 class ControllerConfigSchema(Schema):
     scheduler_address = fields.String(required=True)
     scheduler_port = fields.Integer(required=True)
+    metrics_address = fields.String(required=True)
+    metrics_port = fields.Integer(required=True)
     runner = fields.String(required=True)
     storage_basename = fields.String()
     port = fields.Integer()
@@ -139,6 +143,9 @@ def run(job, config, storage, hostsfile, job_spec):
     runner_config["hostsfile"] = hostsfile
     runner_config["run_id"] = job
     runner_config["storage_config"] = storage
+    runner_config["metrics_host"] = config.metrics_address
+    runner_config["metrics_port"] = config.metrics_port
+
     logger.debug(repr(runner_config))
 
     optimization_objects = optimization_objects_from_spec(job_spec)
