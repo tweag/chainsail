@@ -82,11 +82,7 @@ def watch_job_task(job_id):
     # Load Job object from database entry and lock its row using FOR UPDATE
     # to avoid the job being started multiple times. If the row is locked then
     # we can just ditch this start request.
-    try:
-        job_rep = TblJobs.query.with_for_update(of=TblJobs, nowait=True).filter_by(id=job_id).one()
-    except OperationalError:
-        # TODO: Log that the row could not be queried
-        return
+    job_rep = TblJobs.query().filter_by(id=job_id).one()
     job = Job.from_representation(job_rep, load_scheduler_config())
     try:
         job.watch()
