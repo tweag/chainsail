@@ -3,8 +3,8 @@ Main entrypoint to the resaas controller
 """
 import os
 from multiprocessing import Process
-from typing import Tuple
 from tempfile import TemporaryDirectory
+from typing import Tuple
 
 import click
 import yaml
@@ -51,7 +51,8 @@ def run(basename, job_spec):
     tempdir = TemporaryDirectory()
     hostsfile = os.path.join(tempdir.name, "hostsfile")
     with open(hostsfile, "w") as f:
-        f.write("localhost")
+        for _ in range(job_spec.max_replicas):
+            f.write("localhost\n")
     storage = os.path.join(tempdir.name, "storage.yaml")
     with open(storage, "w") as f:
         yaml.dump({"backend": "local", "backend_config": {"local": {}}}, f)
