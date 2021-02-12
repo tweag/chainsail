@@ -15,6 +15,7 @@ from libcloud.storage.providers import get_driver
 from libcloud.storage.types import Provider
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
+from libcloud.common.types import InvalidCredsError
 
 logger = logging.getLogger(__name__)
 
@@ -241,7 +242,17 @@ class CloudStorageBackend(AbstractStorageBackend):
         self._driver.upload_object_via_stream(stream, self._container, file_name)
 
     def load(self, file_name, data_type="pickle"):
-        obj = self._driver.get_object(self._container.name, file_name)
+        try:
+            obj = self._driver.get_object(self._container.name, file_name)
+        except InvalidCredsError as e:
+            # for Google Cloud Storage
+            if e.value == '':
+                msg = "Object '{}' not found in container {}".format(
+                    file_name, self._container.name)
+                raise FileNotFoundError(msg)
+            else:
+                raise e
+
         stream = self._driver.download_object_as_stream(obj)
         # TODO: all this stream business stinks
         if data_type == "pickle":
