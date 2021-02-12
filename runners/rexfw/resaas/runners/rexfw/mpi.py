@@ -1,14 +1,10 @@
-<<<<<<< HEAD
 """
 MPI-based rexfw runner script. Must be called from within an mpi context.
 """
 import logging
 import sys
-from abc import ABC, abstractmethod
 from typing import Tuple
 
-=======
->>>>>>> main
 import click
 import mpi4py.rc
 import numpy as np
@@ -18,7 +14,6 @@ from resaas.common.storage import SimulationStorage, load_storage_config
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
 from rexfw.pdfs import AbstractPDF
-from rexfw.pdfs.normal import Normal
 from rexfw.samplers.rwmc import RWMCSampler
 from rexfw.slaves import Slave
 
