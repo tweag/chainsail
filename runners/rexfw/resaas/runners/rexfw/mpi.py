@@ -11,11 +11,11 @@ import numpy as np
 from mpi4py import MPI
 from resaas.common.storage import SimulationStorage, load_storage_config
 from resaas.common.tempered_distributions import BoltzmannTemperedDistribution
+from resaas.common.pdfs import AbstractPDF
+from resaas.common.samplers.rwmc import RWMCSampler
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
-from rexfw.pdfs import AbstractPDF
-from rexfw.samplers.rwmc import RWMCSampler
 from rexfw.slaves import Slave
 
 logger = logging.getLogger(__name__)
@@ -169,7 +169,7 @@ def run_rexfw_mpi(basename, path, storage_config):
         ls_params = config["local_sampling"]
         sampler_params = {
             "stepsize": timestep,
-            "timestep_adaption_limit": ls_params["timestep_adaption_limit"],
+            "num_adaption_samples": ls_params["num_adaption_samples"],
             "adaption_uprate": ls_params["adaption_uprate"],
             "adaption_downrate": ls_params["adaption_downrate"],
         }
