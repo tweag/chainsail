@@ -64,6 +64,7 @@ docker run -d \
     -v {config_dir}:/resaas \
     -v {authorized_keys}:/app/config/ssh/authorized_keys \
     -v {pem_file}:/root/.ssh/id.pem \
+    -p 50051 \
     {image} {cmd}
 """
 
@@ -141,11 +142,12 @@ def prepare_deployment(
         container_cmd += " "
         container_cmd += " ".join([a for a in vm_node._config.args])
 
-    if vm_node._representation:
-        job_id = vm_node._representation.job_id
+    if vm_node.spec.name:
+        job_id = vm_node.spec.name
     else:
-        job_id = "job"
-    container_cmd.format(job_id=job_id)
+        job_id = "unnamed-job"
+    print(container_cmd)
+    container_cmd = container_cmd.format(job_id=job_id)
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
         install_script=os.path.basename(install_script_target),
