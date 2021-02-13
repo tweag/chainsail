@@ -43,19 +43,12 @@ class testOptimizationQuantities(unittest.TestCase):
         self.assertAlmostEqual(result, expected, places=2)
 
     def testLogPartitionFunction(self):
-        # partition functions (=normalization constants) can be estimated with
-        # WHAM only known up to a constant (between inverse temperatures) factor.
-        # So we test for (almost-)equality of ratios of partition functions.
         beta1 = 1.0
         beta2 = 1.0 / 3.0 ** 2
         est_Z1 = log_partition_function(self._log_dos, self._energies, beta1)
         est_Z2 = log_partition_function(self._log_dos, self._energies, beta2)
-        print(np.exp(est_Z1))
-        print(np.exp(est_Z2))
         true_Z1 = np.sqrt(2 * np.pi / beta1)
-        print(true_Z1)
         true_Z2 = np.sqrt(2 * np.pi / beta2)
-        print(true_Z2)
 
-        self.assertAlmostEqual(np.exp(est_Z1) / np.exp(est_Z2), true_Z1 / true_Z2,
-                               places=2)
+        self.assertAlmostEqual(est_Z1, np.log(true_Z1), places=2)
+        self.assertAlmostEqual(est_Z2, np.log(true_Z2), places=2)
