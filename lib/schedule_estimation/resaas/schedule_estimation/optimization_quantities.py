@@ -20,6 +20,8 @@ def log_partition_function(dos, energies, beta):
 
     Uses the DOS estimate and sampled energies to calculate an estimate of the
     partition function Z(beta) at a given inverse temperature ``beta``.
+    TODO: this is currently specific for the Boltzmann ensemble. We should
+    make this a general function which takes an Ensemble class instead.
 
     Args:
         dos(:class:`np.ndarray): estimate of density of states (DOS) evaluated
@@ -37,6 +39,8 @@ def acceptance_rate(dos, energies, beta1, beta2):
     Uses the DOS estimate and sampled energies to calculate the expected
     acceptance rate between two replicas in a Boltzmann schedule with inverse
     temperatures ``beta1`` and ``beta2``.
+    TODO: this is currently specific for the Boltzmann ensemble. We should
+    make this a general function which takes an Ensemble class instead.
 
     Args:
         dos(:class:`np.ndarray): estimate of density of states (DOS) evaluated

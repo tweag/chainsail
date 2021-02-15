@@ -1,7 +1,5 @@
 import logging
-from abc import ABC, abstractmethod
 from dataclasses import asdict
-from typing import List
 
 import requests
 from resaas.common.spec import BoltzmannInitialScheduleParameters, TemperedDistributionFamily
@@ -10,7 +8,8 @@ from resaas.common.storage import default_dir_structure as dir_structure
 from resaas.controller.initial_schedules import make_geometric_schedule
 from resaas.controller.initial_setup import setup_initial_states, setup_timesteps
 from resaas.controller.util import schedule_length
-from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
+from resaas.schedule_estimation.dos_estimators import WHAM
+from resaas.common.tempering.ensembles import BoltzmannEnsemble
 from resaas.schedule_estimation.optimization_quantities import get_quantity_function
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 

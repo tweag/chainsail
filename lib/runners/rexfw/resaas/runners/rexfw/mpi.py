@@ -9,10 +9,10 @@ import click
 import mpi4py.rc
 import numpy as np
 from mpi4py import MPI
+from resaas.common.storage import SimulationStorage, load_storage_config
+from resaas.common.tempering.tempered_distributions import BoltzmannTemperedDistribution
 from resaas.common.pdfs import AbstractPDF
 from resaas.common.samplers.rwmc import RWMCSampler
-from resaas.common.storage import SimulationStorage, load_storage_config
-from resaas.common.tempered_distributions import BoltzmannTemperedDistribution
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
