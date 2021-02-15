@@ -276,10 +276,10 @@ class BaseREJobController:
         else:
             num_samples = self._re_params.num_optimization_samples
 
-        adapt_limit = cfg_template["local_sampling"]["timestep_adaption_limit"]
-        if adapt_limit is None:
-            adapt_limit = 0.1 * num_samples
-        updates["local_sampling"]["timestep_adaption_limit"] = adapt_limit
+        num_adaption_samples = cfg_template["local_sampling"]["num_adaption_samples"]
+        if num_adaption_samples is None:
+            num_adaption_samples = int(0.1 * num_samples)
+        updates["local_sampling"]["num_adaption_samples"] = num_adaption_samples
 
         updates["general"] = {
             "n_iterations": num_samples,

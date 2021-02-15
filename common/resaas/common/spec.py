@@ -81,7 +81,7 @@ class LocalSamplers(Enum):
 class NaiveHMCParameters:
     n_steps: int = 20
     timesteps: Optional[str] = None
-    timestep_adaption_limit: Optional[int] = None
+    num_adaption_samples: Optional[int] = None
     adaption_uprate: float = 1.05
     adaption_downrate: float = 0.95
 
@@ -150,14 +150,14 @@ class OptimizationParametersSchema(Schema):
 class NaiveHMCParametersSchema(Schema):
     n_steps = fields.Int()
     timesteps = fields.Str()
-    timestep_adaption_limit = fields.Int()
+    num_adaption_samples = fields.Int()
     adaption_uprate = fields.Float()
     adaption_downrate = fields.Float()
 
     @post_dump
     def remove_nulls(self, data, *args, **kwargs):
         # remove all nullable (i.e. Optional) fields which have a default of None.
-        for nullable_field in ("timestep_adaption_limit", "timesteps"):
+        for nullable_field in ("num_adaption_samples", "timesteps"):
             if data[nullable_field] is None:
                 data.pop(nullable_field)
 

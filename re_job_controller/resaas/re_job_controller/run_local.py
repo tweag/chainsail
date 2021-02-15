@@ -1,6 +1,7 @@
 """
 Main entrypoint to the resaas controller
 """
+import logging
 import os
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
@@ -19,7 +20,7 @@ from resaas.runners.rexfw import MPIRERunner
 
 ProcessStatus = Tuple[bool, str]
 
-
+logger = logging.getLogger("resaas.re_job_controller")
 ##############################################################################
 # ENTRYPOINT
 ##############################################################################
@@ -40,6 +41,15 @@ def run(basename, job_spec):
     """
     The resaas node controller.
     """
+    # Configure logging
+    base_logger = logging.getLogger("resaas")
+    base_logger.setLevel("DEBUG")
+    basic_handler = logging.StreamHandler()
+    # basic_formatter = logging.Formatter("[%(levelname)s] %(asctime)s - %(name)s - %(message)s")
+    basic_formatter = logging.Formatter("%(message)s")
+    basic_handler.setFormatter(basic_formatter)
+    base_logger.addHandler(basic_handler)
+
     # Load the job spec
     with open(job_spec) as f:
         job_spec: JobSpec = JobSpecSchema().loads(f.read())
