@@ -3,7 +3,6 @@ Classes which estimate the density of states (DOS) from MCMC samples from a
 distribution at different "temperatures".
 """
 import logging
-from abc import ABC, abstractmethod
 
 import numpy as np
 from resaas.common.util import log_sum_exp
