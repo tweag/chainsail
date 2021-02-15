@@ -4,7 +4,7 @@ This provides config files to run the full job controller main loop (optimizatio
 ## Instructions
 Make sure you are within the Nix shell provided in the directory root.
 ```bash
-$ cd ../../re_job_controller
+$ cd ../../controller
 $ poetry install --extras rexfw
 $ poetry run resaas-controller-local \
   --basename /tmp/test_simulation \

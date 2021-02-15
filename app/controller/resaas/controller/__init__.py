@@ -7,9 +7,9 @@ import requests
 from resaas.common.spec import BoltzmannInitialScheduleParameters, TemperedDistributionFamily
 from resaas.common.storage import SimulationStorage
 from resaas.common.storage import default_dir_structure as dir_structure
-from resaas.re_job_controller.initial_schedules import make_geometric_schedule
-from resaas.re_job_controller.initial_setup import setup_initial_states, setup_timesteps
-from resaas.re_job_controller.util import schedule_length
+from resaas.controller.initial_schedules import make_geometric_schedule
+from resaas.controller.initial_setup import setup_initial_states, setup_timesteps
+from resaas.controller.util import schedule_length
 from resaas.schedule_estimation.dos_estimators import WHAM, BoltzmannEnsemble
 from resaas.schedule_estimation.optimization_quantities import get_quantity_function
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer

@@ -6,7 +6,7 @@ authors = ["dorranh <dorran.howell@tweag.io>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-resaas-common = { path = "../common", develop = true }
+resaas-common = { path = "../../lib/common", develop = true }
 Flask = "^1.1.2"
 apache-libcloud = "^3.3.0"
 marshmallow = "^3.10.0"
@@ -22,7 +22,7 @@ shortuuid = "^1.0.1"
 celery = {extras = ["gevent", "redis"], version = "^5.0.5"}
 Flask-Cors = "^3.0.10"
 grpcio = "^1.35.0"
-resaas-grpc = { path = "../grpc", develop = true }
+resaas-grpc = { path = "../../lib/grpc", develop = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

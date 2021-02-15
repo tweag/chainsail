@@ -13,7 +13,7 @@ an example configuration file. The configuration file's schema is defined in [re
 There are a few steps to running the resaas scheduler locally. Make sure that you
 are in a nix-shell environment.
   1. Enter a nix and poetry shell
-     1. `nix-shell ../shell.nix`
+     1. `nix-shell ../../shell.nix`
      1. `poetry install` (if you haven't already)
      1. `poetry shell`
   1. Update the example scheduler.yaml file
@@ -25,7 +25,7 @@ are in a nix-shell environment.
   3. Start the celery task worker:
   ```shell
   # Its easiest to run things from the repository root directory
-  $ cd ..
+  $ cd ../..
   $ PYTHONPATH="PYTHONPATH:$PWD/scheduler" \
     CELERY_BROKER_URL="redis://localhost:6379/0" \
     CELERY_RESULT_BACKEND="redis://localhost:6379/1" \
@@ -57,7 +57,7 @@ curl --request POST \
 (assuming you have already run `poetry install`) 
 
 ```shell
-$ nix-shell ../shell.nix
+$ nix-shell ../../shell.nix
 $ poetry shell
 $ PYTHONPATH="$PYTHONPATH:$PWD" pytest --cov-report html --cov=resaas
 ```

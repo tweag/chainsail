@@ -3,7 +3,7 @@
 ## node
 
 Docker image containing all dependencies required to run resaas job nodes, including 
-`re_job_controller`. 
+`controller`. 
 
 Accepts the following configurations:
 

@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: '12'
       - name: Install client dependencies
-        run: cd client && yarn install
+        run: cd app/client && yarn install
       - name: Build client
-        run: cd client && yarn build
+        run: cd app/client && yarn build
 

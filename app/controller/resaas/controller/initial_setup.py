@@ -4,7 +4,7 @@ Logic to set up initial states and values for Replica Exchange simulations
 import numpy as np
 
 from resaas.common.util import log_sum_exp
-from resaas.re_job_controller.util import schedule_length
+from resaas.controller.util import schedule_length
 
 
 def setup_timesteps(current_storage, schedule, previous_storage=None):

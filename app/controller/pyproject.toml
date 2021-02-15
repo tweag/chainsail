@@ -8,19 +8,19 @@ packages = [ { include = 'resaas' } ]
 
 
 [tool.poetry.scripts]
-resaas-controller = 'resaas.re_job_controller.run:run'
-resaas-controller-local = 'resaas.re_job_controller.run_local:run'
+resaas-controller = 'resaas.controller.run:run'
+resaas-controller-local = 'resaas.controller.run_local:run'
 
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "*"
-resaas-common = { path = "../common", develop = true }
-resaas-grpc = { path = "../grpc", develop = true }
-resaas-schedule-optimization = { path = "../schedule_estimation", develop = true }
+resaas-common = { path = "../../lib/common", develop = true }
+resaas-grpc = { path = "../../lib/grpc", develop = true }
+resaas-schedule-optimization = { path = "../../lib/schedule_estimation", develop = true }
 click = "^7.1.2"
 
 # Runners can be installed as extras for convenience
-resaas-runner-rexfw = { path = "../runners/rexfw", optional = true, develop = true }
+resaas-runner-rexfw = { path = "../../lib/runners/rexfw", optional = true, develop = true }
 grpcio = "^1.35.0"
 
 [tool.poetry.extras]

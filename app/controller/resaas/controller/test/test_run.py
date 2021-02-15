@@ -11,6 +11,6 @@ VALID_CONTROLLER_CONFIG = """
 
 
 def test_parse_valid_config():
-    from resaas.re_job_controller.run import ControllerConfigSchema
+    from resaas.controller.run import ControllerConfigSchema
 
     config = ControllerConfigSchema().loads(VALID_CONTROLLER_CONFIG)

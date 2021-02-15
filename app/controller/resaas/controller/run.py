@@ -18,7 +18,7 @@ from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.spec import JobSpec, JobSpecSchema
 from resaas.common.storage import load_storage_config
 from resaas.grpc import Health, add_HealthServicer_to_server
-from resaas.re_job_controller import (
+from resaas.controller import (
     CloudREJobController,
     optimization_objects_from_spec,
     update_nodes_mpi,
@@ -27,7 +27,7 @@ from resaas.re_job_controller import (
 ProcessStatus = Tuple[bool, str]
 
 
-logger = logging.getLogger("resaas.re_job_controller")
+logger = logging.getLogger("resaas.controller")
 ##############################################################################
 # CONFIG
 ##############################################################################
