@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def format_metric_name(run_id: str, storage: AbstractStorageBackend):
-    return ".".join(run_id, storage.sim_path)
+    return ".".join((run_id, storage.sim_path))
 
 
 class MPIRERunner(AbstractRERunner):
