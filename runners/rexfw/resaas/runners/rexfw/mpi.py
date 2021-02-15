@@ -86,8 +86,26 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
     type=click.Path(exists=True),
     help="path to storage backend YAML config file",
 )
+@click.option(
+    "--name",
+    required=True,
+    type=str,
+    help="the name to use for tagging statistics metadata",
+)
+@click.option(
+    "--metrics-host",
+    required=True,
+    type=str,
+    help="the metrics logging host",
+)
+@click.option(
+    "--metrics-port",
+    required=True,
+    type=int,
+    help="the metrics logging port",
+)
 @ensure_mpi_failure
-def run_rexfw_mpi(basename, path, storage_config):
+def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_port):
     rank = mpicomm.Get_rank()
     size = mpicomm.Get_size()
 
@@ -116,7 +134,14 @@ def run_rexfw_mpi(basename, path, storage_config):
 
         # sets up a default RE master object; should be sufficient for all
         # practical purposes
-        master = setup_default_re_master(n_replicas, path, storage_backend, comm)
+        graphite_params = {
+            "job_name": name,
+            "graphite_url": metrics_host,
+            "graphite_port": metrics_port,
+        }
+        master = setup_default_re_master(
+            n_replicas, path, storage_backend, comm, graphite_params=graphite_params
+        )
         master.run(
             config["general"]["n_iterations"],
             config["re"]["swap_interval"],
@@ -157,6 +182,9 @@ def run_rexfw_mpi(basename, path, storage_config):
 
         # Turn user-defined pdf into a Boltzmann distribution
         tempered_pdf = BoltzmannTemperedDistribution(bare_pdf, schedule["beta"][rank - 1])
+
+        # If an initial state is already defined in the config, use that instead
+        # of the user-specified one.
         if config["general"]["initial_states"] is not None:
             init_state = storage.load_initial_states()[rank - 1]
 

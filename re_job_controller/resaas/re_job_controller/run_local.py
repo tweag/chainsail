@@ -3,8 +3,8 @@ Main entrypoint to the resaas controller
 """
 import os
 from multiprocessing import Process
-from typing import Tuple
 from tempfile import TemporaryDirectory
+from typing import Tuple
 
 import click
 import yaml
