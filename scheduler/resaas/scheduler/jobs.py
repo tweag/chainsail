@@ -236,7 +236,6 @@ class Job:
             # Ignore nodes which are no longer in use
             if not node_rep.in_use:
                 continue
-            print(f"Loading existing node {node_rep}")
             node_rep: TblNodes
             node_cls = node_registry[NodeType(node_rep.node_type)]
             nodes.append(node_cls.from_representation(spec, node_rep, config))
