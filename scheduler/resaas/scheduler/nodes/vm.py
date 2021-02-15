@@ -146,7 +146,6 @@ def prepare_deployment(
         job_id = vm_node.spec.name
     else:
         job_id = "unnamed-job"
-    print(container_cmd)
     container_cmd = container_cmd.format(job_id=job_id)
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
