@@ -40,11 +40,6 @@ def n_replicas_to_nodes(n_replicas: int):
 
 # ---------------------------------------------------------------------
 
-# Three TODO items:
-# 1. during start, the control node should be started LAST
-# 2. for provisioning, some steps only need to happen on the control node
-# 3. Need steps for
-
 
 class Job:
     def __init__(
@@ -66,7 +61,7 @@ class Job:
             self.nodes = []
         else:
             self.nodes = nodes
-        self.control_node: Optional[int] = None
+        self.control_node = _DEFAULT_CONTROL_NODE
         self.status = status
         self._node_cls = node_registry[self.config.node_type]
         if not self.nodes:
@@ -78,7 +73,6 @@ class Job:
                 "Cannot initialize nodes for a job which already has nodes assigned to it."
             )
         self.status = JobStatus.INITIALIZED
-        self.control_node = _DEFAULT_CONTROL_NODE
         for _ in range(n_replicas_to_nodes(self.spec.initial_number_of_replicas)):
             self._add_node()
         self.sync_representation()
@@ -198,7 +192,9 @@ class Job:
         # Await control node until it reports exit or dies
         control_node: Node = self.nodes[self.control_node]
         ip = control_node.address
-        port = control_node.listening_ports[0]
+        # TODO: node rep is getting messed up
+        port = 50051
+        # port = control_node.listening_ports[0]
         with grpc.insecure_channel(f"{ip}:{port}") as channel:
             stub = HealthStub(channel)
             while True:
@@ -208,8 +204,10 @@ class Job:
                 else:
                     time.sleep(1)
         if response.status == HealthCheckResponse.SUCCESS:
+            self.status = JobStatus.SUCCESS
             return True
         else:
+            self.status = JobStatus.FAILED
             return False
 
     def sync_representation(self) -> None:
