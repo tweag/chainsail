@@ -4,10 +4,13 @@ constants from an estimate of the density of states (DOS) and the energies it
 was calculated from.
 """
 from typing import Callable
+import logging
 
 import numpy as np
 from resaas.common.spec import OptimizationQuantity
 from resaas.common.util import log_sum_exp
+
+logger = logging.getLogger(__name__)
 
 
 def log_partition_function(dos, energies, beta):
@@ -42,12 +45,22 @@ def acceptance_rate(dos, energies, beta1, beta2):
         beta1(float): first inverse temperature
         beta2(float): second inverse temperature
     """
+    max_num_energies = 5000
     energies = energies.ravel()
+    if len(energies) > max_num_energies:
+        logger.warning(f"More than {max_num_energies} energies given for "
+                        "acceptance rate estimation. Subsampling to avoid "
+                        "excessive memory usage.")
+        indices = np.random.choice(np.arange(len(energies)), max_num_energies)
+        energies = energies[indices]
+        dos = dos[indices]
     log_Z1 = log_partition_function(dos, energies, beta1)
     log_Z2 = log_partition_function(dos, energies, beta2)
     g = np.add.outer(-energies * beta1, -energies * beta2)
     mins = np.min(np.dstack((g, g.T)), axis=2)
+    del g
     integrand = mins + np.add.outer(dos, dos)
+    del mins
 
     return np.exp(log_sum_exp(integrand.ravel()) - log_Z1 - log_Z2)
 

@@ -20,18 +20,30 @@ class MockStorage:
 
 
 class TestDrawInitialTimesteps(unittest.TestCase):
+    """
+    Uses the physicist's best friend, the harmonic oscillator, a.k.a. the
+    normal distribution, to test drawing reweighted samples.
+    """
+
     def setUp(self):
         pass
 
     def test_draw_initial_timesteps(self):
-        """
-        Uses the physicist's best friend, the harmonic oscillator, a.k.a. the
-        normal distribution, to test drawing reweighted samples.
-        """
-        # create equidistant energies
-        energies = np.arange(0.001, 20, 0.005)
-        # get analytical log-density of states
-        dos = np.log(2 / np.sqrt(2 * energies))
+        # In the Boltzmann ensemble, energies are exponentially distributed.
+        # If we use np.linspace, we get too few energies close to zero.
+        # That's why we use np.logspace.
+        E = np.logspace(np.log(0.0001), np.log(30), 5000, base=10)
+        # But this also means that energies are not equidistant. So for the
+        # numerical integrations performed in the acceptance rate and
+        # partition function, we have to reweight the analytical density
+        # of states of the harmonic oscillator, given by
+        # g(E) = 2 / \sqrt(2 * E), with the difference between neighboring
+        # energies.
+        E_mean = 0.5 * (E[1:] + E[:-1])
+        delta = E[1:] - E[:-1]
+        dos = np.log(2 / np.sqrt(2 * E_mean) * delta)
+        energies = E_mean
+
         # Here's the fun part: now that we have energies, we need to get
         # "samples". So because E = 0.5 * x ** 2, for each energy we have two
         # possible samples x = +/- \sqrt(2 * E). So we alternate between
