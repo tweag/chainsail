@@ -4,7 +4,7 @@ from unittest.mock import patch
 import numpy as np
 from resaas.common.storage import AbstractStorageBackend
 from resaas.common.spec import NaiveHMCParameters, ReplicaExchangeParameters, OptimizationParameters
-from resaas.re_job_controller import BaseREJobController
+from resaas.controller import BaseREJobController
 
 
 def mock_setup_initial_states(current_storage, schedule, previous_storage):
@@ -43,7 +43,7 @@ class MockStorageBackend(AbstractStorageBackend):
 class testREJobController(unittest.TestCase):
     def setUp(self):
         initial_states_patcher = patch(
-            'resaas.re_job_controller.setup_initial_states')
+            'resaas.controller.setup_initial_states')
         initial_states_patcher.start()
         self.addCleanup(initial_states_patcher.stop)
 

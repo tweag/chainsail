@@ -14,13 +14,13 @@ from resaas.common.spec import (JobSpec, JobSpecSchema, NaiveHMCParameters,
                                 OptimizationParameters,
                                 ReplicaExchangeParameters)
 from resaas.common.storage import LocalStorageBackend
-from resaas.re_job_controller import (BaseREJobController,
+from resaas.controller import (BaseREJobController,
                                       optimization_objects_from_spec)
 from resaas.runners.rexfw import MPIRERunner
 
 ProcessStatus = Tuple[bool, str]
 
-logger = logging.getLogger("resaas.re_job_controller")
+logger = logging.getLogger("resaas.controller")
 ##############################################################################
 # ENTRYPOINT
 ##############################################################################

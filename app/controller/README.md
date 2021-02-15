@@ -1,4 +1,4 @@
-# re_job_controller
+# controller
 
 Controller application for running sampling jobs.  Invoking the controller
 will execute the sampling job, exposing a gRPC endpoint for job monitoring (this is still a WIP).

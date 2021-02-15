@@ -1,6 +1,6 @@
 import numpy as np
 
-from resaas.re_job_controller.initial_schedules import make_geometric_schedule
+from resaas.controller.initial_schedules import make_geometric_schedule
 
 
 def test_geometric_schedule():

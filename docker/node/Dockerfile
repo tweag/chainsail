@@ -59,17 +59,16 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/app/deps/openmpi/lib
 
 
 # Install the controller
-COPY ./common /app/common
-COPY ./schedule_estimation /app/schedule_estimation
-COPY ./runners /app/runners
-COPY ./re_job_controller /app/re_job_controller
-COPY ./grpc /app/grpc
-
+COPY ./lib/common /app/lib/common
+COPY ./lib/schedule_estimation /app/lib/schedule_estimation
+COPY ./lib/runners /app/lib/runners
+COPY ./lib/grpc /app/lib/grpc
+COPY ./app/controller /app/app/controller
 
 # --extras input for poetry install
 ARG RUNNERS="rexfw"
 
-RUN cd /app/re_job_controller && \
+RUN cd /app/app/controller && \
     poetry config virtualenvs.in-project true && \
     poetry run pip install --upgrade pip && \
     poetry install --no-dev --extras ${RUNNERS}
@@ -99,7 +98,7 @@ ENV PATH=$PATH:/probability
 ENV PYTHONPATH=$PYTHONPATH:/probability
 
 # Adding the app venv bin to the front of path so it is the default pip, etc.
-ENV PATH=/app/re_job_controller/.venv/bin:$PATH
+ENV PATH=/app/app/controller/.venv/bin:$PATH
 
 
 # For SSH. Using non-default ssh port.
