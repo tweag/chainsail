@@ -133,9 +133,6 @@ class Job:
         if self.status in (JobStatus.STOPPED, JobStatus.SUCCESS, JobStatus.FAILED):
             raise JobError(f"Attempted to add a node to a job ({self.id}) which has exited.")
         i_new_node = len(self.nodes)
-        print(f"Index of new node: {i_new_node}")
-        print(f"Index of control node: {self.control_node}")
-        print(f"{i_new_node == self.control_node}")
         self.nodes.append(
             self._node_cls.from_config(
                 f"node-{shortuuid.uuid()}".lower(),
