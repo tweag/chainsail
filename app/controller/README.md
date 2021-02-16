@@ -32,14 +32,14 @@ The controller can be used as a stand-alone app on a single machine. To that end
 2. make sure that your `probability.py` file (and everything importet in there) is in this directory,
 3. install the controller app with the necessary runner (currently, there's only the `rexfw` runner) via `poetry install --extras rexfw`,
 4. install the Python dependencies of your `probability.py` in the Poetry virtual environment via
-```bash
-$ poetry shell
-$ pip install numpy scipy anotherpackage
+   ```bash
+   $ poetry shell
+   $ pip install numpy scipy anotherpackage
 ```
 5. prepare a job configuration JSON file (an example is provided in `examples/local_run/job.json`).
 6. execute the local controller run script via
-```bash
-$ poetry run resaas-controller-local --job_spec <job config file> --basename <some file system path>
-```
+   ```bash
+   $ poetry run resaas-controller-local --job_spec <job config file> --basename <some file system path>
+   ```
 
 , which will run the main optimization loop and a production run and write all results to the directory specified via the `--basename` argument.
