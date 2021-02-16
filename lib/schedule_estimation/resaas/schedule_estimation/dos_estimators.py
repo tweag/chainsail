@@ -118,6 +118,8 @@ class WHAM:
         This requires the sampled energies, a function describing the
         log-ensemble and a dictionary of ensemble parameters which describe
         the ensemble instances from which the energies were sampled.
+        The underlying algorithm is described in Michael Habeck's \"Evaluation
+        of marginal likelihoods via the density of states.\", AISTATS (2012).
 
         Args:
           ensemble(:class:`Ensemble): the ensemble from which the energies
