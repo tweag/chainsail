@@ -78,8 +78,8 @@ def optimization_objects_from_spec(job_spec):
             dos_estimator = WHAM(BoltzmannEnsemble)
             schedule_optimizer = SingleParameterScheduleOptimizer(
                 opt_params.optimization_quantity_target,
-                opt_params.max_param,
-                opt_params.min_param,
+                1.0,
+                sched_parameters.minimum_beta,
                 opt_params.decrement,
                 get_quantity_function(opt_params.optimization_quantity),
                 "beta",
