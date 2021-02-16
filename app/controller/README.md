@@ -35,7 +35,7 @@ The controller can be used as a stand-alone app on a single machine. To that end
    ```bash
    $ poetry shell
    $ pip install numpy scipy anotherpackage
-```
+   ```
 5. prepare a job configuration JSON file (an example is provided in `examples/local_run/job.json`).
 6. execute the local controller run script via
    ```bash
