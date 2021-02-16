@@ -36,7 +36,7 @@ The controller can be used as a stand-alone app on a single machine. To that end
 $ poetry shell
 $ pip install numpy scipy anotherpackage
 ```
-5. prepare a job configuration JSON file (an example is provided in `example_job.json`).
+5. prepare a job configuration JSON file (an example is provided in `examples/local_run/job.json`).
 6. execute the local controller run script via
 ```bash
 $ poetry run resaas-controller-local --job_spec <job config file> --basename <some file system path>
