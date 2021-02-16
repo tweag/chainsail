@@ -28,7 +28,7 @@ See the example in [../scheduler/example/controller.yaml](../scheduler/example/c
 
 ## Running the controller as a stand-alone local app
 The controller can be used as a stand-alone app on a single machine. To that end,
-1. make sure you have any eventual system dependencies for the runner installed (`rexfw` requires `openmpi`, for example, provided in the [Nix shell](../../shell.nix)))
+1. make sure you have any eventual system dependencies for the runner installed (`rexfw` requires `openmpi`, for example, provided in the [Nix shell](../../shell.nix))
 2. make sure that your `probability.py` file (and everything importet in there) is in this directory,
 3. install the controller app with the necessary runner (currently, there's only the `rexfw` runner) via `poetry install --extras rexfw`,
 4. install the Python dependencies of your `probability.py` in the Poetry virtual environment via
