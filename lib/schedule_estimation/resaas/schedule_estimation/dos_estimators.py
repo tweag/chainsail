@@ -11,7 +11,7 @@ from resaas.common.util import log_sum_exp
 logger = logging.getLogger(__name__)
 
 
-def stopping_criterion(self, log_L, previous_log_L, termination_threshold):
+def stopping_criterion(log_L, previous_log_L, stopping_threshold):
     """
     Defines a convergence criterion for stopping the WHAM iteration.
 
@@ -24,7 +24,7 @@ def stopping_criterion(self, log_L, previous_log_L, termination_threshold):
     Returns:
       bool: whether WHAM iteration has converged or not
     """
-    return abs(log_L - previous_log_L) / log_L < termination_threshold
+    return abs((log_L - previous_log_L) / (log_L + previous_log_L)) < stopping_threshold
 
 
 def validate_shapes(energies, parameters):
@@ -65,7 +65,7 @@ def calculate_log_L(f, log_g):
       log_g: estimate of the log-DOS evaluated at the sampled energies
 
     Returns:
-      float: estimate of the log-likelihhod of the energies
+      float: estimate of the log-likelihood of the energies
     """
     return -f.sum() + log_g.sum()
 
@@ -151,7 +151,7 @@ class WHAM:
 
         return log_qs
 
-    def estimate_dos(self, energies, parameters, max_iterations=5000, stopping_threshold=1e-6):
+    def estimate_dos(self, energies, parameters, max_iterations=5000, stopping_threshold=1e-10):
         """Do multiple histogram reweighting with infinitely fine binning as
         outlined in the paper "Evaluation of marginal likelihoods via the
         density of states" (Habeck, AISTATS 2012)
@@ -174,19 +174,18 @@ class WHAM:
         f = np.zeros(energies.shape[0])
         log_qs = self._calculate_log_qs(energies, parameters)
 
-        # old_log_L = 1e300
+        old_log_L = 1e300
         for i in range(max_iterations):
             log_gs = -log_sum_exp(log_qs + f[:, None], axis=0)
             log_gs -= log_sum_exp(log_gs)
             f = -log_sum_exp((log_qs + log_gs).T, axis=0)
 
             log_L = calculate_log_L(f, log_gs)
-            if i % 50 == 0:
-                logger.info("Likelihood: {}".format(log_L))
-            # TODO: implement working stopping criterion
-            # if stopping_criterion(log_L, old_log_L, stopping_threshold):
-            #     break
-            # old_log_L = log_L
+            if i % 10 == 0:
+                logger.info("Likelihood of energies given DOS: {}".format(log_L))
+            if stopping_criterion(log_L, old_log_L, stopping_threshold):
+                break
+            old_log_L = log_L
 
         if i > 0.8 * max_iterations:
             logger.warning(
