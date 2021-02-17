@@ -9,10 +9,10 @@ import click
 import mpi4py.rc
 import numpy as np
 from mpi4py import MPI
-from resaas.common.storage import SimulationStorage, load_storage_config
-from resaas.common.tempered_distributions import BoltzmannTemperedDistribution
 from resaas.common.pdfs import AbstractPDF
 from resaas.common.samplers.rwmc import RWMCSampler
+from resaas.common.storage import SimulationStorage, load_storage_config
+from resaas.common.tempered_distributions import BoltzmannTemperedDistribution
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
@@ -57,7 +57,7 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
     try:
         from probability import initial_states, pdf
     except ImportError as e:
-        logging.exception(
+        logger.exception(
             "Failed to import user-defined pdf and initial_states. Does "
             "the `probability` module exist on the PYTHONPATH? "
             f"PYTHONPATH={sys.path}"
