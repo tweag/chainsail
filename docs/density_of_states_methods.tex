@@ -1,0 +1,112 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{array}
+\usepackage{upgreek}
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\title{Optimizing acceptance rates and drawing initial states using the density of states}
+\date{}
+%\author{Simeon Carstens}
+\renewcommand{\d}{\mathrm{d}}
+\hyphenation{RESAAS}
+\begin{document}
+\maketitle
+This document gives mathematical details about the density of states-based methods used in RESAAS to optimize Replica Exchange schedules and to draw good initial states for consecutive simulation runs. All credit for these ideas goes to Prof. Michael Habeck at Jena University / Germany.
+\section*{General theory}
+Two replicas are sampling distributions $p_1(x)$ and $p_2(x)$ and are currently at states $x_1$ and $x_2$. The probability for accepting an exchange is then given by
+\begin{equation}
+  p_{\mathrm{acc}}(x_1, x_2|p_1, p_2) = \mathrm{min}\left\{1, \frac{p_1(x_2)}{p_1(x_1)} \frac{p_2(x_1)}{p_2(x_2)}\right\} \mbox .
+\end{equation}
+Assume $p_1$ and $p_2$ depend on $x$ only through a common function $E(x)$, the ``energy'', that is, we have $p_i(x)=p_i(E(x))$. \\
+To calculate the average acceptance rate $\overline{p}_{\mathrm{acc}}$, we calculate the expectation value of $p_{\mathrm{acc}}$ with respect to the joint distribution $p(x_1, x_2)=p_1(x_1)p_2(x_2)$ and we have
+\begin{equation}
+  \overline{p}_{\mathrm{acc}} = \iint \d x_1 \d x_2 \ p_{\mathrm{acc}}(x_1, x_2|p_1, p_2) p_1(x_1)p_2(x_2) \mbox .
+\end{equation}
+This is a double integral over two potentially high-dimensional variables. To make progress, we introduce the density of states (DOS) $g(E)$, which counts the multiplicity of energies in an interval $[E, E + \d E]$:
+\begin{equation*}
+  g(E) = \int \d x \ \updelta(E-E(x))
+\end{equation*}
+Using the DOS, we can write the expectation value of any function $f(x)$ which depends on $x$ only via the energy E (meaning, again, $f(x)=f(E(x))$), as an integral over $E$ instead of $x$:
+\begin{equation*}
+  \int \d x \ f(E(x)) = \int \d E \ g(E) f(E)
+\end{equation*}
+We further note that often, we only now distributions $p$ up to a normalization constant $Z$, and we have
+\begin{equation*}
+  p(x) = \frac{1}{Z}q(x)
+\end{equation*}
+Using the DOS, above equation and the assumption that $q(x)=q(E(x))$, we can now rewrite the expected acceptance rate as an integral over energies:
+\begin{gather}
+\begin{aligned}
+  \overline{p}_{\mathrm{acc}} &= \frac{1}{Z_1 Z_2} \iint \d x_1 \d x_2 \ \mathrm{min}\left\{1, \frac{q_1(E(x_2))}{q_1(E(x_1))} \frac{q_2(E(x_1))}{q_2(E(x_2))}\right\} q_1(E(x_1)) q_2(E(x_2)) \\
+                              &= \frac{1}{Z_1 Z_2} \iint \d x_1 \d x_2 \ \mathrm{min}\left\{q_1(E(x_1)) q_2(E(x_2)), q_1(E(x_2)) q_2(E(x_1))\right\} \\
+  &= \frac{1}{Z_1 Z_2} \iint \d E_1 \d E_2 \ g(E_1) g(E_2) \mathrm{min}\left\{q_1(E_1) q_2(E_2), q_1(E_2) q_2(E_1)\right\}
+\end{aligned}
+\end{gather}
+Note that the normalization constants $Z_1, Z_2$ can be written in terms of the energies $E$, too:
+\begin{equation}
+  Z_i = \int \d x \ q_i(E(x)) = \int \d E \ g(E) q_i(E)
+\end{equation}
+Long story short: if we have access to $g(E)$, we can estimate the expected acceptance rate by means of simple numeric approximation of one-dimensional and two-dimensional integrals over energies.\\
+We can get a good estimate of $g(E)$ via multiple histogram reweighting\cite{habeck_dos_wham}; which results in an estimate of $g(E)$ at every sampled value and thus the integrals collapse into sums.\\
+
+\section*{Example: Boltzmann ensemble}
+The only family of tempered distributions currently supported in RESAAS is the Boltzmann ensemble. It is given by
+\begin{equation*}
+  p_\beta(E) = \frac{\exp(-\beta E)}{Z(\beta)}
+\end{equation*}
+and we thus define
+\begin{gather}
+\begin{aligned}
+  p_1(x) &= \frac{1}{Z(\beta_1)}\exp(-\beta_1 E(x)) \mbox , \nonumber \\
+  p_2(x) &= \frac{1}{Z(\beta_2)}\exp(-\beta_2 E(x)) \mbox . \nonumber 
+\end{aligned}
+\end{gather}
+The expected acceptance rate is then
+\begin{equation}
+  \begin{split}
+    \overline{p}_{\mathrm{acc}} = &\frac{1}{Z(\beta_1) Z(\beta_2)} \times \\
+    &\iint \d E_1 \d E_2 \ g(E_1) g(E_2) \mathrm{min}\left\{\exp(-\beta_1E_1-\beta_2E_2), \exp(-\beta_1E_2-\beta_2E_1)\right\}
+  \end{split}
+\end{equation}
+and the normalization constants are given by
+\begin{equation*}
+  Z(\beta_i) = \int \d E \ g(E) \exp(-\beta_i E) \mbox .
+\end{equation*}
+Assuming we have an estimate of $g(E)$ from multiple histogram reweighting, this means we can calculate the expected acceptance rate for any two pairs of inverse temperatures $\beta_1, \beta_2$. Note that in the source code, the acceptance rate and the normalization constants are calculated in log-space for numerical stability.
+
+\subsection*{Determing an inverse temperature schedule with constant acceptance rates}
+Say now that $\beta_0=1$ gives us the distribution we actually are interested in and $\beta_N=\epsilon \approx 0$ is an almost uniform distribution. The above now suggests an iterative algorithm to get a sequence $\beta_0 > \beta_1 > \ldots > \beta_N$ for which the acceptance rates between simulations at consecutive temperatures $\beta_i, \beta_{i+1}$ attain a constant value $\overline p_{\mathrm{acc}}^\mathrm{target}$\cite{habeck_ensemble_annealing}.
+\begin{algorithm}
+  \begin{algorithmic}
+    \STATE $\mathrm{params} \leftarrow  [1.0]$
+    \STATE $\Delta \leftarrow \delta$
+    \WHILE{$\mathrm{params[-1]} - \Delta > \beta_\mathrm{min}$}
+    \IF{$\overline p_\mathrm{acc}(\mathrm{params[-1]} - \Delta \leq p_\mathrm{acc}^\mathrm{target}$}
+    \STATE append $\mathrm{params[-1]} - \Delta$ to params
+    \STATE $\Delta \leftarrow \delta$
+    \ELSE \STATE $\Delta \leftarrow \Delta + \delta$
+    \ENDIF
+    \ENDWHILE
+    \STATE append $\mathrm{params[-1]} - \Delta$ to params
+\end{algorithmic}
+\end{algorithm}
+we start with $\beta = 1$ and lower $\beta$ in increments of $\Delta\beta$, until the expected acceptance rate drops below $p_{\mathrm{acc}}^\mathrm{target}$. We then save the $\beta$ value before the last decrement as $\beta_1$. We then calculate acceptance rates between $\beta_1$ and steadily decreasing $\beta$ values, until the acceptance reate drops below $p_{\mathrm{acc}}^\mathrm{target}$ again and we save the previous $\beta$ value as $\beta_2$ and so on and so forth. At one point, we will hit a predefined $\beta_{\mathrm{min}}$. We then terminate and have obtained the desired sequence of $\beta$ values as our optimized schedule.
+
+\subsection*{Drawing initial states using the density of states}
+To shorten the burnin period of simulations other than the very first one, RESAAS uses the density of states to reweight samples from a previous simulation and then to draw ``good'' initial states in high-probability regions for a Replica Exchange simulation.\\
+Given an unnormalized probability density $q(x)$ which, as above, depends on $x$ only via an ``energy'' $E$, meaning $q(x) = q(E_x)$ (sorry for the abuse of notation), we observe that
+\begin{equation*}
+  q(x) = \frac{g(E_x)q(E_x)}{Z_i}
+\end{equation*}
+Remember that the relation between states $x$ and energies $E_x$ is not one-to-one. The $x$-ses are samples obtained from a previous simulation and for each $x$ we have an estimate $g(E_x)$. Using above relation we can thus calculate, for each previous sample $x$, its probability weight under the new distribution $q$, which can be any member of the set of tempered distributions used in the next Replica Exchange run. Approximately drawing from $q$ then amounts to draw samples from the categorical distribution of $x$-ses with probabilities given by the sample weights. This idea is also due to Prof. Michael Habeck\cite{habeck_ensemble_annealing}.
+\begin{thebibliography}{9}
+\bibitem{habeck_dos_wham} 
+Habeck, Michael. “Evaluation of marginal likelihoods via the density of states.” \textit{AISTATS} (2012).
+
+\bibitem{habeck_ensemble_annealing}
+Habeck, Michael. “Ensemble annealing of complex physical systems.” \textit{arXiv: Computational Physics} (2015). 
+\end{thebibliography}
+
+\end{document}
