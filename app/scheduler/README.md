@@ -26,20 +26,20 @@ are in a nix-shell environment.
   ```shell
   # Its easiest to run things from the repository root directory
   $ cd ../..
-  $ PYTHONPATH="PYTHONPATH:$PWD/scheduler" \
+  $ PYTHONPATH="PYTHONPATH:$PWD/app/scheduler" \
     CELERY_BROKER_URL="redis://localhost:6379/0" \
     CELERY_RESULT_BACKEND="redis://localhost:6379/1" \
     SQLALCHEMY_DATABASE_URI="postgresql://postgres:resaas-dev@localhost:5432/postgres" \
-    RESAAS_SCHEDULER_CONFIG="$PWD/scheduler/example/scheduler.yaml" \
+    RESAAS_SCHEDULER_CONFIG="$PWD/app/scheduler/example/scheduler.yaml" \
       celery --app "resaas.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=1
   ```
   4. Start the flask dev server:
   ```shell
-  $ PYTHONPATH="PYTHONPATH:$PWD/scheduler" \
+  $ PYTHONPATH="PYTHONPATH:$PWD/app/scheduler" \
     CELERY_BROKER_URL="redis://localhost:6379/0" \
     CELERY_RESULT_BACKEND="redis://localhost:6379/1" \
     SQLALCHEMY_DATABASE_URI="postgresql://postgres:resaas-dev@localhost:5432/postgres" \
-    RESAAS_SCHEDULER_CONFIG="$PWD/scheduler/example/scheduler.yaml" \
+    RESAAS_SCHEDULER_CONFIG="$PWD/app/scheduler/example/scheduler.yaml" \
         python -m 'resaas.scheduler.app'
   ```
 

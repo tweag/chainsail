@@ -35,6 +35,8 @@ class TblNodes(db.Model):
     # nodes which have been removed as a part of restarts, scaling, etc.
     # are flagged as in_use=False.
     in_use = db.Column(db.Boolean(), nullable=True)
+    # Flag for indicating whether worker processes can be scheduled on this node
+    is_worker = db.Column(db.Boolean(), nullable=True)
     job = db.relationship("TblJobs", backref="nodes", lazy=True)
 
 

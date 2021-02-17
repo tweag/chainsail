@@ -1,15 +1,17 @@
 import logging
+import time
 from dataclasses import asdict
+from typing import List
 
 import requests
 from resaas.common.spec import BoltzmannInitialScheduleParameters, TemperedDistributionFamily
 from resaas.common.storage import SimulationStorage
 from resaas.common.storage import default_dir_structure as dir_structure
+from resaas.common.tempering.ensembles import BoltzmannEnsemble
 from resaas.controller.initial_schedules import make_geometric_schedule
 from resaas.controller.initial_setup import setup_initial_states, setup_timesteps
 from resaas.controller.util import schedule_length
 from resaas.schedule_estimation.dos_estimators import WHAM
-from resaas.common.tempering.ensembles import BoltzmannEnsemble
 from resaas.schedule_estimation.optimization_quantities import get_quantity_function
 from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 
@@ -82,7 +84,7 @@ def optimization_objects_from_spec(job_spec):
                 opt_params.decrement,
                 get_quantity_function(opt_params.optimization_quantity),
                 "beta",
-                job_spec.max_replicas
+                job_spec.max_replicas,
             )
 
             initial_schedule = make_geometric_schedule(
@@ -187,7 +189,8 @@ class BaseREJobController:
             dict: optimized schedule
         """
         energies = previous_storage.load_all_energies(
-            *self._get_dos_subsample_params(previous_storage))
+            *self._get_dos_subsample_params(previous_storage)
+        )
         schedule = self._schedule_optimizer.optimize(dos, energies)
 
         return schedule
@@ -316,8 +319,11 @@ class BaseREJobController:
         if previous_storage is not None:
             setup_timesteps(current_storage, schedule, previous_storage)
             setup_initial_states(
-                current_storage, schedule, previous_storage,
-                *self._get_dos_subsample_params(previous_storage))
+                current_storage,
+                schedule,
+                previous_storage,
+                *self._get_dos_subsample_params(previous_storage),
+            )
 
         config_dict = self._fill_config_template(current_storage, previous_storage, schedule, prod)
         current_storage.save_config(config_dict)
@@ -337,14 +343,13 @@ class BaseREJobController:
           :class:`np.array`: density of states estimate
         """
         self._re_runner.run_sampling(storage)
-        energies = storage.load_all_energies(
-            *self._get_dos_subsample_params(storage))
+        energies = storage.load_all_energies(*self._get_dos_subsample_params(storage))
         schedule = storage.load_schedule()
         dos = self._dos_estimator.estimate_dos(energies, schedule)
         storage.save_dos(dos)
 
     def _get_dos_subsample_params(self, storage):
-        num_samples = storage.load_config()['general']['n_iterations']
+        num_samples = storage.load_config()["general"]["n_iterations"]
         burnin_percentage = self._optimization_params.dos_burnin_percentage
         thinning_step = self._optimization_params.dos_thinning_step
         from_samples = int(burnin_percentage * num_samples)
@@ -365,6 +370,7 @@ class BaseREJobController:
 
 
 class CloudREJobController(BaseREJobController):
+    SCHEDULER_SCALE_ENDPOINT = "/internal/job/{id}/scale/{n}"
     SCHEDULER_NODE_ENDPOINT = "/job/{id}/nodes"
 
     def __init__(
@@ -382,6 +388,10 @@ class CloudREJobController(BaseREJobController):
         initial_schedule,
         node_updater,
         basename="",
+        connection_retries=5,
+        connection_retry_interval=1,
+        connection_timeout=1200,
+        scaling_timeout=1200,
     ):
         """
         Initializes a Replica Exchange job controller which runs within a
@@ -413,9 +423,15 @@ class CloudREJobController(BaseREJobController):
               maker object which calculates a very first Replica Exchange
               schedule
             node_updater(callable): function which updates information on the
-              available nodes after rescaling, e.g., writes a MPI host file
+              available nodes after rescaling, e.g., writes a MPI host file. Should only
+              accept a single argument, the controller instance.
             basename(str): optional basename to the simulation storage path
               (required for running locally or when reusing an existing bucket)
+            connection_retries(int): the number of connection attempts to make when
+              contacting the scheduler
+            connection_retry_interval(int): the interval in seconds to wait between retries
+            connection_timeout(int): connection timeout in seconds
+            scaling_timeout(int): timeout for waiting on already running scaling requests
         """
         super().__init__(
             re_params,
@@ -432,6 +448,10 @@ class CloudREJobController(BaseREJobController):
         self.scheduler_address = scheduler_address
         self.scheduler_port = scheduler_port
         self._node_updater = node_updater
+        self.connection_retries = connection_retries
+        self.connection_retry_interval = connection_retry_interval
+        self.connection_timeout = connection_timeout
+        self.scaling_timeout = scaling_timeout
 
     def _scale_environment(self, num_replicas):
         """
@@ -440,33 +460,70 @@ class CloudREJobController(BaseREJobController):
         Args:
             num_replicas(int): number of replicas
         """
-        # TODO: sent blocking http request to scheduler to scale up / down
-        # the node cluster.
+        logger.info(f"Requesting job scaling to {num_replicas}")
+        start_time = time.time()
+        retries = 0
+        while (time.time() - start_time) < self.scaling_timeout:
+            try:
+                r = requests.post(
+                    f"http://{self.scheduler_address}:{self.scheduler_port}{self.SCHEDULER_SCALE_ENDPOINT.format(id=self.job_id, n=num_replicas)}"
+                )
+                if r.status_code == 409:
+                    logger.warn(
+                        "Attempted to scale a job which is already scaling. Waiting for "
+                        "scaling to finish."
+                    )
+                    time.sleep(self.connection_retry_interval)
+                    continue
+                r.raise_for_status()
+            except Exception as e:
+                retries += 1
+                if retries > self.connection_retries:
+                    raise e
+                time.sleep(self.connection_retry_interval)
+                continue
+            else:
+                break
+        self._node_updater(self)
 
-        # self._node_updater()
 
-        pass
-
-
-def update_nodes_mpi(hostfile_path):
+def update_nodes_mpi(
+    controller: CloudREJobController,
+    hostfile_path,
+):
     """
     Writes an updated hostfile which is required by the MPI runner.
 
     hostfile_path(str): Path at which to read and write the list of host
       addresses which are participating in the job
     """
-    # Query the active nodes for populating the hosts file
-    # TODO: Use https
-    r = requests.get(
-        f"http://{self.scheduler_address}:{self.scheduler_port}{self.SCHEDULER_NODE_ENDPOINT}"
-    )
-    r.raise_for_status()
+    # Query the scheduler for a list of peers
+    for i in range(controller.connection_retries):
+        try:
+            logger.info("Querying peer addresses")
+            r = requests.get(
+                f"http://{controller.scheduler_address}:{controller.scheduler_port}{controller.SCHEDULER_NODE_ENDPOINT.format(id=controller.job_id)}"
+            )
+            r.raise_for_status()
+        except Exception as e:
+            logger.error(
+                f"Failed to request peer node list from scheduler with response: {repr(r)}"
+            )
+            if (i + 1) == controller.connection_retries:
+                logger.critical("Used all attempts for requesting node list from scheduler.")
+                raise e
+            time.sleep(controller.connection_retry_interval)
     hosts = []
     for n in r.json():
+        if n["is_worker"] is False:
+            logger.debug(f"Ignoring peer node {n['name']} since it is not flagged as worker node.")
+            continue
         if n["in_use"]:
+            # Note: this may also include t he controller host
+            logger.debug(f"Found peer with name: {n['name']}")
             hosts.append(n["address"])
-
-    # Populate the hostsfile
+    logger.info(f"Found a total of {len(hosts)} peers")
     with open(hostfile_path, "w") as f:
+        logger.debug(f"Updating hostfile at {hostfile_path}")
         for h in hosts:
             print(h, file=f)
