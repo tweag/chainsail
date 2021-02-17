@@ -10,6 +10,7 @@ Optimizing the schedule is an iterative procedure consisting of the following st
 4. draw initial states for the next iteration's simulation by reweighting samples using the DOS estimate ([implementation](./resaas/controller/initial_setup.py)) and interpolate sampling stepsizes
 
 For the very first run, an initial schedule is determined heuristically. Currently, the only option is a schedule that follows a geometric progression in an inverse temperature-like parameter.
+These for points are iterated several times, until finally a production run is started with an optimized schedule and good initial states.
 
 ## Replica Exchange sampling runners
 
