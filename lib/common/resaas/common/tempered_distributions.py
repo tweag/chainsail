@@ -91,8 +91,7 @@ class BoltzmannTemperedDistribution(AbstractTemperedDistribution):
         E_gradient = -self.bare_pdf.log_prob_gradient(x)
         # the derivative of the log-Boltzmann ensemble does not depend on the
         # energy, so we don't pass it here and avoid calculating it.
-        return self._ensemble.log_ensemble_derivative(
-            None, beta=self.beta) * E_gradient
+        return self._ensemble.log_ensemble_derivative(None, beta=self.beta) * E_gradient
 
     def bare_log_prob(self, x):
         """
@@ -146,8 +145,7 @@ class LikelihoodTemperedPosterior(AbstractTemperedDistribution):
             x: variate(s) of the underlying posterior
         """
         E = -self.bare_pdf.log_likelihood(x)
-        return self._ensemble.log_ensemble(E, beta=self.beta) \
-          + self.bare_pdf.log_prior(x)
+        return self._ensemble.log_ensemble(E, beta=self.beta) + self.bare_pdf.log_prior(x)
 
     def log_prob_gradient(self, x):
         """
@@ -163,8 +161,7 @@ class LikelihoodTemperedPosterior(AbstractTemperedDistribution):
         E_gradient = -self.bare_pdf.log_likelihood_gradient(x)
         # the derivative of the log-Boltzmann ensemble does not depend on the
         # energy, so we don't pass it here and avoid calculating it.
-        outer_derivative = self._ensemble.log_ensemble_derivative(
-            None, beta=self.beta)
+        outer_derivative = self._ensemble.log_ensemble_derivative(None, beta=self.beta)
         log_likelihood_gradient = outer_derivative * E_gradient
         log_prior_gradient = self.bare_pdf.log_prior_gradient(x)
 

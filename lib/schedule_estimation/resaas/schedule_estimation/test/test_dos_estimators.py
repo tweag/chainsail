@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+
 np.random.seed(52)
 
 from resaas.schedule_estimation.dos_estimators import WHAM
@@ -14,7 +15,7 @@ samples = np.array([np.random.normal(0, s, size=500) for s in sigmas])
 energies = 0.5 * samples ** 2
 # morph normal distributions into samples of harmonic oscillator at different
 # inverse temperatures beta = 1 / sigma ** 2
-schedule = {'beta': 1.0 / sigmas ** 2}
+schedule = {"beta": 1.0 / sigmas ** 2}
 
 
 class testWHAM(unittest.TestCase):
@@ -22,10 +23,10 @@ class testWHAM(unittest.TestCase):
         self.wham = WHAM(BoltzmannEnsemble)
 
     def testDos(self):
-        est_log_dos = self.wham.estimate_dos(energies, schedule,
-                                             max_iterations=100)
+        est_log_dos = self.wham.estimate_dos(energies, schedule, max_iterations=100)
         rebinned_dos, bins = np.histogram(
-            energies.flatten(), weights=np.exp(est_log_dos), bins=100)
+            energies.flatten(), weights=np.exp(est_log_dos), bins=100
+        )
         mean_binned_energy = (bins[:-1] + bins[1:]) / 2
 
         # Normalize re-binned  DOS

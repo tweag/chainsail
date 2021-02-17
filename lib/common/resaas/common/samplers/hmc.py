@@ -42,9 +42,17 @@ class BasicHMCSampler(AbstractSampler):
     adaption scheme.
     """
 
-    def __init__(self, pdf, state, stepsize, num_steps, num_adaption_samples=0,
-                 adaption_uprate=1.05, adaption_downrate=0.95,
-                 integrator=_leapfrog):
+    def __init__(
+        self,
+        pdf,
+        state,
+        stepsize,
+        num_steps,
+        num_adaption_samples=0,
+        adaption_uprate=1.05,
+        adaption_downrate=0.95,
+        integrator=_leapfrog,
+    ):
         """
         Initialize a HMC sampler.
 
@@ -91,8 +99,9 @@ class BasicHMCSampler(AbstractSampler):
           np.ndarray: position at the end of the trajectory
           np.ndarray: momentum at the end of the trajectory
         """
-        return _leapfrog(q, p, lambda x: -self.pdf.log_prob_gradient(x),
-                         self._stepsize, self._num_steps)
+        return _leapfrog(
+            q, p, lambda x: -self.pdf.log_prob_gradient(x), self._stepsize, self._num_steps
+        )
 
     def _total_energy(self, q, p):
         return -self._pdf.log_prob(q) + 0.5 * np.sum(p ** 2)
@@ -104,7 +113,7 @@ class BasicHMCSampler(AbstractSampler):
 
         E_old = self._total_energy(q, p)
         q, p = self._integrate(q, p)
-        E_new = self._total_energy(q, p)#
+        E_new = self._total_energy(q, p)  #
         accepted = np.log(np.random.uniform()) < -(E_new - E_old)
 
         if accepted:
@@ -128,8 +137,7 @@ class BasicHMCSampler(AbstractSampler):
           dict: a single key with the (constant) variable name and an
               HMCSampleStats instance as its value
         """
-        return {self.VARIABLE_NAME: HMCSampleStats(self._last_move_accepted,
-                                                   self._stepsize)}
+        return {self.VARIABLE_NAME: HMCSampleStats(self._last_move_accepted, self._stepsize)}
 
     def _adapt_stepsize(self):
         """
@@ -142,9 +150,8 @@ class BasicHMCSampler(AbstractSampler):
             self._stepsize *= self._adaption_downrate
 
 
+if __name__ == "__main__":
 
-
-if __name__ == '__main__':
     class HO:
         def log_prob(self, x):
             return -0.5 * np.sum(x ** 2)
@@ -157,8 +164,10 @@ if __name__ == '__main__':
     samples = np.array([s.sample() for _ in range(10000)])
 
     import matplotlib.pyplot as plt
+
     fig, ax = plt.subplots()
     from scipy.stats import norm
+
     for i, x in enumerate(init_state):
         ax.hist(samples[:, i], bins=40, alpha=0.5, density=True)
     xspace = np.linspace(-3, 3, 100)

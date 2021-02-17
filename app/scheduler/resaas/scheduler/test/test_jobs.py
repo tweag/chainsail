@@ -2,8 +2,7 @@ import functools
 from unittest.mock import Mock
 
 import pytest
-from resaas.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
-                                     VMNodeConfig)
+from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from resaas.scheduler.nodes.base import NodeStatus, NodeType
 from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 
@@ -59,7 +58,13 @@ def mk_mock_node_cls(
     """
     node_cls = Mock("resaas.scheduler.nodes.base.Node")
 
-    def from_config(name, config, spec, is_controller, job_rep=None, ):
+    def from_config(
+        name,
+        config,
+        spec,
+        is_controller,
+        job_rep=None,
+    ):
         node = node_cls()
         node.name = name
         node.address = "127.0.0.1"

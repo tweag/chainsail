@@ -23,12 +23,14 @@ def test_leapfrog():
     """
     q0 = np.array([1.0])
     p0 = np.array([-1.0])
-    def gradient(x): return x
+
+    def gradient(x):
+        return x
+
     stepsize = 0.01
     num_steps = 1000
 
-    result_q, result_p = _leapfrog(
-        q0.copy(), p0.copy(), gradient, stepsize, num_steps)
+    result_q, result_p = _leapfrog(q0.copy(), p0.copy(), gradient, stepsize, num_steps)
     t_final = stepsize * num_steps
 
     expected_q = p0 * np.sin(t_final) + q0 * np.cos(t_final)
@@ -52,19 +54,18 @@ class TestSamplers(unittest.TestCase):
         for _ in range(num_samples):
             samples.append(sampler.sample())
             stats.append(sampler.last_draw_stats)
-        samples = samples[sampler._num_adaption_samples:]
+        samples = samples[sampler._num_adaption_samples :]
         self.assertTrue(-0.2 < np.mean(samples) < 0.2)
         self.assertTrue(0.8 < np.std(samples) < 1.2)
 
         if test_adaption:
             burnin = sampler._num_adaption_samples
-            num_accepted = np.sum([x['x'].accepted for x in stats[burnin:]])
+            num_accepted = np.sum([x["x"].accepted for x in stats[burnin:]])
             stats_acceptance_rate = num_accepted / (num_samples - burnin)
             self.assertTrue(0.4 < stats_acceptance_rate < 0.6)
 
     def test_hmc_sampler(self):
-        hmc = BasicHMCSampler(self._pdf, self._initial_state.copy(),
-                              0.8, 10, 0)
+        hmc = BasicHMCSampler(self._pdf, self._initial_state.copy(), 0.8, 10, 0)
         # due to the symmetries of the normal distribution, HMC can run into
         # issues: the stability limit is quite sharp, shortly before, the
         # the acceptance rate is essentially 1.0, sfortly after, it's
@@ -72,6 +73,5 @@ class TestSamplers(unittest.TestCase):
         self._test_sampling(hmc, num_samples=10000, test_adaption=False)
 
     def test_rwmc_sampler(self):
-        rwmc = RWMCSampler(self._pdf, self._initial_state.copy(), 2.0,
-                           15000, 1.02, 0.98)
+        rwmc = RWMCSampler(self._pdf, self._initial_state.copy(), 2.0, 15000, 1.02, 0.98)
         self._test_sampling(rwmc, num_samples=50000, test_adaption=True)

@@ -18,8 +18,12 @@ def plot_true_distribution(ax):
 
 
 def plot_samples_histogram(ax, samples, title=""):
-    ax.hist2d(*samples.T, bins=np.linspace(minn, maxx, sl), density=True,
-              norm=matplotlib.colors.LogNorm())
+    ax.hist2d(
+        *samples.T,
+        bins=np.linspace(minn, maxx, sl),
+        density=True,
+        norm=matplotlib.colors.LogNorm(),
+    )
     ax.set_aspect("equal")
     ax.set_title("single chain")
     ax.set_title(title)

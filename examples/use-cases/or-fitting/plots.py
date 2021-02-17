@@ -6,12 +6,14 @@ data = np.loadtxt(os.path.join(os.path.dirname(__file__), "data.txt"))
 
 
 def plot_data(ax):
-    ax.scatter(*data[:,(0, 1)].T, color="black")
-    ax.scatter(*data[:,(0, 2)].T, color="black")
+    ax.scatter(*data[:, (0, 1)].T, color="black")
+    ax.scatter(*data[:, (0, 2)].T, color="black")
 
 
 def plot_data_samples(ax, samples, title):
-    def line(a, b, x): return a * x + b
+    def line(a, b, x):
+        return a * x + b
+
     plot_data(ax)
     x_min = -5
     x_max = 5

@@ -10,12 +10,15 @@ from typing import Tuple
 import click
 import yaml
 from resaas.common.runners import runner_config
-from resaas.common.spec import (JobSpec, JobSpecSchema, NaiveHMCParameters,
-                                OptimizationParameters,
-                                ReplicaExchangeParameters)
+from resaas.common.spec import (
+    JobSpec,
+    JobSpecSchema,
+    NaiveHMCParameters,
+    OptimizationParameters,
+    ReplicaExchangeParameters,
+)
 from resaas.common.storage import LocalStorageBackend
-from resaas.controller import (BaseREJobController,
-                                      optimization_objects_from_spec)
+from resaas.controller import BaseREJobController, optimization_objects_from_spec
 from resaas.runners.rexfw import MPIRERunner
 
 ProcessStatus = Tuple[bool, str]
@@ -24,6 +27,7 @@ logger = logging.getLogger("resaas.controller")
 ##############################################################################
 # ENTRYPOINT
 ##############################################################################
+
 
 def check_status(proc: Process) -> ProcessStatus:
     # TODO: This will be called via gRPC

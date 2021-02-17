@@ -2,12 +2,13 @@ import numpy as np
 
 from .storage import LocalStorageBackend, CloudStorageBackend
 
+
 def log_sum_exp(x, axis=0):
     """Calculate the log of a sum of exponentials in a numerically
     stable way
 
     Args:
-      x: 
+      x:
       axis:  (Default value = 0)
 
     Returns:

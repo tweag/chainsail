@@ -246,9 +246,10 @@ class CloudStorageBackend(AbstractStorageBackend):
             obj = self._driver.get_object(self._container.name, file_name)
         except InvalidCredsError as e:
             # for Google Cloud Storage
-            if e.value == '':
+            if e.value == "":
                 msg = "Object '{}' not found in container {}".format(
-                    file_name, self._container.name)
+                    file_name, self._container.name
+                )
                 raise FileNotFoundError(msg)
             else:
                 raise e

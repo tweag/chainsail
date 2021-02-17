@@ -3,8 +3,7 @@ from itertools import cycle
 
 import numpy as np
 
-from resaas.controller.initial_setup import (draw_initial_states,
-                                                    interpolate_timesteps)
+from resaas.controller.initial_setup import draw_initial_states, interpolate_timesteps
 
 
 class MockStorage:
@@ -61,13 +60,15 @@ class TestDrawInitialTimesteps(unittest.TestCase):
         # each call of draw_initial_states produces one sample for each inverse
         # temperature beta. So we run this many times.
         dos_reweighted_samples = np.array(
-            [draw_initial_states({'beta': new_betas}, storage, dos, 0, 1)
-             for _ in range(n_reweighted_samples)])
+            [
+                draw_initial_states({"beta": new_betas}, storage, dos, 0, 1)
+                for _ in range(n_reweighted_samples)
+            ]
+        )
 
         expected_means = np.zeros(len(new_betas))
         reweighted_means = dos_reweighted_samples.mean(0)
-        self.assertTrue(np.allclose(
-            expected_means, reweighted_means, atol=0.1))
+        self.assertTrue(np.allclose(expected_means, reweighted_means, atol=0.1))
 
         reweighted_stds = dos_reweighted_samples.std(0)
         # transform from standard deviations back to inverse temperatures
@@ -80,29 +81,25 @@ class TestTimestepInterpolation(unittest.TestCase):
         pass
 
     def test_interpolate_timesteps(self):
-        old_schedule = {'beta': [1.0, 0.8, 0.6, 0.4, 0.2]}
+        old_schedule = {"beta": [1.0, 0.8, 0.6, 0.4, 0.2]}
         old_timesteps = [2, 4, 6, 8, 10]
-        new_schedule = {'beta': [1.0, 0.7, 0.3]}
+        new_schedule = {"beta": [1.0, 0.7, 0.3]}
 
-        new_timesteps = interpolate_timesteps(
-            new_schedule, old_schedule, old_timesteps)
+        new_timesteps = interpolate_timesteps(new_schedule, old_schedule, old_timesteps)
         expected = [2, 5, 9]
         self.assertTrue(np.allclose(new_timesteps, expected))
 
-        bad_old_schedule = {'beta': [1.0, 3.0, 0.6, 0.4, 0.2]}
+        bad_old_schedule = {"beta": [1.0, 3.0, 0.6, 0.4, 0.2]}
         old_timesteps = [2, 4, 6, 8, 10]
-        new_schedule = {'beta': [1.0, 0.7, 0.3]}
+        new_schedule = {"beta": [1.0, 0.7, 0.3]}
 
         # non-monotonously decreasing parameter
         with self.assertRaises(ValueError):
-            interpolate_timesteps(new_schedule, bad_old_schedule,
-                                  old_timesteps)
-        bad_new_schedule = {'beta': [1.0, 1.0, 0.3]}
+            interpolate_timesteps(new_schedule, bad_old_schedule, old_timesteps)
+        bad_new_schedule = {"beta": [1.0, 1.0, 0.3]}
         with self.assertRaises(ValueError):
-            interpolate_timesteps(bad_new_schedule, old_schedule,
-                                  old_timesteps)
+            interpolate_timesteps(bad_new_schedule, old_schedule, old_timesteps)
         # non-equal number of parameters and time steps
         bad_timesteps = [0.9, 3]
         with self.assertRaises(ValueError):
-            interpolate_timesteps(new_schedule, old_schedule,
-                                  bad_timesteps)
+            interpolate_timesteps(new_schedule, old_schedule, bad_timesteps)
