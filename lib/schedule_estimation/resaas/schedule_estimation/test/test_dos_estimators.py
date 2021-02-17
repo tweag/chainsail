@@ -2,8 +2,8 @@ import unittest
 import numpy as np
 np.random.seed(52)
 
-from resaas.schedule_estimation.dos_estimators import (WHAM,
-                                                       BoltzmannEnsemble)
+from resaas.schedule_estimation.dos_estimators import WHAM
+from resaas.common.tempering.ensembles import BoltzmannEnsemble
 from resaas.common.util import log_sum_exp
 
 # draw samples from a bunch of normal distributions with standard deviations
