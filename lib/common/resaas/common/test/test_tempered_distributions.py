@@ -4,7 +4,8 @@ import numpy as np
 
 from resaas.common.tempering.tempered_distributions import (
     BoltzmannTemperedDistribution,
-    LikelihoodTemperedPosterior)
+    LikelihoodTemperedPosterior,
+)
 from resaas.common.pdfs import AbstractPDF
 
 

@@ -52,9 +52,11 @@ def acceptance_rate(dos, energies, beta1, beta2):
     max_num_energies = 5000
     energies = energies.ravel()
     if len(energies) > max_num_energies:
-        logger.warning(f"More than {max_num_energies} energies given for "
-                        "acceptance rate estimation. Subsampling to avoid "
-                        "excessive memory usage.")
+        logger.warning(
+            f"More than {max_num_energies} energies given for "
+            "acceptance rate estimation. Subsampling to avoid "
+            "excessive memory usage."
+        )
         indices = np.random.choice(np.arange(len(energies)), max_num_energies)
         energies = energies[indices]
         dos = dos[indices]

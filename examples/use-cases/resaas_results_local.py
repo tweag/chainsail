@@ -12,4 +12,4 @@ storage = SimulationStorage(basename, sim_path, LocalStorageBackend())
 samples = storage.load_all_samples()
 print(samples.shape)
 
-np.save(os.path.join(outfolder, 're_all_samples.npy'), samples)
+np.save(os.path.join(outfolder, "re_all_samples.npy"), samples)

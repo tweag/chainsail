@@ -3,11 +3,12 @@ import os
 import numpy as np
 
 
-def line(a, b, x): return a * x + b
+def line(a, b, x):
+    return a * x + b
 
 
 def rn_average(r, n, axis):
-    return np.sum(np.array(r) ** (-n), axis=axis) ** (-1/n)
+    return np.sum(np.array(r) ** (-n), axis=axis) ** (-1 / n)
 
 
 class Posterior:
@@ -24,14 +25,18 @@ class Posterior:
 
     def log_likelihood(self, x):
         mock_y = line(x[0], x[1], self.data_x)
-        return -0.5 * np.sum(rn_average(np.fabs(self.data_y - mock_y[:, None]), 6, axis=1) ** 2) \
-          / self.sigma_l / self.sigma_l
+        return (
+            -0.5
+            * np.sum(rn_average(np.fabs(self.data_y - mock_y[:, None]), 6, axis=1) ** 2)
+            / self.sigma_l
+            / self.sigma_l
+        )
 
     def log_prob(self, x):
         return self.log_likelihood(x) + self.log_prior(x)
 
 
 path = os.path.dirname(__file__)
-data = np.loadtxt(os.path.join(path, 'data.txt'))
-pdf = Posterior(1, 5, 6, data[:,0], data[:,1:])
+data = np.loadtxt(os.path.join(path, "data.txt"))
+pdf = Posterior(1, 5, 6, data[:, 0], data[:, 1:])
 initial_states = np.random.uniform(-5, 5, size=2).ravel()

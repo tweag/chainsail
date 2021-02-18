@@ -16,12 +16,11 @@ for i in range(n_samples):
     accepted += sampler._last_move_accepted
 
     if i % 500 == 0 and i > 1:
-        print("Samples: {}/{} ### acceptance rate: {:.2f}".format(
-            i, n_samples, accepted / i))
+        print("Samples: {}/{} ### acceptance rate: {:.2f}".format(i, n_samples, accepted / i))
 samples = np.array(samples)
 
 fig, ax = plt.subplots()
 plot_data_samples(ax, samples[::100], "single chain")
 plt.show()
 
-np.save('sc_samples.npy', samples)
+np.save("sc_samples.npy", samples)

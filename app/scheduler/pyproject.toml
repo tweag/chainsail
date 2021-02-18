@@ -34,9 +34,6 @@ pytest-dotenv = "^0.5.2"
 pytest-cov = "^2.10.1"
 isort = "^5.7.0"
 
-[tool.black]
-line-length = 99
-target-version = ["py38"]
 [tool.pytest.ini_options]
 minversion = "6.0"
 env_override_existing_values = 1
