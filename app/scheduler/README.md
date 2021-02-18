@@ -47,7 +47,7 @@ With that you can start making requests, for example:
 ```shell
 curl --request POST \
      --header "Content-Type: application/json" \
-     --data '{"probability_definition": "gs://foo/bar", "initial_number_of_replicas": 1"}' \
+     --data '{"probability_definition": "gs://foo/bar", "initial_number_of_replicas": "2"}' \
      http://127.0.0.1:5000/job
 ```
 

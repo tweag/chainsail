@@ -52,7 +52,7 @@ def start_job(job_id):
         {},
         link=watch_job_task.si(job_id).set(
             link=stop_job_task.si(job_id, exit_status="success"),
-            link_error=stop_job_task.si(job_id, exit_status="failed"),
+            # link_error=stop_job_task.si(job_id, exit_status="failed"),
         ),
     )
     return ("ok", 200)
@@ -102,4 +102,4 @@ def scale_job(job_id, n_replicas):
 if __name__ == "__main__":
     # Development server
     db.create_all()
-    app.run(debug=True)
+    app.run("0.0.0.0", debug=True)

@@ -508,7 +508,7 @@ class VMNode(Node):
 
         # Bind the new node to a database record if a job record was specified
         if job_rep:
-            node_rep = TblNodes(in_use=True)
+            node_rep = TblNodes(in_use=True, is_worker=(not is_controller))
             job_rep.nodes.append(node_rep)
         else:
             node_rep = None
