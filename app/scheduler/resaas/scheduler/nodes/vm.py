@@ -142,11 +142,7 @@ def prepare_deployment(
         container_cmd += " "
         container_cmd += " ".join([a for a in vm_node._config.args])
 
-    if vm_node.spec.name:
-        job_id = vm_node.spec.name
-    else:
-        job_id = "job"
-    container_cmd = container_cmd.format(job_id=job_id)
+    container_cmd = container_cmd.format(job_id=vm_node.representation.job.id)
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
         install_script=os.path.basename(install_script_target),
@@ -281,6 +277,7 @@ class VMNode(Node):
                 "Please consult the libcloud documentation for a list of cloud providers which "
                 f"support this method. Current driver: {driver}"
             )
+        # TODO: Make the representation a mandatory field and check that it has a valid job id associated with it
         self._name = name
         self._driver = driver
         self._image = image
@@ -510,7 +507,7 @@ class VMNode(Node):
 
         # Bind the new node to a database record if a job record was specified
         if job_rep:
-            node_rep = TblNodes(in_use=True)
+            node_rep = TblNodes(in_use=True, is_worker=(not is_controller))
             job_rep.nodes.append(node_rep)
         else:
             node_rep = None

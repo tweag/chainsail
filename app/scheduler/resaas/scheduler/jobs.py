@@ -9,7 +9,7 @@ from resaas.common.spec import JobSpec, JobSpecSchema
 from resaas.grpc import HealthCheckRequest, HealthCheckResponse, HealthStub
 from resaas.scheduler.config import SchedulerConfig
 from resaas.scheduler.db import TblJobs, TblNodes
-from resaas.scheduler.errors import JobError
+from resaas.scheduler.errors import JobError, ObjectConstructionError
 from resaas.scheduler.nodes.base import Node, NodeType
 from resaas.scheduler.nodes.registry import NODE_CLS_REGISTRY
 
@@ -238,7 +238,12 @@ class Job:
                 continue
             node_rep: TblNodes
             node_cls = node_registry[NodeType(node_rep.node_type)]
-            nodes.append(node_cls.from_representation(spec, node_rep, config))
+            try:
+                node = node_cls.from_representation(spec, node_rep, config)
+            except ObjectConstructionError:
+                node_rep.in_use = False
+            else:
+                nodes.append(node)
         return cls(
             id=job_rep.id,
             spec=spec,
