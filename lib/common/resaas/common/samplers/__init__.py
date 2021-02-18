@@ -13,7 +13,7 @@ class AbstractSampler(object):
     Defines an interface for single-chain MCMC samplers.
     """
 
-    VARIABLE_NAME = 'x'
+    VARIABLE_NAME = "x"
 
     def __init__(self, pdf, state):
         """

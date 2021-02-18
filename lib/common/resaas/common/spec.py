@@ -206,8 +206,12 @@ class JobSpecSchema(Schema):
     @post_dump
     def remove_nulls(self, data, *args, **kwargs):
         # remove all nullable (i.e. Optional) fields which have a default of None.
-        nullables = ("name", "local_sampling_parameters",
-                     "replica_exchange_parameters", "optimization_parameters")
+        nullables = (
+            "name",
+            "local_sampling_parameters",
+            "replica_exchange_parameters",
+            "optimization_parameters",
+        )
         for nullable_field in nullables:
             if data[nullable_field] is None:
                 data.pop(nullable_field)

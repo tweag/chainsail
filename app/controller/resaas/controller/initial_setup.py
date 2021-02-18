@@ -1,6 +1,6 @@
-'''
+"""
 Logic to set up initial states and values for Replica Exchange simulations
-'''
+"""
 import numpy as np
 
 from resaas.common.util import log_sum_exp
@@ -8,7 +8,7 @@ from resaas.controller.util import schedule_length
 
 
 def setup_timesteps(current_storage, schedule, previous_storage=None):
-    '''
+    """
     Sets up time steps, possibly based on a previous simulation.
 
     Args:
@@ -17,19 +17,18 @@ def setup_timesteps(current_storage, schedule, previous_storage=None):
         schedule(dict): current parameter schedule
         previous_storage(:class:`SimulationStorage`): storage for previous
           simulation
-    '''
+    """
     if previous_storage is None:
         timesteps = np.linspace(1e-3, 1e-1, len(schedule))
     else:
         old_timesteps = previous_storage.load_final_timesteps()
         old_schedule = previous_storage.load_schedule()
-        timesteps = interpolate_timesteps(schedule, old_schedule,
-                                          old_timesteps)
+        timesteps = interpolate_timesteps(schedule, old_schedule, old_timesteps)
     current_storage.save_initial_timesteps(timesteps)
 
 
 def interpolate_timesteps(schedule, old_schedule, old_timesteps):
-    '''
+    """
     Interpolates time steps from a previous simulation.
 
     Given time steps from a previous simulation and its schedule,
@@ -40,10 +39,9 @@ def interpolate_timesteps(schedule, old_schedule, old_timesteps):
         schedule(dict): current parameter schedule
         old_schedule(dict): previous parameter schedule
         old_timesteps(dict): previous set of time steps
-    '''
+    """
     if len(schedule) > 1 or len(old_schedule) > 1:
-        raise ValueError(("Time steps can be interpolated only for "
-                          "single-parameter schedules"))
+        raise ValueError(("Time steps can be interpolated only for " "single-parameter schedules"))
     new_params = list(schedule.values())[0]
     old_params = list(old_schedule.values())[0]
 
@@ -53,21 +51,18 @@ def interpolate_timesteps(schedule, old_schedule, old_timesteps):
     if not np.all(np.diff(old_params) < 0):
         raise ValueError(err_msg.format("Old"))
     if len(old_params) != len(old_timesteps):
-        raise ValueError(
-            "Old schedule parameters and old timesteps must have same length")
+        raise ValueError("Old schedule parameters and old timesteps must have same length")
 
     # np.interp() expects the sequence of x values to increase, but
     # our schedules always have the highest inverse temperature first,
     # so we have to reverse everything and later reverse the result back
-    interpolated_timesteps = np.interp(
-        new_params[::-1], old_params[::-1], old_timesteps[::-1])
+    interpolated_timesteps = np.interp(new_params[::-1], old_params[::-1], old_timesteps[::-1])
 
     return interpolated_timesteps[::-1]
 
 
-def draw_initial_states(schedule, previous_storage, dos, dos_burnin,
-                        dos_thinning_step):
-    '''
+def draw_initial_states(schedule, previous_storage, dos, dos_burnin, dos_thinning_step):
+    """
     Draw initial states using the density of states.
 
     Given previous samples, their energies, and the current parameter
@@ -89,10 +84,9 @@ def draw_initial_states(schedule, previous_storage, dos, dos_burnin,
           states was calculated
         dos_thinning_step(int): sample thinning step used when density of
           states was calculated
-    '''
-    betas = schedule['beta']
-    energies = previous_storage.load_all_energies(from_sample=dos_burnin,
-                                                  step=dos_thinning_step)
+    """
+    betas = schedule["beta"]
+    energies = previous_storage.load_all_energies(from_sample=dos_burnin, step=dos_thinning_step)
     energies = energies.ravel()
 
     # calculate the probability weights of the old samples for the new
@@ -105,23 +99,26 @@ def draw_initial_states(schedule, previous_storage, dos, dos_burnin,
     # the above are the unnormalized weights, now we normalize them
     log_ps -= log_sum_exp(log_ps.T, axis=0).T[:, None]
 
-    old_samples = previous_storage.load_all_samples(from_sample=dos_burnin,
-                                                    step=dos_thinning_step)
+    old_samples = previous_storage.load_all_samples(from_sample=dos_burnin, step=dos_thinning_step)
     # choose new samples from categorical distribution over old samples
     # with the above calculated weights
     ensemble_flattened_samples = old_samples.reshape(-1, *old_samples.shape[2:])
 
     rng = np.random.default_rng()
-    new_samples = np.array([
-        rng.choice(ensemble_flattened_samples, axis=0, p=np.exp(log_p))
-        for log_p, beta in zip(log_ps, betas)])
+    new_samples = np.array(
+        [
+            rng.choice(ensemble_flattened_samples, axis=0, p=np.exp(log_p))
+            for log_p, beta in zip(log_ps, betas)
+        ]
+    )
 
     return new_samples
 
 
-def setup_initial_states(current_storage, schedule, previous_storage,
-                         dos_from_samples, dos_thinning_step):
-    '''
+def setup_initial_states(
+    current_storage, schedule, previous_storage, dos_from_samples, dos_thinning_step
+):
+    """
     Sets up initial states.
 
     Uses the density of states to draw new initial states and writes them
@@ -137,10 +134,10 @@ def setup_initial_states(current_storage, schedule, previous_storage,
           states was calculated
         dos_thinning_step(int): sample thinning step used when density of
           states was calculated
-    '''
+    """
     if previous_storage is not None:
         dos = previous_storage.load_dos()
         initial_states = draw_initial_states(
-            schedule, previous_storage, dos, dos_from_samples,
-            dos_thinning_step)
+            schedule, previous_storage, dos, dos_from_samples, dos_thinning_step
+        )
         current_storage.save_initial_states(initial_states)

@@ -16,8 +16,15 @@ class RWMCSampler(AbstractSampler):
     A simple Metropolis sampler with a uniform proposal distribution.
     """
 
-    def __init__(self, pdf, state, stepsize, num_adaption_samples=0,
-                 adaption_uprate=1.05, adaption_downrate=0.95):
+    def __init__(
+        self,
+        pdf,
+        state,
+        stepsize,
+        num_adaption_samples=0,
+        adaption_uprate=1.05,
+        adaption_downrate=0.95,
+    ):
         """Initialize a Metropolis sampler.
 
         Args:
@@ -32,7 +39,7 @@ class RWMCSampler(AbstractSampler):
               size in case of rejected move
           adaption_downrate: factor with which to multiply current step size in
               case of accepted move
-          """
+        """
         super(RWMCSampler, self).__init__(pdf, state)
 
         self._stepsize = stepsize
@@ -45,8 +52,7 @@ class RWMCSampler(AbstractSampler):
     @property
     def last_draw_stats(self):
 
-        return {self.VARIABLE_NAME: RWMCSampleStats(self._last_move_accepted,
-                                                    self._stepsize)}
+        return {self.VARIABLE_NAME: RWMCSampleStats(self._last_move_accepted, self._stepsize)}
 
     def _adapt_stepsize(self):
         """
@@ -62,7 +68,8 @@ class RWMCSampler(AbstractSampler):
         """Draws a single sample."""
         E_old = -self.pdf.log_prob(self.state)
         proposal = self.state + np.random.uniform(
-            low=-self._stepsize, high=self._stepsize, size=len(self.state))
+            low=-self._stepsize, high=self._stepsize, size=len(self.state)
+        )
         E_new = -self.pdf.log_prob(proposal)
         accepted = np.log(np.random.random()) < -(E_new - E_old)
 
@@ -73,5 +80,5 @@ class RWMCSampler(AbstractSampler):
         if self._sample_counter < self._num_adaption_samples:
             self._adapt_stepsize()
         self._sample_counter += 1
-        
+
         return self.state

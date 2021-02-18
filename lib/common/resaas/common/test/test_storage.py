@@ -6,10 +6,7 @@ from tempfile import TemporaryDirectory
 
 import numpy as np
 
-from resaas.common.storage import (
-    SimulationStorage,
-    pickle_to_stream,
-    LocalStorageBackend)
+from resaas.common.storage import SimulationStorage, pickle_to_stream, LocalStorageBackend
 
 obj = ["a", "list", 42]
 
@@ -60,19 +57,20 @@ class testFunctions(unittest.TestCase):
 
 class testSimulationStorage(unittest.TestCase):
     def setUp(self):
-        mock_config = {'general': {'num_replicas': 2, 'n_iterations': 10},
-                       're': {'dump_interval': 5}}
+        mock_config = {
+            "general": {"num_replicas": 2, "n_iterations": 10},
+            "re": {"dump_interval": 5},
+        }
         patcher = patch(
-            'resaas.common.storage.SimulationStorage.load_config',
-            return_value=mock_config)
+            "resaas.common.storage.SimulationStorage.load_config", return_value=mock_config
+        )
         patcher.start()
         self.addCleanup(patcher, patcher.stop)
 
         self._basename = "/some/base"
         self._sim_path = "/sim/path"
         self._backend = MockStorageBackend()
-        self._storage = SimulationStorage(
-            self._basename, self._sim_path, self._backend)
+        self._storage = SimulationStorage(self._basename, self._sim_path, self._backend)
 
     def testWrite(self):
         fname = "a_file.pickle"
@@ -99,8 +97,7 @@ class testSimulationStorage(unittest.TestCase):
         self.assertEqual(self._storage.load(fname), obj)
 
     def _write_fake_all_quantities(self, what):
-        template = os.path.join(self._basename, self._sim_path,
-                                f"{what}/{what}")
+        template = os.path.join(self._basename, self._sim_path, f"{what}/{what}")
         template += "_replica{}_{}-{}.pickle"
         self._backend.data[template.format(1, 0, 5)] = [1, 2, 3]
         self._backend.data[template.format(1, 5, 10)] = [4, 5, 6]
@@ -137,7 +134,6 @@ class testSimulationStorage(unittest.TestCase):
 
 
 class TestLocalStorage(unittest.TestCase):
-
     def setUp(self):
         self._tmp_dir = TemporaryDirectory().name
         self._backend = LocalStorageBackend()

@@ -5,19 +5,25 @@ from tempfile import TemporaryDirectory
 from typing import IO, Callable, List, Optional, Tuple, Union
 
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import (NodeAuthSSHKey, NodeDriver, NodeImage,
-                                   NodeSize)
-from libcloud.compute.deployment import (Deployment, FileDeployment,
-                                         MultiStepDeployment, ScriptDeployment,
-                                         ScriptFileDeployment,
-                                         SSHKeyDeployment)
+from libcloud.compute.base import NodeAuthSSHKey, NodeDriver, NodeImage, NodeSize
+from libcloud.compute.deployment import (
+    Deployment,
+    FileDeployment,
+    MultiStepDeployment,
+    ScriptDeployment,
+    ScriptFileDeployment,
+    SSHKeyDeployment,
+)
 from libcloud.compute.types import DeploymentException, NodeState
 from resaas.common.spec import Dependencies, JobSpec, JobSpecSchema
-from resaas.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
-                                     VMNodeConfig)
+from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from resaas.scheduler.db import TblJobs, TblNodes
-from resaas.scheduler.errors import (ConfigurationError, MissingNodeError,
-                                     NodeError, ObjectConstructionError)
+from resaas.scheduler.errors import (
+    ConfigurationError,
+    MissingNodeError,
+    NodeError,
+    ObjectConstructionError,
+)
 from resaas.scheduler.nodes.base import Node, NodeStatus
 
 

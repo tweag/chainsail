@@ -7,6 +7,7 @@ from abc import abstractmethod
 
 class AbstractPDF(object):
     """Defines the interface for PDFs compatible with RESAAS."""
+
     @abstractmethod
     def log_prob(self, x):
         """

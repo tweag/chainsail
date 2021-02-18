@@ -3,7 +3,11 @@ from unittest.mock import patch
 
 import numpy as np
 from resaas.common.storage import AbstractStorageBackend
-from resaas.common.spec import NaiveHMCParameters, ReplicaExchangeParameters, OptimizationParameters
+from resaas.common.spec import (
+    NaiveHMCParameters,
+    ReplicaExchangeParameters,
+    OptimizationParameters,
+)
 from resaas.controller import BaseREJobController
 
 
@@ -18,7 +22,7 @@ class MockWham:
 
 class MockOptimizer:
     def optimize(self, dos, energies):
-        return {"beta": np.arange(dos-1, 0, -1)}
+        return {"beta": np.arange(dos - 1, 0, -1)}
 
 
 class MockRERunner:
@@ -42,22 +46,21 @@ class MockStorageBackend(AbstractStorageBackend):
 
 class testREJobController(unittest.TestCase):
     def setUp(self):
-        initial_states_patcher = patch(
-            'resaas.controller.setup_initial_states')
+        initial_states_patcher = patch("resaas.controller.setup_initial_states")
         initial_states_patcher.start()
         self.addCleanup(initial_states_patcher.stop)
 
         load_all_energies_patcher = patch(
-            'resaas.common.storage.SimulationStorage.load_all_energies',
-            return_value=3)
+            "resaas.common.storage.SimulationStorage.load_all_energies", return_value=3
+        )
         load_all_energies_patcher.start()
         self.addCleanup(load_all_energies_patcher.stop)
 
         optimizer = MockOptimizer()
-        initial_schedule = {'beta': np.arange(7, 0, -1)}
+        initial_schedule = {"beta": np.arange(7, 0, -1)}
         re_params = ReplicaExchangeParameters(
-            num_optimization_samples=10,
-            num_production_samples=20, dump_interval=5)
+            num_optimization_samples=10, num_production_samples=20, dump_interval=5
+        )
         opt_params = OptimizationParameters(max_optimization_runs=5)
         ls_params = NaiveHMCParameters()
         self._controller = BaseREJobController(
