@@ -143,7 +143,6 @@ def prepare_deployment(
         container_cmd += " ".join([a for a in vm_node._config.args])
 
     container_cmd = container_cmd.format(job_id=vm_node.representation.job.id)
-    print(vm_node.representation.job.id)
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
         install_script=os.path.basename(install_script_target),
