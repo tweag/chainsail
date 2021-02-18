@@ -3,7 +3,7 @@ from itertools import cycle
 
 import numpy as np
 
-from resaas.controller.initial_setup import draw_initial_states, interpolate_timesteps
+from resaas.controller.initial_setup import draw_initial_states, interpolate_stepsizes
 
 
 class MockStorage:
@@ -18,7 +18,7 @@ class MockStorage:
         return self._states
 
 
-class TestDrawInitialTimesteps(unittest.TestCase):
+class TestDrawInitialStepsizes(unittest.TestCase):
     """
     Uses the physicist's best friend, the harmonic oscillator, a.k.a. the
     normal distribution, to test drawing reweighted samples.
@@ -27,7 +27,7 @@ class TestDrawInitialTimesteps(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_draw_initial_timesteps(self):
+    def test_draw_initial_stepsizes(self):
         # In the Boltzmann ensemble, energies are exponentially distributed.
         # If we use np.linspace, we get too few energies close to zero.
         # That's why we use np.logspace.
@@ -76,30 +76,30 @@ class TestDrawInitialTimesteps(unittest.TestCase):
         self.assertTrue(np.allclose(reweighted_betas, new_betas, atol=0.1))
 
 
-class TestTimestepInterpolation(unittest.TestCase):
+class TestStepsizeInterpolation(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_interpolate_timesteps(self):
+    def test_interpolate_stepsizes(self):
         old_schedule = {"beta": [1.0, 0.8, 0.6, 0.4, 0.2]}
-        old_timesteps = [2, 4, 6, 8, 10]
+        old_stepsizes = [2, 4, 6, 8, 10]
         new_schedule = {"beta": [1.0, 0.7, 0.3]}
 
-        new_timesteps = interpolate_timesteps(new_schedule, old_schedule, old_timesteps)
+        new_stepsizes = interpolate_stepsizes(new_schedule, old_schedule, old_stepsizes)
         expected = [2, 5, 9]
-        self.assertTrue(np.allclose(new_timesteps, expected))
+        self.assertTrue(np.allclose(new_stepsizes, expected))
 
         bad_old_schedule = {"beta": [1.0, 3.0, 0.6, 0.4, 0.2]}
-        old_timesteps = [2, 4, 6, 8, 10]
+        old_stepsizes = [2, 4, 6, 8, 10]
         new_schedule = {"beta": [1.0, 0.7, 0.3]}
 
         # non-monotonously decreasing parameter
         with self.assertRaises(ValueError):
-            interpolate_timesteps(new_schedule, bad_old_schedule, old_timesteps)
+            interpolate_stepsizes(new_schedule, bad_old_schedule, old_stepsizes)
         bad_new_schedule = {"beta": [1.0, 1.0, 0.3]}
         with self.assertRaises(ValueError):
-            interpolate_timesteps(bad_new_schedule, old_schedule, old_timesteps)
-        # non-equal number of parameters and time steps
-        bad_timesteps = [0.9, 3]
+            interpolate_stepsizes(bad_new_schedule, old_schedule, old_stepsizes)
+        # non-equal number of parameters and stepsizes
+        bad_stepsizes = [0.9, 3]
         with self.assertRaises(ValueError):
-            interpolate_timesteps(new_schedule, old_schedule, bad_timesteps)
+            interpolate_stepsizes(new_schedule, old_schedule, bad_stepsizes)

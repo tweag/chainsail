@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 dir_structure = dict(
     SAMPLES_TEMPLATE="samples/samples_{}_{}-{}.pickle",
     ENERGIES_TEMPLATE="energies/energies_{}_{}-{}.pickle",
-    INITIAL_TIMESTEPS_FILE_NAME="initial_timesteps.pickle",
-    FINAL_TIMESTEPS_FILE_NAME="final_timesteps.pickle",
+    INITIAL_STEPSIZES_FILE_NAME="initial_stepsizes.pickle",
+    FINAL_STEPSIZES_FILE_NAME="final_stepsizes.pickle",
     INITIAL_STATES_FILE_NAME="initial_states.pickle",
     DOS_FILE_NAME="dos.pickle",
     SCHEDULE_FILE_NAME="schedule.pickle",
@@ -384,17 +384,17 @@ class SimulationStorage:
     def load_schedule(self):
         return self.load(self.dir_structure.SCHEDULE_FILE_NAME)
 
-    def save_initial_timesteps(self, timesteps):
-        self.save(timesteps, self.dir_structure.INITIAL_TIMESTEPS_FILE_NAME)
+    def save_initial_stepsizes(self, stepsizes):
+        self.save(stepsizes, self.dir_structure.INITIAL_STEPSIZES_FILE_NAME)
 
-    def load_initial_timesteps(self):
-        return self.load(self.dir_structure.INITIAL_TIMESTEPS_FILE_NAME)
+    def load_initial_stepsizes(self):
+        return self.load(self.dir_structure.INITIAL_STEPSIZES_FILE_NAME)
 
-    def save_final_timesteps(self, timesteps):
-        self.save(timesteps, self.dir_structure.FINAL_TIMESTEPS_FILE_NAME)
+    def save_final_stepsizes(self, stepsizes):
+        self.save(stepsizes, self.dir_structure.FINAL_STEPSIZES_FILE_NAME)
 
-    def load_final_timesteps(self):
-        return self.load(self.dir_structure.FINAL_TIMESTEPS_FILE_NAME)
+    def load_final_stepsizes(self):
+        return self.load(self.dir_structure.FINAL_STEPSIZES_FILE_NAME)
 
     def save_initial_states(self, initial_states):
         self.save(initial_states, self.dir_structure.INITIAL_STATES_FILE_NAME)
