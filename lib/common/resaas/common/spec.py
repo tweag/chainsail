@@ -235,11 +235,7 @@ class JobSpec:
         probability_definition: str,
         name: Optional[str] = None,
         initial_number_of_replicas: int = 15,
-        initial_schedule_parameters: Optional[
-            Union[
-                BoltzmannInitialScheduleParameters,
-            ]
-        ] = None,
+        initial_schedule_parameters: Optional[Union[BoltzmannInitialScheduleParameters,]] = None,
         optimization_parameters: Optional[OptimizationParameters] = None,
         replica_exchange_parameters: Optional[ReplicaExchangeParameters] = None,
         local_sampling_parameters: Optional[NaiveHMCParameters] = None,
