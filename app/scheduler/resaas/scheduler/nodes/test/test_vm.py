@@ -25,7 +25,10 @@ def mock_scheduler_config():
         {},
     )
     scheduler_config = SchedulerConfig(
-        controller=config, worker=config, node_type=NodeType.LIBCLOUD_VM, node_config=node_config,
+        controller=config,
+        worker=config,
+        node_type=NodeType.LIBCLOUD_VM,
+        node_config=node_config,
     )
     return scheduler_config
 
@@ -109,7 +112,11 @@ def test_vm_node_from_representation_then_create(mock_scheduler_config):
 
     with patch("resaas.scheduler.nodes.vm.prepare_deployment") as mock_prepare_deployment:
         # Create the node object
-        node = VMNode.from_representation(job_spec, node_rep, mock_scheduler_config,)
+        node = VMNode.from_representation(
+            job_spec,
+            node_rep,
+            mock_scheduler_config,
+        )
         node.refresh_status()
         (is_created, _) = node.create()
 

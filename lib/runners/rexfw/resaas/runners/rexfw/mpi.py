@@ -68,7 +68,10 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
 
 @click.command()
 @click.option(
-    "--basename", required=True, type=str, help="Storage backend basename",
+    "--basename",
+    required=True,
+    type=str,
+    help="Storage backend basename",
 )
 @click.option(
     "--path",
@@ -84,13 +87,22 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
     help="path to storage backend YAML config file",
 )
 @click.option(
-    "--name", required=True, type=str, help="the name to use for tagging statistics metadata",
+    "--name",
+    required=True,
+    type=str,
+    help="the name to use for tagging statistics metadata",
 )
 @click.option(
-    "--metrics-host", required=True, type=str, help="the metrics logging host",
+    "--metrics-host",
+    required=True,
+    type=str,
+    help="the metrics logging host",
 )
 @click.option(
-    "--metrics-port", required=True, type=int, help="the metrics logging port",
+    "--metrics-port",
+    required=True,
+    type=int,
+    help="the metrics logging port",
 )
 @ensure_mpi_failure
 def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_port):
@@ -106,7 +118,11 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_po
     # this is where all simulation input data & output (samples, statistics files,
     # etc.) are stored
     storage_backend = load_storage_config(storage_config).get_storage_backend()
-    storage = SimulationStorage(basename=basename, sim_path=path, storage_backend=storage_backend,)
+    storage = SimulationStorage(
+        basename=basename,
+        sim_path=path,
+        storage_backend=storage_backend,
+    )
     config = storage.load_config()
 
     comm = MPICommunicator()

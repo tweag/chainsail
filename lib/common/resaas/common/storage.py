@@ -148,7 +148,9 @@ class StorageBackendConfig:
     """
 
     def __init__(
-        self, backend: str, backend_config: dict,
+        self,
+        backend: str,
+        backend_config: dict,
     ):
         self.backend = backend
         self.backend_config = backend_config
