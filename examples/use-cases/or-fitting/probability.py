@@ -44,8 +44,10 @@ class Posterior:
     def log_likelihood_gradient(self, x):
         mock_y = line(x[0], x[1], self.data_x)
         r = self.data_y - mock_y[:, None]
-        line_gradient = np.array((self.data_x, np.ones(len(self.data_x))))
-        abs_grad = (-r / np.fabs(r))[..., None] * np.tile(line_gradient.T, 2).reshape(-1, 2, 2)
+        num_data = len(self.data_x)
+        line_gradient = np.array((self.data_x, np.ones(num_data)))
+        num_ys = self.data_y.shape[1]
+        abs_grad = (-r / np.fabs(r))[..., None] * np.tile(line_gradient.T, num_ys).reshape(-1, num_ys, 2)
         outermost = -rn_average(np.fabs(r), self.n, axis=1)
         avg_grad = rn_average_grad(np.fabs(r), self.n, axis=1)
         inner = np.sum(avg_grad[..., None] * abs_grad, 1)
