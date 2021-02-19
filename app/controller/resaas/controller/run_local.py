@@ -72,7 +72,8 @@ def run(basename, job_spec):
         yaml.dump({"backend": "local", "backend_config": {"local": {}}}, f)
 
     runner_config["hostsfile"] = hostsfile
-    runner_config["run_id"] = "123"
+    runner_config["run_id"] = "local"
+    runner_config["storage_config"] = storage
     runner_config["storage_config"] = storage
 
     optimization_objects = optimization_objects_from_spec(job_spec)

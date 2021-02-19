@@ -134,11 +134,14 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_po
 
         # sets up a default RE master object; should be sufficient for all
         # practical purposes
-        graphite_params = {
-            "job_name": name,
-            "graphite_url": metrics_host,
-            "graphite_port": metrics_port,
-        }
+        if name.split(".")[0] == "local":
+            graphite_params = None
+        else:
+            graphite_params = {
+                "job_name": name,
+                "graphite_url": metrics_host,
+                "graphite_port": metrics_port,
+            }
         master = setup_default_re_master(
             n_replicas, path, storage_backend, comm, graphite_params=graphite_params
         )
