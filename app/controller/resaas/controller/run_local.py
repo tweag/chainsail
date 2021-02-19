@@ -1,4 +1,3 @@
-
 """
 Main entrypoint to the resaas controller
 """
@@ -76,7 +75,7 @@ def run(basename, job_spec):
     runner_config["run_id"] = "local"
     runner_config["storage_config"] = storage
     runner_config["storage_config"] = storage
-    
+
     optimization_objects = optimization_objects_from_spec(job_spec)
 
     controller = BaseREJobController(
