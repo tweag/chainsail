@@ -16,10 +16,13 @@ const FormField = ({
   width,
   value,
   onChange,
+  optional,
 }) => (
   <FlexRow className={`h-10 text-xs md:text-base ${width ? width : 'w-full'} ${className}`}>
     <label
-      className="h-full p-5 text-white bg-purple-700 rounded-l-lg whitespace-nowrap min-w-min"
+      className={`h-full p-5 text-white rounded-l-lg whitespace-nowrap min-w-min 
+      ${optional ? 'bg-purple-500' : 'bg-purple-700'}
+	    `}
       onClick={() => setActiveField(inputName)}
     >
       <FlexCenter className="w-full h-full">
