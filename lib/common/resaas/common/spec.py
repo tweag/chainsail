@@ -204,7 +204,7 @@ class RWMCParametersSchema(Schema):
 
 LOCAL_SAMPLING_PARAMETERS_SCHEMAS = {
     LocalSampler.NAIVE_HMC: NaiveHMCParametersSchema,
-    LocalSampler.RWMC: RWMCParametersSchema
+    LocalSampler.RWMC: RWMCParametersSchema,
 }
 
 

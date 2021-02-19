@@ -197,13 +197,12 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_po
             stepsize = 0.1
 
         ls_params = config["local_sampling"]
-        sampler = get_sampler(ls_params['sampler'])
-        ls_params.pop('sampler')
-        ls_params.pop('stepsizes')
-        ls_params['stepsize'] = stepsize
+        sampler = get_sampler(ls_params["sampler"])
+        ls_params.pop("sampler")
+        ls_params.pop("stepsizes")
+        ls_params["stepsize"] = stepsize
         replica = setup_default_replica(
-            init_state, tempered_pdf, sampler, ls_params, storage, comm,
-            rank
+            init_state, tempered_pdf, sampler, ls_params, storage, comm, rank
         )
 
         # the slaves are relicts; originally I thought them to pass on

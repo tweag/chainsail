@@ -67,6 +67,7 @@ class AbstractSampler(object):
 # such as acceptance rate, stepsize etc.
 # SampleStats = namedtuple("SamplerStats", "statsA statsB statsC")
 
+
 def get_sampler(sampler):
     """
     Looks up the sampler for a corresponding LocalSampler enum.
@@ -79,9 +80,11 @@ def get_sampler(sampler):
     """
     if sampler == LocalSampler.RWMC.value:
         from resaas.common.samplers.rwmc import RWMCSampler
+
         return RWMCSampler
     elif sampler == LocalSampler.NAIVE_HMC.value:
         from resaas.common.samplers.hmc import BasicHMCSampler
+
         return BasicHMCSampler
     else:
         raise ValueError(f"Unknown sampler type: {sampler}")
