@@ -203,135 +203,6 @@ export default function Job() {
     }
   };
 
-  // Form fields
-
-  const JobNameField = () => (
-    <FormField
-      label="Job name"
-      inputName="job_name"
-      setActiveField={setActiveField}
-      value={job_name}
-      onChange={(e) => setJobName(e.target.value)}
-    />
-  );
-
-  const InitialNumberOfReplicasField = () => (
-    <FormField
-      optional
-      label="Initial N° replicas"
-      inputName="initial_number_of_replicas"
-      inputType="number"
-      setActiveField={setActiveField}
-      minNumber={2}
-      value={initial_number_of_replicas}
-      onChange={(e) => setInitNReplicas(e.target.value)}
-    />
-  );
-
-  const MaxReplicasField = () => (
-    <FormField
-      label="Max N° replicas"
-      inputName="max_replicas"
-      inputType="number"
-      setActiveField={setActiveField}
-      minNumber={2}
-      value={max_replicas}
-      onChange={(e) => setMaxReplicas(e.target.value)}
-    />
-  );
-
-  const NumProductionSamplesField = () => (
-    <FormField
-      label="N° production samples"
-      inputName="num_production_samples"
-      inputType="number"
-      setActiveField={setActiveField}
-      minNumber={100}
-      value={num_production_samples}
-      onChange={(e) => setNumProductionSamples(e.target.value)}
-    />
-  );
-
-  const NumOptimizationSamplesField = () => (
-    <FormField
-      optional
-      label="N° optimzation samples"
-      inputName="num_optimization_samples"
-      inputType="number"
-      setActiveField={setActiveField}
-      minNumber={100}
-      value={num_optimization_samples}
-      onChange={(e) => setNumOptimizationSamples(e.target.value)}
-    />
-  );
-
-  const TemperedDistributionFamilyField = () => (
-    <FormField
-      optional
-      label="Tempered distribution family"
-      inputName="tempered_distribution_family"
-      hasDropdown
-      setActiveField={setActiveField}
-      disabled
-      defaultValue="Boltzmann"
-      value={tempered_distribution_family}
-      onChange={(e) => setTemperedDist(e.target.value)}
-    />
-  );
-
-  const BetaMinField = () => (
-    <FormField
-      label="Beta min"
-      optional
-      inputName="minimum_beta"
-      inputType="number"
-      setActiveField={setActiveField}
-      minNumber={0}
-      maxNumber={1}
-      stepNumber={0.01}
-      value={minimum_beta}
-      onChange={(e) => setMinBeta(e.target.value)}
-    />
-  );
-
-  const TargetAcceptanceRateField = () => (
-    <FormField
-      optional
-      label="Target acceptance rate"
-      inputName="target_acceptance_rate"
-      inputType="number"
-      minNumber={0}
-      maxNumber={1}
-      stepNumber={0.1}
-      setActiveField={setActiveField}
-      value={target_acceptance_rate}
-      onChange={(e) => setTargetAcceptanceRate(e.target.value)}
-    />
-  );
-
-  const ProbabilityDefinitionField = () => (
-    <FormField
-      label="Probability definition"
-      inputName="probability_definition"
-      inputType="url"
-      setActiveField={setActiveField}
-      value={probability_definition}
-      onChange={(e) => setProbDef(e.target.value)}
-    />
-  );
-
-  const DependenciesField = () => (
-    <FormField
-      label="Dependencies"
-      inputName="dependencies"
-      inputType="text"
-      setActiveField={setActiveField}
-      value={dependencies}
-      onChange={(e) => setDeps(e.target.value.split(','))}
-      className="mb-5"
-    />
-  );
-
   return (
     <Layout>
       <JobPageModal
@@ -372,17 +243,54 @@ export default function Job() {
                     }}
                   >
                     <FlexCol between className="h-56">
-                      <JobNameField />
+                      <FormField
+                        label="Job name"
+                        inputName="job_name"
+                        setActiveField={setActiveField}
+                        value={job_name}
+                        onChange={(e) => setJobName(e.target.value)}
+                      />
                       <FlexRow
                         responsive
                         media="md"
                         className="space-y-1 md:space-y-0 md:space-x-5"
                       >
-                        <NumProductionSamplesField />
-                        <MaxReplicasField />
+                        <FormField
+                          label="N° production samples"
+                          inputName="num_production_samples"
+                          inputType="number"
+                          setActiveField={setActiveField}
+                          minNumber={100}
+                          value={num_production_samples}
+                          onChange={(e) => setNumProductionSamples(e.target.value)}
+                        />
+                        <FormField
+                          label="Max N° replicas"
+                          inputName="max_replicas"
+                          inputType="number"
+                          setActiveField={setActiveField}
+                          minNumber={2}
+                          value={max_replicas}
+                          onChange={(e) => setMaxReplicas(e.target.value)}
+                        />
                       </FlexRow>
-                      <ProbabilityDefinitionField />
-                      <DependenciesField />
+                      <FormField
+                        label="Probability definition"
+                        inputName="probability_definition"
+                        inputType="url"
+                        setActiveField={setActiveField}
+                        value={probability_definition}
+                        onChange={(e) => setProbDef(e.target.value)}
+                      />
+                      <FormField
+                        label="Dependencies"
+                        inputName="dependencies"
+                        inputType="text"
+                        setActiveField={setActiveField}
+                        value={dependencies}
+                        onChange={(e) => setDeps(e.target.value.split(','))}
+                        className="mb-5"
+                      />
                     </FlexCol>
                     <OptionalFormSection active={seeMoreFields}>
                       <FlexRow
@@ -390,17 +298,68 @@ export default function Job() {
                         media="md"
                         className="space-y-1 md:space-y-0 md:space-x-5"
                       >
-                        <InitialNumberOfReplicasField />
-                        <NumOptimizationSamplesField />
+                        <FormField
+                          optional
+                          label="Initial N° replicas"
+                          inputName="initial_number_of_replicas"
+                          inputType="number"
+                          setActiveField={setActiveField}
+                          minNumber={2}
+                          value={initial_number_of_replicas}
+                          onChange={(e) => setInitNReplicas(e.target.value)}
+                        />
+
+                        <FormField
+                          optional
+                          label="N° optimzation samples"
+                          inputName="num_optimization_samples"
+                          inputType="number"
+                          setActiveField={setActiveField}
+                          minNumber={100}
+                          value={num_optimization_samples}
+                          onChange={(e) => setNumOptimizationSamples(e.target.value)}
+                        />
                       </FlexRow>
-                      <TemperedDistributionFamilyField />
+                      <FormField
+                        optional
+                        label="Tempered distribution family"
+                        inputName="tempered_distribution_family"
+                        hasDropdown
+                        setActiveField={setActiveField}
+                        disabled
+                        defaultValue="Boltzmann"
+                        value={tempered_distribution_family}
+                        onChange={(e) => setTemperedDist(e.target.value)}
+                      />
                       <FlexRow
                         responsive
                         media="md"
                         className="space-y-1 md:space-y-0 md:space-x-5"
                       >
-                        <BetaMinField />
-                        <TargetAcceptanceRateField />
+                        <FormField
+                          label="Beta min"
+                          optional
+                          inputName="minimum_beta"
+                          inputType="number"
+                          setActiveField={setActiveField}
+                          minNumber={0}
+                          maxNumber={1}
+                          stepNumber={0.01}
+                          value={minimum_beta}
+                          onChange={(e) => setMinBeta(e.target.value)}
+                        />
+                        <FormField
+                          optional
+                          label="Target acceptance rate"
+                          inputName="target_acceptance_rate"
+                          inputType="number"
+                          minNumber={0}
+                          maxNumber={1}
+                          stepNumber={0.1}
+                          setActiveField={setActiveField}
+                          value={target_acceptance_rate}
+                          onChange={(e) => setTargetAcceptanceRate(e.target.value)}
+                        />
                       </FlexRow>
                     </OptionalFormSection>
                     <div
