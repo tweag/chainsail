@@ -41,7 +41,7 @@ const FormField = ({
       onBlur={() => setActiveField('')}
       onClick={() => setActiveField(inputName)}
       placeholder={placeholder}
-      defaultValue={defaultValue}
+      defaultValue={value ? undefined : defaultValue}
       disabled={disabled}
       value={value}
       onChange={onChange}
