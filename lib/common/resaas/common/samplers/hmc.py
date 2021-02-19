@@ -38,7 +38,7 @@ def _leapfrog(q, p, gradient, stepsize, num_steps):
 
 class BasicHMCSampler(AbstractSampler):
     """
-    A naive HMC sampler with unit mass matrix and a simple timestep
+    A naive HMC sampler with unit mass matrix and a simple stepsize
     adaption scheme.
     """
 
@@ -60,13 +60,13 @@ class BasicHMCSampler(AbstractSampler):
           pdf(AbstractPDF): an object representting a PDF with the interface
               defined in ``rexfw.pdfs``
           state(np.ndarray): initial state
-          stepsize(float): integration step size for the integrator
+          stepsize(float): integration stepsize for the integrator
           num_steps(int): number of integration steps the integrator performs
           num_adaption_samples(int): number of samples which to stop
-              automatically adapting the step size
+              automatically adapting the stepsize
           adaption_uprate(float): factor with which to multiply current step
               size in case of rejected move
-          adaption_downrate: factor with which to multiply current step size in
+          adaption_downrate: factor with which to multiply current stepsize in
               case of accepted move
           integrator(callable): function which performs symplectic integration
         """
@@ -121,7 +121,7 @@ class BasicHMCSampler(AbstractSampler):
 
         self._last_move_accepted = accepted
         if self._samples_counter < self._num_adaption_samples:
-            self._adapt_timestep()
+            self._adapt_stepsize()
         self._samples_counter += 1
 
         return self.state
@@ -141,7 +141,7 @@ class BasicHMCSampler(AbstractSampler):
 
     def _adapt_stepsize(self):
         """
-        Increases / decreasese the leap frog time step depending on
+        Increases / decreasese the leap frog stepsize depending on
         whether the last move has been rejected / accepted.
         """
         if self._last_move_accepted:

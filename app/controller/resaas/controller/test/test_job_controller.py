@@ -28,9 +28,9 @@ class MockOptimizer:
 class MockRERunner:
     def run_sampling(self, storage):
         sched = storage.load_schedule()
-        # make nonsense timesteps with same length as schedule
-        mock_timesteps = np.ones(len(list(sched.values())[0]))
-        storage.save_final_timesteps(mock_timesteps)
+        # make nonsense stepsizes with same length as schedule
+        mock_stepsizes = np.ones(len(list(sched.values())[0]))
+        storage.save_final_stepsizes(mock_stepsizes)
 
 
 class MockStorageBackend(AbstractStorageBackend):

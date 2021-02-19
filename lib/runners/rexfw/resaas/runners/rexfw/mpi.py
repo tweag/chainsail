@@ -155,22 +155,22 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_po
             config["re"]["statistics_update_interval"],
         )
 
-        # write final step sizes to simulation storage
+        # write final stepsizes to simulation storage
         # The sampling statistics holds objects which internally keep a time
-        # series of quantities such as the step size
-        timestep_quantities = filter(
+        # series of quantities such as the stepsize
+        stepsize_quantities = filter(
             lambda x: x.name == "stepsize", master.sampling_statistics.elements
         )
         # Such a quantity x has a field "origins" which holds strings
         # identifying to which sampling objects this quantity is related.
         # Such a string is, in this case, "replicaXX", where XX enumerates
-        # the replicas. We thus sort by the XXses to get the time steps
+        # the replicas. We thus sort by the XXses to get the stepsizes
         # in the right order.
-        sorted_timestep_quantities = sorted(
-            timestep_quantities, key=lambda x: int(x.origins[0][len("replica") :])
+        sorted_stepsize_quantities = sorted(
+            stepsize_quantities, key=lambda x: int(x.origins[0][len("replica") :])
         )
-        storage.save_final_timesteps(
-            np.array([x.current_value for x in sorted_timestep_quantities])
+        storage.save_final_stepsizes(
+            np.array([x.current_value for x in sorted_stepsize_quantities])
         )
 
         # send kill request to break from infinite message receiving loop in
@@ -191,15 +191,15 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_po
         if config["general"]["initial_states"] is not None:
             init_state = storage.load_initial_states()[rank - 1]
 
-        if config["local_sampling"]["timesteps"] is not None:
-            timestep = storage.load_initial_timesteps()[rank - 1]
+        if config["local_sampling"]["stepsizes"] is not None:
+            stepsize = storage.load_initial_stepsizes()[rank - 1]
         else:
-            timestep = 0.1
+            stepsize = 0.1
 
         # We use a simple Metropolis-Hastings sampler
         ls_params = config["local_sampling"]
         sampler_params = {
-            "stepsize": timestep,
+            "stepsize": stepsize,
             "num_adaption_samples": ls_params["num_adaption_samples"],
             "adaption_uprate": ls_params["adaption_uprate"],
             "adaption_downrate": ls_params["adaption_downrate"],

@@ -31,13 +31,13 @@ class RWMCSampler(AbstractSampler):
           pdf(AbstractPDF): an object representting a PDF with the interface
               defined in ``rexfw.pdfs``
           state(np.ndarray): initial state
-          stepsize(float): integration step size for the integrator
+          stepsize(float): integration stepsize for the integrator
           num_steps(int): number of integration steps the integrator performs
           num_adaption_samples(int): number of samples which to stop
-              automatically adapting the step size
+              automatically adapting the stepsize
           adaption_uprate(float): factor with which to multiply current step
               size in case of rejected move
-          adaption_downrate: factor with which to multiply current step size in
+          adaption_downrate: factor with which to multiply current stepsize in
               case of accepted move
         """
         super(RWMCSampler, self).__init__(pdf, state)
@@ -56,7 +56,7 @@ class RWMCSampler(AbstractSampler):
 
     def _adapt_stepsize(self):
         """
-        Increases / decreasese the leap frog time step depending on
+        Increases / decreasese the leap frog stepsize depending on
         whether the last move has been rejected / accepted.
         """
         if self._last_move_accepted:

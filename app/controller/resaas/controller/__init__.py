@@ -9,7 +9,7 @@ from resaas.common.storage import SimulationStorage
 from resaas.common.storage import default_dir_structure as dir_structure
 from resaas.common.tempering.ensembles import BoltzmannEnsemble
 from resaas.controller.initial_schedules import make_geometric_schedule
-from resaas.controller.initial_setup import setup_initial_states, setup_timesteps
+from resaas.controller.initial_setup import setup_initial_states, setup_stepsizes
 from resaas.controller.util import schedule_length
 from resaas.schedule_estimation.dos_estimators import WHAM
 from resaas.schedule_estimation.optimization_quantities import get_quantity_function
@@ -30,7 +30,7 @@ def _config_template_from_params(re_params, local_sampling_params):
     re.pop("num_optimization_samples")
     re.pop("num_production_samples")
     local_sampling = asdict(local_sampling_params)
-    local_sampling["timesteps"] = None
+    local_sampling["stepsizes"] = None
     general = dict(
         n_iterations=None, basename=None, output_path=None, initial_states=None, num_replicas=None
     )
@@ -271,7 +271,7 @@ class BaseREJobController:
             "general": {},
         }
         if previous_storage is not None:
-            updates["local_sampling"] = {"timesteps": dir_structure.INITIAL_TIMESTEPS_FILE_NAME}
+            updates["local_sampling"] = {"stepsizes": dir_structure.INITIAL_STEPSIZES_FILE_NAME}
             updates["general"] = {"initial_states": dir_structure.INITIAL_STATES_FILE_NAME}
         if prod:
             num_samples = self._re_params.num_production_samples
@@ -317,7 +317,7 @@ class BaseREJobController:
             prod(bool): whether this is the production run or not
         """
         if previous_storage is not None:
-            setup_timesteps(current_storage, schedule, previous_storage)
+            setup_stepsizes(current_storage, schedule, previous_storage)
             setup_initial_states(
                 current_storage,
                 schedule,

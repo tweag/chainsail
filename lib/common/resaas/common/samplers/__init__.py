@@ -63,5 +63,5 @@ class AbstractSampler(object):
 
 # this is the object occuring in the dictionary return by
 # AbstractSampler.last_draw_stats. statsA,B,C (or similar) are fields
-# such as acceptance rate, time step etc.
+# such as acceptance rate, stepsize etc.
 # SampleStats = namedtuple("SamplerStats", "statsA statsB statsC")

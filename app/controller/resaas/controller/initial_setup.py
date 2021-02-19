@@ -7,9 +7,9 @@ from resaas.common.util import log_sum_exp
 from resaas.controller.util import schedule_length
 
 
-def setup_timesteps(current_storage, schedule, previous_storage=None):
+def setup_stepsizes(current_storage, schedule, previous_storage=None):
     """
-    Sets up time steps, possibly based on a previous simulation.
+    Sets up stepsizes, possibly based on a previous simulation.
 
     Args:
         current_storage(:class:`SimulationStorage`): storage for simulation
@@ -19,29 +19,29 @@ def setup_timesteps(current_storage, schedule, previous_storage=None):
           simulation
     """
     if previous_storage is None:
-        timesteps = np.linspace(1e-3, 1e-1, len(schedule))
+        stepsizes = np.linspace(1e-3, 1e-1, len(schedule))
     else:
-        old_timesteps = previous_storage.load_final_timesteps()
+        old_stepsizes = previous_storage.load_final_stepsizes()
         old_schedule = previous_storage.load_schedule()
-        timesteps = interpolate_timesteps(schedule, old_schedule, old_timesteps)
-    current_storage.save_initial_timesteps(timesteps)
+        stepsizes = interpolate_stepsizes(schedule, old_schedule, old_stepsizes)
+    current_storage.save_initial_stepsizes(stepsizes)
 
 
-def interpolate_timesteps(schedule, old_schedule, old_timesteps):
+def interpolate_stepsizes(schedule, old_schedule, old_stepsizes):
     """
-    Interpolates time steps from a previous simulation.
+    Interpolates stepsizes from a previous simulation.
 
-    Given time steps from a previous simulation and its schedule,
-    this linearly interpolates new timesteps for the new schedule.
+    Given stepsizes from a previous simulation and its schedule,
+    this linearly interpolates new stepsizes for the new schedule.
     Works only for single, monotonously decreasing schedule parameters!
 
     Args:
         schedule(dict): current parameter schedule
         old_schedule(dict): previous parameter schedule
-        old_timesteps(dict): previous set of time steps
+        old_stepsizes(dict): previous set of stepsizes
     """
     if len(schedule) > 1 or len(old_schedule) > 1:
-        raise ValueError(("Time steps can be interpolated only for " "single-parameter schedules"))
+        raise ValueError(("stepsizes can be interpolated only for " "single-parameter schedules"))
     new_params = list(schedule.values())[0]
     old_params = list(old_schedule.values())[0]
 
@@ -50,15 +50,15 @@ def interpolate_timesteps(schedule, old_schedule, old_timesteps):
         raise ValueError(err_msg.format("New"))
     if not np.all(np.diff(old_params) < 0):
         raise ValueError(err_msg.format("Old"))
-    if len(old_params) != len(old_timesteps):
-        raise ValueError("Old schedule parameters and old timesteps must have same length")
+    if len(old_params) != len(old_stepsizes):
+        raise ValueError("Old schedule parameters and old stepsizes must have same length")
 
     # np.interp() expects the sequence of x values to increase, but
     # our schedules always have the highest inverse temperature first,
     # so we have to reverse everything and later reverse the result back
-    interpolated_timesteps = np.interp(new_params[::-1], old_params[::-1], old_timesteps[::-1])
+    interpolated_stepsizes = np.interp(new_params[::-1], old_params[::-1], old_stepsizes[::-1])
 
-    return interpolated_timesteps[::-1]
+    return interpolated_stepsizes[::-1]
 
 
 def draw_initial_states(schedule, previous_storage, dos, dos_burnin, dos_thinning_step):
