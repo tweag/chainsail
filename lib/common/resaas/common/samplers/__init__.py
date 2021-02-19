@@ -6,6 +6,7 @@ from abc import abstractmethod, abstractproperty
 import numpy as np
 
 from resaas.common.pdfs import AbstractPDF
+from resaas.common.spec import LocalSampler
 
 
 class AbstractSampler(object):
@@ -65,3 +66,22 @@ class AbstractSampler(object):
 # AbstractSampler.last_draw_stats. statsA,B,C (or similar) are fields
 # such as acceptance rate, stepsize etc.
 # SampleStats = namedtuple("SamplerStats", "statsA statsB statsC")
+
+def get_sampler(sampler):
+    """
+    Looks up the sampler for a corresponding LocalSampler enum.
+
+    Args:
+      sampler: The sampler type value
+
+    Raises:
+      ValueError: If no matches were found for the specified `sampler`.
+    """
+    if sampler == LocalSampler.RWMC.value:
+        from resaas.common.samplers.rwmc import RWMCSampler
+        return RWMCSampler
+    elif sampler == LocalSampler.NAIVE_HMC.value:
+        from resaas.common.samplers.hmc import BasicHMCSampler
+        return BasicHMCSampler
+    else:
+        raise ValueError(f"Unknown sampler type: {sampler}")

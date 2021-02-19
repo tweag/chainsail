@@ -16,7 +16,9 @@
 	"dump_interval": 500,
 	"status_interval": 500
     },
+    "local_sampler": "naive_hmc",
     "local_sampling_parameters": {
+	"num_steps": 30,
 	"num_adaption_samples": 500
     }
 }
