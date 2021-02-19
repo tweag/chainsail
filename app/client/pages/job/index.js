@@ -370,11 +370,11 @@ export default function Job() {
                     >
                       {seeMoreFields ? (
                         <div>
-                          <i class="fas fa-caret-square-up mr-1"></i> see less fields!
+                          <i className="mr-1 fas fa-caret-square-up"></i> see less fields!
                         </div>
                       ) : (
                         <div>
-                          <i class="fas fa-caret-square-down mr-1"></i> see more fields!
+                          <i className="mr-1 fas fa-caret-square-down"></i> see more fields!
                         </div>
                       )}
                     </div>
