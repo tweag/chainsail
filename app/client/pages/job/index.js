@@ -141,10 +141,10 @@ export default function Job() {
   // Form fields state variables
   const [job_name, setJobName] = useState('');
   const [max_replicas, setMaxReplicas] = useState(2);
-  const [initial_number_of_replicas, setInitNReplicas] = useState(2);
+  const [initial_number_of_replicas, setInitNReplicas] = useState(undefined);
   const [tempered_distribution_family, setTemperedDist] = useState('boltzmann');
   const [num_production_samples, setNumProductionSamples] = useState(2000);
-  const [num_optimization_samples, setNumOptimizationSamples] = useState(5000);
+  const [num_optimization_samples, setNumOptimizationSamples] = useState(undefined);
   const [minimum_beta, setMinBeta] = useState(0.01);
   const [target_acceptance_rate, setTargetAcceptanceRate] = useState(0.2);
   const [probability_definition, setProbDef] = useState('');
@@ -164,9 +164,10 @@ export default function Job() {
     const JOB_CREATION_ENDPOINT = '/job';
     const body = JSON.stringify({
       name: job_name,
-      initial_number_of_replicas: seeMoreFields
-        ? initial_number_of_replicas
-        : Math.floor(max_replicas * 0.5),
+      initial_number_of_replicas:
+        seeMoreFields && initial_number_of_replicas
+          ? initial_number_of_replicas
+          : Math.floor(max_replicas * 0.5),
       max_replicas,
       tempered_dist_family: tempered_distribution_family,
       initial_schedule_parameters: {
@@ -174,9 +175,10 @@ export default function Job() {
       },
       replica_exchange_parameters: {
         num_production_samples,
-        num_optimization_samples: seeMoreFields
-          ? num_optimization_samples
-          : Math.floor(num_production_samples * 0.25),
+        num_optimization_samples:
+          seeMoreFields && num_optimization_samples
+            ? num_optimization_samples
+            : Math.floor(num_production_samples * 0.25),
       },
       optimization_parameters: {
         optimization_quantity_target: target_acceptance_rate,
