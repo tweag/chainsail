@@ -137,9 +137,11 @@ class BasicHMCSampler(AbstractSampler):
           dict: a single key with the (constant) variable name and an
               HMCSampleStats instance as its value
         """
-        return {self.VARIABLE_NAME: HMCSampleStats(
-            self._last_move_accepted, self._stepsize,
-            -self.pdf.log_prob(self.state))}
+        return {
+            self.VARIABLE_NAME: HMCSampleStats(
+                self._last_move_accepted, self._stepsize, -self.pdf.log_prob(self.state)
+            )
+        }
 
     def _adapt_stepsize(self):
         """

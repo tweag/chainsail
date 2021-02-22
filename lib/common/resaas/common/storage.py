@@ -85,9 +85,7 @@ def load_storage_backend(backend_name: str, backend_config: dict):
             )
         driver_cls = get_driver(provider)
         driver = driver_cls(**backend_config["driver_kwargs"])
-        container = driver.get_container(
-            container_name=backend_config["container_name"]
-        )
+        container = driver.get_container(container_name=backend_config["container_name"])
         return CloudStorageBackend(driver, container)
     else:
         raise Exception(f"Unrecognized storage backend name: '{backend_name}'.")
@@ -270,9 +268,7 @@ class CloudStorageBackend(AbstractStorageBackend):
 
 
 class SimulationStorage:
-    def __init__(
-        self, basename, sim_path, storage_backend, dir_structure=default_dir_structure
-    ):
+    def __init__(self, basename, sim_path, storage_backend, dir_structure=default_dir_structure):
         self._basename = basename
         self._sim_path = sim_path
         self._storage_backend = storage_backend
@@ -293,9 +289,7 @@ class SimulationStorage:
 
     @property
     def config_file_name(self):
-        return os.path.join(
-            self._basename, self._sim_path, self.dir_structure.CONFIG_FILE_NAME
-        )
+        return os.path.join(self._basename, self._sim_path, self.dir_structure.CONFIG_FILE_NAME)
 
     @property
     def dir_structure(self):
@@ -314,9 +308,7 @@ class SimulationStorage:
     def save_samples(self, samples, replica_name, from_samples, to_samples):
         self.save(
             samples,
-            self.dir_structure.SAMPLES_TEMPLATE.format(
-                replica_name, from_samples, to_samples
-            ),
+            self.dir_structure.SAMPLES_TEMPLATE.format(replica_name, from_samples, to_samples),
         )
 
     def load_samples(self, replica_name, from_sample_num, to_sample_num):
@@ -345,13 +337,13 @@ class SimulationStorage:
                 if n < from_sample:
                     continue
                 if what == "energies":
-                    things_batch = self.load_energies(
-                        "replica" + str(r), n, n + dump_interval
-                    )[::step]
+                    things_batch = self.load_energies("replica" + str(r), n, n + dump_interval)[
+                        ::step
+                    ]
                 elif what == "samples":
-                    things_batch = self.load_samples(
-                        "replica" + str(r), n, n + dump_interval
-                    )[::step]
+                    things_batch = self.load_samples("replica" + str(r), n, n + dump_interval)[
+                        ::step
+                    ]
                 else:
                     raise ValueError(
                         f"'what' argument has to be either 'energies' or 'samples', not {what}"
@@ -366,16 +358,12 @@ class SimulationStorage:
     def save_energies(self, energies, replica_name, from_energies, to_energies):
         self.save(
             energies,
-            self.dir_structure.ENERGIES_TEMPLATE.format(
-                replica_name, from_energies, to_energies
-            ),
+            self.dir_structure.ENERGIES_TEMPLATE.format(replica_name, from_energies, to_energies),
         )
 
     def load_energies(self, replica_name, from_energies, to_energies):
         return self.load(
-            self.dir_structure.ENERGIES_TEMPLATE.format(
-                replica_name, from_energies, to_energies
-            )
+            self.dir_structure.ENERGIES_TEMPLATE.format(replica_name, from_energies, to_energies)
         )
 
     def load_all_energies(self, from_sample=0, step=1):
@@ -389,9 +377,7 @@ class SimulationStorage:
         )
 
     def load_config(self):
-        return yaml.safe_load(
-            self.load(self.dir_structure.CONFIG_FILE_NAME, data_type="text")
-        )
+        return yaml.safe_load(self.load(self.dir_structure.CONFIG_FILE_NAME, data_type="text"))
 
     def save_dos(self, dos):
         self.save(dos, self.dir_structure.DOS_FILE_NAME)

@@ -52,9 +52,11 @@ class RWMCSampler(AbstractSampler):
     @property
     def last_draw_stats(self):
 
-        return {self.VARIABLE_NAME: RWMCSampleStats(
-            self._last_move_accepted, self._stepsize,
-            -self.pdf.log_prob(self.state))}
+        return {
+            self.VARIABLE_NAME: RWMCSampleStats(
+                self._last_move_accepted, self._stepsize, -self.pdf.log_prob(self.state)
+            )
+        }
 
     def _adapt_stepsize(self):
         """
