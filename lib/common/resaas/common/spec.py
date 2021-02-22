@@ -249,7 +249,9 @@ class JobSpecSchema(Schema):
         # Required to handle the "union" nature of the initial_schedule_parameters field
         new_obj = deepcopy(obj)
         schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[new_obj.tempered_dist_family]()
-        new_obj.initial_schedule_parameters = schema.dump(new_obj.initial_schedule_parameters)
+        new_obj.initial_schedule_parameters = schema.dump(
+            new_obj.initial_schedule_parameters
+        )
         return new_obj
 
     @pre_dump
@@ -257,7 +259,9 @@ class JobSpecSchema(Schema):
         # Required to handle the "union" nature of the local_sampling_parameters field
         new_obj = deepcopy(obj)
         schema = LOCAL_SAMPLING_PARAMETERS_SCHEMAS[new_obj.local_sampler]()
-        new_obj.local_sampling_parameters = schema.dump(new_obj.local_sampling_parameters)
+        new_obj.local_sampling_parameters = schema.dump(
+            new_obj.local_sampling_parameters
+        )
         return new_obj
 
     @post_dump
@@ -281,8 +285,12 @@ class JobSpecSchema(Schema):
         )
         if "initial_schedule_parameters" in data:
             init_sched_params = data["initial_schedule_parameters"]
-            init_sched_schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[tempered_dist_family]()
-            data["initial_schedule_parameters"] = init_sched_schema.load(init_sched_params)
+            init_sched_schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[
+                tempered_dist_family
+            ]()
+            data["initial_schedule_parameters"] = init_sched_schema.load(
+                init_sched_params
+            )
         local_sampler = data.get("local_sampler", LocalSampler.NAIVE_HMC)
         if "local_sampling_parameters" in data:
             ls_params = data["local_sampling_parameters"]

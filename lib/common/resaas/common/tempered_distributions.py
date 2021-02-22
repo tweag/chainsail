@@ -145,7 +145,9 @@ class LikelihoodTemperedPosterior(AbstractTemperedDistribution):
             x: variate(s) of the underlying posterior
         """
         E = -self.bare_pdf.log_likelihood(x)
-        return self._ensemble.log_ensemble(E, beta=self.beta) + self.bare_pdf.log_prior(x)
+        return self._ensemble.log_ensemble(E, beta=self.beta) + self.bare_pdf.log_prior(
+            x
+        )
 
     def log_prob_gradient(self, x):
         """
