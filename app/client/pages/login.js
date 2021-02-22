@@ -1,18 +1,9 @@
 import { withAuthUser, AuthAction } from 'next-firebase-auth';
-import { FlexCenter, FirebaseAuth, FlexCol } from '../components';
+import { FlexCenter, FirebaseAuth } from '../components';
 
 const Login = () => (
-  <FlexCenter className="h-screen w-full">
-    <FlexCol>
-      <h3>Sign in</h3>
-      <div>
-        <p>
-          This auth page is <b>static</b>. It will redirect on the client side if the user is
-          already authenticated.
-        </p>
-      </div>
-      <FirebaseAuth />
-    </FlexCol>
+  <FlexCenter className="w-full h-screen bg-purple-900">
+    <FirebaseAuth />
   </FlexCenter>
 );
 
