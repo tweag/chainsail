@@ -12,7 +12,7 @@ from mpi4py import MPI
 from resaas.common.storage import SimulationStorage, load_storage_config
 from resaas.common.tempering.tempered_distributions import BoltzmannTemperedDistribution
 from resaas.common.pdfs import AbstractPDF
-from resaas.common.samplers.rwmc import RWMCSampler
+from resaas.common.samplers import get_sampler
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
@@ -196,16 +196,13 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_po
         else:
             stepsize = 0.1
 
-        # We use a simple Metropolis-Hastings sampler
         ls_params = config["local_sampling"]
-        sampler_params = {
-            "stepsize": stepsize,
-            "num_adaption_samples": ls_params["num_adaption_samples"],
-            "adaption_uprate": ls_params["adaption_uprate"],
-            "adaption_downrate": ls_params["adaption_downrate"],
-        }
+        sampler = get_sampler(ls_params["sampler"])
+        ls_params.pop("sampler")
+        ls_params.pop("stepsizes")
+        ls_params["stepsize"] = stepsize
         replica = setup_default_replica(
-            init_state, tempered_pdf, RWMCSampler, sampler_params, storage, comm, rank
+            init_state, tempered_pdf, sampler, ls_params, storage, comm, rank
         )
 
         # the slaves are relicts; originally I thought them to pass on

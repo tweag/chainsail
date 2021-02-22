@@ -1,10 +1,13 @@
 import logging
 import time
 from dataclasses import asdict
-from typing import List
 
 import requests
-from resaas.common.spec import BoltzmannInitialScheduleParameters, TemperedDistributionFamily
+from resaas.common.spec import (
+    BoltzmannInitialScheduleParameters,
+    TemperedDistributionFamily,
+    get_sampler_from_params,
+)
 from resaas.common.storage import SimulationStorage
 from resaas.common.storage import default_dir_structure as dir_structure
 from resaas.common.tempering.ensembles import BoltzmannEnsemble
@@ -31,6 +34,7 @@ def _config_template_from_params(re_params, local_sampling_params):
     re.pop("num_production_samples")
     local_sampling = asdict(local_sampling_params)
     local_sampling["stepsizes"] = None
+    local_sampling["sampler"] = get_sampler_from_params(local_sampling_params).value
     general = dict(
         n_iterations=None, basename=None, output_path=None, initial_states=None, num_replicas=None
     )

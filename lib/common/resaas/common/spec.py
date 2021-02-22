@@ -73,17 +73,41 @@ class DependencySchema(Schema):
             return _load_dep(data["type"], data["packages"])
 
 
-class LocalSamplers(Enum):
+class LocalSampler(Enum):
+    """
+    "Local" refers to sampling within a single replica, which usually
+    locally explores a single mode of a probability distribution.
+    It has nothing to do with running RESAAS locally or on the cloud.
+    """
+
     NAIVE_HMC = "naive_hmc"
+    RWMC = "rwmc"
 
 
 @dataclass
 class NaiveHMCParameters:
-    n_steps: int = 20
+    num_steps: int = 20
     stepsizes: Optional[str] = None
     num_adaption_samples: Optional[int] = None
     adaption_uprate: float = 1.05
     adaption_downrate: float = 0.95
+
+
+@dataclass
+class RWMCParameters:
+    stepsizes: Optional[str] = None
+    num_adaption_samples: Optional[int] = None
+    adaption_uprate: float = 1.05
+    adaption_downrate: float = 0.95
+
+
+def get_sampler_from_params(params):
+    if type(params) == NaiveHMCParameters:
+        return LocalSampler.NAIVE_HMC
+    elif type(params) == RWMCParameters:
+        return LocalSampler.RWMC
+    else:
+        raise ValueError("Unknown local sampling parameter class")
 
 
 class OptimizationQuantity(Enum):
@@ -148,7 +172,7 @@ class OptimizationParametersSchema(Schema):
 
 
 class NaiveHMCParametersSchema(Schema):
-    n_steps = fields.Int()
+    num_steps = fields.Int()
     stepsizes = fields.Str()
     num_adaption_samples = fields.Int()
     adaption_uprate = fields.Float()
@@ -164,6 +188,30 @@ class NaiveHMCParametersSchema(Schema):
     @post_load
     def make_hmc_sampling_parameters(self, data, **kwargs):
         return NaiveHMCParameters(**data)
+
+
+class RWMCParametersSchema(Schema):
+    stepsizes = fields.Str()
+    num_adaption_samples = fields.Int()
+    adaption_uprate = fields.Float()
+    adaption_downrate = fields.Float()
+
+    @post_dump
+    def remove_nulls(self, data, *args, **kwargs):
+        # remove all nullable (i.e. Optional) fields which have a default of None.
+        for nullable_field in ("num_adaption_samples", "stepsizes"):
+            if data[nullable_field] is None:
+                data.pop(nullable_field)
+
+    @post_load
+    def make_rwmc_sampling_parameters(self, data, **kwargs):
+        return RWMCParameters(**data)
+
+
+LOCAL_SAMPLING_PARAMETERS_SCHEMAS = {
+    LocalSampler.NAIVE_HMC: NaiveHMCParametersSchema,
+    LocalSampler.RWMC: RWMCParametersSchema,
+}
 
 
 class TemperedDistributionFamily(Enum):
@@ -190,7 +238,8 @@ class JobSpecSchema(Schema):
     initial_schedule_parameters = fields.Dict(fields.String, fields.Float())
     optimization_parameters = fields.Nested(OptimizationParametersSchema)
     replica_exchange_parameters = fields.Nested(ReplicaExchangeParametersSchema)
-    local_sampling_parameters = fields.Nested(NaiveHMCParametersSchema)
+    local_sampler = EnumField(LocalSampler, by_value=True)
+    local_sampling_parameters = fields.Dict(fields.String, fields.Float())
     max_replicas = fields.Int()
     tempered_dist_family = EnumField(TemperedDistributionFamily, by_value=True)
     dependencies = fields.Nested(DependencySchema(many=True))
@@ -201,6 +250,14 @@ class JobSpecSchema(Schema):
         new_obj = deepcopy(obj)
         schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[new_obj.tempered_dist_family]()
         new_obj.initial_schedule_parameters = schema.dump(new_obj.initial_schedule_parameters)
+        return new_obj
+
+    @pre_dump
+    def convert_local_sampling_parameters(self, obj, *args, **kwargs):
+        # Required to handle the "union" nature of the local_sampling_parameters field
+        new_obj = deepcopy(obj)
+        schema = LOCAL_SAMPLING_PARAMETERS_SCHEMAS[new_obj.local_sampler]()
+        new_obj.local_sampling_parameters = schema.dump(new_obj.local_sampling_parameters)
         return new_obj
 
     @post_dump
@@ -226,6 +283,11 @@ class JobSpecSchema(Schema):
             init_sched_params = data["initial_schedule_parameters"]
             init_sched_schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[tempered_dist_family]()
             data["initial_schedule_parameters"] = init_sched_schema.load(init_sched_params)
+        local_sampler = data.get("local_sampler", LocalSampler.NAIVE_HMC)
+        if "local_sampling_parameters" in data:
+            ls_params = data["local_sampling_parameters"]
+            ls_schema = LOCAL_SAMPLING_PARAMETERS_SCHEMAS[local_sampler]()
+            data["local_sampling_parameters"] = ls_schema.load(ls_params)
         return JobSpec(**data)
 
 
@@ -234,7 +296,7 @@ class JobSpec:
         self,
         probability_definition: str,
         name: Optional[str] = None,
-        initial_number_of_replicas: int = 15,
+        initial_number_of_replicas: int = 10,
         initial_schedule_parameters: Optional[
             Union[
                 BoltzmannInitialScheduleParameters,
@@ -242,8 +304,9 @@ class JobSpec:
         ] = None,
         optimization_parameters: Optional[OptimizationParameters] = None,
         replica_exchange_parameters: Optional[ReplicaExchangeParameters] = None,
+        local_sampler: Optional[LocalSampler] = LocalSampler.NAIVE_HMC,
         local_sampling_parameters: Optional[NaiveHMCParameters] = None,
-        max_replicas: int = 100,
+        max_replicas: int = 20,
         tempered_dist_family: TemperedDistributionFamily = TemperedDistributionFamily.BOLTZMANN,
         dependencies: Optional[Dependencies] = None,
     ):
@@ -264,6 +327,7 @@ class JobSpec:
             self.replica_exchange_parameters = ReplicaExchangeParameters()
         else:
             self.replica_exchange_parameters = replica_exchange_parameters
+        self.local_sampler = local_sampler
         if local_sampling_parameters is None:
             self.local_sampling_parameters = NaiveHMCParameters()
         else:
