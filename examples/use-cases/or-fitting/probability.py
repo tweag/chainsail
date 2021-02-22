@@ -7,7 +7,8 @@ def line(a, b, x):
     return a * x + b
 
 
-def line_gradient(a, b, x): return np.array((x, np.ones(len(x))))
+def line_gradient(a, b, x):
+    return np.array((x, np.ones(len(x))))
 
 
 def rn_average(r, n, axis):
@@ -49,8 +50,9 @@ class Posterior:
         r = self.data_y - mock_y[:, None]
         line_grad = line_gradient(x[0], x[1], self.data_x)
         num_ys = self.data_y.shape[1]
-        abs_grad = (-r / np.fabs(r))[..., None] * np.tile(
-            line_grad.T, num_ys).reshape(-1, num_ys, 2)
+        abs_grad = (-r / np.fabs(r))[..., None] * np.tile(line_grad.T, num_ys).reshape(
+            -1, num_ys, 2
+        )
         outermost = -rn_average(np.fabs(r), self.n, axis=1)
         avg_grad = rn_average_grad(np.fabs(r), self.n, axis=1)
         inner = np.sum(avg_grad[..., None] * abs_grad, 1)
