@@ -8,7 +8,7 @@ import numpy as np
 from resaas.common.samplers import AbstractSampler
 
 
-HMCSampleStats = namedtuple("HMCSampleStats", "accepted stepsize")
+HMCSampleStats = namedtuple("HMCSampleStats", "accepted stepsize neg_log_prob")
 
 
 def _leapfrog(q, p, gradient, stepsize, num_steps):
@@ -137,7 +137,9 @@ class BasicHMCSampler(AbstractSampler):
           dict: a single key with the (constant) variable name and an
               HMCSampleStats instance as its value
         """
-        return {self.VARIABLE_NAME: HMCSampleStats(self._last_move_accepted, self._stepsize)}
+        return {self.VARIABLE_NAME: HMCSampleStats(
+            self._last_move_accepted, self._stepsize,
+            -self.pdf.log_prob(self.state))}
 
     def _adapt_stepsize(self):
         """

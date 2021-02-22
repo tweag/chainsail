@@ -8,7 +8,7 @@ import numpy as np
 from resaas.common.samplers import AbstractSampler
 
 
-RWMCSampleStats = namedtuple("RWMCSampleStats", "accepted stepsize")
+RWMCSampleStats = namedtuple("RWMCSampleStats", "accepted stepsize neg_log_prob")
 
 
 class RWMCSampler(AbstractSampler):
@@ -52,7 +52,9 @@ class RWMCSampler(AbstractSampler):
     @property
     def last_draw_stats(self):
 
-        return {self.VARIABLE_NAME: RWMCSampleStats(self._last_move_accepted, self._stepsize)}
+        return {self.VARIABLE_NAME: RWMCSampleStats(
+            self._last_move_accepted, self._stepsize,
+            -self.pdf.log_prob(self.state))}
 
     def _adapt_stepsize(self):
         """
