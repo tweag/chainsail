@@ -74,6 +74,11 @@ class DependencySchema(Schema):
 
 
 class LocalSampler(Enum):
+    """
+    "Local" refers to sampling within a single replica, which usually
+    locally explores a single mode of a probability distribution.
+    It has nothing to do with running RESAAS locally or on the cloud.
+    """
     NAIVE_HMC = "naive_hmc"
     RWMC = "rwmc"
 
