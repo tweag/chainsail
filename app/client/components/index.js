@@ -12,6 +12,7 @@ import { ChartBar } from './Chart';
 import Container from './Container';
 import Modal from './Modal';
 import AnimatedPing from './AnimatedPing';
+import FirebaseAuth from './FirebaseAuth';
 
 export {
   AnimatedPing,
@@ -19,6 +20,7 @@ export {
   ChartBar,
   Code,
   Container,
+  FirebaseAuth,
   FlexCenter,
   FlexCol,
   FlexRow,
