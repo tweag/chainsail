@@ -12,6 +12,7 @@
     "chart.js": "^2.9.4",
     "moment": "^2.29.1",
     "next": "10.0.5",
+    "next-firebase-auth": "^0.13.0-alpha.0",
     "postcss": "^8.2.3",
     "react": "17.0.1",
     "react-chartjs-2": "^2.11.1",
