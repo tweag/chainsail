@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import firebase from 'firebase/app';
 
-import { FlexRow } from './Flex';
+import { FlexCenter, FlexRow } from './Flex';
 import { useAuth } from './Auth';
 
 const NavItem = (props) => {
@@ -36,6 +36,7 @@ const logout = async () => {
 
 const Navbar = () => {
   const { user } = useAuth();
+  const providerData = user ? user.providerData : undefined;
   const styleLogInOut = 'border-white rounded-md border-2';
   return (
     <FlexRow between className="items-center h-16 text-sm md:text-base">
@@ -49,9 +50,14 @@ const Navbar = () => {
           </NavItem>
         )}
         {user && (
-          <NavItem onClick={logout} className={styleLogInOut}>
-            Logout
-          </NavItem>
+          <FlexRow>
+            <FlexCenter className="mr-2">
+              <img src={providerData[0].photoURL} className="h-8 rounded-full" />
+            </FlexCenter>
+            <NavItem onClick={logout} className={styleLogInOut}>
+              Logout
+            </NavItem>
+          </FlexRow>
         )}
       </div>
     </FlexRow>
