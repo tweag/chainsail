@@ -5,7 +5,7 @@ export const verifyIdToken = (token) => {
   if (!admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      databaseURL: 'https://nextjs-firebase-auth-9bc98.firebaseio.com',
+      databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
     });
   }
 
