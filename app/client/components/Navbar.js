@@ -6,7 +6,7 @@ import { FlexCenter, FlexRow } from './Flex';
 import { useAuth } from './Auth';
 
 const NavItem = (props) => {
-  const style = `px-6 py-1 border-white border-opacity-20 hover:opacity-60 transition duration-300 cursor-pointer ${props.className}`;
+  const style = `px-6 py-1 rounded-md hover:bg-purple-700 transition duration-300 cursor-pointer ${props.className}`;
   if (props.internal) {
     return (
       <Link href={props.href}>
@@ -38,9 +38,12 @@ const logout = async () => {
 const Navbar = () => {
   const { user } = useAuth();
   const providerData = user ? user.providerData : undefined;
-  const styleLogInOut = 'border-white rounded-md border-2';
+  const styleLogInOut = 'border-indigo-900 border-2';
   return (
-    <FlexRow between className="items-center h-16 text-sm md:text-base bg-gray-800 w-full">
+    <FlexRow
+      between
+      className="items-center h-16 text-sm md:text-base md:px-52 bg-gray-800 w-full text-white"
+    >
       <FlexRow className="items-center space-x-2">
         <NavItem internal href="/">
           Home
