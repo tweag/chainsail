@@ -51,9 +51,11 @@ const Navbar = () => {
         )}
         {user && (
           <FlexRow>
-            <FlexCenter className="mr-2">
-              <img src={providerData[0].photoURL} className="h-8 rounded-full" />
-            </FlexCenter>
+            {providerData && (
+              <FlexCenter className="mr-2">
+                <img src={providerData[0].photoURL} className="h-8 rounded-full" />
+              </FlexCenter>
+            )}
             <NavItem onClick={logout} className={styleLogInOut}>
               Logout
             </NavItem>
