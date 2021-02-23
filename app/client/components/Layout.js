@@ -1,4 +1,7 @@
 import Head from 'next/head';
+import Container from './Container';
+import { FlexCol } from './Flex';
+import Navbar from './Navbar';
 
 export default function Layout({ children }) {
   return (
@@ -17,7 +20,12 @@ export default function Layout({ children }) {
           crossOrigin="anonymous"
         />
       </Head>
-      {children}
+      <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
+        <FlexCol between className="h-full">
+          <Navbar />
+          {children}
+        </FlexCol>
+      </Container>
     </>
   );
 }
