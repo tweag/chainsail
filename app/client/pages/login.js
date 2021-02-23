@@ -12,9 +12,6 @@ const firebaseAuthConfig = {
   signInOptions: [firebase.auth.GoogleAuthProvider.PROVIDER_ID],
   signInSuccessUrl: '/',
   credentialHelper: 'none',
-  callbacks: {
-    signInSuccessWithAuthResult: () => false,
-  },
 };
 
 const FirebaseAuth = () => {
