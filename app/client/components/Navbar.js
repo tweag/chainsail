@@ -40,9 +40,17 @@ const Navbar = () => {
   const styleLogInOut = 'border-white rounded-md border-2';
   return (
     <FlexRow between className="items-center h-16 text-sm md:text-base">
-      <NavItem internal href="/">
-        Home
-      </NavItem>
+      <FlexRow className="space-y-2 items-end">
+        <NavItem internal href="/">
+          Home
+        </NavItem>
+        <NavItem internal href="/job">
+          Create a new job!
+        </NavItem>
+        <NavItem internal href="/job/results">
+          latest jobs
+        </NavItem>
+      </FlexRow>
       <div>
         {!user && (
           <NavItem internal href="/login" className={styleLogInOut}>
