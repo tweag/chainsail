@@ -3,11 +3,9 @@ import firebase from 'firebase/app';
 
 import { FlexRow } from './Flex';
 import { useAuth } from './Auth';
-import firebaseClient from '../utils/firebaseClient';
 
 const NavItem = (props) => {
-  const style =
-    'px-4 py-2 mx-2 border-white border-opacity-20 hover:opacity-60 transition duration-300 cursor-pointer';
+  const style = `px-6 py-1 border-white border-opacity-20 hover:opacity-60 transition duration-300 cursor-pointer ${props.className}`;
   if (props.internal) {
     return (
       <Link href={props.href}>
@@ -38,17 +36,24 @@ const logout = async () => {
 
 const Navbar = () => {
   const { user } = useAuth();
+  const styleLogInOut = 'border-white rounded-md border-2';
   return (
-    <FlexRow className="items-center h-16 text-sm md:text-base">
+    <FlexRow between className="items-center h-16 text-sm md:text-base">
       <NavItem internal href="/">
         Home
       </NavItem>
-      {!user && (
-        <NavItem internal href="/login">
-          Login
-        </NavItem>
-      )}
-      {user && <NavItem onClick={logout}>Logout</NavItem>}
+      <div>
+        {!user && (
+          <NavItem internal href="/login" className={styleLogInOut}>
+            Login
+          </NavItem>
+        )}
+        {user && (
+          <NavItem onClick={logout} className={styleLogInOut}>
+            Logout
+          </NavItem>
+        )}
+      </div>
     </FlexRow>
   );
 };
