@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import firebaseClient from '../../utils/firebaseClient';
+import { useAuth } from '../../components/Auth';
 import {
   Container,
   Link,
@@ -135,6 +137,13 @@ const OptionalFormSection = ({ children, active }) => (
 );
 
 export default function Job() {
+  firebaseClient();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) window.location.href = '/login';
+  }, []);
+
   const [activeField, setActiveField] = useState('other');
   const [jobCreated, setJobCreated] = useState(false);
 
