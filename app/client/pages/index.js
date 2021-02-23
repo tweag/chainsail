@@ -1,4 +1,5 @@
-import { Layout, Button, FlexCenter, FlexCol } from '../components';
+import { useAuthUser, withAuthUser, withAuthUserTokenSSR } from 'next-firebase-auth';
+import { Layout, Button, FlexCenter, FlexCol, FlexRow } from '../components';
 
 const Heading = () => (
   <FlexCol center className="h-full mx-10 md:mx-20 lg:mx-40">
@@ -19,7 +20,7 @@ const Heading = () => (
 );
 
 const CopyrightFooter = () => (
-  <FlexCenter className="h-10 mx-10 md:mx-20 lg:mx-40 text-xs">
+  <FlexCenter className="h-10 mx-10 text-xs md:mx-20 lg:mx-40">
     <div className="opacity-30">All rights reserved. Copyright © 2021 by</div>
     <a href="https://www.tweag.io/">
       <img
@@ -30,16 +31,31 @@ const CopyrightFooter = () => (
   </FlexCenter>
 );
 
-export default function Home() {
+const Home = function () {
+  const AuthUser = useAuthUser();
+  console.log(AuthUser);
   return (
     <Layout>
       <FlexCol
         between
         className="h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body"
       >
+        <FlexRow>
+          <img
+            className="rounded-full h-7"
+            src={AuthUser.firebaseUser ? AuthUser.firebaseUser.providerData[0].photoURL : ''}
+          />
+          <div>
+            User: {AuthUser.firebaseUser ? AuthUser.firebaseUser.providerData[0].displayName : ''}
+          </div>
+        </FlexRow>
         <Heading />
         <CopyrightFooter />
       </FlexCol>
     </Layout>
   );
-}
+};
+
+export const getServerSideProps = withAuthUserTokenSSR()();
+
+export default withAuthUser()(Home);
