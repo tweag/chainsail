@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { FlexRow } from './Flex';
+import { useAuth } from './Auth';
 
 const NavItem = (props) => {
   return (
@@ -16,9 +17,11 @@ const NavItem = (props) => {
 };
 
 const Navbar = () => {
+  const user = useAuth();
   return (
     <FlexRow className="items-center h-16 text-sm md:text-base">
       <NavItem href="/">Home</NavItem>
+      {!user && <NavItem href="/login">Login</NavItem>}
     </FlexRow>
   );
 };
