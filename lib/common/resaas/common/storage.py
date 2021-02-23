@@ -113,7 +113,10 @@ class CloudBackendConfigSchema(Schema):
 
 
 # Registry used for looking up schema during deserialization
-BACKEND_SCHEMA_REGISTRY = {"local": LocalBackendConfigSchema, "cloud": CloudBackendConfigSchema}
+BACKEND_SCHEMA_REGISTRY = {
+    "local": LocalBackendConfigSchema,
+    "cloud": CloudBackendConfigSchema,
+}
 
 
 class StorageBackendConfigSchema(Schema):
@@ -367,7 +370,11 @@ class SimulationStorage:
         return self._load_all("energies", from_sample, step)
 
     def save_config(self, config_dict):
-        self.save(yaml.dump(config_dict), self.dir_structure.CONFIG_FILE_NAME, data_type="text")
+        self.save(
+            yaml.dump(config_dict),
+            self.dir_structure.CONFIG_FILE_NAME,
+            data_type="text",
+        )
 
     def load_config(self):
         return yaml.safe_load(self.load(self.dir_structure.CONFIG_FILE_NAME, data_type="text"))
