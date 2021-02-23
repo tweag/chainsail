@@ -38,7 +38,7 @@ const logout = async () => {
 const Navbar = () => {
   const { user } = useAuth();
   const providerData = user ? user.providerData : undefined;
-  const styleLogInOut = 'border-gray-800 border-2';
+  const styleLogInOut = 'border-gray-100 border-2 hover:border-opacity-0 border-opacity-20';
   return (
     <FlexRow between className="items-center h-16 text-sm md:text-base text-white">
       <FlexRow className="items-center space-x-2">
