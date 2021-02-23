@@ -40,8 +40,8 @@ const Navbar = () => {
   const providerData = user ? user.providerData : undefined;
   const styleLogInOut = 'border-white rounded-md border-2';
   return (
-    <FlexRow between className="items-center h-16 text-sm md:text-base">
-      <FlexRow className="space-x-2 items-end">
+    <FlexRow between className="items-center h-16 text-sm md:text-base bg-gray-800 w-full">
+      <FlexRow className="items-center space-x-2">
         <NavItem internal href="/">
           Home
         </NavItem>
@@ -59,7 +59,7 @@ const Navbar = () => {
           </NavItem>
         )}
         {user && (
-          <FlexRow className="items-end space-x-2">
+          <FlexRow className="items-center space-x-2">
             {providerData && (
               <FlexCenter>
                 <Image
