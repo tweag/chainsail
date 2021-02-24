@@ -165,8 +165,6 @@ const Job = ({ authed }) => {
   const [seeMoreFields, setSeeMoreFields] = useState(false);
 
   const createJob = async () => {
-    const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
-    const JOB_CREATION_ENDPOINT = '/job';
     const body = JSON.stringify({
       name: job_name,
       initial_number_of_replicas:
@@ -191,14 +189,8 @@ const Job = ({ authed }) => {
       probability_definition,
       dependencies: [{ type: 'pip', deps: dependencies }],
     });
-
-    const requestOptions = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    };
     try {
-      let response = await fetch(`${FLASK_URL}${JOB_CREATION_ENDPOINT}`, requestOptions);
+      let response = await fetch(`/api/job/create`, { body });
       let data = await response.json();
       if (response.status === 200) {
         setJobCreated(true);
