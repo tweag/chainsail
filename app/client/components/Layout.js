@@ -21,7 +21,7 @@ export default function Layout({ children }) {
         />
       </Head>
       <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
-        <FlexCol between className="h-full">
+        <FlexCol className="h-full">
           <Navbar />
           {children}
         </FlexCol>
