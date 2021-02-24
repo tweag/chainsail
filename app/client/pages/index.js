@@ -1,7 +1,7 @@
 import { Layout, Button, FlexCenter, FlexCol } from '../components';
 
 const Heading = () => (
-  <FlexCol center className="h-full">
+  <FlexCol center className="h-full mx-10 md:mx-20 lg:mx-40">
     <div className="mb-10 text-5xl md:text-9xl">Resaas</div>
     <div className="mb-10 text-2xl lg:w-2/3 md:text-4xl md:mb-20">
       scalable, automatically-tuning, cloud-based replica exchange implementation
@@ -33,8 +33,13 @@ const CopyrightFooter = () => (
 export default function Home() {
   return (
     <Layout>
-      <Heading />
-      <CopyrightFooter />
+      <FlexCol
+        between
+        className="h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body"
+      >
+        <Heading />
+        <CopyrightFooter />
+      </FlexCol>
     </Layout>
   );
 }
