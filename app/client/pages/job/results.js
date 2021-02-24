@@ -1,5 +1,8 @@
 import useSWR from 'swr';
 import moment from 'moment';
+import nookies from 'nookies';
+
+import { verifyIdToken } from '../../utils/firebaseAdmin';
 import { AnimatedPing, Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
 
 const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
@@ -107,7 +110,7 @@ const JobsTable = ({ data }) => {
   );
 };
 
-export default function Job() {
+const Results = ({ authed }) => {
   // Data fetching
   const JOBS_LIST_ENDPOINT = '/jobs';
   const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -115,18 +118,37 @@ export default function Job() {
     refreshInterval: 3000,
   });
 
-  return (
-    <Layout>
-      <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600">
-        <FlexCol start className="min-h-screen">
+  if (authed)
+    return (
+      <Layout>
+        <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
           <Navbar />
           <FlexCenter className="py-5 md:py-32">
             {error && <div>Failed to load. Please refresh the page.</div>}
             {!error && (data == undefined || data.length == 0) && <div>Loading...</div>}
             {data != undefined && data.length > 0 && <JobsTable data={data} />}
           </FlexCenter>
-        </FlexCol>
-      </Container>
-    </Layout>
-  );
+        </Container>
+      </Layout>
+    );
+};
+
+export async function getServerSideProps(context) {
+  try {
+    const cookies = nookies.get(context);
+    const token = await verifyIdToken(cookies.token);
+    const { uid, email } = token;
+    return {
+      props: { email, uid, authed: true },
+    };
+  } catch (err) {
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/login',
+      },
+    };
+  }
 }
+
+export default Results;

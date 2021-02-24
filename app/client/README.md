@@ -19,6 +19,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
+### Firebase
+
+Make sure to copy your [firebase](https://firebase.google.com/) credentials to the project directory
+for the login to work properly. Firebase admin configuration information should be placed in
+`firebase-admin-secrets.json` and client configuration in` .env.local`.
+The desired interface for `.env.local` is given in` .env.local.example`.
+
 ### Learn More
 
 To learn more about Next.js, take a look at the following resources:
