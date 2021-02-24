@@ -221,171 +221,188 @@ const Job = ({ authed }) => {
           setErr={setErr}
           setErrMsg={setErrMsg}
         />
-        <FlexCenter className="w-full h-full py-5 md:py-20">
-          <FlexCol center className="w-full h-full">
-            <div className="mb-10 text-2xl md:text-5xl lg:text-6xl">
-              Run a sampling task
-              <i className="ml-3 fas fa-rocket"></i>
-            </div>
-            <div className="w-full mb-20 text-base md:text-xl lg:w-2/3 md:text-justify">
-              Every sampling task is called a <em>job</em>. Every job is specified through several
-              attributes. After a job is submitted, the user gets a link to a cloud bucket, which
-              contains the samples, sampling statistics such as acceptance rates and an estimate of
-              the density of states.
-            </div>
-            <FlexRow between responsive media="lg" className="w-full lg:h-4/5 lg:space-x-20">
-              <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 w-96">
-                <form
-                  className="h-full"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    createJob(e);
-                  }}
-                >
-                  <FlexCol between className="h-56">
-                    <FormField
-                      label="Job name"
-                      inputName="job_name"
-                      setActiveField={setActiveField}
-                      value={job_name}
-                      onChange={(e) => setJobName(e.target.value)}
-                    />
-                    <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
-                      <FormField
-                        label="N° production samples"
-                        inputName="num_production_samples"
-                        inputType="number"
-                        setActiveField={setActiveField}
-                        minNumber={100}
-                        value={num_production_samples}
-                        onChange={(e) => setNumProductionSamples(e.target.value)}
-                      />
-                      <FormField
-                        label="Max N° replicas"
-                        inputName="max_replicas"
-                        inputType="number"
-                        setActiveField={setActiveField}
-                        minNumber={2}
-                        value={max_replicas}
-                        onChange={(e) => setMaxReplicas(e.target.value)}
-                      />
-                    </FlexRow>
-                    <FormField
-                      label="Probability definition"
-                      inputName="probability_definition"
-                      inputType="url"
-                      setActiveField={setActiveField}
-                      value={probability_definition}
-                      onChange={(e) => setProbDef(e.target.value)}
-                    />
-                    <FormField
-                      label="Dependencies"
-                      inputName="dependencies"
-                      inputType="text"
-                      setActiveField={setActiveField}
-                      value={dependencies}
-                      onChange={(e) => setDeps(e.target.value.split(','))}
-                      className="mb-5"
-                    />
-                  </FlexCol>
-                  <OptionalFormSection active={seeMoreFields}>
-                    <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
-                      <FormField
-                        optional
-                        label="Initial N° replicas"
-                        inputName="initial_number_of_replicas"
-                        inputType="number"
-                        setActiveField={setActiveField}
-                        minNumber={2}
-                        value={initial_number_of_replicas}
-                        onChange={(e) => setInitNReplicas(e.target.value)}
-                      />
+        <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
+          <FlexCol between className="h-full">
+            <Navbar />
+            <FlexCenter className="w-full h-full py-5 md:py-20">
+              <FlexCol center className="w-full h-full">
+                <div className="mb-10 text-2xl md:text-5xl lg:text-6xl">
+                  Run a sampling task
+                  <i className="ml-3 fas fa-rocket"></i>
+                </div>
+                <div className="w-full mb-20 text-base md:text-xl lg:w-2/3 md:text-justify">
+                  Every sampling task is called a <em>job</em>. Every job is specified through
+                  several attributes. After a job is submitted, the user gets a link to a cloud
+                  bucket, which contains the samples, sampling statistics such as acceptance rates
+                  and an estimate of the density of states.
+                </div>
+                <FlexRow between responsive media="lg" className="w-full lg:h-4/5 lg:space-x-20">
+                  <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 w-96">
+                    <form
+                      className="h-full"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        createJob(e);
+                      }}
+                    >
+                      <FlexCol between className="h-56">
+                        <FormField
+                          label="Job name"
+                          inputName="job_name"
+                          setActiveField={setActiveField}
+                          value={job_name}
+                          onChange={(e) => setJobName(e.target.value)}
+                        />
+                        <FlexRow
+                          responsive
+                          media="md"
+                          className="space-y-1 md:space-y-0 md:space-x-5"
+                        >
+                          <FormField
+                            label="N° production samples"
+                            inputName="num_production_samples"
+                            inputType="number"
+                            setActiveField={setActiveField}
+                            minNumber={100}
+                            value={num_production_samples}
+                            onChange={(e) => setNumProductionSamples(e.target.value)}
+                          />
+                          <FormField
+                            label="Max N° replicas"
+                            inputName="max_replicas"
+                            inputType="number"
+                            setActiveField={setActiveField}
+                            minNumber={2}
+                            value={max_replicas}
+                            onChange={(e) => setMaxReplicas(e.target.value)}
+                          />
+                        </FlexRow>
+                        <FormField
+                          label="Probability definition"
+                          inputName="probability_definition"
+                          inputType="url"
+                          setActiveField={setActiveField}
+                          value={probability_definition}
+                          onChange={(e) => setProbDef(e.target.value)}
+                        />
+                        <FormField
+                          label="Dependencies"
+                          inputName="dependencies"
+                          inputType="text"
+                          setActiveField={setActiveField}
+                          value={dependencies}
+                          onChange={(e) => setDeps(e.target.value.split(','))}
+                          className="mb-5"
+                        />
+                      </FlexCol>
+                      <OptionalFormSection active={seeMoreFields}>
+                        <FlexRow
+                          responsive
+                          media="md"
+                          className="space-y-1 md:space-y-0 md:space-x-5"
+                        >
+                          <FormField
+                            optional
+                            label="Initial N° replicas"
+                            inputName="initial_number_of_replicas"
+                            inputType="number"
+                            setActiveField={setActiveField}
+                            minNumber={2}
+                            value={initial_number_of_replicas}
+                            onChange={(e) => setInitNReplicas(e.target.value)}
+                          />
 
-                      <FormField
-                        optional
-                        label="N° optimzation samples"
-                        inputName="num_optimization_samples"
-                        inputType="number"
-                        setActiveField={setActiveField}
-                        minNumber={100}
-                        value={num_optimization_samples}
-                        onChange={(e) => setNumOptimizationSamples(e.target.value)}
-                      />
-                    </FlexRow>
-                    <FormField
-                      optional
-                      label="Tempered distribution family"
-                      inputName="tempered_distribution_family"
-                      hasDropdown
-                      setActiveField={setActiveField}
-                      disabled
-                      defaultValue="Boltzmann"
-                      value={tempered_distribution_family}
-                      onChange={(e) => setTemperedDist(e.target.value)}
-                    />
-                    <FlexRow responsive media="md" className="space-y-1 md:space-y-0 md:space-x-5">
-                      <FormField
-                        label="Beta min"
-                        optional
-                        inputName="minimum_beta"
-                        inputType="number"
-                        setActiveField={setActiveField}
-                        minNumber={0}
-                        maxNumber={1}
-                        stepNumber={0.01}
-                        value={minimum_beta}
-                        onChange={(e) => setMinBeta(e.target.value)}
-                      />
-                      <FormField
-                        optional
-                        label="Target acceptance rate"
-                        inputName="target_acceptance_rate"
-                        inputType="number"
-                        minNumber={0}
-                        maxNumber={1}
-                        stepNumber={0.1}
-                        setActiveField={setActiveField}
-                        value={target_acceptance_rate}
-                        onChange={(e) => setTargetAcceptanceRate(e.target.value)}
-                      />
-                    </FlexRow>
-                  </OptionalFormSection>
-                  <div
-                    className={`${
-                      seeMoreFields ? 'mt-5' : 'mt-0'
-                    } text-sm cursor-pointer opacity-60 hover:opacity-100 transition duration-300`}
-                    onClick={() => setSeeMoreFields((s) => !s)}
-                  >
-                    {seeMoreFields ? (
-                      <div>
-                        <i className="mr-1 fas fa-caret-square-up"></i> see less fields!
+                          <FormField
+                            optional
+                            label="N° optimzation samples"
+                            inputName="num_optimization_samples"
+                            inputType="number"
+                            setActiveField={setActiveField}
+                            minNumber={100}
+                            value={num_optimization_samples}
+                            onChange={(e) => setNumOptimizationSamples(e.target.value)}
+                          />
+                        </FlexRow>
+                        <FormField
+                          optional
+                          label="Tempered distribution family"
+                          inputName="tempered_distribution_family"
+                          hasDropdown
+                          setActiveField={setActiveField}
+                          disabled
+                          defaultValue="Boltzmann"
+                          value={tempered_distribution_family}
+                          onChange={(e) => setTemperedDist(e.target.value)}
+                        />
+                        <FlexRow
+                          responsive
+                          media="md"
+                          className="space-y-1 md:space-y-0 md:space-x-5"
+                        >
+                          <FormField
+                            label="Beta min"
+                            optional
+                            inputName="minimum_beta"
+                            inputType="number"
+                            setActiveField={setActiveField}
+                            minNumber={0}
+                            maxNumber={1}
+                            stepNumber={0.01}
+                            value={minimum_beta}
+                            onChange={(e) => setMinBeta(e.target.value)}
+                          />
+                          <FormField
+                            optional
+                            label="Target acceptance rate"
+                            inputName="target_acceptance_rate"
+                            inputType="number"
+                            minNumber={0}
+                            maxNumber={1}
+                            stepNumber={0.1}
+                            setActiveField={setActiveField}
+                            value={target_acceptance_rate}
+                            onChange={(e) => setTargetAcceptanceRate(e.target.value)}
+                          />
+                        </FlexRow>
+                      </OptionalFormSection>
+                      <div
+                        className={`${
+                          seeMoreFields ? 'mt-5' : 'mt-0'
+                        } text-sm cursor-pointer opacity-60 hover:opacity-100 transition duration-300`}
+                        onClick={() => setSeeMoreFields((s) => !s)}
+                      >
+                        {seeMoreFields ? (
+                          <div>
+                            <i className="mr-1 fas fa-caret-square-up"></i> see less fields!
+                          </div>
+                        ) : (
+                          <div>
+                            <i className="mr-1 fas fa-caret-square-down"></i> see more fields!
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div>
-                        <i className="mr-1 fas fa-caret-square-down"></i> see more fields!
-                      </div>
-                    )}
-                  </div>
 
-                  <FlexCenter>
-                    <input
-                      type="submit"
-                      value="Submit"
-                      className={
-                        'w-52 px-6 pt-3 pb-4 text-base text-center bg-purple-700  ' +
-                        ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
-                      }
-                    />
+                      <FlexCenter>
+                        <input
+                          type="submit"
+                          value="Submit"
+                          className={
+                            'w-52 px-6 pt-3 pb-4 text-base text-center bg-purple-700  ' +
+                            ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
+                          }
+                        />
+                      </FlexCenter>
+                    </form>
                   </FlexCenter>
-                </form>
-              </FlexCenter>
 
-              <FlexCenter className="w-full p-5 bg-gray-700 md:p-10 lg:w-1/2 lg:h-full rounded-xl">
-                <Descs activeField={activeField} />
-              </FlexCenter>
-            </FlexRow>
+                  <FlexCenter className="w-full p-5 bg-gray-700 md:p-10 lg:w-1/2 lg:h-full rounded-xl">
+                    <Descs activeField={activeField} />
+                  </FlexCenter>
+                </FlexRow>
+              </FlexCol>
+            </FlexCenter>
           </FlexCol>
-        </FlexCenter>
+        </Container>
       </Layout>
     );
 };
