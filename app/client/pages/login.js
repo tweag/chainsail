@@ -26,14 +26,18 @@ const FirebaseAuth = () => {
   }, []);
   return (
     <Layout>
-      {renderAuth ? (
-        <FlexCenter className="w-full mt-20">
-          <div className="px-5 py-8 bg-indigo-500 shadow-lg w-96 rounded-xl">
-            <FlexCenter className="mb-5 w-full">Please login using your Google account</FlexCenter>
-            <StyledFirebaseAuth uiConfig={firebaseAuthConfig} firebaseAuth={firebase.auth()} />
-          </div>
-        </FlexCenter>
-      ) : null}
+      <div className="h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
+        {renderAuth ? (
+          <FlexCenter className="w-full h-full pb-52">
+            <div className="px-5 py-8 bg-indigo-500 shadow-lg w-96 rounded-xl">
+              <FlexCenter className="mb-5 w-full">
+                Please login using your Google account
+              </FlexCenter>
+              <StyledFirebaseAuth uiConfig={firebaseAuthConfig} firebaseAuth={firebase.auth()} />
+            </div>
+          </FlexCenter>
+        ) : null}
+      </div>
     </Layout>
   );
 };
