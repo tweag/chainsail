@@ -8,6 +8,7 @@ from flask import Flask, has_app_context
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+import firebase_admin
 
 
 class FlaskCelery(Celery):
@@ -73,3 +74,7 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 # Celery support
 celery = FlaskCelery(app=app)
+
+# Set the environment variable GOOGLE_APPLICATION_CREDENTIALS to the file path of the JSON file
+# that contains your service account key.
+firebase_app = firebase_admin.initialize_app()

@@ -4,9 +4,10 @@ Scheduler REST API and endpoint specifications
 from datetime import datetime
 
 from flask import abort, jsonify, request
+from firebase_admin.auth import verify_id_token
 from resaas.common.spec import JobSpecSchema
 from resaas.scheduler.config import load_scheduler_config
-from resaas.scheduler.core import app, db
+from resaas.scheduler.core import app, db, firebase_app
 from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.jobs import JobStatus
 from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task, watch_job_task
@@ -24,6 +25,11 @@ def get_job(job_id):
 @app.route("/job", methods=["POST"])
 def create_job():
     """Create a job"""
+    # Verify user id token
+    id_token = request.headers["Authorization"].split(" ").pop()
+    claims = verify_id_token(id_token, app=firebase_app)
+    if not claims:
+        return "Unauthorized", 401
     # Validate the provided job spec
     schema = JobSpecSchema()
     job_spec = schema.load(request.json)
