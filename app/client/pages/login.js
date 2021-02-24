@@ -3,6 +3,8 @@ import StyledFirebaseAuth from 'react-firebaseui/StyledFirebaseAuth';
 import firebase from 'firebase/app';
 import 'firebase/auth';
 
+import { FlexCenter, Layout } from '../components';
+
 import firebaseClient from '../utils/firebaseClient';
 
 const firebaseAuthConfig = {
@@ -23,11 +25,16 @@ const FirebaseAuth = () => {
     }
   }, []);
   return (
-    <div>
+    <Layout>
       {renderAuth ? (
-        <StyledFirebaseAuth uiConfig={firebaseAuthConfig} firebaseAuth={firebase.auth()} />
+        <FlexCenter className="w-full mt-20">
+          <div className="px-5 py-8 bg-indigo-500 shadow-lg w-96 rounded-xl">
+            <FlexCenter className="mb-5 w-full">Please login using your Google account</FlexCenter>
+            <StyledFirebaseAuth uiConfig={firebaseAuthConfig} firebaseAuth={firebase.auth()} />
+          </div>
+        </FlexCenter>
       ) : null}
-    </div>
+    </Layout>
   );
 };
 
