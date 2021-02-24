@@ -77,4 +77,8 @@ celery = FlaskCelery(app=app)
 
 # Set the environment variable GOOGLE_APPLICATION_CREDENTIALS to the file path of the JSON file
 # that contains your service account key.
-firebase_app = firebase_admin.initialize_app()
+firebase_app_name = "resaas"
+try:
+    firebase_app = firebase_admin.get_app(name=firebase_app_name)
+except:
+    firebase_app = firebase_admin.initialize_app(name=firebase_app_name)
