@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+message LogProbRequest {
+  string b64state = 1;
+}
+
+message LogProbResponse {
+  float log_prob_result = 1;
+}
+
+message LogProbGradientRequest {
+  string b64state = 1;
+}
+
+message LogProbGradientResponse {
+  string b64gradient_result = 1;
+}
+
+message InitialStateRequest {
+}
+
+message InitialStateResponse {
+  string b64initial_state = 1;
+}
+
+service UserCodeServicer {
+  rpc LogProb(LogProbRequest) returns (LogProbResponse);
+
+  rpc LogProbGradient(LogProbGradientRequest) returns (LogProbGradientResponse);
+
+  rpc InitialState(InitialStateRequest) returns (InitialStateResponse);
+}
