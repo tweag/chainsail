@@ -197,7 +197,7 @@ const Job = ({ authed }) => {
       body,
     };
     try {
-      let response = await fetch(`/api/job/create`, requestOptions);
+      let response = await fetch('/api/job/create', requestOptions);
       let data = await response.json();
       if (response.status === 200) {
         setJobCreated(true);
