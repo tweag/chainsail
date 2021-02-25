@@ -24,10 +24,6 @@ are in a nix-shell environment.
        we already have the necessary security group created in the eu-central-1 region,
        so you should leave the region to that setting for development.
 1.  Boot up docker and redis using docker-compose: `docker-compose --file example/docker-compose.yaml up`
-1.  Download the JSON file that contains your firebase service account key by following [this instruction](https://firebase.google.com/docs/admin/setup/#initialize-sdk) and set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to that:
-    ```shell
-    export GOOGLE_APPLICATION_CREDENTIALS="/home/user/Downloads/service-account-file.json"
-    ```
 1.  Start the celery task worker:
     ```shell
     # Its easiest to run things from the repository root directory
@@ -38,6 +34,10 @@ are in a nix-shell environment.
       SQLALCHEMY_DATABASE_URI="postgresql://postgres:resaas-dev@localhost:5432/postgres" \
       RESAAS_SCHEDULER_CONFIG="$PWD/app/scheduler/example/scheduler.yaml" \
         celery --app "resaas.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=1
+    ```
+1.  Download the JSON file that contains your firebase service account key by following [this instruction](https://firebase.google.com/docs/admin/setup/#initialize-sdk) and set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to that:
+    ```shell
+    export GOOGLE_APPLICATION_CREDENTIALS="/home/user/Downloads/service-account-file.json"
     ```
 1.  Start the flask dev server:
     ```shell
