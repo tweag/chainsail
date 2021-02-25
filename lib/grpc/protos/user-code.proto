@@ -23,7 +23,7 @@ message InitialStateResponse {
   string b64initial_state = 1;
 }
 
-service UserCodeServicer {
+service UserCode {
   rpc LogProb(LogProbRequest) returns (LogProbResponse);
 
   rpc LogProbGradient(LogProbGradientRequest) returns (LogProbGradientResponse);

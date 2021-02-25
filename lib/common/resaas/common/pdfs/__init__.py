@@ -45,7 +45,7 @@ def _decode_array(x):
 class SafeUserPDF(AbstractPDF):
     def __init__(self, host="localhost", port=50051):
         channel = grpc.insecure_channel(f"{host}:{port}")
-        self._stub = user_code_pb2_grpc.UserCodeServicerStub(channel)
+        self._stub = user_code_pb2_grpc.UserCodeStub(channel)
 
     def log_prob(self, state):
         request = user_code_pb2.LogProbRequest(b64state=_encode_array(state))

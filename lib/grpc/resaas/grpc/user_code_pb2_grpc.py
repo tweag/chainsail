@@ -5,7 +5,7 @@ import grpc
 import resaas.grpc.user_code_pb2 as user__code__pb2
 
 
-class UserCodeServicerStub(object):
+class UserCodeStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -15,23 +15,23 @@ class UserCodeServicerStub(object):
             channel: A grpc.Channel.
         """
         self.LogProb = channel.unary_unary(
-                '/UserCodeServicer/LogProb',
+                '/UserCode/LogProb',
                 request_serializer=user__code__pb2.LogProbRequest.SerializeToString,
                 response_deserializer=user__code__pb2.LogProbResponse.FromString,
                 )
         self.LogProbGradient = channel.unary_unary(
-                '/UserCodeServicer/LogProbGradient',
+                '/UserCode/LogProbGradient',
                 request_serializer=user__code__pb2.LogProbGradientRequest.SerializeToString,
                 response_deserializer=user__code__pb2.LogProbGradientResponse.FromString,
                 )
         self.InitialState = channel.unary_unary(
-                '/UserCodeServicer/InitialState',
+                '/UserCode/InitialState',
                 request_serializer=user__code__pb2.InitialStateRequest.SerializeToString,
                 response_deserializer=user__code__pb2.InitialStateResponse.FromString,
                 )
 
 
-class UserCodeServicerServicer(object):
+class UserCodeServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def LogProb(self, request, context):
@@ -53,7 +53,7 @@ class UserCodeServicerServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_UserCodeServicerServicer_to_server(servicer, server):
+def add_UserCodeServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'LogProb': grpc.unary_unary_rpc_method_handler(
                     servicer.LogProb,
@@ -72,12 +72,12 @@ def add_UserCodeServicerServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'UserCodeServicer', rpc_method_handlers)
+            'UserCode', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class UserCodeServicer(object):
+class UserCode(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -91,7 +91,7 @@ class UserCodeServicer(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/UserCodeServicer/LogProb',
+        return grpc.experimental.unary_unary(request, target, '/UserCode/LogProb',
             user__code__pb2.LogProbRequest.SerializeToString,
             user__code__pb2.LogProbResponse.FromString,
             options, channel_credentials,
@@ -108,7 +108,7 @@ class UserCodeServicer(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/UserCodeServicer/LogProbGradient',
+        return grpc.experimental.unary_unary(request, target, '/UserCode/LogProbGradient',
             user__code__pb2.LogProbGradientRequest.SerializeToString,
             user__code__pb2.LogProbGradientResponse.FromString,
             options, channel_credentials,
@@ -125,7 +125,7 @@ class UserCodeServicer(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/UserCodeServicer/InitialState',
+        return grpc.experimental.unary_unary(request, target, '/UserCode/InitialState',
             user__code__pb2.InitialStateRequest.SerializeToString,
             user__code__pb2.InitialStateResponse.FromString,
             options, channel_credentials,

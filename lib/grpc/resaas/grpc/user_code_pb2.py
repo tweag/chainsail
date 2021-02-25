@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0fuser-code.proto\"\"\n\x0eLogProbRequest\x12\x10\n\x08\x62\x36\x34state\x18\x01 \x01(\t\"*\n\x0fLogProbResponse\x12\x17\n\x0flog_prob_result\x18\x01 \x01(\x02\"*\n\x16LogProbGradientRequest\x12\x10\n\x08\x62\x36\x34state\x18\x01 \x01(\t\"5\n\x17LogProbGradientResponse\x12\x1a\n\x12\x62\x36\x34gradient_result\x18\x01 \x01(\t\"\x15\n\x13InitialStateRequest\"0\n\x14InitialStateResponse\x12\x18\n\x10\x62\x36\x34initial_state\x18\x01 \x01(\t2\xc3\x01\n\x10UserCodeServicer\x12,\n\x07LogProb\x12\x0f.LogProbRequest\x1a\x10.LogProbResponse\x12\x44\n\x0fLogProbGradient\x12\x17.LogProbGradientRequest\x1a\x18.LogProbGradientResponse\x12;\n\x0cInitialState\x12\x14.InitialStateRequest\x1a\x15.InitialStateResponseb\x06proto3'
+  serialized_pb=b'\n\x0fuser-code.proto\"\"\n\x0eLogProbRequest\x12\x10\n\x08\x62\x36\x34state\x18\x01 \x01(\t\"*\n\x0fLogProbResponse\x12\x17\n\x0flog_prob_result\x18\x01 \x01(\x02\"*\n\x16LogProbGradientRequest\x12\x10\n\x08\x62\x36\x34state\x18\x01 \x01(\t\"5\n\x17LogProbGradientResponse\x12\x1a\n\x12\x62\x36\x34gradient_result\x18\x01 \x01(\t\"\x15\n\x13InitialStateRequest\"0\n\x14InitialStateResponse\x12\x18\n\x10\x62\x36\x34initial_state\x18\x01 \x01(\t2\xbb\x01\n\x08UserCode\x12,\n\x07LogProb\x12\x0f.LogProbRequest\x1a\x10.LogProbResponse\x12\x44\n\x0fLogProbGradient\x12\x17.LogProbGradientRequest\x1a\x18.LogProbGradientResponse\x12;\n\x0cInitialState\x12\x14.InitialStateRequest\x1a\x15.InitialStateResponseb\x06proto3'
 )
 
 
@@ -261,19 +261,19 @@ _sym_db.RegisterMessage(InitialStateResponse)
 
 
 
-_USERCODESERVICER = _descriptor.ServiceDescriptor(
-  name='UserCodeServicer',
-  full_name='UserCodeServicer',
+_USERCODE = _descriptor.ServiceDescriptor(
+  name='UserCode',
+  full_name='UserCode',
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
   serialized_start=272,
-  serialized_end=467,
+  serialized_end=459,
   methods=[
   _descriptor.MethodDescriptor(
     name='LogProb',
-    full_name='UserCodeServicer.LogProb',
+    full_name='UserCode.LogProb',
     index=0,
     containing_service=None,
     input_type=_LOGPROBREQUEST,
@@ -283,7 +283,7 @@ _USERCODESERVICER = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='LogProbGradient',
-    full_name='UserCodeServicer.LogProbGradient',
+    full_name='UserCode.LogProbGradient',
     index=1,
     containing_service=None,
     input_type=_LOGPROBGRADIENTREQUEST,
@@ -293,7 +293,7 @@ _USERCODESERVICER = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='InitialState',
-    full_name='UserCodeServicer.InitialState',
+    full_name='UserCode.InitialState',
     index=2,
     containing_service=None,
     input_type=_INITIALSTATEREQUEST,
@@ -302,8 +302,8 @@ _USERCODESERVICER = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
 ])
-_sym_db.RegisterServiceDescriptor(_USERCODESERVICER)
+_sym_db.RegisterServiceDescriptor(_USERCODE)
 
-DESCRIPTOR.services_by_name['UserCodeServicer'] = _USERCODESERVICER
+DESCRIPTOR.services_by_name['UserCode'] = _USERCODE
 
 # @@protoc_insertion_point(module_scope)
