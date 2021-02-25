@@ -56,7 +56,7 @@ const JobPageModal = ({ jobCreated, jobId, err, errMsg, setErr, setErrMsg }) => 
       )}
       {err && (
         <>
-          <div className="mb-7">{errMsg.message}</div>
+          <div className="mb-7">{errMsg}</div>
           <FlexCenter>
             <a
               className={
@@ -201,10 +201,13 @@ const Job = ({ authed }) => {
       if (response.status === 200) {
         setJobCreated(true);
         if (data.job_id) setCreatedJobID(data.job_id);
+      } else {
+        setErr(true);
+        setErrMsg(data.message);
       }
     } catch (e) {
       setErr(true);
-      setErrMsg(e);
+      setErrMsg(e.message);
     }
   };
 
