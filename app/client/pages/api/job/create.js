@@ -14,6 +14,6 @@ export default async (req, res) => {
     const res_body = await response.json();
     res.status(response.status).json(res_body);
   } catch (e) {
-    res.status(404).send(e);
+    res.status(400).send(e);
   }
 };
