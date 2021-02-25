@@ -28,11 +28,14 @@ def create_job():
     # Verify user id token
     id_token = request.headers["Authorization"].split(" ").pop()
     claims = verify_id_token(id_token, app=firebase_app)
-    if not claims:
+    uuid = claims.get("user_id", None)
+    if not claims or not uuid:
         return "Unauthorized", 401
     # Validate the provided job spec
     schema = JobSpecSchema()
-    job_spec = schema.load(request.json)
+    req_json = request.json
+    req_json.update(uuid=uuid)
+    job_spec = schema.load(req_json)
     job = TblJobs(
         status=JobStatus.INITIALIZED.value,
         created_at=datetime.utcnow(),
