@@ -189,8 +189,14 @@ const Job = ({ authed }) => {
       probability_definition,
       dependencies: [{ type: 'pip', deps: dependencies }],
     });
+
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    };
     try {
-      let response = await fetch(`/api/job/create`, { body });
+      let response = await fetch(`/api/job/create`, requestOptions);
       let data = await response.json();
       if (response.status === 200) {
         setJobCreated(true);
