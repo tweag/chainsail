@@ -113,6 +113,7 @@ def test_job_spec_serialization_round_trip():
 
     data = """
     {
+        "uuid": "1234",
         "probability_definition": "gs://bucket/sub/path/script_and_data",
         "max_replicas": 2,
         "initial_schedule_parameters": {
