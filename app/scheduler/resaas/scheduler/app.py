@@ -49,9 +49,15 @@ def create_job():
 @app.route("/job/<job_id>/start", methods=["POST"])
 def start_job(job_id):
     """Start a single job"""
-    job = TblJobs.query.filter_by(id=job_id).first()
+    # Verify user id token
+    id_token = request.headers["Authorization"].split(" ").pop()
+    claims = verify_id_token(id_token, app=firebase_app)
+    user_id = claims.get("user_id", None)
+    if not claims or not user_id:
+        return "Unauthorized", 401
+    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
     if not job:
-        abort(404, "job does not exist")
+        abort(404, "job does not exist for this user")
     job.status = JobStatus.STARTING.value
     db.session.commit()
     # Starts the watch process once the job is successfully started
@@ -70,9 +76,15 @@ def start_job(job_id):
 @app.route("/job/<job_id>/stop", methods=["POST"])
 def stop_job(job_id):
     """Start a single job"""
-    job = TblJobs.query.filter_by(id=job_id).first()
+    # Verify user id token
+    id_token = request.headers["Authorization"].split(" ").pop()
+    claims = verify_id_token(id_token, app=firebase_app)
+    user_id = claims.get("user_id", None)
+    if not claims or not user_id:
+        return "Unauthorized", 401
+    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
     if not job:
-        abort(404, "job does not exist")
+        abort(404, "job does not exist for this user")
     job.status = JobStatus.STOPPING.value
     db.session.commit()
     stop_job_task.apply_async((job_id,), {})
@@ -82,7 +94,13 @@ def stop_job(job_id):
 @app.route("/jobs", methods=["GET"])
 def get_jobs():
     """List all jobs"""
-    jobs = TblJobs.query.all()
+    # Verify user id token
+    id_token = request.headers["Authorization"].split(" ").pop()
+    claims = verify_id_token(id_token, app=firebase_app)
+    user_id = claims.get("user_id", None)
+    if not claims or not user_id:
+        return "Unauthorized", 401
+    jobs = TblJobs.query.filter_by(user_id=user_id)
     return JobViewSchema().jsonify(jobs, many=True)
 
 
