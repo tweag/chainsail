@@ -37,7 +37,7 @@ are in a nix-shell environment.
         celery --app "resaas.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=1
     ```
 
-1.  Download the JSON file that contains your firebase service account key by following [this instruction](https://firebase.google.com/docs/admin/setup/#initialize-sdk) and set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to that:
+1.  Download the JSON file that contains your firebase service account key by following [this instruction](https://firebase.google.com/docs/admin/setup/#initialize-sdk) and set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to it:
 
     ```shell
     export GOOGLE_APPLICATION_CREDENTIALS="/home/user/Downloads/service-account-file.json"
