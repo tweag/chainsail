@@ -4,9 +4,7 @@ import nookies from 'nookies';
 
 import { verifyIdToken } from '../../utils/firebaseAdmin';
 import { AnimatedPing, Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
-
-const GRAPHITE_URL = process.env.GRAPHITE_URL || 'http://127.0.0.1';
-const GRAPHITE_PORT = process.env.GRAPHITE_PORT || '8080';
+import { GRAPHITE_URL, GRAPHITE_PORT } from '../../utils/const';
 
 const JobButton = ({ jobId, jobStatus }) => {
   const isInitialized = jobStatus === 'initialized';
