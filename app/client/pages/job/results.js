@@ -5,7 +5,6 @@ import nookies from 'nookies';
 import { verifyIdToken } from '../../utils/firebaseAdmin';
 import { AnimatedPing, Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
 
-const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
 const GRAPHITE_URL = process.env.GRAPHITE_URL || 'http://127.0.0.1';
 const GRAPHITE_PORT = process.env.GRAPHITE_PORT || '8080';
 
@@ -38,21 +37,23 @@ const JobButton = ({ jobId, jobStatus }) => {
 };
 
 const startJob = (jobId) => {
-  const JOB_START_ENDPOINT = `/job/${jobId}/start`;
+  const body = JSON.stringify({ jobId });
   const requestOptions = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    body,
   };
-  fetch(`${FLASK_URL}${JOB_START_ENDPOINT}`, requestOptions);
+  fetch('/api/job/start', requestOptions);
 };
 
 const stopJob = (jobId) => {
-  const JOB_STOP_ENDPOINT = `/job/${jobId}/stop`;
+  const body = JSON.stringify({ jobId });
   const requestOptions = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    body,
   };
-  fetch(`${FLASK_URL}${JOB_STOP_ENDPOINT}`, requestOptions);
+  fetch('/api/job/start', requestOptions);
 };
 
 const JobsTable = ({ data }) => {
@@ -112,9 +113,8 @@ const JobsTable = ({ data }) => {
 
 const Results = ({ authed }) => {
   // Data fetching
-  const JOBS_LIST_ENDPOINT = '/jobs';
   const fetcher = (url) => fetch(url).then((res) => res.json());
-  const { data, error } = useSWR(`${FLASK_URL}${JOBS_LIST_ENDPOINT}`, fetcher, {
+  const { data, error } = useSWR('/api/job/get-all', fetcher, {
     refreshInterval: 3000,
   });
 

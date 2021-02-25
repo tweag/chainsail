@@ -2,8 +2,8 @@ import { FLASK_URL, JOB_STOP_ENDPOINT } from '../../../utils/const';
 
 export default async (req, res) => {
   const { token } = req.cookies;
-  const { job_id } = req.body;
-  const endpoint = JOB_STOP_ENDPOINT(job_id);
+  const { jobId } = req.body;
+  const endpoint = JOB_STOP_ENDPOINT(jobId);
   const requestOptions = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
