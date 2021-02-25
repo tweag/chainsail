@@ -51,7 +51,7 @@ const stopJob = (jobId) => {
     headers: { 'Content-Type': 'application/json' },
     body,
   };
-  fetch('/api/job/start', requestOptions);
+  fetch('/api/job/stop', requestOptions);
 };
 
 const JobsTable = ({ data }) => {
