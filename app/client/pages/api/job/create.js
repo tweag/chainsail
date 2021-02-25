@@ -3,13 +3,19 @@ const JOB_CREATION_ENDPOINT = '/job';
 
 export default async (req, res) => {
   const { token } = req.cookies;
-  const body = req.body;
+  const body = JSON.stringify(req.body);
   const requestOptions = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body,
   };
-  const response = await fetch(`${FLASK_URL}${JOB_CREATION_ENDPOINT}`, requestOptions);
-  res.statusCode = 200;
-  res.json(response);
+  try {
+    const response = await fetch(`${FLASK_URL}${JOB_CREATION_ENDPOINT}`, requestOptions);
+    const res_body = await response.json();
+    res.status = response.status;
+    res.json(res_body);
+  } catch (e) {
+    res.status = response.status;
+    res.json(e);
+  }
 };
