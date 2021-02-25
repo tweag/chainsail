@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import nookies from 'nookies';
-import { floor } from '../../utils/math';
 import firebaseClient from '../../utils/firebaseClient';
 import { verifyIdToken } from '../../utils/firebaseAdmin';
 import {
@@ -171,7 +170,7 @@ const Job = ({ authed }) => {
       initial_number_of_replicas:
         seeMoreFields && initial_number_of_replicas
           ? initial_number_of_replicas
-          : floor(max_replicas * 0.5),
+          : Math.floor(max_replicas * 0.5),
       max_replicas,
       tempered_dist_family: tempered_distribution_family,
       initial_schedule_parameters: {
@@ -182,7 +181,7 @@ const Job = ({ authed }) => {
         num_optimization_samples:
           seeMoreFields && num_optimization_samples
             ? num_optimization_samples
-            : floor(num_production_samples * 0.25),
+            : Math.floor(num_production_samples * 0.25),
       },
       optimization_parameters: {
         optimization_quantity_target: target_acceptance_rate,
