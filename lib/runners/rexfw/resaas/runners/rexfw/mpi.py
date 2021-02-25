@@ -13,6 +13,7 @@ from resaas.common.storage import SimulationStorage, load_storage_config
 from resaas.common.tempering.tempered_distributions import BoltzmannTemperedDistribution
 from resaas.common.pdfs import AbstractPDF
 from resaas.common.samplers import get_sampler
+from resaas.common.pdfs import SafeUserPDF
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
@@ -114,6 +115,8 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_po
 
     logging.info("Attempting to load user-defined pdf and initial state")
     bare_pdf, init_state = import_from_user()
+
+    bare_pdf = SafeUserPDF()
 
     # this is where all simulation input data & output (samples, statistics files,
     # etc.) are stored
