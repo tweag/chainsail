@@ -109,20 +109,31 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
     type=int,
     help="the metrics logging port",
 )
+@click.option(
+    "--user-code-port",
+    required=True,
+    type=int,
+    help="the port for the user code gRPC server",
+)
 @ensure_mpi_failure
-def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_port):
+def run_rexfw_mpi(basename, path, storage_config, name, metrics_host,
+                  metrics_port, user_code_port):
     rank = mpicomm.Get_rank()
     size = mpicomm.Get_size()
 
     # Number of replicas is inferred from the MPI environment
     n_replicas = size - 1
 
-    if False:
+    # TODO: find better way to determine whether the runner is deployed locally
+    # or on the cloud
+    is_local_run = name.split(".")[0] == "local"
+
+    if is_local_run:
         logging.info("Attempting to load user-defined pdf and initial state")
         bare_pdf, init_state = import_from_user()
     else:
         bare_pdf = SafeUserPDF()
-        channel = grpc.insecure_channel("localhost:50051")
+        channel = grpc.insecure_channel(f"localhost:{user_code_port}")
         stub = user_code_pb2_grpc.UserCodeStub(channel)
         b64_initial_state = stub.InitialState(user_code_pb2.InitialStateRequest()).b64initial_state
         init_state = np.frombuffer(
@@ -148,7 +159,7 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_po
 
         # sets up a default RE master object; should be sufficient for all
         # practical purposes
-        if name.split(".")[0] == "local":
+        if is_local_run:
             graphite_params = None
         else:
             graphite_params = {
