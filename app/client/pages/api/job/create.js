@@ -1,5 +1,4 @@
-const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
-const JOB_CREATION_ENDPOINT = '/job';
+import { FLASK_URL, JOB_CREATION_ENDPOINT } from '../../../utils/const';
 
 export default async (req, res) => {
   const { token } = req.cookies;
