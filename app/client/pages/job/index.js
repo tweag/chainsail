@@ -200,14 +200,17 @@ const Job = ({ authed }) => {
       let data = await response.json();
       if (response.status === 200) {
         setJobCreated(true);
+        setErr(false);
         if (data.job_id) setCreatedJobID(data.job_id);
       } else {
         setErr(true);
-        setErrMsg(data.message);
+        setErrMsg('Something went wrong. For more info look at your browser console.');
+        console.log(data);
       }
     } catch (e) {
       setErr(true);
-      setErrMsg(e.message);
+      setErrMsg('Something went wrong. For more info look at your browser console.');
+      console.log(e);
     }
   };
 
