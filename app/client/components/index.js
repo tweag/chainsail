@@ -6,7 +6,7 @@ import Button from './Button';
 import { FlexCenter, FlexCol, FlexRow } from './Flex';
 import { FormField } from './Form';
 import Code from './Code';
-import Math from './Math';
+import MathTex from './MathTex';
 import Navbar from './Navbar';
 import { ChartBar } from './Chart';
 import Container from './Container';
@@ -26,7 +26,7 @@ export {
   Image,
   Layout,
   Link,
-  Math,
+  MathTex,
   Modal,
   Navbar,
 };

@@ -11,7 +11,7 @@ import {
   FlexCol,
   FlexCenter,
   FormField,
-  Math,
+  MathTex,
   Navbar,
   Modal,
 } from '../../components';
@@ -24,9 +24,9 @@ const FieldDescription = ({ children, name, activeField, icon, math }) => (
   >
     {icon && <i className={`${icon} mr-5`}></i>}
     {math && (
-      <Math inline className="mr-5">
+      <MathTex inline className="mr-5">
         {math}
-      </Math>
+      </MathTex>
     )}
     {children}
   </div>
