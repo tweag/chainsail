@@ -233,6 +233,7 @@ INITIAL_SCHEDULE_PARAMETERS_SCHEMAS = {
 
 class JobSpecSchema(Schema):
     probability_definition = fields.String(required=True)
+    uuid = fields.String(required=True)
     name = fields.String(required=False)
     initial_number_of_replicas = fields.Int()
     initial_schedule_parameters = fields.Dict(fields.String, fields.Float())
@@ -295,6 +296,7 @@ class JobSpec:
     def __init__(
         self,
         probability_definition: str,
+        uuid: str,
         name: Optional[str] = None,
         initial_number_of_replicas: int = 10,
         initial_schedule_parameters: Optional[
@@ -311,6 +313,7 @@ class JobSpec:
         dependencies: Optional[Dependencies] = None,
     ):
         self.probability_definition = probability_definition
+        self.uuid = uuid
         self.name = name
         self.initial_number_of_replicas = initial_number_of_replicas
         self.max_replicas = max_replicas
