@@ -1,6 +1,7 @@
 """
 MPI-based rexfw runner script. Must be called from within an mpi context.
 """
+import base64
 import logging
 import sys
 from typing import Tuple
@@ -9,11 +10,14 @@ import click
 import mpi4py.rc
 import numpy as np
 from mpi4py import MPI
+import grpc
+
 from resaas.common.storage import SimulationStorage, load_storage_config
 from resaas.common.tempering.tempered_distributions import BoltzmannTemperedDistribution
 from resaas.common.pdfs import AbstractPDF
 from resaas.common.samplers import get_sampler
 from resaas.common.pdfs import SafeUserPDF
+from resaas.grpc import user_code_pb2, user_code_pb2_grpc
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
@@ -113,10 +117,17 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_po
     # Number of replicas is inferred from the MPI environment
     n_replicas = size - 1
 
-    logging.info("Attempting to load user-defined pdf and initial state")
-    bare_pdf, init_state = import_from_user()
-
-    bare_pdf = SafeUserPDF()
+    if False:
+        logging.info("Attempting to load user-defined pdf and initial state")
+        bare_pdf, init_state = import_from_user()
+    else:
+        bare_pdf = SafeUserPDF()
+        channel = grpc.insecure_channel("localhost:50051")
+        stub = user_code_pb2_grpc.UserCodeStub(channel)
+        b64_initial_state = stub.InitialState(user_code_pb2.InitialStateRequest()).b64initial_state
+        init_state = np.frombuffer(
+            base64.b64decode(b64_initial_state),
+            dtype=float)
 
     # this is where all simulation input data & output (samples, statistics files,
     # etc.) are stored
