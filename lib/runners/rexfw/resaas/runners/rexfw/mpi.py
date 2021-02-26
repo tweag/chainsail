@@ -110,6 +110,12 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
     help="the metrics logging port",
 )
 @click.option(
+    "--user-code-host",
+    required=True,
+    type=int,
+    help="the hostname for the user code gRPC server",
+)
+@click.option(
     "--user-code-port",
     required=True,
     type=int,
@@ -117,7 +123,7 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
 )
 @ensure_mpi_failure
 def run_rexfw_mpi(basename, path, storage_config, name, metrics_host,
-                  metrics_port, user_code_port):
+                  metrics_port, user_code_host, user_code_port):
     rank = mpicomm.Get_rank()
     size = mpicomm.Get_size()
 
@@ -133,7 +139,7 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host,
         bare_pdf, init_state = import_from_user()
     else:
         bare_pdf = SafeUserPDF()
-        channel = grpc.insecure_channel(f"localhost:{user_code_port}")
+        channel = grpc.insecure_channel(f"{user_code_host}:{user_code_port}")
         stub = user_code_pb2_grpc.UserCodeStub(channel)
         b64_initial_state = stub.InitialState(user_code_pb2.InitialStateRequest()).b64initial_state
         init_state = np.frombuffer(

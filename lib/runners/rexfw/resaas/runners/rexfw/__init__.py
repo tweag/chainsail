@@ -26,6 +26,7 @@ class MPIRERunner(AbstractRERunner):
     DEFAULT_STORAGEFILE = "storage.yaml"
     DEFAULT_METRICS_HOST = "localhost"
     DEFAULT_METRICS_PORT = 2004
+    DEFAULT_USER_CODE_HOST = "localhost"
     DEFAULT_USER_CODE_PORT = 50051
 
     def run_sampling(self, storage: AbstractStorageBackend):
@@ -35,6 +36,7 @@ class MPIRERunner(AbstractRERunner):
         run_id = runner_config.get("run_id", self.DEFAULT_NAME)
         metrics_host = runner_config.get("metrics_host", self.DEFAULT_METRICS_HOST)
         metrics_port = runner_config.get("metrics_port", self.DEFAULT_METRICS_PORT)
+        user_code_host = runner_config.get("user_code_host", self.DEFAULT_USER_CODE_HOST)
         user_code_port = runner_config.get("user_code_port", self.DEFAULT_USER_CODE_PORT)
 
         model_config = storage.load_config()
@@ -65,6 +67,8 @@ class MPIRERunner(AbstractRERunner):
             metrics_host,
             "--metrics-port",
             str(metrics_port),
+            "--user-code-host",
+            user_code_host,
             "--user-code-port",
             str(user_code_port)
         ]
