@@ -112,7 +112,7 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
 @click.option(
     "--user-code-host",
     required=True,
-    type=int,
+    type=str,
     help="the hostname for the user code gRPC server",
 )
 @click.option(

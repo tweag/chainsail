@@ -35,11 +35,11 @@ class AbstractPDF(object):
 
 
 def _encode_array(x):
-    return base64.b64encode(x)
+    return x.tobytes()
 
 
 def _decode_array(x):
-    return base64.b64decode(x)
+    return np.frombuffer(x)
 
 
 class SafeUserPDF(AbstractPDF):
@@ -48,10 +48,10 @@ class SafeUserPDF(AbstractPDF):
         self._stub = user_code_pb2_grpc.UserCodeStub(channel)
 
     def log_prob(self, state):
-        request = user_code_pb2.LogProbRequest(b64state=_encode_array(state))
+        request = user_code_pb2.LogProbRequest(state_bytes=_encode_array(state))
         return self._stub.LogProb(request).log_prob_result
 
     def log_prob_gradient(self, state):
-        request = user_code_pb2.LogProbGradientRequest(b64state=_encode_array(state))
+        request = user_code_pb2.LogProbGradientRequest(state_bytes=_encode_array(state))
         response = self._stub.LogProbGradient(request)
-        return np.frombuffer(_decode_array(response.b64gradient_result), dtype=float)
+        return _decode_array(response.gradient_bytes)

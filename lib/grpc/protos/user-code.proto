@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 message LogProbRequest {
-  string b64state = 1;
+  bytes state_bytes = 1;
 }
 
 message LogProbResponse {
@@ -9,18 +9,18 @@ message LogProbResponse {
 }
 
 message LogProbGradientRequest {
-  string b64state = 1;
+  bytes state_bytes = 1;
 }
 
 message LogProbGradientResponse {
-  string b64gradient_result = 1;
+  bytes gradient_bytes = 1;
 }
 
 message InitialStateRequest {
 }
 
 message InitialStateResponse {
-  string b64initial_state = 1;
+  bytes initial_state_bytes = 1;
 }
 
 service UserCode {

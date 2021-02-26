@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0fuser-code.proto\"\"\n\x0eLogProbRequest\x12\x10\n\x08\x62\x36\x34state\x18\x01 \x01(\t\"*\n\x0fLogProbResponse\x12\x17\n\x0flog_prob_result\x18\x01 \x01(\x02\"*\n\x16LogProbGradientRequest\x12\x10\n\x08\x62\x36\x34state\x18\x01 \x01(\t\"5\n\x17LogProbGradientResponse\x12\x1a\n\x12\x62\x36\x34gradient_result\x18\x01 \x01(\t\"\x15\n\x13InitialStateRequest\"0\n\x14InitialStateResponse\x12\x18\n\x10\x62\x36\x34initial_state\x18\x01 \x01(\t2\xbb\x01\n\x08UserCode\x12,\n\x07LogProb\x12\x0f.LogProbRequest\x1a\x10.LogProbResponse\x12\x44\n\x0fLogProbGradient\x12\x17.LogProbGradientRequest\x1a\x18.LogProbGradientResponse\x12;\n\x0cInitialState\x12\x14.InitialStateRequest\x1a\x15.InitialStateResponseb\x06proto3'
+  serialized_pb=b'\n\x0fuser-code.proto\"%\n\x0eLogProbRequest\x12\x13\n\x0bstate_bytes\x18\x01 \x01(\x0c\"*\n\x0fLogProbResponse\x12\x17\n\x0flog_prob_result\x18\x01 \x01(\x02\"-\n\x16LogProbGradientRequest\x12\x13\n\x0bstate_bytes\x18\x01 \x01(\x0c\"1\n\x17LogProbGradientResponse\x12\x16\n\x0egradient_bytes\x18\x01 \x01(\x0c\"\x15\n\x13InitialStateRequest\"3\n\x14InitialStateResponse\x12\x1b\n\x13initial_state_bytes\x18\x01 \x01(\x0c\x32\xbb\x01\n\x08UserCode\x12,\n\x07LogProb\x12\x0f.LogProbRequest\x1a\x10.LogProbResponse\x12\x44\n\x0fLogProbGradient\x12\x17.LogProbGradientRequest\x1a\x18.LogProbGradientResponse\x12;\n\x0cInitialState\x12\x14.InitialStateRequest\x1a\x15.InitialStateResponseb\x06proto3'
 )
 
 
@@ -34,9 +34,9 @@ _LOGPROBREQUEST = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='b64state', full_name='LogProbRequest.b64state', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
+      name='state_bytes', full_name='LogProbRequest.state_bytes', index=0,
+      number=1, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -53,7 +53,7 @@ _LOGPROBREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=19,
-  serialized_end=53,
+  serialized_end=56,
 )
 
 
@@ -84,8 +84,8 @@ _LOGPROBRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=55,
-  serialized_end=97,
+  serialized_start=58,
+  serialized_end=100,
 )
 
 
@@ -98,9 +98,9 @@ _LOGPROBGRADIENTREQUEST = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='b64state', full_name='LogProbGradientRequest.b64state', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
+      name='state_bytes', full_name='LogProbGradientRequest.state_bytes', index=0,
+      number=1, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -116,8 +116,8 @@ _LOGPROBGRADIENTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=99,
-  serialized_end=141,
+  serialized_start=102,
+  serialized_end=147,
 )
 
 
@@ -130,9 +130,9 @@ _LOGPROBGRADIENTRESPONSE = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='b64gradient_result', full_name='LogProbGradientResponse.b64gradient_result', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
+      name='gradient_bytes', full_name='LogProbGradientResponse.gradient_bytes', index=0,
+      number=1, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -148,8 +148,8 @@ _LOGPROBGRADIENTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=143,
-  serialized_end=196,
+  serialized_start=149,
+  serialized_end=198,
 )
 
 
@@ -173,8 +173,8 @@ _INITIALSTATEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=198,
-  serialized_end=219,
+  serialized_start=200,
+  serialized_end=221,
 )
 
 
@@ -187,9 +187,9 @@ _INITIALSTATERESPONSE = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='b64initial_state', full_name='InitialStateResponse.b64initial_state', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
+      name='initial_state_bytes', full_name='InitialStateResponse.initial_state_bytes', index=0,
+      number=1, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -205,8 +205,8 @@ _INITIALSTATERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=221,
-  serialized_end=269,
+  serialized_start=223,
+  serialized_end=274,
 )
 
 DESCRIPTOR.message_types_by_name['LogProbRequest'] = _LOGPROBREQUEST
@@ -268,8 +268,8 @@ _USERCODE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=272,
-  serialized_end=459,
+  serialized_start=277,
+  serialized_end=464,
   methods=[
   _descriptor.MethodDescriptor(
     name='LogProb',

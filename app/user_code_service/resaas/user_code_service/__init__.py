@@ -40,16 +40,16 @@ pdf, initial_states = import_from_user()
 
 class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
     def LogProb(self, request, context):
-        state = np.frombuffer(base64.b64decode(request.b64state), dtype=float)
+        state = np.frombuffer(request.state_bytes)
         return user_code_pb2.LogProbResponse(log_prob_result=pdf.log_prob(state))
 
     def LogProbGradient(self, request, context):
-        state = np.frombuffer(base64.b64decode(request.b64state), dtype=float)
+        state = np.frombuffer(request.state_bytes)
         gradient = pdf.log_prob_gradient(state)
-        return user_code_pb2.LogProbGradientResponse(b64gradient_result=base64.b64encode(gradient))
+        return user_code_pb2.LogProbGradientResponse(gradient_bytes=gradient.tobytes())
 
     def InitialState(self, request, context):
-        return user_code_pb2.InitialStateResponse(b64initial_state=base64.b64encode(initial_states))
+        return user_code_pb2.InitialStateResponse(initial_state_bytes=initial_states.tobytes())
 
 
 def run():
