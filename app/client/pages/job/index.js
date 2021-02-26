@@ -204,12 +204,16 @@ const Job = ({ authed }) => {
         if (data.job_id) setCreatedJobID(data.job_id);
       } else {
         setErr(true);
-        setErrMsg('Something went wrong. For more info look at your browser console.');
+        setErrMsg(
+          "Something went wrong. For more information, see your browser's console. Please contact our support team if you require assistance."
+        );
         console.log(data);
       }
     } catch (e) {
       setErr(true);
-      setErrMsg('Something went wrong. For more info look at your browser console.');
+      setErrMsg(
+        "Something went wrong. For more information, see your browser's console. Please contact our support team if you require assistance."
+      );
       console.log(e);
     }
   };
