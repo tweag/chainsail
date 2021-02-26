@@ -1,4 +1,8 @@
+import { useEffect } from 'react';
+import ReactDOM from 'react-dom';
+
 import { Layout, Button, FlexCenter, FlexCol, Container, Navbar } from '../components';
+import AnimationMainPage from '../components/AnimationMainPage';
 
 const Heading = () => (
   <FlexCol center className="h-full">
@@ -19,7 +23,7 @@ const Heading = () => (
 );
 
 const CopyrightFooter = () => (
-  <FlexCenter className="h-10 mx-10 md:mx-20 lg:mx-40 text-xs">
+  <FlexCenter className="h-10 mx-10 text-xs md:mx-20 lg:mx-40">
     <div className="opacity-30">All rights reserved. Copyright © 2021 by</div>
     <a href="https://www.tweag.io/">
       <img
@@ -30,7 +34,31 @@ const CopyrightFooter = () => (
   </FlexCenter>
 );
 
+const fireAnimation = () => {
+  console.log('Animation fired');
+  const parent = document.getElementById('animation-main-page');
+  const id = Math.random(); //or some such identifier
+  const div = document.createElement('div');
+  div.id = id;
+  parent.appendChild(div);
+  const duration = 4000;
+  ReactDOM.render(
+    <svg className="fixed top-0 left-0 w-screen h-screen opacity-10">
+      <AnimationMainPage duration={duration} />
+    </svg>,
+    document.getElementById(id)
+  );
+  setTimeout(() => {
+    document.getElementById(id).remove();
+  }, 6000);
+};
+
 export default function Home() {
+  useEffect(() => {
+    setInterval(() => {
+      fireAnimation();
+    }, 3000);
+  }, []);
   return (
     <Layout>
       <FlexCol
@@ -45,6 +73,7 @@ export default function Home() {
         </Container>
         <CopyrightFooter />
       </FlexCol>
+      <div id="animation-main-page" className="fixed top-0 left-0 w-screen h-screen"></div>
     </Layout>
   );
 }

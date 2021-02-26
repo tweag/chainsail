@@ -1,6 +1,6 @@
 import { useSpring, animated } from 'react-spring';
 
-function ReactSpring() {
+function ReactSpring({ duration }) {
   const innerWidth = window.innerWidth;
   const outerWidth = window.outerWidth;
   const innerHeight = window.innerHeight;
@@ -40,14 +40,12 @@ function ReactSpring() {
     return path;
   };
 
-  const duration = Math.random() * 5000;
-
   const props = useSpring({ t: 1, from: { t: 0 }, config: { duration } });
 
   return (
     <animated.path
       d={props.t.interpolate(createPath)}
-      stroke="#7C3AED"
+      stroke="black"
       fill="none"
       stroke-width="5"
     ></animated.path>
