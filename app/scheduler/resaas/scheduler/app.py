@@ -33,9 +33,12 @@ def check_user(func):
 
 
 @app.route("/job/<job_id>", methods=["GET"])
-def get_job(job_id):
+@check_user
+def get_job(job_id, user_id):
     """List a single job"""
-    job = TblJobs.query.filter_by(id=job_id).first()
+    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
+    if not job:
+        abort(404, "job does not exist for this user")
     return JobViewSchema().jsonify(job, many=False)
 
 
@@ -108,12 +111,13 @@ def job_nodes(job_id):
 
 
 @app.route("/internal/job/<job_id>/scale/<n_replicas>", methods=["POST"])
-def scale_job(job_id, n_replicas):
+@check_user
+def scale_job(job_id, n_replicas, user_id):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
-    job = TblJobs.query.filter_by(id=job_id).first()
+    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
     if not job:
-        abort(404, "job does not exist")
+        abort(404, "job does not exist for this user")
     scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
     # Await the result, raising any exceptions that get thrown
     scaled = scaling_task.get()
