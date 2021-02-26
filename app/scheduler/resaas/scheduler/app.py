@@ -33,10 +33,9 @@ def create_job():
         return "Unauthorized", 401
     # Validate the provided job spec
     schema = JobSpecSchema()
-    req_json = request.json
-    req_json.update(user_id=user_id)
-    job_spec = schema.load(req_json)
+    job_spec = schema.load(request.json)
     job = TblJobs(
+        user_id=user_id,
         status=JobStatus.INITIALIZED.value,
         created_at=datetime.utcnow(),
         spec=schema.dumps(job_spec),
