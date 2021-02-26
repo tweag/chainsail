@@ -3,6 +3,7 @@ Scheduler REST API and endpoint specifications
 """
 from datetime import datetime
 
+import functools
 from flask import abort, jsonify, request
 from firebase_admin.auth import verify_id_token
 from resaas.common.spec import JobSpecSchema
@@ -15,6 +16,22 @@ from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task
 config = load_scheduler_config()
 
 
+def check_user(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Verify user id token
+        id_token = request.headers["Authorization"].split(" ").pop()
+        claims = verify_id_token(id_token, app=firebase_app)
+        user_id = claims.get("user_id", None)
+        if not claims or not user_id:
+            return "Unauthorized", 401
+        kwargs.update(user_id=user_id)
+        value = func(*args, **kwargs)
+        return value
+
+    return wrapper
+
+
 @app.route("/job/<job_id>", methods=["GET"])
 def get_job(job_id):
     """List a single job"""
@@ -23,14 +40,9 @@ def get_job(job_id):
 
 
 @app.route("/job", methods=["POST"])
-def create_job():
+@check_user
+def create_job(user_id):
     """Create a job"""
-    # Verify user id token
-    id_token = request.headers["Authorization"].split(" ").pop()
-    claims = verify_id_token(id_token, app=firebase_app)
-    user_id = claims.get("user_id", None)
-    if not claims or not user_id:
-        return "Unauthorized", 401
     # Validate the provided job spec
     schema = JobSpecSchema()
     job_spec = schema.load(request.json)
@@ -46,14 +58,9 @@ def create_job():
 
 
 @app.route("/job/<job_id>/start", methods=["POST"])
-def start_job(job_id):
+@check_user
+def start_job(job_id, user_id):
     """Start a single job"""
-    # Verify user id token
-    id_token = request.headers["Authorization"].split(" ").pop()
-    claims = verify_id_token(id_token, app=firebase_app)
-    user_id = claims.get("user_id", None)
-    if not claims or not user_id:
-        return "Unauthorized", 401
     job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
     if not job:
         abort(404, "job does not exist for this user")
@@ -73,14 +80,9 @@ def start_job(job_id):
 
 
 @app.route("/job/<job_id>/stop", methods=["POST"])
-def stop_job(job_id):
+@check_user
+def stop_job(job_id, user_id):
     """Start a single job"""
-    # Verify user id token
-    id_token = request.headers["Authorization"].split(" ").pop()
-    claims = verify_id_token(id_token, app=firebase_app)
-    user_id = claims.get("user_id", None)
-    if not claims or not user_id:
-        return "Unauthorized", 401
     job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
     if not job:
         abort(404, "job does not exist for this user")
@@ -91,14 +93,9 @@ def stop_job(job_id):
 
 
 @app.route("/jobs", methods=["GET"])
-def get_jobs():
+@check_user
+def get_jobs(user_id):
     """List all jobs"""
-    # Verify user id token
-    id_token = request.headers["Authorization"].split(" ").pop()
-    claims = verify_id_token(id_token, app=firebase_app)
-    user_id = claims.get("user_id", None)
-    if not claims or not user_id:
-        return "Unauthorized", 401
     jobs = TblJobs.query.filter_by(user_id=user_id)
     return JobViewSchema().jsonify(jobs, many=True)
 
