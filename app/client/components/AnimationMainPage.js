@@ -14,28 +14,24 @@ function ReactSpring({ duration }) {
   const sigmas = n_hills_range.map(() => Math.random() * 0.4 + 0.05);
   const pathFunction = (x) => {
     let y_unnorm = n_hills_range
-      .map((i) => Math.exp(-Math.pow((x - means[i]) / sigmas[i], 2) / 2))
+      .map((i) => (1 / sigmas[i]) * Math.exp(-Math.pow((x - means[i]) / sigmas[i], 2) / 2))
       .reduce((a, b) => a + b, 0);
     return y_unnorm / n_hills;
   };
 
+  const N = 3000;
   const offset = (Math.random() + 0.2) / 1.2;
-
-  const eps = 0.3;
-  const N = 300;
-  const steps = [...Array(N).keys()];
-  // t between 0 and 1
-  const createPath = (t) => {
-    let path = steps
-      .map((i) => xmin + (xmax - xmin) * (t + eps * (i / N)))
-      .filter((x) => x > xmin && x < xmax)
-      .map((x) => {
-        let y = pathFunction(x);
-        let x_norm = ((x - xmin) / (xmax - xmin)) * innerWidth;
-        let y_norm = -(y / (xmax - xmin)) * outerWidth + offset * outerHeight;
-        return `${x_norm} ${y_norm}`;
-      })
-      .join(' L');
+  let globalPath = [...Array(N).keys()]
+    .map((i) => xmin + (xmax - xmin) * (i / N))
+    .map((x) => {
+      let y = pathFunction(x);
+      let x_norm = ((x - xmin) / (xmax - xmin)) * innerWidth;
+      let y_norm = -(y / (xmax - xmin)) * outerWidth + offset * outerHeight;
+      return `${x_norm} ${y_norm}`;
+    });
+  const eps = 0.1;
+  let interpolate = (t) => {
+    let path = globalPath.slice(Math.floor(t * N), Math.floor((t + eps) * N)).join(' L');
     path = 'M' + path;
     return path;
   };
@@ -44,7 +40,7 @@ function ReactSpring({ duration }) {
 
   return (
     <animated.path
-      d={props.t.interpolate(createPath)}
+      d={props.t.interpolate(interpolate)}
       stroke="black"
       fill="none"
       stroke-width="5"
