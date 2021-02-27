@@ -8,10 +8,10 @@ function ReactSpring({ duration }) {
 
   const xmin = -5;
   const xmax = 5;
-  const n_hills = Math.floor(Math.random() * 6) + 1;
+  const n_hills = Math.floor(Math.random() * 2) + 1;
   const n_hills_range = [...Array(n_hills).keys()];
   const means = n_hills_range.map(() => Math.random() * (xmax / 2 - xmin / 2) + xmin / 2);
-  const sigmas = n_hills_range.map(() => Math.random() * 0.4 + 0.05);
+  const sigmas = n_hills_range.map(() => Math.random() * 0.2 + 0.5);
   const pathFunction = (x) => {
     let y_unnorm = n_hills_range
       .map((i) => (1 / sigmas[i]) * Math.exp(-Math.pow((x - means[i]) / sigmas[i], 2) / 2))
@@ -29,7 +29,7 @@ function ReactSpring({ duration }) {
       let y_norm = -(y / (xmax - xmin)) * outerWidth + offset * outerHeight;
       return `${x_norm} ${y_norm}`;
     });
-  const eps = 0.1;
+  const eps = 0.3;
   let interpolate = (t) => {
     let path = globalPath.slice(Math.floor(t * N), Math.floor((t + eps) * N)).join(' L');
     path = 'M' + path;
