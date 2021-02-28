@@ -134,17 +134,15 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host,
     # or on the cloud
     is_local_run = name.split(".")[0] == "local"
 
-    if is_local_run:
+    if False:#is_local_run:
         logging.info("Attempting to load user-defined pdf and initial state")
         bare_pdf, init_state = import_from_user()
     else:
         bare_pdf = SafeUserPDF()
         channel = grpc.insecure_channel(f"{user_code_host}:{user_code_port}")
         stub = user_code_pb2_grpc.UserCodeStub(channel)
-        b64_initial_state = stub.InitialState(user_code_pb2.InitialStateRequest()).b64initial_state
-        init_state = np.frombuffer(
-            base64.b64decode(b64_initial_state),
-            dtype=float)
+        initial_state_bytes = stub.InitialState(user_code_pb2.InitialStateRequest()).initial_state_bytes
+        init_state = np.frombuffer(initial_state_bytes)
 
     # this is where all simulation input data & output (samples, statistics files,
     # etc.) are stored
