@@ -10,7 +10,7 @@ import {
   FlexCol,
   FlexCenter,
   FormField,
-  Math,
+  MathTex,
   Navbar,
   Modal,
 } from '../../components';
@@ -23,9 +23,9 @@ const FieldDescription = ({ children, name, activeField, icon, math }) => (
   >
     {icon && <i className={`${icon} mr-5`}></i>}
     {math && (
-      <Math inline className="mr-5">
+      <MathTex inline className="mr-5">
         {math}
-      </Math>
+      </MathTex>
     )}
     {children}
   </div>
@@ -56,7 +56,7 @@ const JobPageModal = ({ jobCreated, jobId, err, errMsg, setErr, setErrMsg }) => 
       )}
       {err && (
         <>
-          <div className="mb-7">{errMsg.message}</div>
+          <div className="mb-7">{errMsg}</div>
           <FlexCenter>
             <a
               className={
@@ -165,8 +165,6 @@ const Job = ({ authed }) => {
   const [seeMoreFields, setSeeMoreFields] = useState(false);
 
   const createJob = async () => {
-    const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
-    const JOB_CREATION_ENDPOINT = '/job';
     const body = JSON.stringify({
       name: job_name,
       initial_number_of_replicas:
@@ -198,15 +196,25 @@ const Job = ({ authed }) => {
       body,
     };
     try {
-      let response = await fetch(`${FLASK_URL}${JOB_CREATION_ENDPOINT}`, requestOptions);
+      let response = await fetch('/api/job/create', requestOptions);
       let data = await response.json();
-      if (response.status === 200) {
+      if (response.ok) {
         setJobCreated(true);
+        setErr(false);
         if (data.job_id) setCreatedJobID(data.job_id);
+      } else {
+        setErr(true);
+        setErrMsg(
+          "Something went wrong. For more information, see your browser's console. Please contact our support team if you require assistance."
+        );
+        console.log(data);
       }
     } catch (e) {
       setErr(true);
-      setErrMsg(e);
+      setErrMsg(
+        "Something went wrong. For more information, see your browser's console. Please contact our support team if you require assistance."
+      );
+      console.log(e);
     }
   };
 
