@@ -4,62 +4,90 @@ import moment from 'moment';
 import { Line } from '@reactchartjs/react-chart.js';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
-import { AnimatedPing, Layout, FlexCol, FlexCenter, Container } from '../components';
-
-const data = {
-  labels: ['1', '2', '3', '4', '5', '6'],
-  datasets: [
-    {
-      label: '# of Votes',
-      data: [12, 19, 3, 5, 2, 3],
-      fill: false,
-      backgroundColor: 'rgb(255, 99, 132)',
-      borderColor: 'rgba(255, 99, 132, 0.2)',
-    },
-  ],
-};
+import { AnimatedPing, Layout, FlexCol, FlexCenter, Container, FlexRow } from '../components';
+import { GRAPHITE_URL, GRAPHITE_PORT } from '../utils/const';
 
 const options = {
   scales: {
+    xAxes: [
+      {
+        id: 'x',
+        type: 'time',
+        time: { minUnit: 'second' },
+        gridLines: { color: 'rgb(256,256,256,0.3)' },
+        ticks: {
+          fontColor: 'rgb(256,256,256,0.6)',
+        },
+      },
+    ],
     yAxes: [
       {
+        id: 'y',
         ticks: {
           beginAtZero: true,
+          fontColor: 'rgb(256,256,256,0.6)',
         },
+        gridLines: { color: 'rgb(256,256,256,0.3)' },
       },
     ],
   },
 };
 
 const Dash = ({ authed }) => {
-  const graphiteUrl =
-    'http://localhost/render?target=test_job.replica1_replica2.acceptance_rate&format=json&from=-1d';
+  const jobId = 'test_job';
+  const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobId}.*.negative_log_prob,'average')&format=json&from=-5min`;
+  const logsUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/events/get_data?tags=log&from=-3hours&until=now`;
 
   const fetcher = (url) => fetch(url).then((res) => res.json());
-  const { data, error } = useSWR(graphiteUrl, fetcher, {});
-  const txs = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
-  console.log(txs);
+  const { data, error } = useSWR(graphiteUrl, fetcher, {
+    refreshInterval: 10000,
+  });
+  const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
   const logPData = {
-    labels: txs ? txs.map((tx) => moment.unix(tx[1]).format()) : [],
     datasets: [
       {
+        xAxisID: 'x',
+        yAxisID: 'y',
         label: 'log p',
-        data: txs ? txs.map((tx) => tx[0]) : [],
+        data: ds
+          ? ds.map((d) => {
+              return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
+            })
+          : [],
         fill: false,
         backgroundColor: 'rgb(255, 99, 132)',
-        borderColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255, 99, 132, 0.5)',
       },
     ],
   };
+  //const { logs, errorLogs } = useSWR(logsUrl, fetcher, {
+  //  refreshInterval: 10000,
+  //});
+  const logs = ['SDFSDFSFS', 'sDFSDFSDFSDF'];
 
   if (authed)
     return (
       <Layout>
-        <div className="bg-gray-100 lg:h-screen font-body">
-          <FlexCenter className="h-full">
-            {!error && <Line data={logPData} options={options} />}
-          </FlexCenter>
-        </div>
+        <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
+          <FlexRow className="w-full h-full">
+            <FlexCenter className="w-1/3">Hello</FlexCenter>
+            <FlexCol between className="w-2/3">
+              <div className="w-full p-10 h-1/2">
+                {!error && <Line data={logPData} options={options} />}
+              </div>
+              <FlexCenter className="p-10 h-1/2">
+                <div className="w-full h-full p-8 text-white bg-gray-900 rounded-xl">
+                  <div className="mb-5">
+                    <AnimatedPing color="green-400" />
+                  </div>
+                  {logs.map((log, i) => (
+                    <div key={i}>{log}</div>
+                  ))}
+                </div>
+              </FlexCenter>
+            </FlexCol>
+          </FlexRow>
+        </Container>
       </Layout>
     );
 };
