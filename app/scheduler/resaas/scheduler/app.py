@@ -32,13 +32,18 @@ def check_user(func):
     return wrapper
 
 
+def find_job(job_id, user_id):
+    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
+    if not job:
+        abort(404, "job does not exist for this user")
+    return job
+
+
 @app.route("/job/<job_id>", methods=["GET"])
 @check_user
 def get_job(job_id, user_id):
     """List a single job"""
-    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
-    if not job:
-        abort(404, "job does not exist for this user")
+    job = find_job(job_id, user_id)
     return JobViewSchema().jsonify(job, many=False)
 
 
@@ -64,9 +69,7 @@ def create_job(user_id):
 @check_user
 def start_job(job_id, user_id):
     """Start a single job"""
-    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
-    if not job:
-        abort(404, "job does not exist for this user")
+    job = find_job(job_id, user_id)
     job.status = JobStatus.STARTING.value
     db.session.commit()
     # Starts the watch process once the job is successfully started
@@ -86,9 +89,7 @@ def start_job(job_id, user_id):
 @check_user
 def stop_job(job_id, user_id):
     """Start a single job"""
-    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
-    if not job:
-        abort(404, "job does not exist for this user")
+    job = find_job(job_id, user_id)
     job.status = JobStatus.STOPPING.value
     db.session.commit()
     stop_job_task.apply_async((job_id,), {})
@@ -115,9 +116,7 @@ def job_nodes(job_id):
 def scale_job(job_id, n_replicas, user_id):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
-    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
-    if not job:
-        abort(404, "job does not exist for this user")
+    job = find_job(job_id, user_id)
     scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
     # Await the result, raising any exceptions that get thrown
     scaled = scaling_task.get()
