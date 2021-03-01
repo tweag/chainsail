@@ -33,17 +33,17 @@ const options = {
 
 const Dash = ({ authed }) => {
   const graphiteUrl =
-    'http://localhost/render?target=test_job.replica4.negative_log_prob&format=json';
+    'http://localhost/render?target=test_job.replica1_replica2.acceptance_rate&format=json&from=-1d';
 
   const fetcher = (url) => fetch(url).then((res) => res.json());
   const { data, error } = useSWR(graphiteUrl, fetcher, {});
-  const txs = data ? data[0].datapoints.filter((d) => d[0]) : [];
+  const txs = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
   console.log(txs);
   const logPData = {
     labels: txs ? txs.map((tx) => moment.unix(tx[1]).format()) : [],
     datasets: [
       {
-        label: '# of Votes',
+        label: 'log p',
         data: txs ? txs.map((tx) => tx[0]) : [],
         fill: false,
         backgroundColor: 'rgb(255, 99, 132)',
