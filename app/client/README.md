@@ -23,8 +23,8 @@ The `pages/api` directory is mapped to `/api/*`. Files in this directory are tre
 
 Make sure to copy your [firebase](https://firebase.google.com/) credentials to the project directory
 for the login to work properly. Firebase admin configuration information should be placed in
-`firebase-admin-secrets.json` and client configuration in` .env.local`.
-The desired interface for `.env.local` is given in` .env.local.example`.
+`firebase-admin-secrets.json` and client configuration in `.env.local`.
+The desired interface for `.env.local` is given in `.env.local.example`.
 
 ### Learn More
 
