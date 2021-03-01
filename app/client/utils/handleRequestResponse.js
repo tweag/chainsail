@@ -1,4 +1,4 @@
-export default handleRequestResponse = async function (req, res, url, method) {
+const handleRequestResponse = async function (req, res, url, method) {
   const { token } = req.cookies;
   const requestOptions = {
     method,
@@ -13,3 +13,5 @@ export default handleRequestResponse = async function (req, res, url, method) {
     res.status(400).send(e);
   }
 };
+
+export default handleRequestResponse;
