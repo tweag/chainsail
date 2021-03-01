@@ -1,4 +1,6 @@
 import nookies from 'nookies';
+import useSWR from 'swr';
+import moment from 'moment';
 import { Line } from '@reactchartjs/react-chart.js';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
@@ -30,12 +32,32 @@ const options = {
 };
 
 const Dash = ({ authed }) => {
+  const graphiteUrl =
+    'http://localhost/render?target=test_job.replica4.negative_log_prob&format=json';
+
+  const fetcher = (url) => fetch(url).then((res) => res.json());
+  const { data, error } = useSWR(graphiteUrl, fetcher, {});
+  const txs = data ? data[0].datapoints.filter((d) => d[0]) : [];
+  console.log(txs);
+  const logPData = {
+    labels: txs ? txs.map((tx) => moment.unix(tx[1]).format()) : [],
+    datasets: [
+      {
+        label: '# of Votes',
+        data: txs ? txs.map((tx) => tx[0]) : [],
+        fill: false,
+        backgroundColor: 'rgb(255, 99, 132)',
+        borderColor: 'rgba(255, 99, 132, 0.2)',
+      },
+    ],
+  };
+
   if (authed)
     return (
       <Layout>
         <div className="bg-gray-100 lg:h-screen font-body">
           <FlexCenter className="h-full">
-            <Line data={data} options={options} />
+            {!error && <Line data={logPData} options={options} />}
           </FlexCenter>
         </div>
       </Layout>
