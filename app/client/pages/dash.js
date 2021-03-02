@@ -76,12 +76,14 @@ const Dash = ({ authed }) => {
                 {!error && <Line data={logPData} options={options} />}
               </div>
               <FlexCenter className="p-10 h-1/2">
-                <div className="w-full h-full p-8 text-white bg-gray-900 rounded-xl">
+                <div className="w-full h-full p-8 text-white bg-gray-900 rounded-xl overflow-auto">
                   <div className="mb-5">
                     <AnimatedPing color="green-400" />
                   </div>
                   {logs.map((log, i) => (
-                    <div key={i}>{log}</div>
+                    <div key={i} className="break-words">
+                      {log}
+                    </div>
                   ))}
                 </div>
               </FlexCenter>
