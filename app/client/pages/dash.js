@@ -72,11 +72,11 @@ const Dash = ({ authed }) => {
           <FlexRow className="w-full h-full">
             <FlexCenter className="w-1/3">Hello</FlexCenter>
             <FlexCol between className="w-2/3">
-              <div className="w-full p-10 h-1/2">
-                {!error && <Line data={logPData} options={options} />}
-              </div>
+              <FlexCenter className="w-full h-1/2">
+                {!error && <Line data={logPData} options={options} width="3" height="1" />}
+              </FlexCenter>
               <FlexCenter className="p-10 h-1/2">
-                <div className="w-full h-full p-8 text-white bg-gray-900 rounded-xl overflow-auto">
+                <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl">
                   <div className="mb-5">
                     <AnimatedPing color="green-400" />
                   </div>
