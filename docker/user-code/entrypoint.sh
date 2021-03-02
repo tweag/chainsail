@@ -27,4 +27,5 @@ else
       bash "$USER_INSTALL_SCRIPT"
 fi
 
-exec "$@"
+# exec "$@"
+python /app/app/user_code_server/resaas/user_code_server/__init__.py

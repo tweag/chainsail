@@ -58,6 +58,7 @@ set -ex
 docker run -d \
     -e "USER_PROB_URL={prob_def}" \
     -e "USER_INSTALL_SCRIPT=/resaas/{install_script}" \
+    -v {config_dir}:/resaas \
     --network host \
     -p 50052 \
     {user_code_image} {user_code_cmd}
@@ -146,7 +147,7 @@ def prepare_deployment(
         container_cmd += " ".join([a for a in vm_node._config.args])
 
     container_cmd = container_cmd.format(job_id=vm_node.representation.job.id)
-    user_code_cmd = "poetry run resaas-user-code-server"
+    user_code_cmd = "python /app/app/user_code_server/resaas/user_code_server/__init__.py"
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
         install_script=os.path.basename(install_script_target),

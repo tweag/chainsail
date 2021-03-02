@@ -27,12 +27,12 @@ RUN apt-get update && apt-get install -y wget unzip git build-essential libffi-d
 # Python package managers
 RUN pip install --upgrade pip && pip install "poetry~=1.1"
 
-    ##############################################################################
+##############################################################################
 FROM builder-common as builder
 
 # Install the controller
-COPY ./lib/common /app/lib/common
 COPY ./lib/grpc /app/lib/grpc
+COPY ./lib/common /app/lib/common
 COPY ./app/user_code_server /app/app/user_code_server
 
 RUN cd /app/app/user_code_server && \
@@ -54,6 +54,9 @@ RUN mkdir -p /probability
 # User-defined functions and data
 ENV PATH=$PATH:/probability
 ENV PYTHONPATH=$PYTHONPATH:/probability
+
+ADD docker/user-code/entrypoint.sh /app/entrypoint.sh
+RUN chmod 555 /app/entrypoint.sh
 
 # Adding the app venv bin to the front of path so it is the default pip, etc.
 ENV PATH=/app/app/user_code_server/.venv/bin:$PATH

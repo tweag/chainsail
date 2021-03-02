@@ -6,7 +6,7 @@ authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
 packages = [ { include = 'resaas' } ]
 
 [tool.poetry.scripts]
-resaas-user-code-service = 'resaas.user_code_service:run'
+resaas-user-code-server = 'resaas.user_code_server:run'
 
 [tool.poetry.dependencies]
 python = "^3.8"
