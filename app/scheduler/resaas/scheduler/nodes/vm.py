@@ -1,21 +1,19 @@
-import json
 import os
 import traceback
 from tempfile import TemporaryDirectory
-from typing import IO, Callable, List, Optional, Tuple, Union
+from typing import Callable, Optional, Tuple
 
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import NodeAuthSSHKey, NodeDriver, NodeImage, NodeSize
+from libcloud.compute.base import NodeDriver, NodeImage, NodeSize
 from libcloud.compute.deployment import (
     Deployment,
     FileDeployment,
     MultiStepDeployment,
     ScriptDeployment,
-    ScriptFileDeployment,
     SSHKeyDeployment,
 )
 from libcloud.compute.types import DeploymentException, NodeState
-from resaas.common.spec import Dependencies, JobSpec, JobSpecSchema
+from resaas.common.spec import JobSpec, JobSpecSchema
 from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import (
@@ -60,6 +58,11 @@ set -ex
 docker run -d \
     -e "USER_PROB_URL={prob_def}" \
     -e "USER_INSTALL_SCRIPT=/resaas/{install_script}" \
+    --network host \
+    -p 50052 \
+    {user_code_image} {user_code_cmd}
+
+docker run -d \
     --network host \
     -v {config_dir}:/resaas \
     -v {authorized_keys}:/app/config/ssh/authorized_keys \
@@ -143,6 +146,7 @@ def prepare_deployment(
         container_cmd += " ".join([a for a in vm_node._config.args])
 
     container_cmd = container_cmd.format(job_id=vm_node.representation.job.id)
+    user_code_cmd = "poetry run resaas-user-code-server"
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
         install_script=os.path.basename(install_script_target),
@@ -152,6 +156,8 @@ def prepare_deployment(
         pem_file=ssh_private_key_target,
         image=vm_node._config.image,
         cmd=container_cmd,
+        user_code_image=vm_node._config.user_code_image,
+        user_code_cmd=user_code_cmd
     )
 
     steps = MultiStepDeployment(
