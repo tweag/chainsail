@@ -75,7 +75,7 @@ const Dash = ({ authed }) => {
               <FlexCenter className="w-full h-1/2">
                 {!error && <Line data={logPData} options={options} width="3" height="1" />}
               </FlexCenter>
-              <FlexCenter className="p-10 h-1/2">
+              <FlexCenter className="py-5 h-1/2">
                 <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl">
                   <div className="mb-5">
                     <AnimatedPing color="green-400" />
