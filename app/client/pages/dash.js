@@ -33,17 +33,9 @@ const options = {
   },
 };
 
-const Dash = ({ authed }) => {
-  const jobId = 'test_job';
-  const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobId}.*.negative_log_prob,'average')&format=json&from=-5min`;
-  const logsUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/events/get_data?tags=log&from=-3hours&until=now`;
-
-  const fetcher = (url) => fetch(url).then((res) => res.json());
-  const { data, error } = useSWR(graphiteUrl, fetcher, {
-    refreshInterval: 10000,
-  });
+const giveChartData = (data) => {
   const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
-  const logPData = {
+  return {
     datasets: [
       {
         xAxisID: 'x',
@@ -60,6 +52,18 @@ const Dash = ({ authed }) => {
       },
     ],
   };
+};
+
+const Dash = ({ authed }) => {
+  const jobId = 'test_job';
+  const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobId}.*.negative_log_prob,'average')&format=json&from=-5min`;
+  const logsUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/events/get_data?tags=log&from=-3hours&until=now`;
+
+  const fetcher = (url) => fetch(url).then((res) => res.json());
+  const { data, error } = useSWR(graphiteUrl, fetcher, {
+    refreshInterval: 10000,
+  });
+  const chartData = giveChartData(data);
   //const { logs, errorLogs } = useSWR(logsUrl, fetcher, {
   //  refreshInterval: 10000,
   //});
@@ -73,7 +77,7 @@ const Dash = ({ authed }) => {
             <FlexCenter className="w-1/3">Hello</FlexCenter>
             <FlexCol between className="w-2/3">
               <FlexCenter className="w-full h-1/2">
-                {!error && <Line data={logPData} options={options} width="3" height="1" />}
+                {!error && <Line data={chartData} options={options} width="3" height="1" />}
               </FlexCenter>
               <FlexCenter className="py-5 h-1/2">
                 <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl">
