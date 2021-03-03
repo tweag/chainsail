@@ -4,9 +4,8 @@ from scipy.special import logsumexp, softmax
 
 
 def log_gaussian(x, mu, sigma):
-    return -0.5 * np.sum((x - mu) ** 2, -1) / sigma ** 2 - np.log(
-        np.sqrt(2 * np.pi * sigma ** 2)
-    )
+    Z = np.log(np.sqrt(2 * np.pi * sigma ** 2))
+    return -0.5 * np.sum((x - mu) ** 2, -1) / sigma ** 2 - Z
 
 
 def log_gaussian_gradient(x, mu, sigma):
