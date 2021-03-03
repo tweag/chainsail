@@ -1,24 +1,21 @@
 """
 Main entrypoint to the resaas controller
 """
-import json
 import logging
 from concurrent import futures
 from dataclasses import dataclass
-from datetime import datetime
 from functools import partial
 from importlib import import_module
 from logging.handlers import MemoryHandler
-from math import floor
 from multiprocessing import Process
 from typing import Tuple
 
 import click
 import grpc
-import requests
 import yaml
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
+from resaas.common.logging import configure_controller_logging
 from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.spec import JobSpec, JobSpecSchema
 from resaas.common.storage import load_storage_config
@@ -32,7 +29,6 @@ from resaas.grpc import Health, add_HealthServicer_to_server
 ProcessStatus = Tuple[bool, str]
 
 
-logger = logging.getLogger("resaas.controller")
 ##############################################################################
 # CONFIG
 ##############################################################################
@@ -75,48 +71,7 @@ class ControllerConfigSchema(Schema):
         return ControllerConfig(**data)
 
 
-class GraphiteHTTPHandler(logging.Handler):
-    """A logging handler for writing Graphite events.
-
-    Uses `requests` internally and writes the log record to the Graphite event's
-    'data' field. Supports custom logging formaters.
-
-    Args:
-        url: The graphite events url
-        what: The name of the event
-        tags: An optional list of tags to give the event
-        timeout: Request timeout in seconds
-
-    """
-
-    def __init__(self, url: str, what="log", tags=None, timeout=5):
-        super().__init__()
-        self.url = url
-        self.timeout = timeout
-        self.what = what
-        if not tags:
-            self.tags = ["log"]
-        else:
-            self.tags = tags
-
-    def emit(self, record: logging.LogRecord):
-        try:
-            payload = {
-                "what": self.what,
-                "tags": self.tags + [record.levelname],
-                "when": floor(datetime.utcnow().timestamp()),
-                "data": self.format(record),
-            }
-            response = requests.post(
-                url=self.url,
-                data=json.dumps(payload),
-                timeout=self.timeout,
-            )
-            response.raise_for_status()
-        except Exception:
-            self.handleError(record)
-
-
+logger = logging.getLogger("resaas.controller")
 ##############################################################################
 # ENTRYPOINT
 ##############################################################################
@@ -177,29 +132,13 @@ def run(job, config, storage, hostsfile, job_spec):
     with open(config) as f:
         config: ControllerConfig = ControllerConfigSchema().load(yaml.safe_load(f))
     # Configure logging
-    log_level = logging.getLevelName(config.log_level)
-    base_logger = logging.getLogger("resaas")
-    base_logger.setLevel(log_level)
-    basic_handler = logging.StreamHandler()
-    basic_formatter = logging.Formatter("[%(levelname)s] %(asctime)s - %(name)s - %(message)s")
-    basic_handler.setFormatter(basic_formatter)
-    base_logger.addHandler(basic_handler)
-
-    if config.remote_logging:
-        logger.info("Configuring remote logging")
-
-        # Add graphite remote logging
-        graphite_handler = GraphiteHTTPHandler(
-            url=f"http://{config.metrics_address}:{config.remote_logging_port}/events",
-            what="log",
-            tags=["log"],
-        )
-        graphite_handler.setFormatter(basic_formatter)
-        # Use buffering to avoid having to making excessive calls
-        buffered_graphite_handler = MemoryHandler(
-            config.remote_logging_buffer_size, target=graphite_handler
-        )
-        base_logger.addHandler(buffered_graphite_handler)
+    configure_controller_logging(
+        config.log_level,
+        config.remote_logging,
+        config.metrics_address,
+        config.remote_logging_port,
+        config.remote_logging_buffer_size,
+    )
 
     logger.info("Loading job spec from file")
     with open(job_spec) as f:
