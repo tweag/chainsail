@@ -20,9 +20,7 @@ class GaussianMixture(object):
         self.weights = weights
 
     def log_prob(self, x):
-        return logsumexp(
-            np.log(self.weights) + log_gaussian(x, self.means, self.sigmas)
-        )
+        return logsumexp(np.log(self.weights) + log_gaussian(x, self.means, self.sigmas))
 
     def log_prob_gradient(self, x):
         outer = softmax(np.log(self.weights) + log_gaussian(x, self.means, self.sigmas))
