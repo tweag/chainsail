@@ -1,10 +1,16 @@
 import numpy as np
 
-from scipy.special import logsumexp
+from scipy.special import logsumexp, softmax
 
 
 def log_gaussian(x, mu, sigma):
-    return -0.5 * np.sum((x - mu) ** 2, -1) / sigma ** 2 - np.log(np.sqrt(2 * np.pi * sigma ** 2))
+    return -0.5 * np.sum((x - mu) ** 2, -1) / sigma ** 2 - np.log(
+        np.sqrt(2 * np.pi * sigma ** 2)
+    )
+
+
+def log_gaussian_gradient(x, mu, sigma):
+    return (x - mu) / sigma[:, None] ** 2
 
 
 class GaussianMixture(object):
@@ -14,7 +20,14 @@ class GaussianMixture(object):
         self.weights = weights
 
     def log_prob(self, x):
-        return logsumexp(np.log(self.weights) + log_gaussian(x, self.means, self.sigmas))
+        return logsumexp(
+            np.log(self.weights) + log_gaussian(x, self.means, self.sigmas)
+        )
+
+    def log_prob_gradient(self, x):
+        outer = softmax(np.log(self.weights) + log_gaussian(x, self.means, self.sigmas))
+        inner = log_gaussian_gradient(x, self.means, self.sigmas)
+        return np.sum(outer[..., None] * inner, 0)
 
 
 n_components = 4
