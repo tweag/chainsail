@@ -96,15 +96,15 @@ const Dash = ({ authed }) => {
   if (authed)
     return (
       <Layout>
-        <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
+        <div className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
           <FlexRow className="w-full h-full">
             <FlexCenter className="w-1/3">Hello</FlexCenter>
-            <FlexCol between className="w-2/3">
+            <FlexCol between className="w-2/3 p-10">
               <Chart />
               <Logs />
             </FlexCol>
           </FlexRow>
-        </Container>
+        </div>
       </Layout>
     );
 };
