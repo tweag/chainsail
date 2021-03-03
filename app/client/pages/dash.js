@@ -5,8 +5,7 @@ import moment from 'moment';
 import { Line } from '@reactchartjs/react-chart.js';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
-import { AnimatedPing, Layout, FlexCol, FlexCenter, Container, FlexRow } from '../components';
-import { getJob } from '../utils/handleJob';
+import { AnimatedPing, Layout, FlexCol, FlexCenter, FlexRow } from '../components';
 import { GRAPHITE_URL, GRAPHITE_PORT } from '../utils/const';
 
 const options = {
@@ -71,8 +70,7 @@ const Chart = ({ jobId }) => {
 };
 
 const Logs = () => {
-  const logsUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/events/get_data?tags=log&from=-3hours&until=now`;
-
+  //const logsUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/events/get_data?tags=log&from=-3hours&until=now`;
   //const { logs, errorLogs } = useSWR(logsUrl, fetcher, {
   //  refreshInterval: 10000,
   //});
