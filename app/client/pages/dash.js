@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import nookies from 'nookies';
 import useSWR from 'swr';
 import moment from 'moment';
@@ -92,10 +93,11 @@ const Logs = () => {
 };
 
 const Dash = ({ authed }) => {
-  const jobId = '1';
+  const router = useRouter();
+  const { jobId } = router.query;
   const { data, error } = useSWR(`/api/job/get/${jobId}`, fetcher);
-  const job = data;
-  const jobFound = !error && job.id;
+  const id = data ? data.id : undefined;
+  const jobFound = !error && id;
 
   if (authed)
     return (
