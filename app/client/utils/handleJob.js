@@ -23,5 +23,5 @@ export const getJob = (jobId) => {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   };
-  fetch(`/api/job/get?jobId=${jobId}`, requestOptions);
+  return fetch(`/api/job/get/${jobId}`, requestOptions);
 };
