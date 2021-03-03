@@ -58,6 +58,7 @@ set -ex
 docker run -d \
     -e "USER_PROB_URL={prob_def}" \
     -e "USER_INSTALL_SCRIPT=/resaas/{install_script}" \
+    -e "USER_CODE_SERVER_PORT=50052" \
     -v {config_dir}:/resaas \
     --network host \
     -p 50052 \

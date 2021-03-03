@@ -1,10 +1,8 @@
 """
 MPI-based rexfw runner script. Must be called from within an mpi context.
 """
-import base64
 import logging
 import sys
-from typing import Tuple
 
 import click
 import mpi4py.rc
@@ -12,9 +10,9 @@ import numpy as np
 from mpi4py import MPI
 import grpc
 
+from resaas.common import import_from_user
 from resaas.common.storage import SimulationStorage, load_storage_config
 from resaas.common.tempering.tempered_distributions import BoltzmannTemperedDistribution
-from resaas.common.pdfs import AbstractPDF
 from resaas.common.samplers import get_sampler
 from resaas.common.pdfs import SafeUserPDF
 from resaas.grpc import user_code_pb2, user_code_pb2_grpc
@@ -52,23 +50,6 @@ def ensure_mpi_failure(func):
         sys.excepthook = sys.__excepthook__
 
     return wrapper
-
-
-def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
-    """
-    Imports a user-defined pdf and corresponding initial states from
-    module `probability`.
-    """
-    try:
-        from probability import initial_states, pdf
-    except ImportError as e:
-        logger.exception(
-            "Failed to import user-defined pdf and initial_states. Does "
-            "the `probability` module exist on the PYTHONPATH? "
-            f"PYTHONPATH={sys.path}"
-        )
-        raise e
-    return (pdf, initial_states)
 
 
 @click.command()
@@ -134,7 +115,7 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host,
     # or on the cloud
     is_local_run = name.split(".")[0] == "local"
 
-    if False:#is_local_run:
+    if is_local_run:
         logging.info("Attempting to load user-defined pdf and initial state")
         bare_pdf, init_state = import_from_user()
     else:

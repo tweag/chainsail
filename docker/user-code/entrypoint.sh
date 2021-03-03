@@ -27,5 +27,7 @@ else
       bash "$USER_INSTALL_SCRIPT"
 fi
 
+# TODO: bash interprets the Python + args command as a single command "python arg1 arg2", I think :-(
+# So hardcoding this for now
 # exec "$@"
-python /app/app/user_code_server/resaas/user_code_server/__init__.py
+python /app/app/user_code_server/resaas/user_code_server/__init__.py --port $USER_CODE_SERVER_PORT
