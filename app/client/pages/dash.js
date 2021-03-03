@@ -96,13 +96,14 @@ const Logs = () => {
 const Dash = ({ authed }) => {
   const jobId = '1';
   const { data, error } = useSWR(`/api/job/get/${jobId}`, fetcher);
-  console.log(data);
+  const job = data;
+  const jobFound = !error && job.id;
 
   if (authed)
     return (
       <Layout>
         <div className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
-          {jobId && (
+          {jobFound && (
             <FlexRow className="w-full h-full">
               <FlexCenter className="w-1/3">Hello</FlexCenter>
               <FlexCol between className="w-2/3 p-10">
@@ -111,7 +112,7 @@ const Dash = ({ authed }) => {
               </FlexCol>
             </FlexRow>
           )}
-          {!jobId && (
+          {!jobFound && (
             <FlexCenter className="w-full h-full">
               <FlexCol className="space-y-5">
                 <div>
