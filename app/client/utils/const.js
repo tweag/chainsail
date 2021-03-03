@@ -3,6 +3,7 @@ export const FLASK_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
 export const JOB_CREATION_ENDPOINT = '/job';
 export const JOB_START_ENDPOINT = (jobId) => `/job/${jobId}/start`;
 export const JOB_STOP_ENDPOINT = (jobId) => `/job/${jobId}/stop`;
+export const JOB_GET_ENDPOINT = (jobId) => `/job/${jobId}`;
 export const JOBS_LIST_ENDPOINT = '/jobs';
 
 // Graphite
