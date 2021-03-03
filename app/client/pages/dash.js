@@ -93,8 +93,11 @@ const Logs = () => {
   );
 };
 
-const Dash = ({ authed, job }) => {
-  const jobId = job ? job.id : undefined;
+const Dash = ({ authed }) => {
+  const jobId = '1';
+  const { data, error } = useSWR(`/api/job/get/${jobId}`, fetcher);
+  console.log(data);
+
   if (authed)
     return (
       <Layout>
@@ -117,7 +120,7 @@ const Dash = ({ authed, job }) => {
                 </div>
                 <FlexCenter>
                   <Link href="/job/results">
-                    <a className="px-6 py-2 w-72 text-base text-center bg-purple-700 rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white">
+                    <a className="px-6 py-2 text-base text-center text-white bg-purple-700 rounded-lg cursor-pointer w-72 lg:transition lg:duration-300 hover:bg-purple-900">
                       Go back to results page!
                     </a>
                   </Link>
@@ -135,18 +138,9 @@ export async function getServerSideProps(context) {
     const cookies = nookies.get(context);
     const token = await verifyIdToken(cookies.token);
     const { uid, email } = token;
-    const { jobId } = context.query;
-    try {
-      const res = await getJob(jobId);
-      const job = res.json();
-      return {
-        props: { email, uid, authed: true, job },
-      };
-    } catch (err) {
-      return {
-        props: { email, uid, authed: true },
-      };
-    }
+    return {
+      props: { email, uid, authed: true },
+    };
   } catch (err) {
     return {
       redirect: {
