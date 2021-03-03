@@ -1,0 +1,56 @@
+version: "3.5"
+
+services:
+  # Scheduler database
+  postgres:
+    image: postgres:11.5-alpine
+    command: ["postgres", "-c", "log_statement=all"]
+    environment:
+      # Using default "postgres" database and "postgres" user
+      - POSTGRES_PASSWORD=resaas-dev
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+  # For async-task message passing
+  redis:
+    image: redis:6.2-rc2-alpine
+    volumes:
+      - redis:/data
+    ports:
+      - 6379:6379
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+  scheduler:
+    image: "scheduler:latest"
+    volumes:
+      - ./config/:/config
+    ports:
+      - "5000:5000"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - SQLALCHEMY_DATABASE_URI=postgresql://postgres:resaas-dev@postgres:5432/postgres
+      - RESAAS_SCHEDULER_CONFIG=/config/scheduler.yaml
+  graphite:
+    image: "graphiteapp/graphite-statsd"
+    restart: "always"
+    ports:
+      - "80:80"
+      - "2003-2004:2003-2004"
+      - "2023-2024:2023-2024"
+      - "8125:8125/udp"
+      - "8126:8126"
+volumes:
+  redis:
+  postgres:
