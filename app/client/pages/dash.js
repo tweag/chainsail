@@ -109,12 +109,20 @@ const Dash = ({ authed, job }) => {
             </FlexRow>
           )}
           {!jobId && (
-            <FlexCenter>
-              This job is not accessible for this user. Please refer to your
-              <Link href="/results" className="inline-block">
-                <a>resuls</a>
-              </Link>
-              page and choose one of the jobs listed in the table.
+            <FlexCenter className="w-full h-full">
+              <FlexCol className="space-y-5">
+                <div>
+                  This job is not accessible for this user. Please refer to results page and choose
+                  one of the jobs listed in the table.
+                </div>
+                <FlexCenter>
+                  <Link href="/job/results">
+                    <a className="px-6 py-2 w-72 text-base text-center bg-purple-700 rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white">
+                      Go back to results page!
+                    </a>
+                  </Link>
+                </FlexCenter>
+              </FlexCol>
             </FlexCenter>
           )}
         </div>
