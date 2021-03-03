@@ -4,6 +4,7 @@ import nookies from 'nookies';
 
 import { verifyIdToken } from '../../utils/firebaseAdmin';
 import { AnimatedPing, Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
+import { startJob, stopJob } from '../../utils/handleJob';
 import { GRAPHITE_URL, GRAPHITE_PORT } from '../../utils/const';
 
 const JobButton = ({ jobId, jobStatus }) => {
@@ -32,26 +33,6 @@ const JobButton = ({ jobId, jobStatus }) => {
       )}
     </div>
   );
-};
-
-const startJob = (jobId) => {
-  const body = JSON.stringify({ jobId });
-  const requestOptions = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-  };
-  fetch('/api/job/start', requestOptions);
-};
-
-const stopJob = (jobId) => {
-  const body = JSON.stringify({ jobId });
-  const requestOptions = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-  };
-  fetch('/api/job/stop', requestOptions);
 };
 
 const JobsTable = ({ data }) => {
