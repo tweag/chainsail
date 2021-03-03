@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import nookies from 'nookies';
 import useSWR from 'swr';
 import moment from 'moment';
@@ -5,6 +6,7 @@ import { Line } from '@reactchartjs/react-chart.js';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
 import { AnimatedPing, Layout, FlexCol, FlexCenter, Container, FlexRow } from '../components';
+import { getJob } from '../utils/handleJob';
 import { GRAPHITE_URL, GRAPHITE_PORT } from '../utils/const';
 
 const options = {
@@ -55,8 +57,7 @@ const giveChartData = (data) => {
 };
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
-const Chart = () => {
-  const jobId = 'test_job';
+const Chart = ({ jobId }) => {
   const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobId}.*.negative_log_prob,'average')&format=json&from=-5min`;
   const { data, error } = useSWR(graphiteUrl, fetcher, {
     refreshInterval: 10000,
@@ -92,18 +93,30 @@ const Logs = () => {
   );
 };
 
-const Dash = ({ authed }) => {
+const Dash = ({ authed, job }) => {
+  const jobId = job ? job.id : undefined;
   if (authed)
     return (
       <Layout>
         <div className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
-          <FlexRow className="w-full h-full">
-            <FlexCenter className="w-1/3">Hello</FlexCenter>
-            <FlexCol between className="w-2/3 p-10">
-              <Chart />
-              <Logs />
-            </FlexCol>
-          </FlexRow>
+          {jobId && (
+            <FlexRow className="w-full h-full">
+              <FlexCenter className="w-1/3">Hello</FlexCenter>
+              <FlexCol between className="w-2/3 p-10">
+                <Chart jobId={jobId} />
+                <Logs />
+              </FlexCol>
+            </FlexRow>
+          )}
+          {!jobId && (
+            <FlexCenter>
+              This job is not accessible for this user. Please refer to your
+              <Link href="/results" className="inline-block">
+                <a>resuls</a>
+              </Link>
+              page and choose one of the jobs listed in the table.
+            </FlexCenter>
+          )}
         </div>
       </Layout>
     );
@@ -114,9 +127,18 @@ export async function getServerSideProps(context) {
     const cookies = nookies.get(context);
     const token = await verifyIdToken(cookies.token);
     const { uid, email } = token;
-    return {
-      props: { email, uid, authed: true },
-    };
+    const { jobId } = context.query;
+    try {
+      const res = await getJob(jobId);
+      const job = res.json();
+      return {
+        props: { email, uid, authed: true, job },
+      };
+    } catch (err) {
+      return {
+        props: { email, uid, authed: true },
+      };
+    }
   } catch (err) {
     return {
       redirect: {
