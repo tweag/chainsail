@@ -1,5 +1,5 @@
-import { FLASK_URL, JOB_GET_ENDPOINT } from '../../../utils/const';
-import handleRequestResponse from '../../../utils/handleRequestResponse';
+import { FLASK_URL, JOB_GET_ENDPOINT } from '../../../../utils/const';
+import handleRequestResponse from '../../../../utils/handleRequestResponse';
 
 export default async (req, res) => {
   const { jobId } = req.query;
