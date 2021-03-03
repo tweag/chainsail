@@ -36,4 +36,4 @@ weights = np.ones(n_components) / n_components
 weights /= weights.sum()
 
 pdf = GaussianMixture(means, sigmas, weights)
-initial_state = np.array([-1.0, 0.5])
+initial_states = np.array([-1.0, 0.5])
