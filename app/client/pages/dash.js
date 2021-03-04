@@ -86,6 +86,8 @@ const Chart = ({ job }) => {
         {!error && <Line data={chartData} options={options} width="3" height="1" />}
       </FlexCenter>
     );
+  } else {
+    return <></>;
   }
 };
 
@@ -141,6 +143,8 @@ const JobInfo = ({ jobId }) => {
         </FlexCenter>
       </FlexCol>
     );
+  } else {
+    return <></>;
   }
 };
 
