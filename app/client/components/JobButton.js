@@ -11,7 +11,7 @@ const JobButton = ({ jobId, jobStatus, width }) => {
               ${width ? width : 'w-32'}
 	      ${isInitialized ? 'bg-green-800 hover:bg-green-900 cursor-pointer' : ''}
 	      ${isRunning ? 'bg-red-800 hover:bg-red-900 cursor-pointer' : ''}
-	      ${isPending ? 'bg-yellow-800' : ''}
+	      ${isPending ? 'bg-yellow-600' : ''}
 	      `}
       onClick={() => {
         if (isInitialized) startJob(jobId);
