@@ -9,13 +9,11 @@ from typing import Tuple
 
 import click
 import yaml
+from resaas.common.logging import configure_controller_logging
 from resaas.common.runners import runner_config
 from resaas.common.spec import (
     JobSpec,
     JobSpecSchema,
-    NaiveHMCParameters,
-    OptimizationParameters,
-    ReplicaExchangeParameters,
 )
 from resaas.common.storage import LocalStorageBackend
 from resaas.controller import BaseREJobController, optimization_objects_from_spec
@@ -46,13 +44,18 @@ def run(basename, job_spec):
     The resaas node controller.
     """
     # Configure logging
-    base_logger = logging.getLogger("resaas")
-    base_logger.setLevel("DEBUG")
-    basic_handler = logging.StreamHandler()
-    # basic_formatter = logging.Formatter("[%(levelname)s] %(asctime)s - %(name)s - %(message)s")
-    basic_formatter = logging.Formatter("%(message)s")
-    basic_handler.setFormatter(basic_formatter)
-    base_logger.addHandler(basic_handler)
+    configure_controller_logging(
+        "DEBUG",
+        # remote_logging=False,
+        # metrics_address=None,
+        # remote_logging_port=None,
+        # remote_logging_buffer_size=None,
+        remote_logging=True,
+        metrics_address="localhost",
+        remote_logging_port=2004,
+        remote_logging_buffer_size=5,
+        format_string="%(message)s",
+    )
 
     # Load the job spec
     with open(job_spec) as f:
