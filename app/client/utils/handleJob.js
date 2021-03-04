@@ -5,7 +5,7 @@ export const startJob = (jobId) => {
     headers: { 'Content-Type': 'application/json' },
     body,
   };
-  fetch('/api/job/start', requestOptions);
+  fetch('/api/job/start', requestOptions).catch((err) => console.log(err));
 };
 
 export const stopJob = (jobId) => {
@@ -15,5 +15,5 @@ export const stopJob = (jobId) => {
     headers: { 'Content-Type': 'application/json' },
     body,
   };
-  fetch('/api/job/stop', requestOptions);
+  fetch('/api/job/stop', requestOptions).catch((err) => console.log(err));
 };
