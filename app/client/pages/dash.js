@@ -109,12 +109,21 @@ const JobInfo = ({ jobId }) => {
     const job = data;
     const jobSpec = job.spec ? JSON.parse(job.spec) : {};
     return (
-      <FlexCol className="w-1/3 p-32 space-y-2">
-        <div>Name: {jobSpec.name}</div>
-        <div>Status: {job.status}</div>
-        <div>Created at: {dateFormatter(job.created_at)}</div>
-        <div>Started at: {dateFormatter(job.started_at)}</div>
-        <div>Finished at: {dateFormatter(job.finished_at)}</div>
+      <FlexCol className="w-1/3 pt-20">
+        <FlexCenter>
+          <div className="w-64 grid grid-cols-2 gap-y-2">
+            <div>Name:</div>
+            <div> {jobSpec.name}</div>
+            <div>Status: </div>
+            <div>{job.status}</div>
+            <div>Created at:</div>
+            <div> {dateFormatter(job.created_at)}</div>
+            <div>Started at:</div>
+            <div> {dateFormatter(job.started_at)}</div>
+            <div>Finished at:</div>
+            <div> {dateFormatter(job.finished_at)}</div>
+          </div>
+        </FlexCenter>
       </FlexCol>
     );
   }
