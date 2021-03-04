@@ -57,7 +57,7 @@ const giveChartData = (data) => {
       {
         xAxisID: 'x',
         yAxisID: 'y',
-        label: 'log p',
+        label: 'negative log-probability',
         data: ds
           ? ds.map((d) => {
               return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
