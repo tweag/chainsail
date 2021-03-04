@@ -20,6 +20,11 @@ import { GRAPHITE_URL, GRAPHITE_PORT } from '../utils/const';
 import { dateFormatter } from '../utils/date';
 
 const options = {
+  legend: {
+    labels: {
+      fontColor: 'rgb(256,256,256,0.6)',
+    },
+  },
   scales: {
     xAxes: [
       {
