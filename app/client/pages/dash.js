@@ -121,7 +121,7 @@ const JobInfo = ({ jobId }) => {
     return (
       <FlexCol className="w-1/3 pt-20">
         <FlexCenter>
-          <div className="w-64 grid grid-cols-2 gap-y-2">
+          <div className="px-10 py-8 border-2 shadow-xl grid grid-cols-2 gap-y-2 border-gray-50 border-opacity-30 rounded-xl">
             <div>Name:</div>
             <div>{jobSpec.name}</div>
             <div>Status: </div>
