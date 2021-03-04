@@ -12,6 +12,7 @@ import { ChartBar } from './Chart';
 import Container from './Container';
 import Modal from './Modal';
 import AnimatedPing from './AnimatedPing';
+import JobButton from './JobButton';
 
 export {
   AnimatedPing,
@@ -24,6 +25,7 @@ export {
   FlexRow,
   FormField,
   Image,
+  JobButton,
   Layout,
   Link,
   MathTex,
