@@ -49,7 +49,7 @@ const Navbar = () => {
           Create a new job!
         </NavItem>
         <NavItem internal href="/job/results">
-          latest jobs
+          Latest jobs
         </NavItem>
       </FlexRow>
       <div>
