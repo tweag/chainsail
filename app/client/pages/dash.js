@@ -8,6 +8,7 @@ import { Line } from '@reactchartjs/react-chart.js';
 import { verifyIdToken } from '../utils/firebaseAdmin';
 import { AnimatedPing, Layout, FlexCol, FlexCenter, FlexRow } from '../components';
 import { GRAPHITE_URL, GRAPHITE_PORT } from '../utils/const';
+import { dateFormatter } from '../utils/date';
 
 const options = {
   scales: {
@@ -92,6 +93,19 @@ const Logs = () => {
   );
 };
 
+const JobInfo = ({ job }) => {
+  const jobSpec = job.spec ? JSON.parse(job.spec) : {};
+  return (
+    <FlexCol className="w-1/3 p-32">
+      <div>Name: {jobSpec.name}</div>
+      <div>Status: {job.status}</div>
+      <div>Created at: {dateFormatter(job.created_at)}</div>
+      <div>Started at: {dateFormatter(job.started_at)}</div>
+      <div>Finished at: {dateFormatter(job.finished_at)}</div>
+    </FlexCol>
+  );
+};
+
 const Dash = ({ authed }) => {
   const router = useRouter();
   const { jobId } = router.query;
@@ -100,7 +114,6 @@ const Dash = ({ authed }) => {
   const jobNotFound = !error && data && !data.id;
   const isLoading = !data;
   const job = data;
-  const jobSpec = jobFound ? JSON.parse(job.spec) : {};
 
   if (authed)
     return (
@@ -108,7 +121,7 @@ const Dash = ({ authed }) => {
         <div className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
           {jobFound && (
             <FlexRow className="w-full h-full">
-              <FlexCenter className="w-1/3">Hello</FlexCenter>
+              <JobInfo job={job} />
               <FlexCol between className="w-2/3 p-10">
                 <Chart jobId={jobId} />
                 <Logs />
