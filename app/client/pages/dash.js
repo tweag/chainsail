@@ -134,7 +134,7 @@ const JobInfo = ({ jobId }) => {
             <div>{dateFormatter(job.finished_at)}</div>
             <div className="mt-3 col-span-2">
               <FlexCenter>
-                <JobButton jobId={job.id} jobStatus={job.status} />
+                <JobButton jobId={job.id} jobStatus={job.status} width="w-full" />
               </FlexCenter>
             </div>
           </div>
