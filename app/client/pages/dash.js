@@ -121,7 +121,7 @@ const JobInfo = ({ jobId }) => {
     return (
       <FlexCol className="w-1/3 pt-20">
         <FlexCenter>
-          <div className="px-10 py-8 border-2 shadow-xl grid grid-cols-2 gap-y-2 border-gray-50 border-opacity-30 rounded-xl">
+          <div className="p-8 border-2 shadow-xl w-80 grid grid-cols-2 gap-y-2 border-gray-50 border-opacity-30 rounded-xl">
             <div>Name:</div>
             <div>{jobSpec.name}</div>
             <div>Status: </div>
@@ -132,8 +132,10 @@ const JobInfo = ({ jobId }) => {
             <div>{dateFormatter(job.started_at)}</div>
             <div>Finished at:</div>
             <div>{dateFormatter(job.finished_at)}</div>
-            <div className="mt-3">
-              <JobButton jobId={job.id} jobStatus={job.status} />
+            <div className="mt-3 col-span-2">
+              <FlexCenter>
+                <JobButton jobId={job.id} jobStatus={job.status} />
+              </FlexCenter>
             </div>
           </div>
         </FlexCenter>
