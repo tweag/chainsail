@@ -99,6 +99,8 @@ const Dash = ({ authed }) => {
   const jobFound = !error && data && data.id;
   const jobNotFound = !error && data && !data.id;
   const isLoading = !data;
+  const job = data;
+  const jobSpec = jobFound ? JSON.parse(job.spec) : {};
 
   if (authed)
     return (
