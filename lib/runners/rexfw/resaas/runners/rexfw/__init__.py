@@ -27,7 +27,7 @@ class MPIRERunner(AbstractRERunner):
     DEFAULT_METRICS_HOST = "localhost"
     DEFAULT_METRICS_PORT = 2004
     DEFAULT_USER_CODE_HOST = "localhost"
-    DEFAULT_USER_CODE_PORT = 50051
+    DEFAULT_USER_CODE_PORT = 50052
 
     def run_sampling(self, storage: AbstractStorageBackend):
         # Get configuration
