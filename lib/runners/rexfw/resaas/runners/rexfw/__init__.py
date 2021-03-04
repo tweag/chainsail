@@ -70,7 +70,7 @@ class MPIRERunner(AbstractRERunner):
             "--user-code-host",
             user_code_host,
             "--user-code-port",
-            str(user_code_port)
+            str(user_code_port),
         ]
 
         logger.debug(f"Calling mpirun with: {cmd}")

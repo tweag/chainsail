@@ -36,16 +36,10 @@ class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
 
 @click.command()
 @click.option(
-    "--port",
-    type=int,
-    default=50052,
-    help="the port the gRPC server listens on",
+    "--port", type=int, default=50052, help="the port the gRPC server listens on",
 )
 @click.option(
-    "--config",
-    type=click.Path(exists=False),
-    default=None,
-    help="path to controller config file"
+    "--config", type=click.Path(exists=False), default=None, help="path to controller config file"
 )
 def run(port, config):
     # Configure logging
@@ -57,7 +51,7 @@ def run(port, config):
             remote_logging_port=None,
             remote_logging_buffer_size=None,
             format_string="%(message)s",
-            )
+        )
     else:
         # Load the controller configuration file
         with open(config) as f:
@@ -69,13 +63,12 @@ def run(port, config):
                 config.metrics_address,
                 config.remote_logging_port,
                 config.remote_logging_buffer_size,
-                )
+            )
 
     logger.info("Starting user code gRPC server")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
-    user_code_pb2_grpc.add_UserCodeServicer_to_server(
-        UserCodeServicer(), server)
-    server.add_insecure_port(f'[::]:{port}')
+    user_code_pb2_grpc.add_UserCodeServicer_to_server(UserCodeServicer(), server)
+    server.add_insecure_port(f"[::]:{port}")
     server.start()
     server.wait_for_termination()
 

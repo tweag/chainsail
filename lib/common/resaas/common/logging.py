@@ -42,11 +42,7 @@ class GraphiteHTTPHandler(logging.Handler):
                 "when": floor(datetime.utcnow().timestamp()),
                 "data": self.format(record),
             }
-            response = requests.post(
-                url=self.url,
-                data=json.dumps(payload),
-                timeout=self.timeout,
-            )
+            response = requests.post(url=self.url, data=json.dumps(payload), timeout=self.timeout,)
             response.raise_for_status()
         except Exception:
             self.handleError(record)
@@ -87,9 +83,7 @@ def configure_controller_logging(
 
         # Add graphite remote logging
         graphite_handler = GraphiteHTTPHandler(
-            url=f"http://{metrics_address}:{remote_logging_port}/events",
-            what="log",
-            tags=["log"],
+            url=f"http://{metrics_address}:{remote_logging_port}/events", what="log", tags=["log"],
         )
         graphite_handler.setFormatter(basic_formatter)
         # Use buffering to avoid having to making excessive calls
