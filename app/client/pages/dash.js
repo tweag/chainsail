@@ -12,6 +12,7 @@ import {
   FlexCol,
   FlexCenter,
   FlexRow,
+  JobButton,
   Container,
   Navbar,
 } from '../components';
@@ -105,7 +106,7 @@ const JobInfo = ({ jobId }) => {
   const { data } = useSWR(`/api/job/get/${jobId}`, fetcher, {
     refreshInterval: 3000,
   });
-  if (data) {
+  if (data && data.id) {
     const job = data;
     const jobSpec = job.spec ? JSON.parse(job.spec) : {};
     return (
@@ -122,6 +123,9 @@ const JobInfo = ({ jobId }) => {
             <div> {dateFormatter(job.started_at)}</div>
             <div>Finished at:</div>
             <div> {dateFormatter(job.finished_at)}</div>
+            <div className="mt-3">
+              <JobButton jobId={job.id} jobStatus={job.status} />
+            </div>
           </div>
         </FlexCenter>
       </FlexCol>
