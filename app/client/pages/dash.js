@@ -6,7 +6,15 @@ import moment from 'moment';
 import { Line } from '@reactchartjs/react-chart.js';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
-import { AnimatedPing, Layout, FlexCol, FlexCenter, FlexRow } from '../components';
+import {
+  AnimatedPing,
+  Layout,
+  FlexCol,
+  FlexCenter,
+  FlexRow,
+  Container,
+  Navbar,
+} from '../components';
 import { GRAPHITE_URL, GRAPHITE_PORT } from '../utils/const';
 import { dateFormatter } from '../utils/date';
 
@@ -123,7 +131,10 @@ const Dash = ({ authed }) => {
   if (authed)
     return (
       <Layout>
-        <div className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
+        <FlexCol className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
+          <Container>
+            <Navbar />
+          </Container>
           {jobFound && (
             <FlexRow className="w-full h-full">
               <JobInfo jobId={jobId} />
@@ -151,7 +162,7 @@ const Dash = ({ authed }) => {
             </FlexCenter>
           )}
           {isLoading && <FlexCenter className="w-full h-full">Loading ...</FlexCenter>}
-        </div>
+        </FlexCol>
       </Layout>
     );
 };
