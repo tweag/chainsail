@@ -122,8 +122,13 @@ const JobInfo = ({ jobId }) => {
     const jobSpec = job.spec ? JSON.parse(job.spec) : {};
     return (
       <FlexCol className="w-1/3 pt-20">
-        <FlexCenter>
-          <div className="p-8 border-2 shadow-xl w-80 grid grid-cols-2 gap-y-2 border-gray-50 border-opacity-30 rounded-xl">
+        <div className="p-8 bg-indigo-900 mx-20 mb-10 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+          The plot of the negative log-probability of your target distribution helps to monitor
+          sampling convergence. If it scatters around a fixed value, your distribution is, given
+          good Replica Exchange acceptance rates, likely sampled exhaustively.
+        </div>
+        <FlexCenter className="p-8 mx-20 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+          <div className="w-full grid grid-cols-2 gap-y-2">
             <div>Name:</div>
             <div>{jobSpec.name}</div>
             <div>Status: </div>
