@@ -1,11 +1,11 @@
 import useSWR from 'swr';
-import moment from 'moment';
 import nookies from 'nookies';
 
 import { verifyIdToken } from '../../utils/firebaseAdmin';
 import { AnimatedPing, Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
 import { startJob, stopJob } from '../../utils/handleJob';
 import { GRAPHITE_URL, GRAPHITE_PORT } from '../../utils/const';
+import { dateFormatter } from '../../utils/date';
 
 const JobButton = ({ jobId, jobStatus }) => {
   const isInitialized = jobStatus === 'initialized';
@@ -37,10 +37,6 @@ const JobButton = ({ jobId, jobStatus }) => {
 
 const JobsTable = ({ data }) => {
   const headersName = ['Id', 'Name', 'Created at', 'Finished at', 'Started at', 'Status', '', ''];
-  const dateFormatter = (d) => {
-    if (d) return moment(d).format('d MMM hh:mm');
-    else return '---';
-  };
   const TableHeader = ({ children }) => <th className="px-4 py-2 text-left ">{children}</th>;
   const TableRow = ({ row }) => {
     const job_name = JSON.parse(row.spec).name;
