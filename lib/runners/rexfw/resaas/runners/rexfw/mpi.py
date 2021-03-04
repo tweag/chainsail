@@ -54,10 +54,7 @@ def ensure_mpi_failure(func):
 
 @click.command()
 @click.option(
-    "--basename",
-    required=True,
-    type=str,
-    help="Storage backend basename",
+    "--basename", required=True, type=str, help="Storage backend basename",
 )
 @click.option(
     "--path",
@@ -73,38 +70,31 @@ def ensure_mpi_failure(func):
     help="path to storage backend YAML config file",
 )
 @click.option(
-    "--name",
-    required=True,
-    type=str,
-    help="the name to use for tagging statistics metadata",
+    "--name", required=True, type=str, help="the name to use for tagging statistics metadata",
 )
 @click.option(
-    "--metrics-host",
-    required=True,
-    type=str,
-    help="the metrics logging host",
+    "--metrics-host", required=True, type=str, help="the metrics logging host",
 )
 @click.option(
-    "--metrics-port",
-    required=True,
-    type=int,
-    help="the metrics logging port",
+    "--metrics-port", required=True, type=int, help="the metrics logging port",
 )
 @click.option(
-    "--user-code-host",
-    required=True,
-    type=str,
-    help="the hostname for the user code gRPC server",
+    "--user-code-host", required=True, type=str, help="the hostname for the user code gRPC server",
 )
 @click.option(
-    "--user-code-port",
-    required=True,
-    type=int,
-    help="the port for the user code gRPC server",
+    "--user-code-port", required=True, type=int, help="the port for the user code gRPC server",
 )
 @ensure_mpi_failure
-def run_rexfw_mpi(basename, path, storage_config, name, metrics_host,
-                  metrics_port, user_code_host, user_code_port):
+def run_rexfw_mpi(
+    basename,
+    path,
+    storage_config,
+    name,
+    metrics_host,
+    metrics_port,
+    user_code_host,
+    user_code_port,
+):
     rank = mpicomm.Get_rank()
     size = mpicomm.Get_size()
 
@@ -122,17 +112,15 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host,
         bare_pdf = SafeUserPDF()
         channel = grpc.insecure_channel(f"{user_code_host}:{user_code_port}")
         stub = user_code_pb2_grpc.UserCodeStub(channel)
-        initial_state_bytes = stub.InitialState(user_code_pb2.InitialStateRequest()).initial_state_bytes
+        initial_state_bytes = stub.InitialState(
+            user_code_pb2.InitialStateRequest()
+        ).initial_state_bytes
         init_state = np.frombuffer(initial_state_bytes)
 
     # this is where all simulation input data & output (samples, statistics files,
     # etc.) are stored
     storage_backend = load_storage_config(storage_config).get_storage_backend()
-    storage = SimulationStorage(
-        basename=basename,
-        sim_path=path,
-        storage_backend=storage_backend,
-    )
+    storage = SimulationStorage(basename=basename, sim_path=path, storage_backend=storage_backend,)
     config = storage.load_config()
 
     comm = MPICommunicator()

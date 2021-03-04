@@ -159,7 +159,7 @@ def prepare_deployment(
         image=vm_node._config.image,
         cmd=container_cmd,
         user_code_image=vm_node._config.user_code_image,
-        user_code_cmd=user_code_cmd
+        user_code_cmd=user_code_cmd,
     )
 
     steps = MultiStepDeployment(
@@ -172,20 +172,11 @@ def prepare_deployment(
             # public ssh key for openmpi and general use
             SSHKeyDeployment(vm_node._vm_config.ssh_public_key),
             # Installer script
-            FileDeployment(
-                install_script_src,
-                install_script_target,
-            ),
+            FileDeployment(install_script_src, install_script_target,),
             # Hostfile
-            FileDeployment(
-                hostfile_src,
-                hostfile_target,
-            ),
+            FileDeployment(hostfile_src, hostfile_target,),
             # Job spec
-            FileDeployment(
-                spec_file_src,
-                spec_file_target,
-            ),
+            FileDeployment(spec_file_src, spec_file_target,),
             # Storage backend config
             FileDeployment(
                 vm_node._vm_config.storage_config_path,
@@ -201,10 +192,7 @@ def prepare_deployment(
                 ),
             ),
             # private ssh key for openmpi to use
-            FileDeployment(
-                ssh_private_key_src,
-                ssh_private_key_target,
-            ),
+            FileDeployment(ssh_private_key_src, ssh_private_key_target,),
             # Start the main process. This is expected to return immediately after the process starts
             ScriptDeployment(command),
         ]
