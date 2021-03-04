@@ -2,9 +2,16 @@ import useSWR from 'swr';
 import nookies from 'nookies';
 
 import { verifyIdToken } from '../../utils/firebaseAdmin';
-import { AnimatedPing, Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
+import {
+  AnimatedPing,
+  Layout,
+  FlexCol,
+  FlexCenter,
+  Navbar,
+  Container,
+  Link,
+} from '../../components';
 import { startJob, stopJob } from '../../utils/handleJob';
-import { GRAPHITE_URL, GRAPHITE_PORT } from '../../utils/const';
 import { dateFormatter } from '../../utils/date';
 
 const JobButton = ({ jobId, jobStatus }) => {
@@ -40,7 +47,6 @@ const JobsTable = ({ data }) => {
   const TableHeader = ({ children }) => <th className="px-4 py-2 text-left ">{children}</th>;
   const TableRow = ({ row }) => {
     const job_name = JSON.parse(row.spec).name;
-    const graphite_link = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=${job_name}.*&height=800&width=800&from=-5min`;
     return (
       <tr className="hover:bg-gray-800 transition duration-100">
         <TableData d={row.id} />
@@ -50,9 +56,11 @@ const JobsTable = ({ data }) => {
         <TableData d={dateFormatter(row.finished_at)} />
         <TableData d={row.status} className="w-40" />
         <TableData className="w-48">
-          <div className="w-32 py-1 text-center text-white bg-purple-600 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700">
-            <a href={graphite_link}>SEE PLOTS!</a>
-          </div>
+          <Link href={`/dash?jobId=${row.id}`}>
+            <div className="w-32 py-1 text-center text-white bg-purple-600 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700">
+              SEE DASH!
+            </div>
+          </Link>
         </TableData>
         <TableData className="w-48">
           <JobButton jobId={row.id} jobStatus={row.status} />
