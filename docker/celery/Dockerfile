@@ -38,8 +38,7 @@ COPY ./app/scheduler /app/app/scheduler
 RUN cd /app/app/scheduler && \
     poetry config virtualenvs.in-project true && \
     poetry run pip install --upgrade pip && \
-    poetry install --no-dev && \
-    poetry run pip install uwsgi
+    poetry install --no-dev
 
 
 ##############################################################################
@@ -54,4 +53,4 @@ ENV PYTHONPATH=$PYTHONPATH:/app/app/scheduler
 # Adding the app venv bin to the front of path so it is the default pip, etc.
 ENV PATH=/app/app/scheduler/.venv/bin:$PATH
 
-CMD uwsgi --ini /app/app/scheduler/resaas/scheduler/app.ini --need-app
+CMD celery --app "resaas.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=1
