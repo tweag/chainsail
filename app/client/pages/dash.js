@@ -93,17 +93,23 @@ const Logs = () => {
   );
 };
 
-const JobInfo = ({ job }) => {
-  const jobSpec = job.spec ? JSON.parse(job.spec) : {};
-  return (
-    <FlexCol className="w-1/3 p-32">
-      <div>Name: {jobSpec.name}</div>
-      <div>Status: {job.status}</div>
-      <div>Created at: {dateFormatter(job.created_at)}</div>
-      <div>Started at: {dateFormatter(job.started_at)}</div>
-      <div>Finished at: {dateFormatter(job.finished_at)}</div>
-    </FlexCol>
-  );
+const JobInfo = ({ jobId }) => {
+  const { data } = useSWR(`/api/job/get/${jobId}`, fetcher, {
+    refreshInterval: 3000,
+  });
+  if (data) {
+    const job = data;
+    const jobSpec = job.spec ? JSON.parse(job.spec) : {};
+    return (
+      <FlexCol className="w-1/3 p-32 space-y-2">
+        <div>Name: {jobSpec.name}</div>
+        <div>Status: {job.status}</div>
+        <div>Created at: {dateFormatter(job.created_at)}</div>
+        <div>Started at: {dateFormatter(job.started_at)}</div>
+        <div>Finished at: {dateFormatter(job.finished_at)}</div>
+      </FlexCol>
+    );
+  }
 };
 
 const Dash = ({ authed }) => {
@@ -113,7 +119,6 @@ const Dash = ({ authed }) => {
   const jobFound = !error && data && data.id;
   const jobNotFound = !error && data && !data.id;
   const isLoading = !data;
-  const job = data;
 
   if (authed)
     return (
@@ -121,7 +126,7 @@ const Dash = ({ authed }) => {
         <div className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
           {jobFound && (
             <FlexRow className="w-full h-full">
-              <JobInfo job={job} />
+              <JobInfo jobId={jobId} />
               <FlexCol between className="w-2/3 p-10">
                 <Chart jobId={jobId} />
                 <Logs />
