@@ -67,17 +67,21 @@ const giveChartData = (data) => {
 };
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
-const Chart = ({ jobId }) => {
-  const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobId}.*.negative_log_prob,'average')&format=json&from=-5min`;
-  const { data, error } = useSWR(graphiteUrl, fetcher, {
-    refreshInterval: 10000,
-  });
-  const chartData = giveChartData(data);
-  return (
-    <FlexCenter className="w-full h-1/2">
-      {!error && <Line data={chartData} options={options} width="3" height="1" />}
-    </FlexCenter>
-  );
+const Chart = ({ job }) => {
+  if (job && job.id) {
+    const jobSpec = JSON.parse(job.spec);
+    const jobName = jobSpec.name;
+    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobName}.*.negative_log_prob,'average')&format=json&from=-5min`;
+    const { data, error } = useSWR(graphiteUrl, fetcher, {
+      refreshInterval: 10000,
+    });
+    const chartData = giveChartData(data);
+    return (
+      <FlexCenter className="w-full h-1/2">
+        {!error && <Line data={chartData} options={options} width="3" height="1" />}
+      </FlexCenter>
+    );
+  }
 };
 
 const Logs = () => {
@@ -152,7 +156,7 @@ const Dash = ({ authed }) => {
             <FlexRow className="w-full h-full">
               <JobInfo jobId={jobId} />
               <FlexCol between className="w-2/3 p-10">
-                <Chart jobId={jobId} />
+                <Chart job={data} />
                 <Logs />
               </FlexCol>
             </FlexRow>
