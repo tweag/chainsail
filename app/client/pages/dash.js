@@ -118,15 +118,15 @@ const JobInfo = ({ jobId }) => {
         <FlexCenter>
           <div className="w-64 grid grid-cols-2 gap-y-2">
             <div>Name:</div>
-            <div> {jobSpec.name}</div>
+            <div>{jobSpec.name}</div>
             <div>Status: </div>
             <div>{job.status}</div>
             <div>Created at:</div>
-            <div> {dateFormatter(job.created_at)}</div>
+            <div>{dateFormatter(job.created_at)}</div>
             <div>Started at:</div>
-            <div> {dateFormatter(job.started_at)}</div>
+            <div>{dateFormatter(job.started_at)}</div>
             <div>Finished at:</div>
-            <div> {dateFormatter(job.finished_at)}</div>
+            <div>{dateFormatter(job.finished_at)}</div>
             <div className="mt-3">
               <JobButton jobId={job.id} jobStatus={job.status} />
             </div>
