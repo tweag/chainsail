@@ -96,8 +96,9 @@ const Dash = ({ authed }) => {
   const router = useRouter();
   const { jobId } = router.query;
   const { data, error } = useSWR(`/api/job/get/${jobId}`, fetcher);
-  const id = data ? data.id : undefined;
-  const jobFound = !error && id;
+  const jobFound = !error && data && data.id;
+  const jobNotFound = !error && data && !data.id;
+  const isLoading = !data;
 
   if (authed)
     return (
@@ -112,7 +113,7 @@ const Dash = ({ authed }) => {
               </FlexCol>
             </FlexRow>
           )}
-          {!jobFound && (
+          {jobNotFound && (
             <FlexCenter className="w-full h-full">
               <FlexCol className="space-y-5">
                 <div>
@@ -129,6 +130,7 @@ const Dash = ({ authed }) => {
               </FlexCol>
             </FlexCenter>
           )}
+          {isLoading && <FlexCenter className="w-full h-full">Loading ...</FlexCenter>}
         </div>
       </Layout>
     );
