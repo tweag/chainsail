@@ -111,7 +111,7 @@ const AcceptanceRateChart = ({ job }) => {
           })
         : [];
     const chartData = {
-      labels: dss ? dss.map((ds) => ds.target) : [],
+      labels: dss ? dss.map((ds) => ds.target.split('.')[1]) : [],
       datasets: [
         {
           label: 'acceptance rate',
