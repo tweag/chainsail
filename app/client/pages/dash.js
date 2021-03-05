@@ -64,6 +64,7 @@ const NegLogPChart = ({ job }) => {
     const chartData = {
       datasets: [
         {
+          labels: ds ? ds.map((d) => moment.unix(d[1]).format()) : [],
           xAxisID: 'x',
           yAxisID: 'y',
           label: 'negative log-probability',
