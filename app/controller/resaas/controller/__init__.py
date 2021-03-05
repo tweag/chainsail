@@ -497,9 +497,11 @@ class CloudREJobController(BaseREJobController):
             try:
                 logger.info(f"Asking scheduler to add controller iteration {iteration}")
                 add_iteration_endpoint = self.SCHEDULER_ADD_ITERATION_ENDPOINT.format(
-                    id=self.job_id, iteration=iteration)
+                    id=self.job_id, iteration=iteration
+                )
                 url = "http://{}:{}{}".format(
-                    self.scheduler_address, self.scheduler_port, add_iteration_endpoint)
+                    self.scheduler_address, self.scheduler_port, add_iteration_endpoint
+                )
                 r = requests.post(url)
                 r.raise_for_status()
             except Exception as e:
@@ -507,7 +509,9 @@ class CloudREJobController(BaseREJobController):
                     f"Failed to ask scheduler to add controller iteration {iteration} with response: {repr(r)}"
                 )
                 if (i + 1) == self.connection_retries:
-                    logger.critical("Used all attempts for asking scheduler to add controller iteration {iteration}.")
+                    logger.critical(
+                        "Used all attempts for asking scheduler to add controller iteration {iteration}."
+                    )
                     raise e
                 time.sleep(self.connection_retry_interval)
 

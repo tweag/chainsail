@@ -19,7 +19,6 @@ config = load_scheduler_config()
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        return func(*args, **{**kwargs, **{'user_id': 'me'}})
         # Verify user id token
         id_token = request.headers["Authorization"].split(" ").pop()
         claims = verify_id_token(id_token, app=firebase_app)
@@ -42,7 +41,7 @@ def find_job(job_id, user_id="me"):
 
 @app.route("/job/<job_id>", methods=["GET"])
 @check_user
-def get_job(job_id, user_id="me"):
+def get_job(job_id, user_id):
     """List a single job"""
     job = find_job(job_id, user_id)
     return JobViewSchema().jsonify(job, many=False)
