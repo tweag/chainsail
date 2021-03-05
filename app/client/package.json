@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@reactchartjs/react-chart.js": "^1.0.0-rc.3",
     "autoprefixer": "^10.2.1",
     "chart.js": "^2.9.4",
     "firebase": "^8.2.9",

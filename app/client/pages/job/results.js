@@ -1,69 +1,15 @@
 import useSWR from 'swr';
-import moment from 'moment';
 import nookies from 'nookies';
 
 import { verifyIdToken } from '../../utils/firebaseAdmin';
-import { AnimatedPing, Layout, FlexCol, FlexCenter, Navbar, Container } from '../../components';
-import { GRAPHITE_URL, GRAPHITE_PORT } from '../../utils/const';
-
-const JobButton = ({ jobId, jobStatus }) => {
-  const isInitialized = jobStatus === 'initialized';
-  const isRunning = jobStatus === 'running';
-  const isPending = jobStatus === 'starting';
-  return (
-    <div
-      className={`py-1 text-center rounded-lg lg:transition lg:duration-100 text-white w-32
-	      ${isInitialized ? 'bg-green-800 hover:bg-green-900 cursor-pointer' : ''}
-	      ${isRunning ? 'bg-red-800 hover:bg-red-900 cursor-pointer' : ''}
-	      ${isPending ? 'bg-yellow-800' : ''}
-	      `}
-      onClick={() => {
-        if (isInitialized) startJob(jobId);
-        if (isRunning) stopJob(jobId);
-      }}
-    >
-      {isInitialized && 'START'}
-      {isRunning && 'STOP'}
-      {isPending && (
-        <div>
-          <div className="inline-block mr-3">PENDING</div>
-          <AnimatedPing />
-        </div>
-      )}
-    </div>
-  );
-};
-
-const startJob = (jobId) => {
-  const body = JSON.stringify({ jobId });
-  const requestOptions = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-  };
-  fetch('/api/job/start', requestOptions);
-};
-
-const stopJob = (jobId) => {
-  const body = JSON.stringify({ jobId });
-  const requestOptions = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-  };
-  fetch('/api/job/stop', requestOptions);
-};
+import { Layout, FlexCenter, JobButton, Navbar, Container, Link } from '../../components';
+import { dateFormatter } from '../../utils/date';
 
 const JobsTable = ({ data }) => {
   const headersName = ['Id', 'Name', 'Created at', 'Finished at', 'Started at', 'Status', '', ''];
-  const dateFormatter = (d) => {
-    if (d) return moment(d).format('d MMM hh:mm');
-    else return '---';
-  };
   const TableHeader = ({ children }) => <th className="px-4 py-2 text-left ">{children}</th>;
   const TableRow = ({ row }) => {
     const job_name = JSON.parse(row.spec).name;
-    const graphite_link = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=${job_name}.*&height=800&width=800&from=-5min`;
     return (
       <tr className="hover:bg-gray-800 transition duration-100">
         <TableData d={row.id} />
@@ -73,9 +19,11 @@ const JobsTable = ({ data }) => {
         <TableData d={dateFormatter(row.finished_at)} />
         <TableData d={row.status} className="w-40" />
         <TableData className="w-48">
-          <div className="w-32 py-1 text-center text-white bg-purple-600 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700">
-            <a href={graphite_link}>SEE PLOTS!</a>
-          </div>
+          <Link href={`/dash?jobId=${row.id}`}>
+            <div className="w-32 py-1 text-center text-white bg-purple-600 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700">
+              SEE DASH!
+            </div>
+          </Link>
         </TableData>
         <TableData className="w-48">
           <JobButton jobId={row.id} jobStatus={row.status} />
