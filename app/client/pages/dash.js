@@ -50,14 +50,14 @@ const options = {
   },
 };
 
-const giveChartData = (data) => {
+const giveChartData = (data, label) => {
   const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
   return {
     datasets: [
       {
         xAxisID: 'x',
         yAxisID: 'y',
-        label: 'negative log-probability',
+        label,
         data: ds
           ? ds.map((d) => {
               return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
@@ -72,7 +72,7 @@ const giveChartData = (data) => {
 };
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
-const Chart = ({ job }) => {
+const NegLogPChart = ({ job }) => {
   if (job && job.id) {
     const jobSpec = JSON.parse(job.spec);
     const jobName = jobSpec.name;
@@ -80,10 +80,29 @@ const Chart = ({ job }) => {
     const { data, error } = useSWR(graphiteUrl, fetcher, {
       refreshInterval: 10000,
     });
-    const chartData = giveChartData(data);
+    const chartData = giveChartData(data, 'negative log-probability');
     return (
       <FlexCenter className="w-full h-1/2">
-        {!error && <Line data={chartData} options={options} width="3" height="1" />}
+        {!error && <Line data={chartData} options={options} width="5" height="1" />}
+      </FlexCenter>
+    );
+  } else {
+    return <></>;
+  }
+};
+
+const AcceptanceRateChart = ({ job }) => {
+  if (job && job.id) {
+    const jobSpec = JSON.parse(job.spec);
+    const jobName = jobSpec.name;
+    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobName}.*.acceptance_rate,'average')&format=json&from=-5min`;
+    const { data, error } = useSWR(graphiteUrl, fetcher, {
+      refreshInterval: 10000,
+    });
+    const chartData = giveChartData(data, 'acceptance rate');
+    return (
+      <FlexCenter className="w-full h-1/2">
+        {!error && <Line data={chartData} options={options} width="5" height="1" />}
       </FlexCenter>
     );
   } else {
@@ -122,7 +141,7 @@ const JobInfo = ({ jobId }) => {
     const jobSpec = job.spec ? JSON.parse(job.spec) : {};
     return (
       <FlexCol className="w-1/3 pt-20">
-        <div className="p-8 bg-indigo-900 mx-20 mb-10 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+        <div className="p-8 mx-20 mb-10 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
           The plot of the negative log-probability of your target distribution helps to monitor
           sampling convergence. If it scatters around a fixed value, your distribution is, given
           good Replica Exchange acceptance rates, likely sampled exhaustively.
@@ -172,7 +191,8 @@ const Dash = ({ authed }) => {
             <FlexRow className="w-full h-full">
               <JobInfo jobId={jobId} />
               <FlexCol between className="w-2/3 p-10">
-                <Chart job={data} />
+                <NegLogPChart job={data} />
+                <AcceptanceRateChart job={data} />
                 <Logs />
               </FlexCol>
             </FlexRow>
