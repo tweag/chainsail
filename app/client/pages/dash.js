@@ -95,7 +95,7 @@ const AcceptanceRateChart = ({ job }) => {
   if (job && job.id) {
     const jobSpec = JSON.parse(job.spec);
     const jobName = jobSpec.name;
-    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobName}.*.acceptance_rate,'average')&format=json&from=-5min`;
+    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=${jobName}.replica*_replica*.acceptance_rate&format=json&from=-5min`;
     const { data, error } = useSWR(graphiteUrl, fetcher, {
       refreshInterval: 10000,
     });
