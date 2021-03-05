@@ -205,9 +205,9 @@ const JobInfo = ({ jobId }) => {
     return (
       <FlexCol className="w-1/3 pt-20">
         <div className="p-8 mx-20 mb-10 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
-          The plot of the negative log-probability of your target distribution helps to monitor
-          sampling convergence. If it scatters around a fixed value, your distribution is, given
-          good Replica Exchange acceptance rates, likely sampled exhaustively.
+          The plot of the total negative log-probability of all replicas helps to monitor
+          sampling convergence. If it scatters around a fixed value, your target distribution is, given
+          good Replica Exchange acceptance rates, likely to be sampled exhaustively.
         </div>
         <FlexCenter className="p-8 mx-20 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
           <div className="w-full grid grid-cols-2 gap-y-2">
