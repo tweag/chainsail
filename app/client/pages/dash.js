@@ -50,26 +50,6 @@ const options = {
   },
 };
 
-const giveChartData = (data, label) => {
-  const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
-  return {
-    datasets: [
-      {
-        xAxisID: 'x',
-        yAxisID: 'y',
-        label,
-        data: ds
-          ? ds.map((d) => {
-              return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
-            })
-          : [],
-        fill: false,
-        backgroundColor: 'rgb(255, 99, 132)',
-        borderColor: 'rgba(255, 99, 132, 0.5)',
-      },
-    ],
-  };
-};
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
 const NegLogPChart = ({ job }) => {
@@ -80,7 +60,24 @@ const NegLogPChart = ({ job }) => {
     const { data, error } = useSWR(graphiteUrl, fetcher, {
       refreshInterval: 10000,
     });
-    const chartData = giveChartData(data, 'negative log-probability');
+    const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
+    const chartData = {
+      datasets: [
+        {
+          xAxisID: 'x',
+          yAxisID: 'y',
+          label: 'negative log-probability',
+          data: ds
+            ? ds.map((d) => {
+                return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
+              })
+            : [],
+          fill: false,
+          backgroundColor: 'rgb(255, 99, 132)',
+          borderColor: 'rgba(255, 99, 132, 0.5)',
+        },
+      ],
+    };
     return (
       <FlexCenter className="w-full h-1/2">
         {!error && <Line data={chartData} options={options} width="5" height="1" />}
@@ -99,7 +96,24 @@ const AcceptanceRateChart = ({ job }) => {
     const { data, error } = useSWR(graphiteUrl, fetcher, {
       refreshInterval: 10000,
     });
-    const chartData = giveChartData(data, 'acceptance rate');
+    const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
+    const chartData = {
+      datasets: [
+        {
+          xAxisID: 'x',
+          yAxisID: 'y',
+          label: 'acceptance rate',
+          data: ds
+            ? ds.map((d) => {
+                return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
+              })
+            : [],
+          fill: false,
+          backgroundColor: 'rgb(255, 99, 132)',
+          borderColor: 'rgba(255, 99, 132, 0.5)',
+        },
+      ],
+    };
     return (
       <FlexCenter className="w-full h-1/2">
         {!error && <Line data={chartData} options={options} width="5" height="1" />}
