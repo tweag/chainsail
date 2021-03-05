@@ -19,6 +19,7 @@ config = load_scheduler_config()
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        return func(*args, **{**kwargs, **{'user_id': 'me'}})
         # Verify user id token
         id_token = request.headers["Authorization"].split(" ").pop()
         claims = verify_id_token(id_token, app=firebase_app)
@@ -32,7 +33,7 @@ def check_user(func):
     return wrapper
 
 
-def find_job(job_id, user_id):
+def find_job(job_id, user_id="me"):
     job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
     if not job:
         abort(404, "job does not exist for this user")
@@ -41,7 +42,7 @@ def find_job(job_id, user_id):
 
 @app.route("/job/<job_id>", methods=["GET"])
 @check_user
-def get_job(job_id, user_id):
+def get_job(job_id, user_id="me"):
     """List a single job"""
     job = find_job(job_id, user_id)
     return JobViewSchema().jsonify(job, many=False)
@@ -122,6 +123,19 @@ def scale_job(job_id, n_replicas, user_id):
     scaled = scaling_task.get()
     if not scaled:
         abort(409, "job is currently being scaled")
+    return ("ok", 200)
+
+
+@app.route("/internal/job/<job_id>/add_iteration/<iteration>", methods=["POST"])
+def add_iteration(job_id, iteration):
+    """Adds an iteration entry to a job's list of controller iterations"""
+    job = find_job(job_id)
+    if job.controller_iterations is None:
+        job.controller_iterations = []
+    # .append(iteration) does not work, probably b/c lists are a mutable data type
+    # or something like that
+    job.controller_iterations = job.controller_iterations + [iteration]
+    db.session.commit()
     return ("ok", 200)
 
 

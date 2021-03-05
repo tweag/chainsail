@@ -1,3 +1,5 @@
+from sqlalchemy.types import ARRAY
+
 from resaas.scheduler.core import db, ma
 
 
@@ -14,6 +16,7 @@ class TblJobs(db.Model):
     created_at = db.Column(db.DateTime(), nullable=False)
     started_at = db.Column(db.DateTime(), nullable=True)
     finished_at = db.Column(db.DateTime(), nullable=True)
+    controller_iterations = db.Column(ARRAY(db.String(50)), nullable=True)
 
 
 class TblNodes(db.Model):
