@@ -76,7 +76,7 @@ const NegLogPChart = ({ job }) => {
   if (job && job.id) {
     const jobSpec = JSON.parse(job.spec);
     const jobName = jobSpec.name;
-    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobName}.*.negative_log_prob,'average')&format=json&from=-5min`;
+    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobName}.*.negative_log_prob,'sum')&format=json&from=-5min`;
     const { data, error } = useSWR(graphiteUrl, fetcher, {
       refreshInterval: 10000,
     });
