@@ -55,6 +55,7 @@ def run(basename, job_spec, enable_remote_logging):
         # This is for dash page testing / development
         configure_controller_logging(
             "DEBUG",
+            job_id=-1,
             remote_logging=True,
             metrics_address="localhost",
             remote_logging_port=8080,
@@ -65,6 +66,7 @@ def run(basename, job_spec, enable_remote_logging):
         # disable remote logging
         configure_controller_logging(
             "DEBUG",
+            job_id=-1,
             remote_logging=False,
             metrics_address=None,
             remote_logging_port=None,
