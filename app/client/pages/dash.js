@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import nookies from 'nookies';
 import useSWR from 'swr';
 import moment from 'moment';
-import { Bar, Line } from '@reactchartjs/react-chart.js';
+import { Line } from '@reactchartjs/react-chart.js';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
 import {
@@ -18,37 +18,6 @@ import {
 } from '../components';
 import { GRAPHITE_URL, GRAPHITE_PORT } from '../utils/const';
 import { dateFormatter } from '../utils/date';
-
-const options = {
-  legend: {
-    labels: {
-      fontColor: 'rgb(256,256,256,0.6)',
-    },
-  },
-  scales: {
-    xAxes: [
-      {
-        id: 'x',
-        type: 'time',
-        time: { minUnit: 'second' },
-        gridLines: { color: 'rgb(256,256,256,0.3)' },
-        ticks: {
-          fontColor: 'rgb(256,256,256,0.6)',
-        },
-      },
-    ],
-    yAxes: [
-      {
-        id: 'y',
-        ticks: {
-          beginAtZero: true,
-          fontColor: 'rgb(256,256,256,0.6)',
-        },
-        gridLines: { color: 'rgb(256,256,256,0.3)' },
-      },
-    ],
-  },
-};
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
@@ -79,6 +48,38 @@ const NegLogPChart = ({ job }) => {
         },
       ],
     };
+    const options = {
+      legend: {
+        labels: {
+          fontColor: 'rgb(256,256,256,0.6)',
+        },
+      },
+      scales: {
+        xAxes: [
+          {
+            id: 'x',
+            type: 'time',
+            time: { minUnit: 'second' },
+            gridLines: { color: 'rgb(256,256,256,0.3)', drawTicks: false },
+            ticks: {
+              fontColor: 'rgb(256,256,256,0.6)',
+              padding: 10,
+            },
+          },
+        ],
+        yAxes: [
+          {
+            id: 'y',
+            ticks: {
+              beginAtZero: true,
+              fontColor: 'rgb(256,256,256,0.6)',
+              padding: 10,
+            },
+            gridLines: { color: 'rgb(256,256,256,0.3)', drawTicks: false },
+          },
+        ],
+      },
+    };
     return (
       <FlexCenter className="w-full h-1/2">
         {!error && <Line data={chartData} options={options} width="5" height="1" />}
@@ -93,7 +94,7 @@ const AcceptanceRateChart = ({ job }) => {
   if (job && job.id) {
     const jobSpec = JSON.parse(job.spec);
     const jobName = jobSpec.name;
-    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=${jobName}.replica*_replica*.acceptance_rate&format=json&from=-5min`;
+    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=${jobName}.replica*_replica*.acceptance_rate&format=json`;
     const { data, error } = useSWR(graphiteUrl, fetcher, {
       refreshInterval: 10000,
     });
@@ -110,8 +111,14 @@ const AcceptanceRateChart = ({ job }) => {
             };
           })
         : [];
+    const giveReplicaLabel = (target) =>
+      target
+        .split('.')[1]
+        .split('_')
+        .map((r) => r.replace('replica', ''))
+        .join('<>');
     const chartData = {
-      labels: dss ? dss.map((ds) => ds.target.split('.')[1]) : [],
+      labels: dss ? dss.map((ds) => giveReplicaLabel(ds.target)) : [],
       datasets: [
         {
           label: 'acceptance rate',
@@ -119,10 +126,11 @@ const AcceptanceRateChart = ({ job }) => {
           fill: false,
           backgroundColor: 'rgb(255, 99, 132)',
           borderColor: 'rgba(255, 99, 132, 0.5)',
+          lineTension: 0,
         },
       ],
     };
-    const barOptions = {
+    const options = {
       legend: {
         labels: {
           fontColor: 'rgb(256,256,256,0.6)',
@@ -131,9 +139,11 @@ const AcceptanceRateChart = ({ job }) => {
       scales: {
         xAxes: [
           {
-            gridLines: { color: 'rgb(256,256,256,0.3)' },
+            offset: true,
+            gridLines: { color: 'rgb(256,256,256,0.3)', drawTicks: false },
             ticks: {
               fontColor: 'rgb(256,256,256,0.6)',
+              padding: 10,
             },
           },
         ],
@@ -142,8 +152,12 @@ const AcceptanceRateChart = ({ job }) => {
             ticks: {
               beginAtZero: true,
               fontColor: 'rgb(256,256,256,0.6)',
+              padding: 10,
             },
-            gridLines: { color: 'rgb(256,256,256,0.3)' },
+            gridLines: {
+              color: 'rgb(256,256,256,0.3)',
+              drawTicks: false,
+            },
           },
         ],
       },
@@ -151,7 +165,7 @@ const AcceptanceRateChart = ({ job }) => {
 
     return (
       <FlexCenter className="w-full h-1/2">
-        {!error && <Bar data={chartData} options={barOptions} width="5" height="1" />}
+        {!error && <Line data={chartData} options={options} width="5" height="1" />}
       </FlexCenter>
     );
   } else {
