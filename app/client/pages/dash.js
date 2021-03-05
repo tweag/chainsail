@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import nookies from 'nookies';
 import useSWR from 'swr';
 import moment from 'moment';
-import { Line } from '@reactchartjs/react-chart.js';
+import { Bar, Line } from '@reactchartjs/react-chart.js';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
 import {
@@ -97,27 +97,61 @@ const AcceptanceRateChart = ({ job }) => {
     const { data, error } = useSWR(graphiteUrl, fetcher, {
       refreshInterval: 10000,
     });
-    const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
+    const dss =
+      data && data.length > 0
+        ? data.map((ds) => {
+            let acceptanceRate;
+            try {
+              acceptanceRate = ds.datapoints.filter((d) => d[0]).pop()[0];
+            } catch (err) {}
+            return {
+              acceptanceRate,
+              target: ds.target,
+            };
+          })
+        : [];
     const chartData = {
+      labels: dss ? dss.map((ds) => ds.target) : [],
       datasets: [
         {
-          xAxisID: 'x',
-          yAxisID: 'y',
           label: 'acceptance rate',
-          data: ds
-            ? ds.map((d) => {
-                return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
-              })
-            : [],
+          data: dss ? dss.map((ds) => ds.acceptanceRate) : [],
           fill: false,
           backgroundColor: 'rgb(255, 99, 132)',
           borderColor: 'rgba(255, 99, 132, 0.5)',
         },
       ],
     };
+    const barOptions = {
+      legend: {
+        labels: {
+          fontColor: 'rgb(256,256,256,0.6)',
+        },
+      },
+      scales: {
+        xAxes: [
+          {
+            gridLines: { color: 'rgb(256,256,256,0.3)' },
+            ticks: {
+              fontColor: 'rgb(256,256,256,0.6)',
+            },
+          },
+        ],
+        yAxes: [
+          {
+            ticks: {
+              beginAtZero: true,
+              fontColor: 'rgb(256,256,256,0.6)',
+            },
+            gridLines: { color: 'rgb(256,256,256,0.3)' },
+          },
+        ],
+      },
+    };
+
     return (
       <FlexCenter className="w-full h-1/2">
-        {!error && <Line data={chartData} options={options} width="5" height="1" />}
+        {!error && <Bar data={chartData} options={barOptions} width="5" height="1" />}
       </FlexCenter>
     );
   } else {
