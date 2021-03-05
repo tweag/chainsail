@@ -40,9 +40,9 @@ services:
   scheduler:
     image: "scheduler:latest"
     volumes:
-      - ./config/:/config
+      - ./config:/config
     ports:
-      - "5000:5000"
+      - "5000:5001"
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
