@@ -11,8 +11,8 @@ from resaas.common.storage import AbstractStorageBackend
 logger = logging.getLogger(__name__)
 
 
-def format_metric_name(run_id: str, storage: AbstractStorageBackend):
-    return ".".join((run_id, storage.sim_path))
+def format_metric_name(run_id: int, storage: AbstractStorageBackend):
+    return f"job{run_id}.{storage.sim_path}"
 
 
 class MPIRERunner(AbstractRERunner):
@@ -21,7 +21,7 @@ class MPIRERunner(AbstractRERunner):
     """
 
     REXFW_SCRIPT = "run-rexfw-mpi"
-    DEFAULT_NAME = "job"
+    DEFAULT_RUN_ID = 1
     DEFAULT_HOSTSFILE = "hostsfile"
     DEFAULT_STORAGEFILE = "storage.yaml"
     DEFAULT_METRICS_HOST = "localhost"
@@ -33,7 +33,7 @@ class MPIRERunner(AbstractRERunner):
         # Get configuration
         hostsfile = runner_config.get("hostsfile", self.DEFAULT_HOSTSFILE)
         storage_config = runner_config.get("storage_config", self.DEFAULT_STORAGEFILE)
-        run_id = runner_config.get("run_id", self.DEFAULT_NAME)
+        run_id = runner_config.get("run_id", self.DEFAULT_RUN_ID)
         metrics_host = runner_config.get("metrics_host", self.DEFAULT_METRICS_HOST)
         metrics_port = runner_config.get("metrics_port", self.DEFAULT_METRICS_PORT)
         user_code_host = runner_config.get("user_code_host", self.DEFAULT_USER_CODE_HOST)

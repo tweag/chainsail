@@ -90,7 +90,7 @@ def run(basename, job_spec, enable_remote_logging):
         yaml.dump({"backend": "local", "backend_config": {"local": {}}}, f)
 
     runner_config["hostsfile"] = hostsfile
-    runner_config["run_id"] = "local"
+    runner_config["run_id"] = -1
     runner_config["storage_config"] = storage
     runner_config["storage_config"] = storage
 
