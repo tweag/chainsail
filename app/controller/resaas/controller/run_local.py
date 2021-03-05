@@ -44,18 +44,28 @@ def run(basename, job_spec):
     The resaas node controller.
     """
     # Configure logging
-    configure_controller_logging(
-        "DEBUG",
-        # remote_logging=False,
-        # metrics_address=None,
-        # remote_logging_port=None,
-        # remote_logging_buffer_size=None,
-        remote_logging=True,
-        metrics_address="localhost",
-        remote_logging_port=2004,
-        remote_logging_buffer_size=5,
-        format_string="%(message)s",
-    )
+    if False:
+        # enable remote logging; verify that port number matches the one given
+        # in docker/docker-compose.yaml
+        # This is for dash page testing / development
+        configure_controller_logging(
+            "DEBUG",
+            remote_logging=True,
+            metrics_address="localhost",
+            remote_logging_port=8080,
+            remote_logging_buffer_size=5,
+            format_string="%(message)s",
+        )
+    else:
+        # disable remote logging
+        configure_controller_logging(
+            "DEBUG",
+            remote_logging=False,
+            metrics_address=None,
+            remote_logging_port=None,
+            remote_logging_buffer_size=None,
+            format_string="%(message)s",
+        )
 
     # Load the job spec
     with open(job_spec) as f:
