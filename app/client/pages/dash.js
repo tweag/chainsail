@@ -36,7 +36,7 @@ const NegLogPChart = ({ job }) => {
           labels: ds ? ds.map((d) => moment.unix(d[1]).format()) : [],
           xAxisID: 'x',
           yAxisID: 'y',
-          label: 'negative log-probability',
+          label: 'negative total log-probability',
           data: ds
             ? ds.map((d) => {
                 return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
