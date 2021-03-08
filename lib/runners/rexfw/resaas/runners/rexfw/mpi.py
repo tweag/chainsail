@@ -54,10 +54,7 @@ def ensure_mpi_failure(func):
 
 @click.command()
 @click.option(
-    "--basename",
-    required=True,
-    type=str,
-    help="Storage backend basename",
+    "--basename", required=True, type=str, help="Storage backend basename",
 )
 @click.option(
     "--path",

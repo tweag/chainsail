@@ -492,8 +492,7 @@ class CloudREJobController(BaseREJobController):
 
 
 def update_nodes_mpi(
-    controller: CloudREJobController,
-    hostfile_path,
+    controller: CloudREJobController, hostfile_path,
 ):
     """
     Writes an updated hostfile which is required by the MPI runner.

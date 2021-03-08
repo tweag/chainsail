@@ -42,11 +42,7 @@ class GraphiteHTTPHandler(logging.Handler):
                 "when": floor(datetime.utcnow().timestamp()),
                 "data": self.format(record),
             }
-            response = requests.post(
-                url=self.url,
-                data=json.dumps(payload),
-                timeout=self.timeout,
-            )
+            response = requests.post(url=self.url, data=json.dumps(payload), timeout=self.timeout,)
             response.raise_for_status()
         except Exception:
             self.handleError(record)

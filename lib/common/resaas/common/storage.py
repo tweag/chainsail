@@ -151,9 +151,7 @@ class StorageBackendConfig:
     """
 
     def __init__(
-        self,
-        backend: str,
-        backend_config: dict,
+        self, backend: str, backend_config: dict,
     ):
         self.backend = backend
         self.backend_config = backend_config
@@ -371,9 +369,7 @@ class SimulationStorage:
 
     def save_config(self, config_dict):
         self.save(
-            yaml.dump(config_dict),
-            self.dir_structure.CONFIG_FILE_NAME,
-            data_type="text",
+            yaml.dump(config_dict), self.dir_structure.CONFIG_FILE_NAME, data_type="text",
         )
 
     def load_config(self):
