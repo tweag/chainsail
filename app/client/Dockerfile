@@ -12,6 +12,15 @@ RUN yarn install --frozen-lockfile
 FROM node:lts-alpine AS builder
 
 ENV NODE_ENV=production
+ENV FLASK_URL
+# Update these with your Firebase client credentials
+ENV NEXT_PUBLIC_FIREBASE_PUBLIC_API_KEY
+ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID
+ENV NEXT_PUBLIC_FIREBASE_DATABASE_URL
+ENV NEXT_PUBLIC_FIREBASE_MSG_SENDER_ID
+ENV NEXT_PUBLIC_FIREBASE_APP_ID
+
 WORKDIR /opt/app
 COPY . .
 COPY --from=deps /opt/app/node_modules ./node_modules
