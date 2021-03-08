@@ -234,12 +234,12 @@ const Dash = ({ authed }) => {
   const jobFound = !error && data && data.id;
   const jobNotFound = !error && data && !data.id;
   const isLoading = !data;
+  const runs = jobFound ? data.controller_iterations : [];
 
   // Dropdown
   const [dropdownIsAcitve, setDropdownIsAcitve] = useState(false);
   const [simulationRun, setSimulationRun] = useState(undefined);
 
-  const runs = ['run1', 'run2'];
   const Dropdown = () => (
     <div className="mx-20 mt-10">
       <div
