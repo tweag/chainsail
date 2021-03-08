@@ -19,7 +19,7 @@ config = load_scheduler_config()
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        return func(*args, **{**{"user_id": "saeed"}, **kwargs})
+        return func(*args, user_id="saeed", **kwargs)
         # Verify user id token
         id_token = request.headers["Authorization"].split(" ").pop()
         claims = verify_id_token(id_token, app=firebase_app)
@@ -33,7 +33,7 @@ def check_user(func):
     return wrapper
 
 
-def find_job(job_id, user_id="me"):
+def find_job(job_id, user_id="saeed"):
     job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
     if not job:
         abort(404, "job does not exist for this user")
