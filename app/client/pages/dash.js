@@ -22,11 +22,11 @@ import { useState } from 'react';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
-const NegLogPChart = ({ job }) => {
+const NegLogPChart = ({ job, simulationRun }) => {
   if (job && job.id) {
     const jobSpec = JSON.parse(job.spec);
     const jobName = jobSpec.name;
-    const { data, error } = useSWR(GRAPHITE_NEGLOGP_URL(jobName), fetcher, {
+    const { data, error } = useSWR(GRAPHITE_NEGLOGP_URL(jobName, simulationRun), fetcher, {
       refreshInterval: 10000,
     });
     const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
@@ -90,11 +90,11 @@ const NegLogPChart = ({ job }) => {
   }
 };
 
-const AcceptanceRateChart = ({ job }) => {
+const AcceptanceRateChart = ({ job, simulationRun }) => {
   if (job && job.id) {
     const jobSpec = JSON.parse(job.spec);
     const jobName = jobSpec.name;
-    const { data, error } = useSWR(GRAPHITE_ACCEPTANCE_RATE_URL(jobName), fetcher, {
+    const { data, error } = useSWR(GRAPHITE_ACCEPTANCE_RATE_URL(jobName, simulationRun), fetcher, {
       refreshInterval: 10000,
     });
     const dss =
@@ -296,8 +296,8 @@ const Dash = ({ authed }) => {
                 <Dropdown />
               </FlexCol>
               <FlexCol between className="w-2/3 p-10">
-                <NegLogPChart job={data} />
-                <AcceptanceRateChart job={data} />
+                <NegLogPChart job={data} simulationRun={simulationRun} />
+                <AcceptanceRateChart job={data} simulationRun={simulationRun} />
                 <Logs />
               </FlexCol>
             </FlexRow>
