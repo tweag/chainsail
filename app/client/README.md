@@ -26,15 +26,18 @@ for the login to work properly. Firebase admin configuration information should 
 `firebase-admin-secrets.json` and client configuration in `.env.local`.
 The desired interface for `.env.local` is given in `.env.local.example`.
 
-### Learn More
+### Deployment
 
-To learn more about Next.js, take a look at the following resources:
+Use docker to build an image and feed with proper environment variables:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-### Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/import?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```shell
+$ docker build -t resaas-client3:latest \
+  -e FLASK_URL=<FLASK_URL> \
+  -e NEXT_PUBLIC_FIREBASE_PUBLIC_API_KEY=<FIREBASE_PUBLIC_API_KEY> \
+  -e NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<FIREBASE_AUTH_DOMAIN> \
+  -e NEXT_PUBLIC_FIREBASE_PROJECT_ID=<FIREBASE_PROJECT_ID> \
+  -e NEXT_PUBLIC_FIREBASE_DATABASE_URL=<FIREBASE_DATABASE_URL> \
+  -e NEXT_PUBLIC_FIREBASE_MSG_SENDER_ID=<FIREBASE_MSG_SENDER_ID> \
+  -e NEXT_PUBLIC_FIREBASE_APP_ID=<FIREBASE_APP_ID> \
+  .
+```
