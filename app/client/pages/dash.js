@@ -241,9 +241,9 @@ const Dash = ({ authed }) => {
 
   const runs = ['run1', 'run2'];
   const Dropdown = () => (
-    <div className="p-8 mx-20 mt-10 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+    <div className="mx-20 mt-10">
       <div
-        className="text-sm cursor-pointer opacity-60 hover:opacity-100 transition duration-300"
+        className="cursor-pointer opacity-60 hover:opacity-100 transition duration-300"
         onClick={() => setDropdownIsAcitve((s) => !s)}
       >
         <div>
@@ -255,9 +255,20 @@ const Dash = ({ authed }) => {
           Choose a simlation run
         </div>
       </div>
-      <div className={`${dropdownIsAcitve ? 'visible' : 'hidden'}`}>
+      <div
+        className={`${
+          dropdownIsAcitve ? 'visible' : 'hidden h-0'
+        } fixed bg-gray-800 bg-opacity-50 mt-1 transition-all duration-300 w-48`}
+      >
         {runs.map((r, i) => (
-          <div key={i} onClick={() => setSimulationRun(r)}>
+          <div
+            key={i}
+            onClick={() => {
+              setSimulationRun(r);
+              setDropdownIsAcitve(false);
+            }}
+            className="px-4 py-2 cursor-pointer hover:opacity-70 transition duration-300 hover:bg-purple-700"
+          >
             {r}
           </div>
         ))}
