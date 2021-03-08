@@ -28,16 +28,9 @@ The desired interface for `.env.local` is given in `.env.local.example`.
 
 ### Deployment
 
-Use docker to create an image and feed it with the appropriate environment variables:
+Create a `.env.local` file in client directory and feed it with appropriate environment variables
+(see `.env.local.example` for its interface). Then use the `Dockerfile` provided to build an image:
 
 ```shell
-$ docker build -t resaas-client3:latest \
-  -e FLASK_URL=<FLASK_URL> \
-  -e NEXT_PUBLIC_FIREBASE_PUBLIC_API_KEY=<FIREBASE_PUBLIC_API_KEY> \
-  -e NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<FIREBASE_AUTH_DOMAIN> \
-  -e NEXT_PUBLIC_FIREBASE_PROJECT_ID=<FIREBASE_PROJECT_ID> \
-  -e NEXT_PUBLIC_FIREBASE_DATABASE_URL=<FIREBASE_DATABASE_URL> \
-  -e NEXT_PUBLIC_FIREBASE_MSG_SENDER_ID=<FIREBASE_MSG_SENDER_ID> \
-  -e NEXT_PUBLIC_FIREBASE_APP_ID=<FIREBASE_APP_ID> \
-  .
+$ docker build -t resaas-client:latest .
 ```
