@@ -52,7 +52,7 @@ def run(basename, job_spec):
         # remote_logging_buffer_size=None,
         remote_logging=True,
         metrics_address="localhost",
-        remote_logging_port=2004,
+        remote_logging_port=8080,
         remote_logging_buffer_size=5,
         format_string="%(message)s",
     )
@@ -75,7 +75,7 @@ def run(basename, job_spec):
         yaml.dump({"backend": "local", "backend_config": {"local": {}}}, f)
 
     runner_config["hostsfile"] = hostsfile
-    runner_config["run_id"] = "local"
+    runner_config["run_id"] = "loocal"
     runner_config["storage_config"] = storage
     runner_config["storage_config"] = storage
 
