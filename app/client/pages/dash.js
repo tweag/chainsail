@@ -16,7 +16,7 @@ import {
   Container,
   Navbar,
 } from '../components';
-import { GRAPHITE_URL, GRAPHITE_PORT } from '../utils/const';
+import { GRAPHITE_NEGLOGP_URL } from '../utils/const';
 import { dateFormatter } from '../utils/date';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -25,8 +25,7 @@ const NegLogPChart = ({ job }) => {
   if (job && job.id) {
     const jobSpec = JSON.parse(job.spec);
     const jobName = jobSpec.name;
-    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobName}.*.negative_log_prob,'sum')&format=json&from=-5min`;
-    const { data, error } = useSWR(graphiteUrl, fetcher, {
+    const { data, error } = useSWR(GRAPHITE_NEGLOGP_URL(jobName), fetcher, {
       refreshInterval: 10000,
     });
     const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
@@ -205,9 +204,9 @@ const JobInfo = ({ jobId }) => {
     return (
       <FlexCol className="w-1/3 pt-20">
         <div className="p-8 mx-20 mb-10 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
-          The plot of the total negative log-probability of all replicas helps to monitor
-          sampling convergence. If it scatters around a fixed value, your target distribution is, given
-          good Replica Exchange acceptance rates, likely to be sampled exhaustively.
+          The plot of the total negative log-probability of all replicas helps to monitor sampling
+          convergence. If it scatters around a fixed value, your target distribution is, given good
+          Replica Exchange acceptance rates, likely to be sampled exhaustively.
         </div>
         <FlexCenter className="p-8 mx-20 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
           <div className="w-full grid grid-cols-2 gap-y-2">

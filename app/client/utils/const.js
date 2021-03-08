@@ -9,3 +9,5 @@ export const JOBS_LIST_ENDPOINT = '/jobs';
 // Graphite
 export const GRAPHITE_URL = process.env.GRAPHITE_URL || 'http://127.0.0.1';
 export const GRAPHITE_PORT = process.env.GRAPHITE_PORT || '80';
+export const GRAPHITE_NEGLOGP_URL = (jobName) =>
+  `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobName}.*.negative_log_prob,'sum')&format=json&from=-5min`;
