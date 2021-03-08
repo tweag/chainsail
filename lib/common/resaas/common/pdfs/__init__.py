@@ -2,7 +2,6 @@
 Defines the interface for RESAAS-compatible PDFs.
 """
 from abc import abstractmethod
-import base64
 
 import grpc
 import numpy as np

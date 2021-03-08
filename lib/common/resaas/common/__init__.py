@@ -1,6 +1,9 @@
 """
 Code shared between different parts of RESAAS.
 """
+import logging
+import sys
+
 import numpy as np
 from typing import Tuple
 
@@ -15,6 +18,7 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
     try:
         from probability import initial_states, pdf
     except ImportError as e:
+        logger = logging.getLogger("resaas.controller")
         logger.exception(
             "Failed to import user-defined pdf and initial_states. Does "
             "the `probability` module exist on the PYTHONPATH? "

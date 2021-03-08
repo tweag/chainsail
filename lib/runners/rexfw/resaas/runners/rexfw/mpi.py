@@ -8,14 +8,13 @@ import click
 import mpi4py.rc
 import numpy as np
 from mpi4py import MPI
-import grpc
 
 from resaas.common import import_from_user
 from resaas.common.storage import SimulationStorage, load_storage_config
 from resaas.common.tempering.tempered_distributions import BoltzmannTemperedDistribution
 from resaas.common.samplers import get_sampler
 from resaas.common.pdfs import SafeUserPDF
-from resaas.grpc import user_code_pb2, user_code_pb2_grpc
+from resaas.grpc import user_code_pb2
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
