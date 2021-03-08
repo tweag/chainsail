@@ -28,7 +28,7 @@ The desired interface for `.env.local` is given in `.env.local.example`.
 
 ### Deployment
 
-Use docker to build an image and feed with proper environment variables:
+Use docker to create an image and feed it with the appropriate environment variables:
 
 ```shell
 $ docker build -t resaas-client3:latest \
