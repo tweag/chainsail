@@ -24,9 +24,8 @@ const fetcher = (url) => fetch(url).then((res) => res.json());
 
 const NegLogPChart = ({ job, simulationRun }) => {
   if (job && job.id) {
-    const jobSpec = JSON.parse(job.spec);
-    const jobName = jobSpec.name;
-    const { data, error } = useSWR(GRAPHITE_NEGLOGP_URL(jobName, simulationRun), fetcher, {
+    const jobId = job.id;
+    const { data, error } = useSWR(GRAPHITE_NEGLOGP_URL(jobId, simulationRun), fetcher, {
       refreshInterval: 10000,
     });
     const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
@@ -92,9 +91,8 @@ const NegLogPChart = ({ job, simulationRun }) => {
 
 const AcceptanceRateChart = ({ job, simulationRun }) => {
   if (job && job.id) {
-    const jobSpec = JSON.parse(job.spec);
-    const jobName = jobSpec.name;
-    const { data, error } = useSWR(GRAPHITE_ACCEPTANCE_RATE_URL(jobName, simulationRun), fetcher, {
+    const jobId = job.id;
+    const { data, error } = useSWR(GRAPHITE_ACCEPTANCE_RATE_URL(jobId, simulationRun), fetcher, {
       refreshInterval: 10000,
     });
     const dss =
