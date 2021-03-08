@@ -36,7 +36,10 @@ class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
 
 @click.command()
 @click.option(
-    "--port", type=int, default=50052, help="the port the gRPC server listens on",
+    "--port",
+    type=int,
+    default=50052,
+    help="the port the gRPC server listens on",
 )
 @click.option(
     "--config", type=click.Path(exists=False), default=None, help="path to controller config file"

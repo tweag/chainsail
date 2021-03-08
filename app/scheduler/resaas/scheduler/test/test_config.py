@@ -36,7 +36,11 @@ VALID_CONFIG_VM = {
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
     },
-    "worker": {"image": "some-docker-image:latest", "ports": [22], "cmd": "ls",},
+    "worker": {
+        "image": "some-docker-image:latest",
+        "ports": [22],
+        "cmd": "ls",
+    },
     "node_type": "LibcloudVM",
     "node_config": VM_NODE_CONFIG,
 }
@@ -48,7 +52,11 @@ VALID_CONFIG_VM_RESAAS_DRIVER = {
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
     },
-    "worker": {"image": "some-docker-image:latest", "ports": [22], "cmd": "ls",},
+    "worker": {
+        "image": "some-docker-image:latest",
+        "ports": [22],
+        "cmd": "ls",
+    },
     "node_type": "LibcloudVM",
     "node_config": VM_NODE_CONFIG_RESAAS_DRIVER,
 }
@@ -61,7 +69,11 @@ CONFIG_INVALID_TYPE = {
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
     },
-    "worker": {"image": "some-docker-image:latest", "ports": [22], "cmd": "ls",},
+    "worker": {
+        "image": "some-docker-image:latest",
+        "ports": [22],
+        "cmd": "ls",
+    },
     "node_type": "DoesNotExist",
     "node_config": VM_NODE_CONFIG,
 }

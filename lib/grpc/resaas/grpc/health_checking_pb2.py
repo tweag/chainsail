@@ -149,7 +149,9 @@ _HEALTHCHECKRESPONSE = _descriptor.Descriptor(
     ],
     extensions=[],
     nested_types=[],
-    enum_types=[_HEALTHCHECKRESPONSE_SERVINGSTATUS,],
+    enum_types=[
+        _HEALTHCHECKRESPONSE_SERVINGSTATUS,
+    ],
     serialized_options=None,
     is_extendable=False,
     syntax="proto3",
