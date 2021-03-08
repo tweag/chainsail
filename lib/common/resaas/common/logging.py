@@ -91,7 +91,7 @@ def configure_controller_logging(
         graphite_handler = GraphiteHTTPHandler(
             url=f"http://{metrics_address}:{remote_logging_port}/events",
             what="log",
-            tags=["log", str(job_id)],
+            tags=["log", f"job{job_id}"],
         )
         graphite_handler.setFormatter(basic_formatter)
         # Use buffering to avoid having to making excessive calls
