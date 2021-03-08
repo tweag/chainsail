@@ -16,7 +16,7 @@ import {
   Container,
   Navbar,
 } from '../components';
-import { GRAPHITE_NEGLOGP_URL } from '../utils/const';
+import { GRAPHITE_NEGLOGP_URL, GRAPHITE_ACCEPTANCE_RATE_URL } from '../utils/const';
 import { dateFormatter } from '../utils/date';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -93,8 +93,7 @@ const AcceptanceRateChart = ({ job }) => {
   if (job && job.id) {
     const jobSpec = JSON.parse(job.spec);
     const jobName = jobSpec.name;
-    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=${jobName}.replica*_replica*.acceptance_rate&format=json`;
-    const { data, error } = useSWR(graphiteUrl, fetcher, {
+    const { data, error } = useSWR(GRAPHITE_ACCEPTANCE_RATE_URL(jobName), fetcher, {
       refreshInterval: 10000,
     });
     const dss =
