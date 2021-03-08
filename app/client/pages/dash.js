@@ -18,6 +18,7 @@ import {
 } from '../components';
 import { GRAPHITE_NEGLOGP_URL, GRAPHITE_ACCEPTANCE_RATE_URL } from '../utils/const';
 import { dateFormatter } from '../utils/date';
+import { useState } from 'react';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
@@ -201,32 +202,25 @@ const JobInfo = ({ jobId }) => {
     const job = data;
     const jobSpec = job.spec ? JSON.parse(job.spec) : {};
     return (
-      <FlexCol className="w-1/3 pt-20">
-        <div className="p-8 mx-20 mb-10 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
-          The plot of the total negative log-probability of all replicas helps to monitor sampling
-          convergence. If it scatters around a fixed value, your target distribution is, given good
-          Replica Exchange acceptance rates, likely to be sampled exhaustively.
-        </div>
-        <FlexCenter className="p-8 mx-20 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
-          <div className="w-full grid grid-cols-2 gap-y-2">
-            <div>Name:</div>
-            <div>{jobSpec.name}</div>
-            <div>Status: </div>
-            <div>{job.status}</div>
-            <div>Created at:</div>
-            <div>{dateFormatter(job.created_at)}</div>
-            <div>Started at:</div>
-            <div>{dateFormatter(job.started_at)}</div>
-            <div>Finished at:</div>
-            <div>{dateFormatter(job.finished_at)}</div>
-            <div className="mt-3 col-span-2">
-              <FlexCenter>
-                <JobButton jobId={job.id} jobStatus={job.status} width="w-full" />
-              </FlexCenter>
-            </div>
+      <FlexCenter className="p-8 mx-20 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+        <div className="w-full grid grid-cols-2 gap-y-2">
+          <div>Name:</div>
+          <div>{jobSpec.name}</div>
+          <div>Status: </div>
+          <div>{job.status}</div>
+          <div>Created at:</div>
+          <div>{dateFormatter(job.created_at)}</div>
+          <div>Started at:</div>
+          <div>{dateFormatter(job.started_at)}</div>
+          <div>Finished at:</div>
+          <div>{dateFormatter(job.finished_at)}</div>
+          <div className="mt-3 col-span-2">
+            <FlexCenter>
+              <JobButton jobId={job.id} jobStatus={job.status} width="w-full" />
+            </FlexCenter>
           </div>
-        </FlexCenter>
-      </FlexCol>
+        </div>
+      </FlexCenter>
     );
   } else {
     return <></>;
@@ -241,6 +235,36 @@ const Dash = ({ authed }) => {
   const jobNotFound = !error && data && !data.id;
   const isLoading = !data;
 
+  // Dropdown
+  const [dropdownIsAcitve, setDropdownIsAcitve] = useState(false);
+  const [simulationRun, setSimulationRun] = useState(undefined);
+
+  const runs = ['run1', 'run2'];
+  const Dropdown = () => (
+    <div className="p-8 mx-20 mt-10 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+      <div
+        className="text-sm cursor-pointer opacity-60 hover:opacity-100 transition duration-300"
+        onClick={() => setDropdownIsAcitve((s) => !s)}
+      >
+        <div>
+          {dropdownIsAcitve ? (
+            <i className="mr-1 fas fa-caret-square-up"></i>
+          ) : (
+            <i className="mr-1 fas fa-caret-square-down"></i>
+          )}
+          Choose a simlation run
+        </div>
+      </div>
+      <div className={`${dropdownIsAcitve ? 'visible' : 'hidden'}`}>
+        {runs.map((r, i) => (
+          <div key={i} onClick={() => setSimulationRun(r)}>
+            {r}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   if (authed)
     return (
       <Layout>
@@ -250,7 +274,16 @@ const Dash = ({ authed }) => {
           </Container>
           {jobFound && (
             <FlexRow className="w-full h-full">
-              <JobInfo jobId={jobId} />
+              <FlexCol className="w-1/3 pt-20">
+                <div className="p-8 mx-20 mb-10 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+                  The plot of the total negative log-probability of all replicas helps to monitor
+                  sampling convergence. If it scatters around a fixed value, your target
+                  distribution is, given good Replica Exchange acceptance rates, likely to be
+                  sampled exhaustively.
+                </div>
+                <JobInfo jobId={jobId} />
+                <Dropdown />
+              </FlexCol>
               <FlexCol between className="w-2/3 p-10">
                 <NegLogPChart job={data} />
                 <AcceptanceRateChart job={data} />
