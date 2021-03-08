@@ -17,6 +17,4 @@ sleep 5
 curl --request POST --header "Content-Type: application/json" --data '{"probability_definition": "gs://foo/bar", "initial_number_of_replicas": "2"}' http://127.0.0.1:5000/job
 curl --request POST http://127.0.0.1:5000/internal/job/1/add_iteration/optimization_run1
 curl --request POST http://127.0.0.1:5000/internal/job/1/add_iteration/optimization_run2
-curl --request POST http://127.0.0.1:5000/internal/job/1/add_iteration/optimization_run3
-curl --request POST http://127.0.0.1:5000/internal/job/1/add_iteration/optimization_run4
 curl --request POST http://127.0.0.1:5000/internal/job/1/add_iteration/production_run
