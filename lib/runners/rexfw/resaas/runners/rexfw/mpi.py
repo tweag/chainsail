@@ -112,10 +112,9 @@ def run_rexfw_mpi(
         logging.info("Attempting to load user-defined pdf and initial state")
         bare_pdf, init_state = import_from_user()
     else:
-        bare_pdf = SafeUserPDF()
-        channel = grpc.insecure_channel(f"{user_code_host}:{user_code_port}")
-        stub = user_code_pb2_grpc.UserCodeStub(channel)
-        initial_state_bytes = stub.InitialState(
+        logging.info("Instantiating safe, wrapped user-defined PDF and getting initial state")
+        bare_pdf = SafeUserPDF(user_code_host, user_code_port)
+        initial_state_bytes = bare_pdf.stub.InitialState(
             user_code_pb2.InitialStateRequest()
         ).initial_state_bytes
         init_state = np.frombuffer(initial_state_bytes)
