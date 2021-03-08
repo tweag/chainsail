@@ -28,8 +28,9 @@ The desired interface for `.env.local` is given in `.env.local.example`.
 
 ### Deployment
 
-Create a `.env.local` file in client directory and feed it with appropriate environment variables
-(see `.env.local.example` for its interface). Then use the `Dockerfile` provided to build an image:
+Create a `.env.local` file in the client directory and feed it with the appropriate environment variables
+(see `.env.local.example` for the interface). Then use the `Dockerfile` provided in the client
+directory to build an image:
 
 ```shell
 $ docker build -t resaas-client:latest .
