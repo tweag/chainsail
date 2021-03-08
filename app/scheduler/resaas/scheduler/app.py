@@ -2,6 +2,7 @@
 Scheduler REST API and endpoint specifications
 """
 from datetime import datetime
+import os
 
 import functools
 from flask import abort, jsonify, request
@@ -19,12 +20,14 @@ config = load_scheduler_config()
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Verify user id token
-        id_token = request.headers["Authorization"].split(" ").pop()
-        claims = verify_id_token(id_token, app=firebase_app)
-        user_id = claims.get("user_id", None)
-        if not claims or not user_id:
-            return "Unauthorized", 401
+        user_id = None
+        # Verify user id token only in production mode
+        if os.environ["PYTHON_ENV"] == "production":
+            id_token = request.headers["Authorization"].split(" ").pop()
+            claims = verify_id_token(id_token, app=firebase_app)
+            user_id = claims.get("user_id", None)
+            if not claims or not user_id:
+                return "Unauthorized", 401
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
         return value
@@ -32,10 +35,15 @@ def check_user(func):
     return wrapper
 
 
-def find_job(job_id, user_id="me"):
-    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
-    if not job:
-        abort(404, "job does not exist for this user")
+def find_job(job_id, user_id):
+    if os.environ["PYTHON_ENV"] == "production":
+        job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
+        if not job:
+            abort(404, "job does not exist for this user")
+    else:
+        job = TblJobs.query.filter_by(id=job_id).first()
+        if not job:
+            abort(404, "job does not exist")
     return job
 
 
