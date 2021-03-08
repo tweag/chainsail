@@ -40,8 +40,10 @@ def check_status(proc: Process) -> ProcessStatus:
     "--job-spec", required=True, type=click.Path(exists=True), help="path to job spec json file"
 )
 @click.option(
-    "--enable-remote-logging/--disable-remote-logging", default=False,
-    help="Enables remote logging to a Graphite server listening at 127.0.0.1:8080 (for development purposes)")
+    "--enable-remote-logging/--disable-remote-logging",
+    default=False,
+    help="Enables remote logging to a Graphite server listening at 127.0.0.1:8080 (for development purposes)",
+)
 def run(basename, job_spec, enable_remote_logging):
     """
     The resaas node controller.
