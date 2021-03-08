@@ -32,7 +32,7 @@ def check_user(func):
     return wrapper
 
 
-def find_job(job_id, user_id):
+def find_job(job_id, user_id="me"):
     job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
     if not job:
         abort(404, "job does not exist for this user")
@@ -122,6 +122,19 @@ def scale_job(job_id, n_replicas, user_id):
     scaled = scaling_task.get()
     if not scaled:
         abort(409, "job is currently being scaled")
+    return ("ok", 200)
+
+
+@app.route("/internal/job/<job_id>/add_iteration/<iteration>", methods=["POST"])
+def add_iteration(job_id, iteration):
+    """Adds an iteration entry to a job's list of controller iterations"""
+    job = find_job(job_id)
+    if job.controller_iterations is None:
+        job.controller_iterations = []
+    # .append(iteration) does not work, probably b/c lists are a mutable data type
+    # or something like that
+    job.controller_iterations = job.controller_iterations + [iteration]
+    db.session.commit()
     return ("ok", 200)
 
 
