@@ -1,10 +1,29 @@
+import os
+
 import numpy as np
 import requests
+
+import multiprocessing
+
+
+def run_server(host, port):
+    import httpstan.app
+    import aiohttp.web
+
+    app = httpstan.app.make_app()
+    aiohttp.web.run_app(app, host=host, port=port)
 
 
 class PDF:
     def __init__(self, model_code, data, port=8082):
         self._port = port
+        server_process = multiprocessing.Process(
+            target=run_server, args=('127.0.0.1', self._port)
+        )
+        server_process.start()
+        # give server process time to start
+        import time
+        time.sleep(5)
         try:
             r = requests.post(
                 f"http://127.0.0.1:{self._port}/v1/models",
@@ -91,5 +110,5 @@ data_points = np.vstack(data_points)
 # compile stan model
 data = {"N": len(data_points), "D": 2, "K": 9, "y": data_points.tolist()}
 
-pdf = PDF(model_code, data, 8082)
+pdf = PDF(model_code, data, os.getpid() + 8100)
 initial_states = np.random.uniform(0, 3, data["D"] * data["K"])
