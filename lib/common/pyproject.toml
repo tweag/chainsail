@@ -16,7 +16,7 @@ cryptography = "^3.4.1"
 # poetry is annoying. We actually need this, but it will then fail with
 # a lib/grpc directory does not exist error. It works without, too,
 # because luckily other components have resaas.grpc as dependency, too.
-# resaas-grpc = { path="../grpc", develop=true }
+resaas-grpc = { path="../grpc", develop=true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
