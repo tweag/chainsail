@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+message LogProbRequest {
+  bytes state_bytes = 1;
+}
+
+message LogProbResponse {
+  float log_prob_result = 1;
+}
+
+message LogProbGradientRequest {
+  bytes state_bytes = 1;
+}
+
+message LogProbGradientResponse {
+  bytes gradient_bytes = 1;
+}
+
+message InitialStateRequest {
+}
+
+message InitialStateResponse {
+  bytes initial_state_bytes = 1;
+}
+
+service UserCode {
+  rpc LogProb(LogProbRequest) returns (LogProbResponse);
+
+  rpc LogProbGradient(LogProbGradientRequest) returns (LogProbGradientResponse);
+
+  rpc InitialState(InitialStateRequest) returns (InitialStateResponse);
+}

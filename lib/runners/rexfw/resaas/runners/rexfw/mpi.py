@@ -3,16 +3,19 @@ MPI-based rexfw runner script. Must be called from within an mpi context.
 """
 import logging
 import sys
-from typing import Tuple
 
 import click
 import mpi4py.rc
 import numpy as np
 from mpi4py import MPI
+import grpc
+
+from resaas.common import import_from_user
 from resaas.common.storage import SimulationStorage, load_storage_config
 from resaas.common.tempering.tempered_distributions import BoltzmannTemperedDistribution
-from resaas.common.pdfs import AbstractPDF
 from resaas.common.samplers import get_sampler
+from resaas.common.pdfs import SafeUserPDF
+from resaas.grpc import user_code_pb2, user_code_pb2_grpc
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
@@ -47,23 +50,6 @@ def ensure_mpi_failure(func):
         sys.excepthook = sys.__excepthook__
 
     return wrapper
-
-
-def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
-    """
-    Imports a user-defined pdf and corresponding initial states from
-    module `probability`.
-    """
-    try:
-        from probability import initial_states, pdf
-    except ImportError as e:
-        logger.exception(
-            "Failed to import user-defined pdf and initial_states. Does "
-            "the `probability` module exist on the PYTHONPATH? "
-            f"PYTHONPATH={sys.path}"
-        )
-        raise e
-    return (pdf, initial_states)
 
 
 @click.command()
@@ -104,16 +90,49 @@ def import_from_user() -> Tuple[AbstractPDF, np.ndarray]:
     type=int,
     help="the metrics logging port",
 )
+@click.option(
+    "--user-code-host",
+    required=True,
+    type=str,
+    help="the hostname for the user code gRPC server",
+)
+@click.option(
+    "--user-code-port",
+    required=True,
+    type=int,
+    help="the port for the user code gRPC server",
+)
 @ensure_mpi_failure
-def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_port):
+def run_rexfw_mpi(
+    basename,
+    path,
+    storage_config,
+    name,
+    metrics_host,
+    metrics_port,
+    user_code_host,
+    user_code_port,
+):
     rank = mpicomm.Get_rank()
     size = mpicomm.Get_size()
 
     # Number of replicas is inferred from the MPI environment
     n_replicas = size - 1
 
-    logging.info("Attempting to load user-defined pdf and initial state")
-    bare_pdf, init_state = import_from_user()
+    # TODO: find better way to determine whether the runner is deployed locally
+    # or on the cloud
+    is_local_run = name.split(".")[0] == "local"
+
+    if is_local_run:
+        logging.info("Attempting to load user-defined pdf and initial state")
+        bare_pdf, init_state = import_from_user()
+    else:
+        logging.info("Instantiating safe, wrapped user-defined PDF and getting initial state")
+        bare_pdf = SafeUserPDF(user_code_host, user_code_port)
+        initial_state_bytes = bare_pdf.stub.InitialState(
+            user_code_pb2.InitialStateRequest()
+        ).initial_state_bytes
+        init_state = np.frombuffer(initial_state_bytes)
 
     # this is where all simulation input data & output (samples, statistics files,
     # etc.) are stored
@@ -134,7 +153,7 @@ def run_rexfw_mpi(basename, path, storage_config, name, metrics_host, metrics_po
 
         # sets up a default RE master object; should be sufficient for all
         # practical purposes
-        if name.split(".")[0] == "local":
+        if is_local_run:
             graphite_params = None
         else:
             graphite_params = {
