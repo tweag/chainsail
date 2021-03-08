@@ -120,7 +120,7 @@ def run_rexfw_mpi(
 
     # TODO: find better way to determine whether the runner is deployed locally
     # or on the cloud
-    is_local_run = name.split(".")[0] == "local"
+    is_local_run = name.split(".")[0] == "job-1"
 
     if is_local_run:
         logging.info("Attempting to load user-defined pdf and initial state")
