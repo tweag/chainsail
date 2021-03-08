@@ -54,6 +54,7 @@ class GraphiteHTTPHandler(logging.Handler):
 
 def configure_controller_logging(
     log_level,
+    job_id,
     remote_logging,
     metrics_address,
     remote_logging_port,
@@ -65,6 +66,7 @@ def configure_controller_logging(
 
     Args:
         log_level (str): log level
+        job_id (int): job id
         remote_logging (bool): whether to enable remote logging
         metrics_address (str): IP address / hostname of remote logging server
         remote_logging_port (int): port on which remote logging server is listening
@@ -89,7 +91,7 @@ def configure_controller_logging(
         graphite_handler = GraphiteHTTPHandler(
             url=f"http://{metrics_address}:{remote_logging_port}/events",
             what="log",
-            tags=["log"],
+            tags=["log", f"job{job_id}"],
         )
         graphite_handler.setFormatter(basic_formatter)
         # Use buffering to avoid having to making excessive calls

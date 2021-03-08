@@ -89,6 +89,7 @@ def run(job, config, storage, hostsfile, job_spec):
     # Configure logging
     configure_controller_logging(
         config.log_level,
+        job,
         config.remote_logging,
         config.metrics_address,
         config.remote_logging_port,
