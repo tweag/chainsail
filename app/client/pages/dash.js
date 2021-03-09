@@ -180,9 +180,8 @@ const Logs = () => {
         <div className="mb-5">
           <AnimatedPing color="green-400" />
         </div>
-        {(data && !error ? data : []).map((log, i) => (
+        {(data && !error ? data : []).reverse().map((log, i) => (
           <div key={i} className="my-3 break-words">
-            <div className="mb-1">{dateFormatter(log.when)}</div>
             <div className="text-xs">{log.data}</div>
           </div>
         ))}
