@@ -16,7 +16,7 @@ import {
   Container,
   Navbar,
 } from '../components';
-import { GRAPHITE_NEGLOGP_URL, GRAPHITE_ACCEPTANCE_RATE_URL } from '../utils/const';
+import { GRAPHITE_NEGLOGP_URL, GRAPHITE_ACCEPTANCE_RATE_URL, GRAPHITE_LOGS } from '../utils/const';
 import { dateFormatter } from '../utils/date';
 import { useState } from 'react';
 
@@ -171,20 +171,20 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
 };
 
 const Logs = () => {
-  //const logsUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/events/get_data?tags=log&from=-3hours&until=now`;
-  //const { logs, errorLogs } = useSWR(logsUrl, fetcher, {
-  //  refreshInterval: 10000,
-  //});
-  const logs = ['SDFSDFSFS', 'sDFSDFSDFSDF'];
+  const { data, error } = useSWR(GRAPHITE_LOGS, fetcher, {
+    refreshInterval: 10000,
+  });
   return (
     <FlexCenter className="py-5 h-1/2">
       <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl">
         <div className="mb-5">
           <AnimatedPing color="green-400" />
         </div>
-        {logs.map((log, i) => (
-          <div key={i} className="break-words">
-            {log}
+        {(data && !error ? data : []).map((log, i) => (
+          <div key={i} className="my-3 break-words">
+            {dateFormatter(log.when)}
+
+            {log.data}
           </div>
         ))}
       </div>
