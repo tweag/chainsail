@@ -26,15 +26,19 @@ for the login to work properly. Firebase admin configuration information should 
 `firebase-admin-secrets.json` and client configuration in `.env.local`.
 The desired interface for `.env.local` is given in `.env.local.example`.
 
-### Learn More
+### Deployment
 
-To learn more about Next.js, take a look at the following resources:
+Create a `.env.local` file in the client directory and feed it with the appropriate environment variables
+(see `.env.local.example` for the interface). Then use the `Dockerfile` provided in the client
+directory to build an image:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```shell
+$ docker build -t resaas-client:latest .
+```
 
-### Deploy on Vercel
+To run the docker image make sure to fill `next.config.js` file with firebase secrets and mirror it
+to the appropriate path as follows:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/import?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```shell
+$ docker run -v $PWD/next.config.js:/opt/app/next.config.js -p 3000:3000 resaas-client:latest
+```
