@@ -110,7 +110,7 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
         : [];
     const giveReplicaLabel = (target) =>
       target
-        .split('.')[1]
+        .split('.')[2]
         .split('_')
         .map((r) => r.replace('replica', ''))
         .join('<>');
