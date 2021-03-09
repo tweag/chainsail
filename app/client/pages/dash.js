@@ -4,6 +4,7 @@ import nookies from 'nookies';
 import useSWR from 'swr';
 import moment from 'moment';
 import { Line } from '@reactchartjs/react-chart.js';
+import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
 import {
@@ -180,8 +181,8 @@ const Logs = () => {
         <div className="mb-5">
           <AnimatedPing color="green-400" />
         </div>
-        {(data && !error ? data : []).reverse().map((log, i) => (
-          <div key={i} className="my-3 break-words">
+        {(data && !error ? data : []).map((log) => (
+          <div key={uuidv4()} className="my-3 break-words">
             <div className="text-sm">{log.data}</div>
           </div>
         ))}
@@ -256,9 +257,9 @@ const Dash = ({ authed }) => {
           dropdownIsAcitve ? 'visible' : 'hidden h-0'
         } fixed bg-gray-800 bg-opacity-50 mt-1 transition-all duration-300 w-48`}
       >
-        {runs.map((r, i) => (
+        {runs.map((r) => (
           <div
-            key={i}
+            key={uuidv4()}
             onClick={() => {
               setSimulationRun(r);
               setDropdownIsAcitve(false);
