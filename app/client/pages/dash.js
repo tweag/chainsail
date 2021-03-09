@@ -264,7 +264,7 @@ const Dash = ({ authed }) => {
               setSimulationRun(r);
               setDropdownIsAcitve(false);
             }}
-            className="px-4 py-2 cursor-pointer hover:opacity-70 transition duration-300 hover:bg-purple-700"
+            className="px-4 py-2 cursor-pointer transition duration-300 hover:bg-purple-700"
           >
             {r}
           </div>
