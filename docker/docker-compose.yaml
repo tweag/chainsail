@@ -48,6 +48,15 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - SQLALCHEMY_DATABASE_URI=postgresql://postgres:resaas-dev@postgres:5432/postgres
       - RESAAS_SCHEDULER_CONFIG=/config/scheduler.yaml
+    depends_on: [postgres, celery-worker, redis, graphite]
+  nginx:
+    image: "resaas-nginx:latest"
+    ports:
+      - "80:80"
+    links:
+      - scheduler
+    depends_on:
+      - scheduler
   graphite:
     image: "graphiteapp/graphite-statsd"
     restart: "always"
