@@ -182,7 +182,7 @@ const Logs = () => {
         </div>
         {(data && !error ? data : []).reverse().map((log, i) => (
           <div key={i} className="my-3 break-words">
-            <div className="text-xs">{log.data}</div>
+            <div className="text-sm">{log.data}</div>
           </div>
         ))}
       </div>
