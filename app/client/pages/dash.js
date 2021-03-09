@@ -237,7 +237,7 @@ const Dash = ({ authed }) => {
           ) : (
             <i className="mr-1 fas fa-caret-square-down"></i>
           )}
-          Choose a simlation run
+          {simulationRun ? `Simulation run: ${simulationRun}` : 'Choose a simulation run'}
         </div>
       </div>
       <div
