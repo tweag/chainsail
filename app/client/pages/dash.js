@@ -178,11 +178,20 @@ const Logs = () => {
   return (
     <FlexCenter className="py-5 h-1/2">
       <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl">
-        {(data && !error ? data : []).map((log) => (
-          <div key={uuidv4()} className="my-3 break-words">
-            <div className="text-sm">{log.data}</div>
-          </div>
-        ))}
+        {(data && !error ? data : [])
+          .sort((a, b) => {
+            try {
+              if (a.when > b.when) return -1;
+              else return 1;
+            } catch (err) {
+              return -1;
+            }
+          })
+          .map((log) => (
+            <div key={uuidv4()} className="my-3 break-words">
+              <div className="text-sm">{log.data}</div>
+            </div>
+          ))}
       </div>
     </FlexCenter>
   );
