@@ -178,9 +178,6 @@ const Logs = () => {
   return (
     <FlexCenter className="py-5 h-1/2">
       <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl">
-        <div className="mb-5">
-          <AnimatedPing color="green-400" />
-        </div>
         {(data && !error ? data : []).map((log) => (
           <div key={uuidv4()} className="my-3 break-words">
             <div className="text-sm">{log.data}</div>
