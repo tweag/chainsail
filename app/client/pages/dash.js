@@ -10,7 +10,7 @@ import { verifyIdToken } from '../utils/firebaseAdmin';
 import { Layout, FlexCol, FlexCenter, FlexRow, JobButton, Container, Navbar } from '../components';
 import { GRAPHITE_NEGLOGP_URL, GRAPHITE_ACCEPTANCE_RATE_URL, GRAPHITE_LOGS } from '../utils/const';
 import { dateFormatter } from '../utils/date';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
@@ -163,12 +163,16 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
 };
 
 const Logs = () => {
+  useEffect(() => {
+    var element = document.getElementById('logs');
+    element.scrollTop = element.scrollHeight;
+  });
   const { data, error } = useSWR(GRAPHITE_LOGS, fetcher, {
     refreshInterval: 10000,
   });
   return (
     <FlexCenter className="py-5 h-1/2">
-      <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl">
+      <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl" id="logs">
         {(data && !error ? data : []).map((log) => (
           <div key={uuidv4()} className="my-3 break-words">
             <div className="text-sm">{log.data}</div>
