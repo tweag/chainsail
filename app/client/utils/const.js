@@ -1,5 +1,5 @@
 // Scheduler endpoints
-export const SCHEDULER_URL = process.env.FLASK_URL || 'http://127.0.0.1:5000';
+export const SCHEDULER_URL = process.env.SCHEDULER_URL || 'http://127.0.0.1:5000';
 export const JOB_CREATION_URL = `${SCHEDULER_URL}/job`;
 export const JOB_START_URL = (jobId) => `${SCHEDULER_URL}/job/${jobId}/start`;
 export const JOB_STOP_URL = (jobId) => `${SCHEDULER_URL}/job/${jobId}/stop`;
