@@ -35,3 +35,10 @@ directory to build an image:
 ```shell
 $ docker build -t resaas-client:latest .
 ```
+
+To run the docker image make sure to fill `next.config.js` file with firebase secrets and mirror it
+to the appropriate path as follows:
+
+```shell
+$ docker run -v $pwd/next.config.js:/opt/app/next.js.config -p 3000:3000 resaas-client:latest
+```
