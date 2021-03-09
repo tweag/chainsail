@@ -13,7 +13,7 @@ WORKDIR /app
 FROM base as system-deps
 
 RUN apt-get update && \
-    apt-get install -y curl wget unzip openssh-client openssh-server nginx && \
+    apt-get install -y curl wget unzip nginx && \
     rm -rf /var/lib/apt/lists/*
 
 
