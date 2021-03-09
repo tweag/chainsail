@@ -1,5 +1,5 @@
 controller:
-  image: eu.gcr.io/cloud-platform-learning-dh/resaas-controller:dev17
+  image: TODO
   cmd: resaas-controller
   args:
     - --job
@@ -15,7 +15,7 @@ controller:
   ports: [50051, 26]
 
 worker:
-  image: eu.gcr.io/cloud-platform-learning-dh/resaas-controller:dev17
+  image: TODO
   cmd: /usr/sbin/sshd
   args:
     - -D
@@ -25,21 +25,21 @@ node_type: LibcloudVM
 
 node_config:
   # Custom resaas-dev-node image
-  vm_image_id: "6581594611843370864"
+  vm_image_id: "TODO"
   vm_size: "e2-standard-2"
   # User is same as one defined in instance metadata below
   ssh_user: ubuntu
-  ssh_public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCnEsQk2O0MLZpk3zGOXfdxkmPW9T68lLm74qHU1y/b1Cir6cmRBUMCX3mSrLrqtwUEHvOfmj4QT8fVpwF1JamRGUUNFwa8+Re/dCKwh6qwUaH2c0b4oVyggqNPvZbC7+o/TA0XpVT+isFXiW5Z1wBLWvO6RlCzsjCdl8k+L45BtvgNVE2TROaXDtnizL4Bs6lwG0a3h/6q/ck4S9QOvWLxQrah3o6hrXUf5Wd9S8oquwN5bHdwPes84+mKr2wXFiToZJMVUN8X0pdIZd1DnF1nDr4FDlKgn0/lUjOozcyyVU7L3sl3kKslx3ZmMPowdNTcn9xIEtASHL05kJkSvDcD resaasDevKeyDorran"
-  ssh_private_key_path: /home/dorran/dorran-resaas-pair.pem
-  storage_config_path: /home/dorran/resaas/storage.yaml
-  controller_config_path: /home/dorran/resaas/controller.yaml
+  ssh_public_key: "ssh-rsa ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxrjgZC7qz7Ern5I2S80u1kN+GY2y+WShfcJ/ZLjFH0MHRrK1pOtzz1BoCxje+sMTzOb/rXyxDUe2jGmBvVcifelO2MblXOBlCBRwwuACv3ChqOfu3Kjgpgn12am3hxyp1xAScbFlzG5/bF6ggx0T4QxBcJVwa1gwnVjaZnXikg36amMAMpUScN2Irl8XLPJgvM+jyV69YxsENuUszLKcuVKbgoWC6NBArbD2l3mUGOrmdGuF8vBts4VrwcpEmvAufwrtg+pz5Bsh5XqVYi+WVcXp83JhHMJHFN2QoNLUNf8qBU7gdFRG/ISa3AGICjOiOC+SE8CRgsiOwkXqvaCoeNAuIWNRP57rzezW9B09CfgsKUN9OafDz+pFdaDoM1a2Qa997YuXbxLvVnoSY81nd+thC+ugm3rHLvx+8VG65aP0Og2h0LcGkTCHGqYi6/3o2wcie5yGuxiRAU4jeQrz4JhgBLw6N/e2xvdtuq+bcp0QLPVxvMLvZN/MS09iY9fU= unsafeDevKey"
+  ssh_private_key_path: /config/unsafe_private_key.pem
+  storage_config_path: /config/storage.yaml
+  controller_config_path: /config/controller.yaml
 
   libcloud_provider: GCE
 
   libcloud_driver_inputs:
-    user_id: resaas-dev@cloud-platform-learning-dh.iam.gserviceaccount.com
-    key: /home/dorran/cloud-platform-learning-dh-bf48dce76d1b.json
-    project: cloud-platform-learning-dh
+    user_id: TODO@TODO.iam.gserviceaccount.com
+    key: /config/service_account_key.json
+    project: TODO
     auth_type: SA
     datacenter: europe-west1-b
 
@@ -51,7 +51,7 @@ node_config:
       items:
         - {
             "key": "ssh-keys",
-            "value": "ubuntu: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCnEsQk2O0MLZpk3zGOXfdxkmPW9T68lLm74qHU1y/b1Cir6cmRBUMCX3mSrLrqtwUEHvOfmj4QT8fVpwF1JamRGUUNFwa8+Re/dCKwh6qwUaH2c0b4oVyggqNPvZbC7+o/TA0XpVT+isFXiW5Z1wBLWvO6RlCzsjCdl8k+L45BtvgNVE2TROaXDtnizL4Bs6lwG0a3h/6q/ck4S9QOvWLxQrah3o6hrXUf5Wd9S8oquwN5bHdwPes84+mKr2wXFiToZJMVUN8X0pdIZd1DnF1nDr4FDlKgn0/lUjOozcyyVU7L3sl3kKslx3ZmMPowdNTcn9xIEtASHL05kJkSvDcD resaasDevKeyDorran",
+            "value": "ubuntu: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxrjgZC7qz7Ern5I2S80u1kN+GY2y+WShfcJ/ZLjFH0MHRrK1pOtzz1BoCxje+sMTzOb/rXyxDUe2jGmBvVcifelO2MblXOBlCBRwwuACv3ChqOfu3Kjgpgn12am3hxyp1xAScbFlzG5/bF6ggx0T4QxBcJVwa1gwnVjaZnXikg36amMAMpUScN2Irl8XLPJgvM+jyV69YxsENuUszLKcuVKbgoWC6NBArbD2l3mUGOrmdGuF8vBts4VrwcpEmvAufwrtg+pz5Bsh5XqVYi+WVcXp83JhHMJHFN2QoNLUNf8qBU7gdFRG/ISa3AGICjOiOC+SE8CRgsiOwkXqvaCoeNAuIWNRP57rzezW9B09CfgsKUN9OafDz+pFdaDoM1a2Qa997YuXbxLvVnoSY81nd+thC+ugm3rHLvx+8VG65aP0Og2h0LcGkTCHGqYi6/3o2wcie5yGuxiRAU4jeQrz4JhgBLw6N/e2xvdtuq+bcp0QLPVxvMLvZN/MS09iY9fU= unsafeDevKey",
           }
     ex_service_accounts:
       - { "email": "default", "scopes": ["cloud-platform"] }
