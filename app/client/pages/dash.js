@@ -7,16 +7,7 @@ import { Line } from '@reactchartjs/react-chart.js';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
-import {
-  AnimatedPing,
-  Layout,
-  FlexCol,
-  FlexCenter,
-  FlexRow,
-  JobButton,
-  Container,
-  Navbar,
-} from '../components';
+import { Layout, FlexCol, FlexCenter, FlexRow, JobButton, Container, Navbar } from '../components';
 import { GRAPHITE_NEGLOGP_URL, GRAPHITE_ACCEPTANCE_RATE_URL, GRAPHITE_LOGS } from '../utils/const';
 import { dateFormatter } from '../utils/date';
 import { useState } from 'react';
