@@ -1,5 +1,8 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('../firebase-admin-secrets.json');
+import getConfig from 'next/config';
+import admin from 'firebase-admin';
+
+const { serverRuntimeConfig } = getConfig();
+const serviceAccount = serverRuntimeConfig.firebaseAdminSecrets;
 
 export const verifyIdToken = (token) => {
   if (!admin.apps.length) {
