@@ -40,5 +40,5 @@ To run the docker image make sure to fill `next.config.js` file with firebase se
 to the appropriate path as follows:
 
 ```shell
-$ docker run -v $PWD/next.config.js:/opt/app/next.js.config -p 3000:3000 resaas-client:latest
+$ docker run -v $PWD/next.config.js:/opt/app/next.config.js -p 3000:3000 resaas-client:latest
 ```
