@@ -182,9 +182,8 @@ const Logs = () => {
         </div>
         {(data && !error ? data : []).map((log, i) => (
           <div key={i} className="my-3 break-words">
-            {dateFormatter(log.when)}
-
-            {log.data}
+            <div className="mb-1">{dateFormatter(log.when)}</div>
+            <div className="text-xs">{log.data}</div>
           </div>
         ))}
       </div>
