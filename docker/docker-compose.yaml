@@ -66,6 +66,18 @@ services:
       - "2023-2024:2023-2024"
       - "8125:8125/udp"
       - "8126:8126"
+  client:
+    image: "resaas-client:latest"
+    volumes:
+      - /home/simeon/projects/resaas/app/client/next.config.js:/opt/app/next.config.js
+    ports:
+      - "3000:3000"
+    environment:
+      - GRAPHITE_PORT=8080
+      - GRAPHITE_URL=http://graphite:8080
+      - FLASK_PORT=5000
+      - FLASK_URL=http://scheduler:5000
+    depends_on: [scheduler, graphite]
 volumes:
   redis:
   postgres:
