@@ -2,6 +2,7 @@
 Scheduler REST API and endpoint specifications
 """
 from datetime import datetime
+import os
 
 import functools
 from flask import abort, jsonify, request
@@ -16,14 +17,27 @@ from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task
 config = load_scheduler_config()
 
 
+def _is_dev_mode():
+    try:
+        is_dev = os.environ["PYTHON_ENV"] == "development" or os.environ["PYTHON_ENV"] == "dev"
+        return is_dev
+    except:
+        return False
+
+
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Verify user id token
-        id_token = request.headers["Authorization"].split(" ").pop()
-        claims = verify_id_token(id_token, app=firebase_app)
-        user_id = claims.get("user_id", None)
-        if not claims or not user_id:
+        try:
+            id_token = request.headers["Authorization"].split(" ").pop()
+            claims = verify_id_token(id_token, app=firebase_app)
+            user_id = claims.get("user_id", None)
+        except:
+            user_id = None
+            claims = None
+        user_not_found = not claims or not user_id
+        # Verify user id token in non dev mode
+        if (not _is_dev_mode()) and user_not_found:
             return "Unauthorized", 401
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
@@ -32,10 +46,15 @@ def check_user(func):
     return wrapper
 
 
-def find_job(job_id, user_id="me"):
-    job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
-    if not job:
-        abort(404, "job does not exist for this user")
+def find_job(job_id, user_id):
+    if not _is_dev_mode():
+        job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
+        if not job:
+            abort(404, "job does not exist for this user")
+    else:
+        job = TblJobs.query.filter_by(id=job_id).first()
+        if not job:
+            abort(404, "job does not exist")
     return job
 
 
@@ -100,7 +119,10 @@ def stop_job(job_id, user_id):
 @check_user
 def get_jobs(user_id):
     """List all jobs"""
-    jobs = TblJobs.query.filter_by(user_id=user_id)
+    if not _is_dev_mode():
+        jobs = TblJobs.query.filter_by(user_id=user_id)
+    else:
+        jobs = TblJobs.query.all()
     return JobViewSchema().jsonify(jobs, many=True)
 
 
@@ -140,5 +162,7 @@ def add_iteration(job_id, iteration):
 
 if __name__ == "__main__":
     # Development server
+    if _is_dev_mode():
+        print("dev mode: user authentication switched off")
     db.create_all()
     app.run("0.0.0.0", debug=True)
