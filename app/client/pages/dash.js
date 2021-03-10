@@ -8,7 +8,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
 import { Layout, FlexCol, FlexCenter, FlexRow, JobButton, Container, Navbar } from '../components';
-import { GRAPHITE_NEGLOGP_URL, GRAPHITE_ACCEPTANCE_RATE_URL, GRAPHITE_LOGS } from '../utils/const';
+import {
+  GRAPHITE_NEGLOGP_URL,
+  GRAPHITE_ACCEPTANCE_RATE_URL,
+  GRAPHITE_LOGS_URL,
+} from '../utils/const';
 import { dateFormatter } from '../utils/date';
 import { useEffect, useState } from 'react';
 
@@ -167,7 +171,7 @@ const Logs = () => {
     var element = document.getElementById('logs');
     element.scrollTop = element.scrollHeight;
   });
-  const { data, error } = useSWR(GRAPHITE_LOGS, fetcher, {
+  const { data, error } = useSWR(GRAPHITE_LOGS_URL, fetcher, {
     refreshInterval: 10000,
   });
   return (
