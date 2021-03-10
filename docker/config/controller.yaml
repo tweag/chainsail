@@ -1,0 +1,8 @@
+scheduler_address: scheduler
+scheduler_port: 5000
+metrics_address: graphite
+metrics_port: 2004
+runner: "resaas.runners.rexfw:MPIRERunner"
+storage_basename: "/storage"
+log_level: DEBUG
+remote_logging_port: 8080
