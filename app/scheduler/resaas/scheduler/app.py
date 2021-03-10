@@ -24,14 +24,17 @@ def _is_prod_mode():
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        user_id = None
         # Verify user id token only in production mode
-        if _is_prod_mode():
+        try:
             id_token = request.headers["Authorization"].split(" ").pop()
             claims = verify_id_token(id_token, app=firebase_app)
             user_id = claims.get("user_id", None)
-            if not claims or not user_id:
-                return "Unauthorized", 401
+        except:
+            user_id = None
+            claims = None
+        user_not_found = not claims or not user_id
+        if _is_prod_mode() and user_not_found:
+            return "Unauthorized", 401
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
         return value
@@ -41,6 +44,10 @@ def check_user(func):
 
 def find_job(job_id, user_id):
     if _is_prod_mode():
+        job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
+        if not job:
+            abort(404, "job does not exist for this user")
+    elif user_id:
         job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
         if not job:
             abort(404, "job does not exist for this user")
