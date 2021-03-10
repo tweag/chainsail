@@ -7,5 +7,5 @@ backend_config:
     driver_kwargs:
       key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       secret: XXXXXXXXXXXXXXXXXXXXXXXXXXXX
-      project: XXXXXXXXXXXXX
+      project: resaas-simeon-dev
 

@@ -25,7 +25,7 @@ node_type: LibcloudVM
 
 node_config:
   # Custom resaas-dev-node image
-  vm_image_id: "TODO"
+  vm_image_id: "8373025462420862349"
   vm_size: "e2-standard-2"
   # User is same as one defined in instance metadata below
   ssh_user: ubuntu
@@ -37,9 +37,9 @@ node_config:
   libcloud_provider: GCE
 
   libcloud_driver_inputs:
-    user_id: TODO@TODO.iam.gserviceaccount.com
+    user_id: resaas-gce@resaas-simeon-dev.iam.gserviceaccount.com
     key: /config/service_account_key.json
-    project: TODO
+    project: resaas-simeon-dev
     auth_type: SA
     datacenter: europe-west1-b
 
