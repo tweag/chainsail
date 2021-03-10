@@ -13,7 +13,7 @@ WORKDIR /app
 FROM base as system-deps
 
 RUN apt-get update && \
-    apt-get install -y curl wget unzip && \
+    apt-get install -y curl wget unzip libncurses5-dev libncursesw5-dev && \
     rm -rf /var/lib/apt/lists/*
 
 
@@ -38,8 +38,7 @@ COPY ./app/scheduler /app/app/scheduler
 RUN cd /app/app/scheduler && \
     poetry config virtualenvs.in-project true && \
     poetry run pip install --upgrade pip && \
-    poetry install --no-dev && \
-    poetry run pip install uwsgi
+    poetry install --no-dev
 
 
 ##############################################################################

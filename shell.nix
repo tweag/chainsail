@@ -40,5 +40,6 @@ in
       docker-compose
       openmpi
       python38Packages.tkinter
+      ncurses
     ];
   }
