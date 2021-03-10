@@ -17,12 +17,16 @@ from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task
 config = load_scheduler_config()
 
 
+def _is_prod_mode():
+    return os.environ["PYTHON_ENV"] == "production" or os.environ["PYTHON_ENV"] == "prod"
+
+
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         user_id = None
         # Verify user id token only in production mode
-        if os.environ["PYTHON_ENV"] == "production":
+        if _is_prod_mode():
             id_token = request.headers["Authorization"].split(" ").pop()
             claims = verify_id_token(id_token, app=firebase_app)
             user_id = claims.get("user_id", None)
@@ -36,7 +40,7 @@ def check_user(func):
 
 
 def find_job(job_id, user_id):
-    if os.environ["PYTHON_ENV"] == "production":
+    if _is_prod_mode():
         job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
         if not job:
             abort(404, "job does not exist for this user")
