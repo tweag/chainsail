@@ -5,7 +5,7 @@ backend_config:
     libcloud_provider: GOOGLE_STORAGE
     container_name: "resaas-dev"
     driver_kwargs:
-      key: GOOG1EQKNST6GFS2JXGVAHFIVUKDJOZB526QERWOVVK3WEXJCXXYINOARXRZY
-      secret: sl9aqJqMYKhhD419N8FVMY7WmNDtzRV31SeOUC1K
-      project: cloud-platform-learning-dh
+      key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      secret: XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      project: XXXXXXXXXXXXX
 
