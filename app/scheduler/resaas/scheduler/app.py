@@ -28,7 +28,6 @@ def _is_dev_mode():
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Verify user id token only in production mode
         try:
             id_token = request.headers["Authorization"].split(" ").pop()
             claims = verify_id_token(id_token, app=firebase_app)
@@ -37,6 +36,7 @@ def check_user(func):
             user_id = None
             claims = None
         user_not_found = not claims or not user_id
+        # Verify user id token in non dev mode
         if (not _is_dev_mode()) and user_not_found:
             return "Unauthorized", 401
         kwargs.update(user_id=user_id)
