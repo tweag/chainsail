@@ -119,7 +119,10 @@ def stop_job(job_id, user_id):
 @check_user
 def get_jobs(user_id):
     """List all jobs"""
-    jobs = TblJobs.query.filter_by(user_id=user_id)
+    if not _is_dev_mode():
+        jobs = TblJobs.query.filter_by(user_id=user_id)
+    else:
+        jobs = TblJobs.query.all()
     return JobViewSchema().jsonify(jobs, many=True)
 
 
@@ -159,5 +162,7 @@ def add_iteration(job_id, iteration):
 
 if __name__ == "__main__":
     # Development server
+    if _is_dev_mode():
+        print("The server is in dev mode")
     db.create_all()
     app.run("0.0.0.0", debug=True)
