@@ -163,6 +163,6 @@ def add_iteration(job_id, iteration):
 if __name__ == "__main__":
     # Development server
     if _is_dev_mode():
-        print("The server is in dev mode")
+        print("dev mode: user authentication switched off")
     db.create_all()
     app.run("0.0.0.0", debug=True)
