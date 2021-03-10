@@ -54,8 +54,6 @@ services:
     image: "resaas-nginx:latest"
     ports:
       - "80:80"
-    links:
-      - scheduler
     depends_on:
       - scheduler
   graphite:
@@ -76,9 +74,9 @@ services:
     environment:
       - GRAPHITE_PORT=8080
       - GRAPHITE_URL=http://graphite:8080
-      - FLASK_PORT=5001
-      - FLASK_URL=http://scheduler:5001
-    depends_on: [scheduler, graphite]
+      - FLASK_PORT=80
+      - FLASK_URL=http://nginx:80
+    depends_on: [scheduler, graphite, nginx]
 volumes:
   redis:
   postgres:

@@ -54,5 +54,4 @@ ENV PATH=/app/app/scheduler/.venv/bin:$PATH
 
 EXPOSE 5001
 
-# TODO: use supervisord?
 CMD uwsgi --ini /app/app/scheduler/resaas/scheduler/app.ini --need-app --uid $(id -u www-data) --gid $(id -u www-data)
