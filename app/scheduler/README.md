@@ -51,8 +51,11 @@ are in a nix-shell environment.
       CELERY_RESULT_BACKEND="redis://localhost:6379/1" \
       SQLALCHEMY_DATABASE_URI="postgresql://postgres:resaas-dev@localhost:5432/postgres" \
       RESAAS_SCHEDULER_CONFIG="$PWD/app/scheduler/example/scheduler.yaml" \
+      PYTHON_ENV=dev \
           python -m 'resaas.scheduler.app'
     ```
+
+    Make sure to drop `PYTHON_ENV=dev` for production.
 
 With that you can start making requests, for example:
 
