@@ -73,7 +73,7 @@ services:
       - "3000:3000"
     environment:
       - GRAPHITE_URL=http://graphite:8080
-      - FLASK_URL=http://nginx:80
+      - SCHEDULER_URL=http://nginx:80
     depends_on: [scheduler, graphite, nginx]
 volumes:
   redis:
