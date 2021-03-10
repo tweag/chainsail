@@ -4,29 +4,24 @@ import nookies from 'nookies';
 import useSWR from 'swr';
 import moment from 'moment';
 import { Line } from '@reactchartjs/react-chart.js';
+import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
+import { Layout, FlexCol, FlexCenter, FlexRow, JobButton, Container, Navbar } from '../components';
 import {
-  AnimatedPing,
-  Layout,
-  FlexCol,
-  FlexCenter,
-  FlexRow,
-  JobButton,
-  Container,
-  Navbar,
-} from '../components';
-import { GRAPHITE_URL, GRAPHITE_PORT } from '../utils/const';
+  GRAPHITE_NEGLOGP_URL,
+  GRAPHITE_ACCEPTANCE_RATE_URL,
+  GRAPHITE_LOGS_URL,
+} from '../utils/const';
 import { dateFormatter } from '../utils/date';
+import { useEffect, useState } from 'react';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
-const NegLogPChart = ({ job }) => {
+const NegLogPChart = ({ job, simulationRun }) => {
   if (job && job.id) {
-    const jobSpec = JSON.parse(job.spec);
-    const jobName = jobSpec.name;
-    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=aggregate(${jobName}.*.negative_log_prob,'sum')&format=json&from=-5min`;
-    const { data, error } = useSWR(graphiteUrl, fetcher, {
+    const jobId = job.id;
+    const { data, error } = useSWR(GRAPHITE_NEGLOGP_URL(jobId, simulationRun), fetcher, {
       refreshInterval: 10000,
     });
     const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
@@ -90,12 +85,10 @@ const NegLogPChart = ({ job }) => {
   }
 };
 
-const AcceptanceRateChart = ({ job }) => {
+const AcceptanceRateChart = ({ job, simulationRun }) => {
   if (job && job.id) {
-    const jobSpec = JSON.parse(job.spec);
-    const jobName = jobSpec.name;
-    const graphiteUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/render?target=${jobName}.replica*_replica*.acceptance_rate&format=json`;
-    const { data, error } = useSWR(graphiteUrl, fetcher, {
+    const jobId = job.id;
+    const { data, error } = useSWR(GRAPHITE_ACCEPTANCE_RATE_URL(jobId, simulationRun), fetcher, {
       refreshInterval: 10000,
     });
     const dss =
@@ -113,7 +106,7 @@ const AcceptanceRateChart = ({ job }) => {
         : [];
     const giveReplicaLabel = (target) =>
       target
-        .split('.')[1]
+        .split('.')[2]
         .split('_')
         .map((r) => r.replace('replica', ''))
         .join('<>');
@@ -174,20 +167,19 @@ const AcceptanceRateChart = ({ job }) => {
 };
 
 const Logs = () => {
-  //const logsUrl = `${GRAPHITE_URL}:${GRAPHITE_PORT}/events/get_data?tags=log&from=-3hours&until=now`;
-  //const { logs, errorLogs } = useSWR(logsUrl, fetcher, {
-  //  refreshInterval: 10000,
-  //});
-  const logs = ['SDFSDFSFS', 'sDFSDFSDFSDF'];
+  useEffect(() => {
+    var element = document.getElementById('logs');
+    element.scrollTop = element.scrollHeight;
+  });
+  const { data, error } = useSWR(GRAPHITE_LOGS_URL, fetcher, {
+    refreshInterval: 10000,
+  });
   return (
     <FlexCenter className="py-5 h-1/2">
-      <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl">
-        <div className="mb-5">
-          <AnimatedPing color="green-400" />
-        </div>
-        {logs.map((log, i) => (
-          <div key={i} className="break-words">
-            {log}
+      <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl" id="logs">
+        {(data && !error ? data : []).map((log) => (
+          <div key={uuidv4()} className="my-3 break-words">
+            <div className="text-sm">{log.data}</div>
           </div>
         ))}
       </div>
@@ -203,32 +195,25 @@ const JobInfo = ({ jobId }) => {
     const job = data;
     const jobSpec = job.spec ? JSON.parse(job.spec) : {};
     return (
-      <FlexCol className="w-1/3 pt-20">
-        <div className="p-8 mx-20 mb-10 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
-          The plot of the total negative log-probability of all replicas helps to monitor
-          sampling convergence. If it scatters around a fixed value, your target distribution is, given
-          good Replica Exchange acceptance rates, likely to be sampled exhaustively.
-        </div>
-        <FlexCenter className="p-8 mx-20 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
-          <div className="w-full grid grid-cols-2 gap-y-2">
-            <div>Name:</div>
-            <div>{jobSpec.name}</div>
-            <div>Status: </div>
-            <div>{job.status}</div>
-            <div>Created at:</div>
-            <div>{dateFormatter(job.created_at)}</div>
-            <div>Started at:</div>
-            <div>{dateFormatter(job.started_at)}</div>
-            <div>Finished at:</div>
-            <div>{dateFormatter(job.finished_at)}</div>
-            <div className="mt-3 col-span-2">
-              <FlexCenter>
-                <JobButton jobId={job.id} jobStatus={job.status} width="w-full" />
-              </FlexCenter>
-            </div>
+      <FlexCenter className="p-8 mx-20 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+        <div className="w-full grid grid-cols-2 gap-y-2">
+          <div>Name:</div>
+          <div>{jobSpec.name}</div>
+          <div>Status: </div>
+          <div>{job.status}</div>
+          <div>Created at:</div>
+          <div>{dateFormatter(job.created_at)}</div>
+          <div>Started at:</div>
+          <div>{dateFormatter(job.started_at)}</div>
+          <div>Finished at:</div>
+          <div>{dateFormatter(job.finished_at)}</div>
+          <div className="mt-3 col-span-2">
+            <FlexCenter>
+              <JobButton jobId={job.id} jobStatus={job.status} width="w-full" />
+            </FlexCenter>
           </div>
-        </FlexCenter>
-      </FlexCol>
+        </div>
+      </FlexCenter>
     );
   } else {
     return <></>;
@@ -242,6 +227,47 @@ const Dash = ({ authed }) => {
   const jobFound = !error && data && data.id;
   const jobNotFound = !error && data && !data.id;
   const isLoading = !data;
+  const runs = jobFound && data.controller_iterations ? data.controller_iterations : [];
+
+  // Dropdown
+  const [dropdownIsAcitve, setDropdownIsAcitve] = useState(false);
+  const [simulationRun, setSimulationRun] = useState(undefined);
+
+  const Dropdown = () => (
+    <div className="mx-20 mt-10">
+      <div
+        className="cursor-pointer opacity-60 hover:opacity-100 transition duration-300"
+        onClick={() => setDropdownIsAcitve((s) => !s)}
+      >
+        <div>
+          {dropdownIsAcitve ? (
+            <i className="mr-1 fas fa-caret-square-up"></i>
+          ) : (
+            <i className="mr-1 fas fa-caret-square-down"></i>
+          )}
+          {simulationRun ? `Simulation run: ${simulationRun}` : 'Choose a simulation run'}
+        </div>
+      </div>
+      <div
+        className={`${
+          dropdownIsAcitve ? 'visible' : 'hidden h-0'
+        } fixed bg-gray-800 bg-opacity-50 mt-1 transition-all duration-300 w-48`}
+      >
+        {runs.map((r) => (
+          <div
+            key={uuidv4()}
+            onClick={() => {
+              setSimulationRun(r);
+              setDropdownIsAcitve(false);
+            }}
+            className="px-4 py-2 cursor-pointer transition duration-300 hover:bg-purple-700"
+          >
+            {r}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   if (authed)
     return (
@@ -252,10 +278,19 @@ const Dash = ({ authed }) => {
           </Container>
           {jobFound && (
             <FlexRow className="w-full h-full">
-              <JobInfo jobId={jobId} />
+              <FlexCol className="w-1/3 pt-20">
+                <div className="p-8 mx-20 mb-10 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+                  The plot of the total negative log-probability of all replicas helps to monitor
+                  sampling convergence. If it scatters around a fixed value, your target
+                  distribution is, given good Replica Exchange acceptance rates, likely to be
+                  sampled exhaustively.
+                </div>
+                <JobInfo jobId={jobId} />
+                <Dropdown />
+              </FlexCol>
               <FlexCol between className="w-2/3 p-10">
-                <NegLogPChart job={data} />
-                <AcceptanceRateChart job={data} />
+                <NegLogPChart job={data} simulationRun={simulationRun} />
+                <AcceptanceRateChart job={data} simulationRun={simulationRun} />
                 <Logs />
               </FlexCol>
             </FlexRow>
