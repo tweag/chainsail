@@ -17,8 +17,12 @@ from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task
 config = load_scheduler_config()
 
 
-def _is_prod_mode():
-    return os.environ["PYTHON_ENV"] == "production" or os.environ["PYTHON_ENV"] == "prod"
+def _is_dev_mode():
+    try:
+        is_dev = os.environ["PYTHON_ENV"] == "development" or os.environ["PYTHON_ENV"] == "dev"
+        return is_dev
+    except:
+        return False
 
 
 def check_user(func):
@@ -33,7 +37,7 @@ def check_user(func):
             user_id = None
             claims = None
         user_not_found = not claims or not user_id
-        if _is_prod_mode() and user_not_found:
+        if (not _is_dev_mode()) and user_not_found:
             return "Unauthorized", 401
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
@@ -43,11 +47,7 @@ def check_user(func):
 
 
 def find_job(job_id, user_id):
-    if _is_prod_mode():
-        job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
-        if not job:
-            abort(404, "job does not exist for this user")
-    elif user_id:
+    if not _is_dev_mode():
         job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
         if not job:
             abort(404, "job does not exist for this user")
