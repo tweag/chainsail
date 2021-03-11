@@ -62,6 +62,7 @@ docker run -d \
     -v {config_dir}:/resaas \
     --network host \
     -p 50052 \
+    --log-driver=gcplogs \
     {user_code_image} {user_code_cmd}
 
 docker run -d \
@@ -70,6 +71,7 @@ docker run -d \
     -v {authorized_keys}:/app/config/ssh/authorized_keys \
     -v {pem_file}:/root/.ssh/id.pem \
     -p 50051 \
+    --log-driver=gcplogs \
     {image} {cmd}
 """
 
