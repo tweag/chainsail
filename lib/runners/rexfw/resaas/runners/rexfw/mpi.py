@@ -161,7 +161,7 @@ def run_rexfw_mpi(
                 "graphite_port": metrics_port,
             }
         master = setup_default_re_master(
-            n_replicas, path, storage_backend, comm, graphite_params=graphite_params
+            n_replicas, os.path.join(basename, path), storage_backend, comm, graphite_params=graphite_params
         )
         master.run(
             config["general"]["n_iterations"],
