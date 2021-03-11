@@ -1,6 +1,7 @@
 """
 MPI-based rexfw runner script. Must be called from within an mpi context.
 """
+import os
 import logging
 import sys
 
