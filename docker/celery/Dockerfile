@@ -55,4 +55,4 @@ ENV PATH=/app/app/scheduler/.venv/bin:$PATH
 
 ARG CONCURRENCY=10
 
-CMD celery --app "resaas.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=$CONCURRENCY
+CMD celery --app "resaas.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=5
