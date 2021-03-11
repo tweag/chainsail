@@ -3,6 +3,10 @@ Asynchronous tasks run using celery
 """
 
 from datetime import datetime
+import yaml
+import json
+import zipfile
+from tempfile import NamedTemporaryFile
 
 from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import celery, db
@@ -10,6 +14,7 @@ from resaas.scheduler.db import TblJobs
 from resaas.scheduler.errors import JobError
 from resaas.scheduler.jobs import Job, JobStatus
 from sqlalchemy.exc import OperationalError
+from cloudstorage.drivers.google import GoogleStorageDriver
 
 
 @celery.task()
@@ -126,3 +131,47 @@ def scale_job_task(job_id, n_replicas) -> bool:
     else:
         db.session.commit()
         return True
+
+
+@celery.task()
+def update_job_signed_url(job_id) -> bool:
+    """Update a job signed url
+
+    Args:
+        job_id: The id of the job to stop
+    """
+    scheduler_config = load_scheduler_config()
+    storage_config_path = scheduler_config.node_config.storage_config_path
+
+    with open(storage_config_path) as f:
+        storage_config = yaml.load(f, Loader=yaml.FullLoader)
+
+    driver_kwargs = storage_config.backend_config.cloud.driver_kwargs
+    with NamedTemporaryFile() as f:
+        f.write(json.dumps(driver_kwargs))
+        google_storage_driver = GoogleStorageDriver(key=f.name)
+
+    container = storage_config.backend_config.cloud.container_name
+
+    tmpfiles = []
+    for blob in google_storage_driver.get_blobs(container):
+        tmpfile = NamedTemporaryFile()
+        google_storage_driver.download_blob(blob, tmpfile.name)
+        tmpfiles.append(tmpfile)
+
+    # Put all downloaded blobs in a zip file
+    with NamedTemporaryFile() as tmpzipfile:
+        zipf = zipfile.ZipFile(tmpzipfile.name, "w", zipfile.ZIP_DEFLATED)
+        for tmpfile in tmpfiles:
+            zipf.write(tmpfile.name)
+            tmpfile.close()
+        zipf.close()
+        blob_name = "stats.zip"
+        google_storage_driver.upload_blob(container, tmpzipfile, blob_name=blob_name)
+
+    # Generates a signed URL for this blob
+    signed_url = google_storage_driver.generate_blob_download_url(blob_name, expires=3600)
+
+    job_rep = TblJobs.query.filter_by(id=job_id).one()
+    job_rep.signed_url = signed_url
+    db.session.commit()
