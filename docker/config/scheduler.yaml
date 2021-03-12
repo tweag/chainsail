@@ -40,7 +40,7 @@ node_config:
 
   libcloud_driver_inputs:
     user_id: resaas-gce@resaas-simeon-dev.iam.gserviceaccount.com
-    key: /config/service_account_key.json
+    key: /config/gce_key.json
     project: resaas-simeon-dev
     auth_type: SA
     datacenter: europe-west1-b
