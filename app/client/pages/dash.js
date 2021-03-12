@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import nookies from 'nookies';
@@ -14,7 +15,6 @@ import {
   GRAPHITE_LOGS_URL,
 } from '../utils/const';
 import { dateFormatter } from '../utils/date';
-import { useEffect, useState } from 'react';
 import fetcher from '../utils/fetcher';
 
 const NegLogPChart = ({ job, simulationRun }) => {
