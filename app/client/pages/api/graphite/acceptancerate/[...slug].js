@@ -7,5 +7,6 @@ export default async (req, res) => {
   const simulationRun = slug[1];
   const url = GRAPHITE_ACCEPTANCE_RATE_URL(jobId, simulationRun);
   const method = 'GET';
-  handleRequestResponse(req, res, url, method);
+  const checkAuth = false;
+  handleRequestResponse(req, res, url, method, checkAuth);
 };
