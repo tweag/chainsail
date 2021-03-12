@@ -147,11 +147,11 @@ def update_job_signed_url(job_id) -> bool:
         storage_config = yaml.load(f, Loader=yaml.FullLoader)
 
     driver_kwargs = storage_config.backend_config.cloud.driver_kwargs
+    container = storage_config.backend_config.cloud.container_name
+
     with NamedTemporaryFile() as f:
         f.write(json.dumps(driver_kwargs))
         google_storage_driver = GoogleStorageDriver(key=f.name)
-
-    container = storage_config.backend_config.cloud.container_name
 
     tmpfiles = []
     for blob in google_storage_driver.get_blobs(container):
@@ -161,7 +161,7 @@ def update_job_signed_url(job_id) -> bool:
 
     # Put all downloaded blobs in a zip file
     with NamedTemporaryFile() as tmpzipfile:
-        zipf = zipfile.ZipFile(tmpzipfile.name, "w", zipfile.ZIP_DEFLATED)
+        zipf = zipfile.ZipFile(tmpzipfile, "w", zipfile.ZIP_DEFLATED)
         for tmpfile in tmpfiles:
             zipf.write(tmpfile.name)
             tmpfile.close()
