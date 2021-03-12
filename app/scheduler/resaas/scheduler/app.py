@@ -46,15 +46,15 @@ def check_user(func):
     return wrapper
 
 
-def find_job(job_id, user_id):
-    if not _is_dev_mode():
-        job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
-        if not job:
-            abort(404, "job does not exist for this user")
-    else:
+def find_job(job_id, user_id=None):
+    if _is_dev_mode() or user_id is None:
         job = TblJobs.query.filter_by(id=job_id).first()
         if not job:
             abort(404, "job does not exist")
+    elif not _is_dev_mode():
+        job = TblJobs.query.filter_by(id=job_id, user_id=user_id).first()
+        if not job:
+            abort(404, "job does not exist for this user")
     return job
 
 
@@ -134,11 +134,10 @@ def job_nodes(job_id):
 
 
 @app.route("/internal/job/<job_id>/scale/<n_replicas>", methods=["POST"])
-@check_user
 def scale_job(job_id, n_replicas, user_id):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
-    job = find_job(job_id, user_id)
+    find_job(job_id)
     scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
     # Await the result, raising any exceptions that get thrown
     scaled = scaling_task.get()

@@ -1,8 +1,10 @@
-const handleRequestResponse = async function (req, res, url, method) {
-  const { token } = req.cookies;
+const handleRequestResponse = async function (req, res, url, method, checkAuth = true) {
   const requestOptions = {
     method,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: checkAuth ? `Bearer ${req.cookies.token}` : undefined,
+    },
     body: method == 'POST' ? JSON.stringify(req.body) : undefined,
   };
   try {

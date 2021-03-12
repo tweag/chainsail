@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import nookies from 'nookies';
@@ -8,22 +9,16 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
 import { Layout, FlexCol, FlexCenter, FlexRow, JobButton, Container, Navbar } from '../components';
-import {
-  GRAPHITE_NEGLOGP_URL,
-  GRAPHITE_ACCEPTANCE_RATE_URL,
-  GRAPHITE_LOGS_URL,
-} from '../utils/const';
 import { dateFormatter } from '../utils/date';
-import { useEffect, useState } from 'react';
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
+import fetcher from '../utils/fetcher';
 
 const NegLogPChart = ({ job, simulationRun }) => {
   if (job && job.id) {
     const jobId = job.id;
-    const { data, error } = useSWR(GRAPHITE_NEGLOGP_URL(jobId, simulationRun), fetcher, {
+    const { data, error } = useSWR(`/api/graphite/neglogp/${jobId}/${simulationRun}`, fetcher, {
       refreshInterval: 10000,
     });
+    if (error) console.log(error);
     const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
     const chartData = {
       datasets: [
@@ -88,9 +83,14 @@ const NegLogPChart = ({ job, simulationRun }) => {
 const AcceptanceRateChart = ({ job, simulationRun }) => {
   if (job && job.id) {
     const jobId = job.id;
-    const { data, error } = useSWR(GRAPHITE_ACCEPTANCE_RATE_URL(jobId, simulationRun), fetcher, {
-      refreshInterval: 10000,
-    });
+    const { data, error } = useSWR(
+      `/api/graphite/acceptancerate/${jobId}/${simulationRun}`,
+      fetcher,
+      {
+        refreshInterval: 10000,
+      }
+    );
+    if (error) console.log(error);
     const dss =
       data && data.length > 0
         ? data.map((ds) => {
@@ -171,9 +171,10 @@ const Logs = () => {
     var element = document.getElementById('logs');
     element.scrollTop = element.scrollHeight;
   });
-  const { data, error } = useSWR(GRAPHITE_LOGS_URL, fetcher, {
+  const { data, error } = useSWR('/api/graphite/logs', fetcher, {
     refreshInterval: 10000,
   });
+  if (error) console.log(error);
   return (
     <FlexCenter className="py-5 h-1/2">
       <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl" id="logs">
@@ -224,6 +225,7 @@ const Dash = ({ authed }) => {
   const router = useRouter();
   const { jobId } = router.query;
   const { data, error } = useSWR(`/api/job/get/${jobId}`, fetcher);
+  if (error) console.log(error);
   const jobFound = !error && data && data.id;
   const jobNotFound = !error && data && !data.id;
   const isLoading = !data;

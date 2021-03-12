@@ -1,9 +1,11 @@
 import useSWR from 'swr';
 import nookies from 'nookies';
+import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../../utils/firebaseAdmin';
 import { Layout, FlexCenter, JobButton, Navbar, Container, Link } from '../../components';
 import { dateFormatter } from '../../utils/date';
+import fetcher from '../../utils/fetcher';
 
 const JobsTable = ({ data }) => {
   const headersName = ['Id', 'Name', 'Created at', 'Finished at', 'Started at', 'Status', '', ''];
@@ -44,13 +46,13 @@ const JobsTable = ({ data }) => {
       <table className="w-full">
         <tr className="bg-blue-900 hover:bg-blue-800">
           {headersName.map((h) => (
-            <TableHeader>{h}</TableHeader>
+            <TableHeader key={uuidv4()}>{h}</TableHeader>
           ))}
         </tr>
         {data
           .sort((a, b) => (a.id > b.id ? 1 : -1))
           .map((row) => (
-            <TableRow row={row} />
+            <TableRow row={row} key={uuidv4()} />
           ))}
       </table>
     </div>
@@ -59,11 +61,10 @@ const JobsTable = ({ data }) => {
 
 const Results = ({ authed }) => {
   // Data fetching
-  const fetcher = (url) => fetch(url).then((res) => res.json());
   const { data, error } = useSWR('/api/job/get-all', fetcher, {
     refreshInterval: 3000,
   });
-
+  if (error) console.log(error);
   if (authed)
     return (
       <Layout>
