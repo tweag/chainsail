@@ -121,7 +121,7 @@ def stop_job(job_id, user_id):
     return ("ok", 200)
 
 
-@app.route("/job/<job_id>/update_signed_url", methods=["POST"])
+@app.route("/job/<job_id>/update_signed_url", methods=["GET"])
 @check_user
 def update_job_signed_url(job_id, user_id):
     find_job(job_id, user_id)
