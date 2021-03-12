@@ -15,7 +15,6 @@ VM_NODE_CONFIG = {
         "secret": "XXXXXXXXXXX",
         "ex_security_groups": ["default", "resaas"],
     },
-    "user_code_image": "some-docker-image",
 }
 
 VM_NODE_CONFIG_RESAAS_DRIVER = {
@@ -28,7 +27,6 @@ VM_NODE_CONFIG_RESAAS_DRIVER = {
     "storage_config_path": "/foo/bar/storage.yaml",
     "libcloud_provider": "RESAAS_DUMMY",
     "libcloud_driver_inputs": {"creds": "foobar"},
-    "user_code_image": "some-docker-image",
 }
 
 VALID_CONFIG_VM = {
