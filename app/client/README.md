@@ -42,7 +42,7 @@ to the appropriate path as follows:
 ```shell
 $ docker run -v $PWD/next.config.js:/opt/app/next.config.js\
   -p 3000:3000\
-  -e GRAPHITE_URL=http://graphite:8080\
-  -e SCHEDULER_URL=http://nginx:88\
+  -e GRAPHITE_URL=<GRAPHITE_URL> \
+  -e SCHEDULER_URL=<SCHEDULER_URL> \
   resaas-client:latest
 ```
