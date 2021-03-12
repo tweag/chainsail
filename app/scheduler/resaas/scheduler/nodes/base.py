@@ -7,7 +7,8 @@ from resaas.scheduler.db import TblJobs, TblNodes
 
 
 class NodeType(Enum):
-    LIBCLOUD_VM = "LibcloudVM"
+    LIBCLOUD_CONTROLLER_VM = "LibcloudControllerVM"
+    LIBCLOUD_WORKER_VM = "LibcloudWorkerVM"
 
 
 class NodeStatus(Enum):

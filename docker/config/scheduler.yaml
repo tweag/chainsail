@@ -16,6 +16,7 @@ controller:
 
 worker:
   image: TODO
+  user_code_image: TODO
   cmd: /usr/sbin/sshd
   args:
     - -D

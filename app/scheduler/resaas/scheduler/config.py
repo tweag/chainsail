@@ -4,7 +4,7 @@ Scheduler app configuration file parsing
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import yaml
 from libcloud.compute.base import NodeDriver
@@ -51,7 +51,7 @@ class HasDriver(ABC):
 
 @dataclass
 class VMNodeConfig(HasDriver):
-    """Configurations for a `VMNode`"""
+    """Configurations for a general `VMNode`"""
 
     vm_image_id: str
     vm_size: str
@@ -63,6 +63,25 @@ class VMNodeConfig(HasDriver):
     libcloud_driver: NodeDriver
     libcloud_driver_inputs: Dict
     libcloud_create_node_inputs: Dict
+
+    def create_node_driver(self):
+        return self.libcloud_driver(**self.libcloud_driver_inputs)
+
+
+@dataclass
+class ControllerVMNodeConfig(VMNodeConfig):
+    """Configurations for a `ControllerVMNode`"""
+
+    # this is necessary b/c of issues with the MRO and the order of
+    # arguments, unless we want things to be way more complicated
+    init_script: str = ""
+
+
+@dataclass
+class WorkerVMNodeConfig(VMNodeConfig):
+    """Configurations for a `WorkerVMNode`"""
+
+    user_code_image: str
     init_script: str = ""
 
     def create_node_driver(self):
@@ -105,6 +124,15 @@ class VMNodeConfigSchema(Schema):
         return VMNodeConfig(**data)
 
 
+class ControllerVMNodeConfigSchema(VMNodeConfigSchema):
+    pass
+
+
+class WorkerVMNodeConfigSchema(VMNodeConfigSchema):
+    # User code Docker image
+    user_code_image = fields.String(required=True)
+
+
 @dataclass
 class GeneralNodeConfig:
     image: str
@@ -125,7 +153,10 @@ class GeneralNodeConfigSchema(Schema):
 
 
 # Global registry of node config schemas
-NODE_CONFIG_SCHEMAS: Dict[NodeType, Schema] = {NodeType.LIBCLOUD_VM: VMNodeConfigSchema()}
+NODE_CONFIG_SCHEMAS: Dict[NodeType, Schema] = {
+    NodeType.LIBCLOUD_CONTROLLER_VM: ControllerVMNodeConfigSchema(),
+    NodeType.LIBCLOUD_WORKER_VM: WorkerVMNodeConfigSchema()
+}
 
 
 @dataclass
@@ -142,8 +173,8 @@ class SchedulerConfig:
 
     """
 
-    controller: GeneralNodeConfig
-    worker: GeneralNodeConfig
+    controller: ControllerVMNodeConfig
+    worker: WorkerVMNodeConfig
     node_type: NodeType
     node_config: HasDriver
 
