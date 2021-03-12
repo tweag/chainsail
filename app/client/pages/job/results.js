@@ -4,6 +4,7 @@ import nookies from 'nookies';
 import { verifyIdToken } from '../../utils/firebaseAdmin';
 import { Layout, FlexCenter, JobButton, Navbar, Container, Link } from '../../components';
 import { dateFormatter } from '../../utils/date';
+import fetcher from '../../utils/fetcher';
 
 const JobsTable = ({ data }) => {
   const headersName = ['Id', 'Name', 'Created at', 'Finished at', 'Started at', 'Status', '', ''];
@@ -59,7 +60,6 @@ const JobsTable = ({ data }) => {
 
 const Results = ({ authed }) => {
   // Data fetching
-  const fetcher = (url) => fetch(url).then((res) => res.json());
   const { data, error } = useSWR('/api/job/get-all', fetcher, {
     refreshInterval: 3000,
   });

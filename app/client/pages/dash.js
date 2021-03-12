@@ -15,8 +15,7 @@ import {
 } from '../utils/const';
 import { dateFormatter } from '../utils/date';
 import { useEffect, useState } from 'react';
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
+import fetcher from '../utils/fetcher';
 
 const NegLogPChart = ({ job, simulationRun }) => {
   if (job && job.id) {
