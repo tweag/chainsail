@@ -37,6 +37,7 @@ in
       black
       niv.niv
       yarn
+      nodejs
       docker-compose
       openmpi
       python38Packages.tkinter
