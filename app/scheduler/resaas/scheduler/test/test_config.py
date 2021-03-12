@@ -37,11 +37,13 @@ VALID_CONFIG_VM = {
         "ports": [8080, 22],
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
+        "user_code_image": "some-docker-image",
     },
     "worker": {
         "image": "some-docker-image:latest",
         "ports": [22],
         "cmd": "ls",
+        "user_code_image": "some-docker-image",
     },
     "node_type": "LibcloudVM",
     "node_config": VM_NODE_CONFIG,

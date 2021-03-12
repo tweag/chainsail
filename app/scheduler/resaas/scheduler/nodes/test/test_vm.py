@@ -10,7 +10,7 @@ from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 @pytest.fixture
 def mock_scheduler_config():
     config = GeneralNodeConfig(
-        image="foo:latest", cmd="bash", args=["-c", "'echo foo'"], ports=[8080]
+        image="foo:latest", cmd="bash", args=["-c", "'echo foo'"], ports=[8080], user_code_image="bar:earliest"
     )
     node_config = VMNodeConfig(
         "1",
