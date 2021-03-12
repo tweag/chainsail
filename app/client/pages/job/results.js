@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import nookies from 'nookies';
+import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../../utils/firebaseAdmin';
 import { Layout, FlexCenter, JobButton, Navbar, Container, Link } from '../../components';
@@ -45,13 +46,13 @@ const JobsTable = ({ data }) => {
       <table className="w-full">
         <tr className="bg-blue-900 hover:bg-blue-800">
           {headersName.map((h) => (
-            <TableHeader>{h}</TableHeader>
+            <TableHeader key={uuidv4()}>{h}</TableHeader>
           ))}
         </tr>
         {data
           .sort((a, b) => (a.id > b.id ? 1 : -1))
           .map((row) => (
-            <TableRow row={row} />
+            <TableRow row={row} key={uuidv4()} />
           ))}
       </table>
     </div>
