@@ -2,7 +2,7 @@ import functools
 from unittest.mock import Mock
 
 import pytest
-from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
+from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, ControllerVMNodeConfig
 from resaas.scheduler.nodes.base import NodeStatus, NodeType
 from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 
@@ -85,7 +85,7 @@ def mock_config():
         controller=GeneralNodeConfig(image="foo:latest", cmd="echo", args=["bar"], ports=[8080]),
         worker=GeneralNodeConfig(image="foo:latest", cmd="echo", args=["bar"], ports=[8080]),
         node_type="mock",
-        node_config=VMNodeConfig(
+        node_config=ControllerVMNodeConfig(
             "Ubuntu 9.10",
             "Small",
             "ubuntu",
@@ -254,7 +254,7 @@ def test_vm_job_from_db_representation(mock_config):
         "probability_definition": "gs://bucket/sub/path/script_and_data"
     }
     """
-    mock_config.node_type = NodeType.LIBCLOUD_VM
+    mock_config.node_type = NodeType.LIBCLOUD_CONTROLLER_VM
     job_rep = TblJobs(spec=spec, status=JobStatus.RUNNING)
     for i in range(2):
         job_rep.nodes.append(
@@ -262,7 +262,7 @@ def test_vm_job_from_db_representation(mock_config):
                 name=f"dummy-{i+1}",
                 entrypoint="test",
                 status=NodeStatus.RUNNING,
-                node_type=NodeType.LIBCLOUD_VM.value,
+                node_type=NodeType.LIBCLOUD_CONTROLLER_VM.value,
                 address=f"127.0.0.{i}",
                 ports="[8080, 8081]",
                 in_use=True,

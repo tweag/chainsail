@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from resaas.common.spec import JobSpec
-from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
+from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, ControllerVMNodeConfig
 from resaas.scheduler.nodes.base import NodeType
 from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 
@@ -12,7 +12,7 @@ def mock_scheduler_config():
     config = GeneralNodeConfig(
         image="foo:latest", cmd="bash", args=["-c", "'echo foo'"], ports=[8080]
     )
-    node_config = VMNodeConfig(
+    node_config = ControllerVMNodeConfig(
         "1",
         "Small",
         "ubuntu",
@@ -27,7 +27,7 @@ def mock_scheduler_config():
     scheduler_config = SchedulerConfig(
         controller=config,
         worker=config,
-        node_type=NodeType.LIBCLOUD_VM,
+        node_type=NodeType.LIBCLOUD_CONTROLLER_VM,
         node_config=node_config,
     )
     return scheduler_config
@@ -45,7 +45,7 @@ def test_vm_node_from_representation(mock_scheduler_config):
         job_id=1,
         # dummy-1 already exists on the driver
         name="dummy-1",
-        node_type=NodeType.LIBCLOUD_VM,
+        node_type=NodeType.LIBCLOUD_CONTROLLER_VM,
         entrypoint="echo 'hello world'",
         status=NodeStatus.RUNNING,
         address="127.0.0.1",
@@ -81,7 +81,7 @@ def test_vm_node_from_representation_no_match_raises(mock_scheduler_config):
         id=1,
         job_id=1,
         name="does not exist in driver",
-        node_type=NodeType.LIBCLOUD_VM,
+        node_type=NodeType.LIBCLOUD_CONTROLLER_VM,
         entrypoint="echo 'hello world'",
         status=NodeStatus.RUNNING,
         address="127.0.0.1",
@@ -103,7 +103,7 @@ def test_vm_node_from_representation_then_create(mock_scheduler_config):
         id=1,
         job_id=1,
         name="new-node",
-        node_type=NodeType.LIBCLOUD_VM,
+        node_type=NodeType.LIBCLOUD_CONTROLLER_VM,
         entrypoint="echo 'hello world'",
         # This node has not been actually created yet
         status=NodeStatus.INITIALIZED,
