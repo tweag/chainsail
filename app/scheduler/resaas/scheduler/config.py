@@ -155,7 +155,7 @@ class GeneralNodeConfigSchema(Schema):
 # Global registry of node config schemas
 NODE_CONFIG_SCHEMAS: Dict[NodeType, Schema] = {
     NodeType.LIBCLOUD_CONTROLLER_VM: ControllerVMNodeConfigSchema(),
-    NodeType.LIBCLOUD_WORKER_VM: WorkerVMNodeConfigSchema()
+    NodeType.LIBCLOUD_WORKER_VM: WorkerVMNodeConfigSchema(),
 }
 
 
