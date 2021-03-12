@@ -63,7 +63,7 @@ const Results = ({ authed }) => {
   const { data, error } = useSWR('/api/job/get-all', fetcher, {
     refreshInterval: 3000,
   });
-
+  if (error) console.log(error);
   if (authed)
     return (
       <Layout>

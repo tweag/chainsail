@@ -18,6 +18,7 @@ const NegLogPChart = ({ job, simulationRun }) => {
     const { data, error } = useSWR(`/api/graphite/neglogp/${jobId}/${simulationRun}`, fetcher, {
       refreshInterval: 10000,
     });
+    if (error) console.log(error);
     const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
     const chartData = {
       datasets: [
@@ -89,6 +90,7 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
         refreshInterval: 10000,
       }
     );
+    if (error) console.log(error);
     const dss =
       data && data.length > 0
         ? data.map((ds) => {
@@ -172,6 +174,7 @@ const Logs = () => {
   const { data, error } = useSWR('/api/graphite/logs', fetcher, {
     refreshInterval: 10000,
   });
+  if (error) console.log(error);
   return (
     <FlexCenter className="py-5 h-1/2">
       <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl" id="logs">
@@ -222,6 +225,7 @@ const Dash = ({ authed }) => {
   const router = useRouter();
   const { jobId } = router.query;
   const { data, error } = useSWR(`/api/job/get/${jobId}`, fetcher);
+  if (error) console.log(error);
   const jobFound = !error && data && data.id;
   const jobNotFound = !error && data && !data.id;
   const isLoading = !data;
