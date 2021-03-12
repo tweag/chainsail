@@ -82,8 +82,20 @@ def mk_mock_node_cls(
 @pytest.fixture
 def mock_config():
     config = SchedulerConfig(
-        controller=GeneralNodeConfig(image="foo:latest", cmd="echo", args=["bar"], ports=[8080]),
-        worker=GeneralNodeConfig(image="foo:latest", cmd="echo", args=["bar"], ports=[8080]),
+        controller=GeneralNodeConfig(
+            image="foo:latest",
+            cmd="echo",
+            args=["bar"],
+            ports=[8080],
+            user_code_image="bar:earliest",
+        ),
+        worker=GeneralNodeConfig(
+            image="foo:latest",
+            cmd="echo",
+            args=["bar"],
+            ports=[8080],
+            user_code_image="bar:earliest",
+        ),
         node_type="mock",
         node_config=VMNodeConfig(
             "Ubuntu 9.10",

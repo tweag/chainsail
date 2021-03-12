@@ -13,6 +13,7 @@ controller:
     - --config
     - /resaas/controller.yaml
   ports: [50051, 26]
+  user_code_image: TODO
 
 worker:
   image: TODO
@@ -20,6 +21,7 @@ worker:
   args:
     - -D
   ports: [26]
+  user_code_image: TODO
 
 node_type: LibcloudVM
 

@@ -110,6 +110,7 @@ class GeneralNodeConfig:
     image: str
     ports: List[int]
     cmd: str
+    user_code_image: str
     args: Optional[List[str]] = None
 
 
@@ -117,6 +118,7 @@ class GeneralNodeConfigSchema(Schema):
     image = fields.String(required=True)
     cmd = fields.String(required=True)
     ports = fields.List(fields.Int(required=True))
+    user_code_image = fields.String(required=True)
     args = fields.List(fields.String())
 
     @post_load
