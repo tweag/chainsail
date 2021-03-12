@@ -63,6 +63,7 @@ class VMNodeConfig(HasDriver):
     libcloud_driver: NodeDriver
     libcloud_driver_inputs: Dict
     libcloud_create_node_inputs: Dict
+    user_code_image: str
     init_script: str = ""
 
     def create_node_driver(self):
@@ -90,6 +91,8 @@ class VMNodeConfigSchema(Schema):
     libcloud_driver_inputs = fields.Dict(keys=fields.String)
     # Additional provider-specific inputs to pass to the driver's create node method
     libcloud_create_node_inputs = fields.Dict(keys=fields.String)
+    # User code Docker image
+    user_code_image = fields.String(required=True)
     # An initialization bash script which will be run on startup. Use for things
     # like initializing credential helpers, etc.
     init_script = fields.String()
@@ -110,6 +113,7 @@ class GeneralNodeConfig:
     image: str
     ports: List[int]
     cmd: str
+    user_code_image: str
     args: Optional[List[str]] = None
 
 
@@ -117,6 +121,7 @@ class GeneralNodeConfigSchema(Schema):
     image = fields.String(required=True)
     cmd = fields.String(required=True)
     ports = fields.List(fields.Int(required=True))
+    user_code_image = fields.String(required=True)
     args = fields.List(fields.String())
 
     @post_load
