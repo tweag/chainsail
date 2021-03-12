@@ -125,7 +125,7 @@ def stop_job(job_id, user_id):
 @check_user
 def update_job_signed_url(job_id, user_id):
     find_job(job_id, user_id)
-    update_job_signed_url.apply_async((job_id,), {})
+    update_job_signed_url_task.apply_async((job_id,), {})
     return ("ok", 200)
 
 
