@@ -134,7 +134,7 @@ def scale_job_task(job_id, n_replicas) -> bool:
 
 
 @celery.task()
-def update_job_signed_url_task(job_id) -> bool:
+def update_job_signed_url_task(job_id):
     """Update a job signed url
 
     Args:
