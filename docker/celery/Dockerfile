@@ -53,6 +53,7 @@ ENV PYTHONPATH=$PYTHONPATH:/app/app/scheduler
 # Adding the app venv bin to the front of path so it is the default pip, etc.
 ENV PATH=/app/app/scheduler/.venv/bin:$PATH
 
-ARG CONCURRENCY=10
+# This didn't work - I wasn't able to retrieve the value for $CONCURRENCY in the CMD
+# ARG CONCURRENCY=10
 
-CMD celery --app "resaas.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=$CONCURRENCY
+CMD celery --app "resaas.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=5

@@ -373,7 +373,7 @@ class BaseREJobController:
 class CloudREJobController(BaseREJobController):
     SCHEDULER_SCALE_ENDPOINT = "/internal/job/{id}/scale/{n}"
     SCHEDULER_NODE_ENDPOINT = "/job/{id}/nodes"
-    SCHEDULER_ADD_ITERATION_ENDPOIT = "/internal/job/{id}/add_iteration/{iteration}"
+    SCHEDULER_ADD_ITERATION_ENDPOINT = "/internal/job/{id}/add_iteration/{iteration}"
 
     def __init__(
         self,
@@ -504,6 +504,7 @@ class CloudREJobController(BaseREJobController):
                 )
                 r = requests.post(url)
                 r.raise_for_status()
+                break
             except Exception as e:
                 logger.error(
                     f"Failed to ask scheduler to add controller iteration {iteration} with response: {repr(r)}"
