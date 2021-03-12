@@ -12,7 +12,13 @@ from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import app, db, firebase_app
 from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.jobs import JobStatus
-from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task, watch_job_task
+from resaas.scheduler.tasks import (
+    scale_job_task,
+    start_job_task,
+    stop_job_task,
+    watch_job_task,
+    update_job_signed_url_task,
+)
 
 config = load_scheduler_config()
 
@@ -112,6 +118,14 @@ def stop_job(job_id, user_id):
     job.status = JobStatus.STOPPING.value
     db.session.commit()
     stop_job_task.apply_async((job_id,), {})
+    return ("ok", 200)
+
+
+@app.route("/job/<job_id>/update_signed_url", methods=["POST"])
+@check_user
+def update_job_signed_url(job_id, user_id):
+    find_job(job_id, user_id)
+    update_job_signed_url.apply_async((job_id,), {})
     return ("ok", 200)
 
 
