@@ -27,7 +27,7 @@ def _get_blob_job_root(scheduler_config, job_id):
     with open(controller_config_path) as f:
         raw_controller_config = yaml.load(f, Loaded=yaml.FullLoader)
     storage_basename = ControllerConfigSchema().load(raw_controller_config)
-    if storage_basename.startswith('/'):
+    if storage_basename.startswith("/"):
         storage_basename = storage_basename[1:]
     return os.path.join(storage_basename, str(job_id))
 
@@ -192,7 +192,8 @@ def update_job_signed_url_task(job_id):
 
     # Generates a signed URL for this blob
     signed_url = google_storage_driver.generate_blob_download_url(
-        blob_name, expires=scheduler_config.results_url_expiry_time)
+        blob_name, expires=scheduler_config.results_url_expiry_time
+    )
 
     job_rep = TblJobs.query.filter_by(id=job_id).one()
     job_rep.signed_url = signed_url
