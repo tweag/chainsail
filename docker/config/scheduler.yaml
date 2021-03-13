@@ -23,6 +23,10 @@ worker:
   ports: [26]
   user_code_image: TODO
 
+# signed URLs the user requests are valid for n seconds
+# (here: 604800 seconds = 1 week)
+results_url_expiry_time: 604800
+
 node_type: LibcloudVM
 
 node_config:

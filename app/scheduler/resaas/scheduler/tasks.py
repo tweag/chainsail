@@ -3,11 +3,13 @@ Asynchronous tasks run using celery
 """
 
 from datetime import datetime
+import os
 import yaml
 import json
 import zipfile
 from tempfile import NamedTemporaryFile
 
+from resaas.common.configs import ControllerConfigSchema
 from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import celery, db
 from resaas.scheduler.db import TblJobs
@@ -15,6 +17,19 @@ from resaas.scheduler.errors import JobError
 from resaas.scheduler.jobs import Job, JobStatus
 from sqlalchemy.exc import OperationalError
 from cloudstorage.drivers.google import GoogleStorageDriver
+
+
+RESULTS_ARCHIVE_FILENAME = "results.zip"
+
+
+def _get_blob_job_root(scheduler_config, job_id):
+    controller_config_path = scheduler_config.node_config.controller_config_file_path
+    with open(controller_config_path) as f:
+        raw_controller_config = yaml.load(f, Loaded=yaml.FullLoader)
+    storage_basename = ControllerConfigSchema().load(raw_controller_config)
+    if storage_basename.startswith('/'):
+        storage_basename = storage_basename[1:]
+    return os.path.join(storage_basename, str(job_id))
 
 
 @celery.task()
@@ -153,8 +168,14 @@ def update_job_signed_url_task(job_id):
         f.write(json.dumps(driver_kwargs))
         google_storage_driver = GoogleStorageDriver(key=f.name)
 
+    job_blob_root = _get_blob_job_root(scheduler_config, job_id)
+
     tmpfiles = []
     for blob in google_storage_driver.get_blobs(container):
+        is_results_archive = blob.name.endswith(RESULTS_ARCHIVE_FILENAME)
+        in_job_root = blob.name.startswith(job_blob_root) and blob.name[len(job_blob_root)] == "/"
+        if is_results_archive or in_job_root:
+            continue
         tmpfile = NamedTemporaryFile()
         google_storage_driver.download_blob(blob, tmpfile.name)
         tmpfiles.append(tmpfile)
@@ -166,11 +187,12 @@ def update_job_signed_url_task(job_id):
             zipf.write(tmpfile.name)
             tmpfile.close()
         zipf.close()
-        blob_name = "stats.zip"
+        blob_name = os.path.join((job_blob_root, RESULTS_ARCHIVE_FILENAME))
         google_storage_driver.upload_blob(container, tmpzipfile, blob_name=blob_name)
 
     # Generates a signed URL for this blob
-    signed_url = google_storage_driver.generate_blob_download_url(blob_name, expires=3600)
+    signed_url = google_storage_driver.generate_blob_download_url(
+        blob_name, expires=scheduler_config.results_url_expiry_time)
 
     job_rep = TblJobs.query.filter_by(id=job_id).one()
     job_rep.signed_url = signed_url

@@ -4,7 +4,7 @@ Scheduler app configuration file parsing
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Int
 
 import yaml
 from libcloud.compute.base import NodeDriver
@@ -148,6 +148,7 @@ class SchedulerConfig:
     worker: GeneralNodeConfig
     node_type: NodeType
     node_config: HasDriver
+    results_url_expiry_time: Int
 
     def create_node_driver(self):
         """Create a new node driver instance using the scheduler config"""
@@ -158,6 +159,7 @@ class SchedulerConfigSchema(Schema):
     controller = fields.Nested(GeneralNodeConfigSchema, required=True)
     worker = fields.Nested(GeneralNodeConfigSchema, required=True)
     node_type = EnumField(NodeType, by_value=True, required=True)
+    results_url_expiry_time = fields.Int()
     node_config = fields.Dict(keys=fields.String())
 
     @post_load
