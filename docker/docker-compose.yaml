@@ -32,13 +32,16 @@ services:
         max-size: "200k"
         max-file: "10"
   celery-worker:
-    image: "celery-worker:latest"
+    image: "resaas-celery-worker:latest"
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - SQLALCHEMY_DATABASE_URI=postgresql://postgres:resaas-dev@postgres:5432/postgres
+      - RESAAS_SCHEDULER_CONFIG=/config/scheduler.yaml
+    volumes:
+      - ./config:/config
   scheduler:
-    image: "scheduler:latest"
+    image: "resaas-scheduler:latest"
     volumes:
       - ./config:/config
     ports:

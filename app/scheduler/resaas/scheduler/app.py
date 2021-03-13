@@ -134,7 +134,7 @@ def job_nodes(job_id):
 
 
 @app.route("/internal/job/<job_id>/scale/<n_replicas>", methods=["POST"])
-def scale_job(job_id, n_replicas, user_id):
+def scale_job(job_id, n_replicas):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
     find_job(job_id)
