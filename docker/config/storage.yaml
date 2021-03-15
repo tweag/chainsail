@@ -8,4 +8,5 @@ backend_config:
       key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       secret: XXXXXXXXXXXXXXXXXXXXXXXXXXXX
       project: resaas-simeon-dev
+    storage_key_path: /config/storage_key.json
 

@@ -23,13 +23,13 @@ RESULTS_ARCHIVE_FILENAME = "results.zip"
 
 
 def _get_blob_job_root(scheduler_config, job_id):
-    controller_config_path = scheduler_config.node_config.controller_config_file_path
+    controller_config_path = scheduler_config.node_config.controller_config_path
     with open(controller_config_path) as f:
-        raw_controller_config = yaml.load(f, Loaded=yaml.FullLoader)
-    storage_basename = ControllerConfigSchema().load(raw_controller_config)
+        raw_controller_config = yaml.load(f, Loader=yaml.FullLoader)
+    storage_basename = ControllerConfigSchema().load(raw_controller_config).storage_basename
     if storage_basename.startswith("/"):
         storage_basename = storage_basename[1:]
-    return os.path.join(storage_basename, str(job_id))
+    return os.path.join(storage_basename, str(job_id)) + "/"
 
 
 @celery.task()
@@ -161,38 +161,38 @@ def update_job_signed_url_task(job_id):
     with open(storage_config_path) as f:
         storage_config = yaml.load(f, Loader=yaml.FullLoader)
 
-    driver_kwargs = storage_config.backend_config.cloud.driver_kwargs
-    container = storage_config.backend_config.cloud.container_name
+    backend_config = storage_config['backend_config']
+    container_name = backend_config['cloud']['container_name']
 
-    with NamedTemporaryFile() as f:
-        f.write(json.dumps(driver_kwargs))
-        google_storage_driver = GoogleStorageDriver(key=f.name)
+    google_storage_driver = GoogleStorageDriver(key=backend_config['cloud']['storage_key_path'])
+    container = google_storage_driver.get_container(container_name)
 
     job_blob_root = _get_blob_job_root(scheduler_config, job_id)
 
     tmpfiles = []
     for blob in google_storage_driver.get_blobs(container):
         is_results_archive = blob.name.endswith(RESULTS_ARCHIVE_FILENAME)
-        in_job_root = blob.name.startswith(job_blob_root) and blob.name[len(job_blob_root)] == "/"
-        if is_results_archive or in_job_root:
+        in_job_root = blob.name.startswith(job_blob_root)
+        if is_results_archive or not in_job_root:
             continue
         tmpfile = NamedTemporaryFile()
         google_storage_driver.download_blob(blob, tmpfile.name)
-        tmpfiles.append(tmpfile)
+        tmpfiles.append((tmpfile, blob.name[len(job_blob_root):]))
 
     # Put all downloaded blobs in a zip file
     with NamedTemporaryFile() as tmpzipfile:
         zipf = zipfile.ZipFile(tmpzipfile, "w", zipfile.ZIP_DEFLATED)
-        for tmpfile in tmpfiles:
-            zipf.write(tmpfile.name)
+        for tmpfile, blob_name_no_root in tmpfiles:
+            zipf.write(tmpfile.name, blob_name_no_root)
             tmpfile.close()
         zipf.close()
-        blob_name = os.path.join((job_blob_root, RESULTS_ARCHIVE_FILENAME))
-        google_storage_driver.upload_blob(container, tmpzipfile, blob_name=blob_name)
+        tmpzipfile.seek(0)
+        blob_name = os.path.join(job_blob_root, RESULTS_ARCHIVE_FILENAME)
+        zip_blob = google_storage_driver.upload_blob(container, tmpzipfile, blob_name=blob_name)
 
     # Generates a signed URL for this blob
     signed_url = google_storage_driver.generate_blob_download_url(
-        blob_name, expires=scheduler_config.results_url_expiry_time
+        zip_blob, expires=scheduler_config.results_url_expiry_time
     )
 
     job_rep = TblJobs.query.filter_by(id=job_id).one()

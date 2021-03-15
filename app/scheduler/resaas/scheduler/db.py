@@ -18,7 +18,7 @@ class TblJobs(db.Model):
     finished_at = db.Column(db.DateTime(), nullable=True)
     # the ARRAY type limits us to postgresql databases
     controller_iterations = db.Column(ARRAY(db.String(50)), nullable=True)
-    signed_url = db.Column(db.String(50), nullable=True)
+    signed_url = db.Column(db.String(1000), nullable=True)
 
 
 class TblNodes(db.Model):
