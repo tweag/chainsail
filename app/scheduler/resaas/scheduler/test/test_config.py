@@ -45,6 +45,7 @@ VALID_CONFIG_VM = {
     },
     "node_type": "LibcloudVM",
     "node_config": VM_NODE_CONFIG,
+    "results_url_expiry_time": 42,
 }
 
 VALID_CONFIG_VM_RESAAS_DRIVER = {
@@ -63,6 +64,7 @@ VALID_CONFIG_VM_RESAAS_DRIVER = {
     },
     "node_type": "LibcloudVM",
     "node_config": VM_NODE_CONFIG_RESAAS_DRIVER,
+    "results_url_expiry_time": 42,
 }
 
 # The below config fails to specify inputs for the driver
@@ -82,6 +84,7 @@ CONFIG_INVALID_TYPE = {
     },
     "node_type": "DoesNotExist",
     "node_config": VM_NODE_CONFIG,
+    "results_url_expiry_time": 42,
 }
 
 

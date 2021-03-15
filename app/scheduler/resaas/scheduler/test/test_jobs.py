@@ -109,6 +109,7 @@ def mock_config():
             {"creds": "test"},
             {},
         ),
+        results_url_expiry_time=42,
     )
     return config
 
