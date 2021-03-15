@@ -161,10 +161,10 @@ def update_job_signed_url_task(job_id):
     with open(storage_config_path) as f:
         storage_config = yaml.load(f, Loader=yaml.FullLoader)
 
-    backend_config = storage_config['backend_config']
-    container_name = backend_config['cloud']['container_name']
+    backend_config = storage_config["backend_config"]
+    container_name = backend_config["cloud"]["container_name"]
 
-    google_storage_driver = GoogleStorageDriver(key=backend_config['cloud']['storage_key_path'])
+    google_storage_driver = GoogleStorageDriver(key=backend_config["cloud"]["storage_key_path"])
     container = google_storage_driver.get_container(container_name)
 
     job_blob_root = _get_blob_job_root(scheduler_config, job_id)
@@ -177,7 +177,7 @@ def update_job_signed_url_task(job_id):
             continue
         tmpfile = NamedTemporaryFile()
         google_storage_driver.download_blob(blob, tmpfile.name)
-        tmpfiles.append((tmpfile, blob.name[len(job_blob_root):]))
+        tmpfiles.append((tmpfile, blob.name[len(job_blob_root) :]))
 
     # Put all downloaded blobs in a zip file
     with NamedTemporaryFile() as tmpzipfile:
