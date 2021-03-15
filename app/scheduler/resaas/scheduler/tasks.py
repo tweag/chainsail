@@ -22,7 +22,26 @@ from cloudstorage.drivers.google import GoogleStorageDriver
 RESULTS_ARCHIVE_FILENAME = "results.zip"
 
 
-def _get_blob_job_root(scheduler_config, job_id):
+def get_storage_driver_container(scheduler_config):
+    """Gets the cloudstorage driver and results container.
+
+    TODO: make this cloud provider-agnostic.
+    """
+    storage_config_path = scheduler_config.node_config.storage_config_path
+
+    with open(storage_config_path) as f:
+        storage_config = yaml.load(f, Loader=yaml.FullLoader)
+
+    backend_config = storage_config["backend_config"]
+    container_name = backend_config["cloud"]["container_name"]
+
+    storage_driver = GoogleStorageDriver(key=backend_config["cloud"]["storage_key_path"])
+    container = storage_driver.get_container(container_name)
+
+    return storage_driver, container
+
+
+def get_blob_job_root(scheduler_config, job_id):
     controller_config_path = scheduler_config.node_config.controller_config_path
     with open(controller_config_path) as f:
         raw_controller_config = yaml.load(f, Loader=yaml.FullLoader)
@@ -148,35 +167,48 @@ def scale_job_task(job_id, n_replicas) -> bool:
         return True
 
 
+def get_signed_url(job_id):
+    scheduler_config = load_scheduler_config()
+    storage_driver, container = get_storage_driver_container(scheduler_config)
+    job_blob_root = get_job_blob_root(scheduler_config, job_id)
+    zip_blob = container.get_blob(os.path.join(job_blob_root, RESULTS_ARCHIVE_FILENAME))
+    if zip_blob not in container:
+        return ("Results not zipped yet", 404)
+    signed_url = storage_driver.generate_blob_download_url(
+        zip_blob, expires=scheduler_config.results_url_expiry_time
+    )
+
+    return signed_url
+
+
 @celery.task()
-def update_job_signed_url_task(job_id):
-    """Update a job signed url
+def update_signed_url_task(job_id, signed_url=None):
+    if signed_url is None:
+        signed_url = get_signed_url(job_id)
+    job_rep = TblJobs.query.filter_by(id=job_id).one()
+    job_rep.signed_url = signed_url
+    db.session.commit()
+
+
+@celery.task()
+def zip_results_task(job_id):
+    """Make zip archive of all results for a given job.
 
     Args:
-        job_id: The id of the job to stop
+        job_id: The id of the job the results of which to zip and link to
     """
     scheduler_config = load_scheduler_config()
-    storage_config_path = scheduler_config.node_config.storage_config_path
-
-    with open(storage_config_path) as f:
-        storage_config = yaml.load(f, Loader=yaml.FullLoader)
-
-    backend_config = storage_config["backend_config"]
-    container_name = backend_config["cloud"]["container_name"]
-
-    google_storage_driver = GoogleStorageDriver(key=backend_config["cloud"]["storage_key_path"])
-    container = google_storage_driver.get_container(container_name)
-
-    job_blob_root = _get_blob_job_root(scheduler_config, job_id)
+    storage_driver, container = get_storage_driver_container()
+    job_blob_root = get_blob_job_root(scheduler_config, job_id)
 
     tmpfiles = []
-    for blob in google_storage_driver.get_blobs(container):
+    for blob in storage_driver.get_blobs(container):
         is_results_archive = blob.name.endswith(RESULTS_ARCHIVE_FILENAME)
         in_job_root = blob.name.startswith(job_blob_root)
         if is_results_archive or not in_job_root:
             continue
         tmpfile = NamedTemporaryFile()
-        google_storage_driver.download_blob(blob, tmpfile.name)
+        storage_driver.download_blob(blob, tmpfile.name)
         tmpfiles.append((tmpfile, blob.name[len(job_blob_root) :]))
 
     # Put all downloaded blobs in a zip file
@@ -188,13 +220,4 @@ def update_job_signed_url_task(job_id):
         zipf.close()
         tmpzipfile.seek(0)
         blob_name = os.path.join(job_blob_root, RESULTS_ARCHIVE_FILENAME)
-        zip_blob = google_storage_driver.upload_blob(container, tmpzipfile, blob_name=blob_name)
-
-    # Generates a signed URL for this blob
-    signed_url = google_storage_driver.generate_blob_download_url(
-        zip_blob, expires=scheduler_config.results_url_expiry_time
-    )
-
-    job_rep = TblJobs.query.filter_by(id=job_id).one()
-    job_rep.signed_url = signed_url
-    db.session.commit()
+        storage_driver.upload_blob(container, tmpzipfile, blob_name=blob_name)

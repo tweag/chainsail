@@ -4,6 +4,7 @@ Scheduler REST API and endpoint specifications
 from datetime import datetime
 import os
 
+from celery import chain
 import functools
 from flask import abort, jsonify, request
 from firebase_admin.auth import verify_id_token
@@ -17,7 +18,9 @@ from resaas.scheduler.tasks import (
     start_job_task,
     stop_job_task,
     watch_job_task,
-    update_job_signed_url_task,
+    zip_results_task,
+    get_signed_url,
+    update_signed_url_task,
 )
 
 config = load_scheduler_config()
@@ -117,16 +120,20 @@ def stop_job(job_id, user_id):
     job = find_job(job_id, user_id)
     job.status = JobStatus.STOPPING.value
     db.session.commit()
-    stop_job_task.apply_async((job_id,), {})
+    
+    stop_chain = chain(stop_job_task.s(job_id), zip_results_task.s(job_id), update_signed_url_task.s(job_id))
+    stop_chain.apply_async()
+    
     return ("ok", 200)
 
 
 @app.route("/job/<job_id>/update_signed_url", methods=["POST"])
 @check_user
-def update_job_signed_url(job_id, user_id):
+def get_job_signed_url(job_id, user_id):
     find_job(job_id, user_id)
-    update_job_signed_url_task.apply_async((job_id,), {})
-    return ("ok", 200)
+    signed_url = get_signed_url(job_id)
+    update_signed_url_task.apply_async((job_id, signed_url), {})
+    return (signed_url, 200)
 
 
 @app.route("/jobs", methods=["GET"])
