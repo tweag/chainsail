@@ -8,7 +8,16 @@ import { Line } from '@reactchartjs/react-chart.js';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
-import { Layout, FlexCol, FlexCenter, FlexRow, JobButton, Container, Navbar } from '../components';
+import {
+  Layout,
+  FlexCol,
+  FlexCenter,
+  FlexRow,
+  JobButton,
+  Container,
+  Navbar,
+  ResultsLink,
+} from '../components';
 import { dateFormatter } from '../utils/date';
 import fetcher from '../utils/fetcher';
 
@@ -208,6 +217,8 @@ const JobInfo = ({ jobId }) => {
           <div>{dateFormatter(job.started_at)}</div>
           <div>Finished at:</div>
           <div>{dateFormatter(job.finished_at)}</div>
+          <div>Results:</div>
+          <ResultsLink signed_url={job.signed_url} />
           <div className="mt-3 col-span-2">
             <FlexCenter>
               <JobButton jobId={job.id} jobStatus={job.status} width="w-full" />

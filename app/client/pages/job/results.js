@@ -3,12 +3,30 @@ import nookies from 'nookies';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../../utils/firebaseAdmin';
-import { Layout, FlexCenter, JobButton, Navbar, Container, Link } from '../../components';
+import {
+  Layout,
+  FlexCenter,
+  JobButton,
+  Navbar,
+  Container,
+  Link,
+  ResultsLink,
+} from '../../components';
 import { dateFormatter } from '../../utils/date';
 import fetcher from '../../utils/fetcher';
 
 const JobsTable = ({ data }) => {
-  const headersName = ['Id', 'Name', 'Created at', 'Finished at', 'Started at', 'Status', '', ''];
+  const headersName = [
+    'Id',
+    'Name',
+    'Created at',
+    'Started at',
+    'Finished at',
+    'Results',
+    'Status',
+    '',
+    '',
+  ];
   const TableHeader = ({ children }) => <th className="px-4 py-2 text-left ">{children}</th>;
   const TableRow = ({ row }) => {
     const job_name = JSON.parse(row.spec).name;
@@ -17,8 +35,11 @@ const JobsTable = ({ data }) => {
         <TableData d={row.id} />
         <TableData d={job_name} />
         <TableData d={dateFormatter(row.created_at)} />
-        <TableData d={dateFormatter(row.started_at_at)} />
+        <TableData d={dateFormatter(row.started_at)} />
         <TableData d={dateFormatter(row.finished_at)} />
+        <TableData className="w-30">
+          <ResultsLink signed_url={row.signed_url} />
+        </TableData>
         <TableData d={row.status} className="w-40" />
         <TableData className="w-48">
           <Link href={`/dash?jobId=${row.id}`}>
