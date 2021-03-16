@@ -122,7 +122,9 @@ def stop_job(job_id, user_id):
     job.status = JobStatus.STOPPING.value
     db.session.commit()
 
-    stop_chain = chain(stop_job_task.s(job_id), zip_results_task.si(job_id), update_signed_url_task.si(job_id))
+    stop_chain = chain(
+        stop_job_task.s(job_id), zip_results_task.si(job_id), update_signed_url_task.si(job_id)
+    )
     stop_chain.apply_async()
 
     return ("ok", 200)
