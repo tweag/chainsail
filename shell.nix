@@ -42,5 +42,9 @@ in
       openmpi
       python38Packages.tkinter
       ncurses
+      file
     ];
+  shellHook = ''
+    export LD_LIBRARY_PATH=$(nix eval --raw nixpkgs.stdenv.cc.cc.lib)/lib:$LD_LIBRARY_PATH:${pkgs.file}/lib
+  '';
   }

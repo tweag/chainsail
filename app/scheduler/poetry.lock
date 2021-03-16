@@ -261,6 +261,33 @@ prompt-toolkit = "*"
 six = "*"
 
 [[package]]
+name = "cloudstorage"
+version = "0.11.0"
+description = "Unified cloud storage API for storage services."
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[package.dependencies]
+google-cloud-storage = {version = ">=1.18.0", optional = true, markers = "extra == \"google\""}
+inflection = ">=0.3.1"
+python-dateutil = ">=2.7.3"
+python-magic = ">=0.4.15"
+
+[package.extras]
+amazon = ["boto3 (>=1.8.00)"]
+dev = ["flake8", "pytest", "prettyconf", "requests (>=2.19.1)", "black (19.10b0)", "flake8 (3.7.9)", "flake8-bugbear (20.1.4)", "pre-commit (>=2.0,<3.0)", "tox"]
+digitalocean = ["boto3 (>=1.8.00)"]
+docs = ["sphinx (3.0.2)", "sphinx-rtd-theme (0.4.3)", "sphinx-autodoc-typehints (1.10.3)", "pygments (2.6.1)"]
+google = ["google-cloud-storage (>=1.18.0)", "requests (>=2.19.1)"]
+lint = ["black (19.10b0)", "flake8 (3.7.9)", "flake8-bugbear (20.1.4)", "pre-commit (>=2.0,<3.0)"]
+local = ["filelock (>=3.0.0)", "itsdangerous (>=1.1.0)", "xattr (>=0.9.6)"]
+microsoft = ["azure (4.0.0)"]
+minio = ["minio (>=4.0.0)"]
+rackspace = ["openstacksdk (<=0.17.2)", "rackspacesdk (0.7.5)", "requests (>=2.19.1)"]
+tests = ["flake8", "pytest", "prettyconf", "requests (>=2.19.1)"]
+
+[[package]]
 name = "colorama"
 version = "0.4.4"
 description = "Cross-platform colored terminal text."
@@ -611,6 +638,14 @@ description = "Internationalized Domain Names in Applications (IDNA)"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[[package]]
+name = "inflection"
+version = "0.5.1"
+description = "A port of Ruby on Rails inflector to Python"
+category = "main"
+optional = false
+python-versions = ">=3.5"
 
 [[package]]
 name = "iniconfig"
@@ -1021,6 +1056,17 @@ pytest = ">=5.0.0"
 python-dotenv = ">=0.9.1"
 
 [[package]]
+name = "python-dateutil"
+version = "2.8.1"
+description = "Extensions to the standard Python datetime module"
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+
+[package.dependencies]
+six = ">=1.5"
+
+[[package]]
 name = "python-dotenv"
 version = "0.15.0"
 description = "Add .env support to your django/flask apps in development and deployments"
@@ -1030,6 +1076,14 @@ python-versions = "*"
 
 [package.extras]
 cli = ["click (>=5.0)"]
+
+[[package]]
+name = "python-magic"
+version = "0.4.22"
+description = "File type identification using libmagic"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "pytz"
@@ -1286,7 +1340,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "0e3341c167d08e6f6cd2c37e25d4235923bed36a8b9e4fec9316c8f412f4aa4b"
+content-hash = "b7883de60abff83a920badafdd3430e6b41ec0033bddb1a568d33addaa4a79bc"
 
 [metadata.files]
 amqp = [
@@ -1402,6 +1456,9 @@ click-plugins = [
 click-repl = [
     {file = "click-repl-0.1.6.tar.gz", hash = "sha256:b9f29d52abc4d6059f8e276132a111ab8d94980afe6a5432b9d996544afa95d5"},
     {file = "click_repl-0.1.6-py3-none-any.whl", hash = "sha256:9c4c3d022789cae912aad8a3f5e1d7c2cdd016ee1225b5212ad3e8691563cda5"},
+]
+cloudstorage = [
+    {file = "cloudstorage-0.11.0-py3-none-any.whl", hash = "sha256:dcbcc4b4abe29f1af9953ebf45251ff4468ea41ae05acbc613aaca58268b65fe"},
 ]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
@@ -1688,6 +1745,10 @@ httplib2 = [
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
     {file = "idna-2.10.tar.gz", hash = "sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6"},
+]
+inflection = [
+    {file = "inflection-0.5.1-py2.py3-none-any.whl", hash = "sha256:f38b2b640938a4f35ade69ac3d053042959b62a0f1076a5bbaa1b9526605a8a2"},
+    {file = "inflection-0.5.1.tar.gz", hash = "sha256:1a29730d366e996aaacffb2f1f1cb9593dc38e2ddd30c91250c6dde09ea9b417"},
 ]
 iniconfig = [
     {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
@@ -2025,9 +2086,17 @@ pytest-dotenv = [
     {file = "pytest-dotenv-0.5.2.tar.gz", hash = "sha256:2dc6c3ac6d8764c71c6d2804e902d0ff810fa19692e95fe138aefc9b1aa73732"},
     {file = "pytest_dotenv-0.5.2-py3-none-any.whl", hash = "sha256:40a2cece120a213898afaa5407673f6bd924b1fa7eafce6bda0e8abffe2f710f"},
 ]
+python-dateutil = [
+    {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
+    {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
+]
 python-dotenv = [
     {file = "python-dotenv-0.15.0.tar.gz", hash = "sha256:587825ed60b1711daea4832cf37524dfd404325b7db5e25ebe88c495c9f807a0"},
     {file = "python_dotenv-0.15.0-py2.py3-none-any.whl", hash = "sha256:0c8d1b80d1a1e91717ea7d526178e3882732420b03f08afea0406db6402e220e"},
+]
+python-magic = [
+    {file = "python-magic-0.4.22.tar.gz", hash = "sha256:ca884349f2c92ce830e3f498c5b7c7051fe2942c3ee4332f65213b8ebff15a62"},
+    {file = "python_magic-0.4.22-py2.py3-none-any.whl", hash = "sha256:8551e804c09a3398790bd9e392acb26554ae2609f29c72abb0b9dee9a5571eae"},
 ]
 pytz = [
     {file = "pytz-2021.1-py2.py3-none-any.whl", hash = "sha256:eb10ce3e7736052ed3623d49975ce333bcd712c7bb19a58b9e2089d4057d0798"},

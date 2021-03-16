@@ -20,6 +20,7 @@ CLOUD_STORAGE_CONFIG = {
             "libcloud_provider": "S3",
             "container_name": "foobar",
             "driver_kwargs": {"key": "xxxxxxxxxx"},
+            "storage_key_path": "/dev/null",
         },
     },
 }

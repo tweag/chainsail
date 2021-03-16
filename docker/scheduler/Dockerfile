@@ -13,7 +13,7 @@ WORKDIR /app
 FROM base as system-deps
 
 RUN apt-get update && \
-    apt-get install -y curl wget unzip libncurses5-dev libncursesw5-dev && \
+    apt-get install -y curl wget unzip libncurses5-dev libncursesw5-dev libmagic1 && \
     rm -rf /var/lib/apt/lists/*
 
 

@@ -4,6 +4,8 @@ Scheduler REST API and endpoint specifications
 from datetime import datetime
 import os
 
+from celery import chain
+from cloudstorage.exceptions import NotFoundError
 import functools
 from flask import abort, jsonify, request
 from firebase_admin.auth import verify_id_token
@@ -12,7 +14,15 @@ from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import app, db, firebase_app
 from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.jobs import JobStatus
-from resaas.scheduler.tasks import scale_job_task, start_job_task, stop_job_task, watch_job_task
+from resaas.scheduler.tasks import (
+    scale_job_task,
+    start_job_task,
+    stop_job_task,
+    watch_job_task,
+    zip_results_task,
+    get_signed_url,
+    update_signed_url_task,
+)
 
 config = load_scheduler_config()
 
@@ -58,6 +68,10 @@ def find_job(job_id, user_id=None):
     return job
 
 
+def get_zip_chain(job_id):
+    return chain(zip_results_task.si(job_id), update_signed_url_task.si(job_id))
+
+
 @app.route("/job/<job_id>", methods=["GET"])
 @check_user
 def get_job(job_id, user_id):
@@ -93,11 +107,12 @@ def start_job(job_id, user_id):
     db.session.commit()
     # Starts the watch process once the job is successfully started
     # The watch process will stop the job once it either succeeds or fails.
+    zip_chain = get_zip_chain(job_id)
     start_job_task.apply_async(
         (job_id,),
         {},
         link=watch_job_task.si(job_id).set(
-            link=stop_job_task.si(job_id, exit_status="success"),
+            link=stop_job_task.si(job_id, exit_status="success").set(link=zip_chain),
             link_error=stop_job_task.si(job_id, exit_status="failed"),
         ),
     )
@@ -111,8 +126,23 @@ def stop_job(job_id, user_id):
     job = find_job(job_id, user_id)
     job.status = JobStatus.STOPPING.value
     db.session.commit()
-    stop_job_task.apply_async((job_id,), {})
+
+    zip_chain = get_zip_chain(job_id)
+    stop_job_task.apply_async(link=zip_chain)
+
     return ("ok", 200)
+
+
+@app.route("/job/<job_id>/update_signed_url", methods=["POST"])
+@check_user
+def get_job_signed_url(job_id, user_id):
+    find_job(job_id, user_id)
+    try:
+        signed_url = get_signed_url(job_id)
+    except NotFoundError:
+        return ("Results not zipped yet", 404)
+    update_signed_url_task.apply_async((job_id, signed_url), {})
+    return (signed_url, 200)
 
 
 @app.route("/jobs", methods=["GET"])
