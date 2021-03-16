@@ -1,32 +1,15 @@
-import os
-
 import numpy as np
 import requests
 
-import multiprocessing
-
-
-def run_server(host, port):
-    import httpstan.app
-    import aiohttp.web
-
-    app = httpstan.app.make_app()
-    aiohttp.web.run_app(app, host=host, port=port)
-
 
 class PDF:
+    STAN_SERVER_ADDRESS = "http://localhost"
+
     def __init__(self, model_code, data, port=8082):
         self._port = port
-        server_process = multiprocessing.Process(
-            target=run_server, args=('127.0.0.1', self._port)
-        )
-        server_process.start()
-        # give server process time to start
-        import time
-        time.sleep(5)
         try:
             r = requests.post(
-                f"http://127.0.0.1:{self._port}/v1/models",
+                f"{self.STAN_SERVER_ADDRESS}:{self._port}/v1/models",
                 json={"program_code": model_code}
             )
             r.raise_for_status()
@@ -38,7 +21,7 @@ class PDF:
     def log_prob(self, x):
         try:
             r = requests.post(
-                f"http://127.0.0.1:{self._port}/v1/{self._model_id}/log_prob",
+                f"{self.STAN_SERVER_ADDRESS}:{self._port}/v1/{self._model_id}/log_prob",
                 json={"unconstrained_parameters": x.tolist(),
                       "data": self._data,
                       "adjust_transform": False}
@@ -51,7 +34,7 @@ class PDF:
     def log_prob_gradient(self, x):
         try:
             r = requests.post(
-                f"http://127.0.0.1:{self._port}/v1/{self._model_id}/log_prob_grad",
+                f"{self.STAN_SERVER_ADDRESS}:{self._port}/v1/{self._model_id}/log_prob_grad",
                 json={"unconstrained_parameters": x.tolist(),
                       "data": self._data,
                       "adjust_transform": False}
@@ -110,5 +93,5 @@ data_points = np.vstack(data_points)
 # compile stan model
 data = {"N": len(data_points), "D": 2, "K": 9, "y": data_points.tolist()}
 
-pdf = PDF(model_code, data, os.getpid() + 8100)
+pdf = PDF(model_code, data)
 initial_states = np.random.uniform(0, 3, data["D"] * data["K"])
