@@ -23,7 +23,7 @@ const JobsTable = ({ data }) => {
         <TableData className="w-48">
           <Link href={`/dash?jobId=${row.id}`}>
             <div className="w-32 py-1 text-center text-white bg-purple-600 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700">
-              SEE DASH!
+              dash site
             </div>
           </Link>
         </TableData>
