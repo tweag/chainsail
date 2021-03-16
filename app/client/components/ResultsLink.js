@@ -1,14 +1,16 @@
-import { Link } from '../components';
-
 const ResultsLink = ({ signed_url }) => {
-    if (signed_url == null) {
-	return <span className="w-30"> n/a </span>;
-    } else {
-	// underline not working ;-(
-	return <Link href={`${signed_url}`} style={{ textDecoration: 'underline' }}>
-            link
-            </Link>
-    }
+  if (signed_url) {
+    return (
+      <a
+        download
+        href={signed_url}
+        className="w-32 py-1 text-center text-white bg-green-600 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-green-700"
+      >
+        Download results
+      </a>
+    );
+  } else {
+    return <></>;
+  }
 };
-
 export default ResultsLink;

@@ -32,5 +32,5 @@ export {
   MathTex,
   Modal,
   Navbar,
-  ResultsLink,	
+  ResultsLink,
 };
