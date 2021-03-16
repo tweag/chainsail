@@ -239,7 +239,9 @@ const Job = ({ authed }) => {
 		  Every sampling job is specified through several parameters. This form is
 		  populated with values for a simple example: a mixture of Gaussians in
 		  two dimensions. If you like to define your own probability, download the
-		  example .zip file and follow instructions in the source code.
+                  example .zip file and follow instructions in the source code. You can extract
+	          the samples from your distribution from the downloaded results by using
+	          a script we provide here: {<a href="https://storage.googleapis.com/resaas-dev-public/concatenate_samples.py">link</a>
                 </div>
                 <FlexRow between responsive media="lg" className="w-full lg:h-4/5 lg:space-x-20">
                   <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 w-96">
