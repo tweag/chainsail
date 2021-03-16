@@ -68,6 +68,10 @@ def find_job(job_id, user_id=None):
     return job
 
 
+def get_zip_chain(job_id):
+    return chain(zip_results_task.si(job_id), update_signed_url_task.si(job_id))
+
+
 @app.route("/job/<job_id>", methods=["GET"])
 @check_user
 def get_job(job_id, user_id):
@@ -103,11 +107,12 @@ def start_job(job_id, user_id):
     db.session.commit()
     # Starts the watch process once the job is successfully started
     # The watch process will stop the job once it either succeeds or fails.
+    zip_chain = get_zip_chain(job_id)
     start_job_task.apply_async(
         (job_id,),
         {},
         link=watch_job_task.si(job_id).set(
-            link=stop_job_task.si(job_id, exit_status="success"),
+            link=stop_job_task.si(job_id, exit_status="success").set(link=zip_chain),
             link_error=stop_job_task.si(job_id, exit_status="failed"),
         ),
     )
@@ -122,10 +127,8 @@ def stop_job(job_id, user_id):
     job.status = JobStatus.STOPPING.value
     db.session.commit()
 
-    stop_chain = chain(
-        stop_job_task.s(job_id), zip_results_task.si(job_id), update_signed_url_task.si(job_id)
-    )
-    stop_chain.apply_async()
+    zip_chain = get_zip_chain(job_id)
+    stop_job_task.apply_async(link=zip_chain)
 
     return ("ok", 200)
 
