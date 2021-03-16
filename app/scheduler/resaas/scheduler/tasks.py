@@ -1,13 +1,12 @@
 """
 Asynchronous tasks run using celery
 """
-
-from datetime import datetime
 import os
-import yaml
-import json
-import zipfile
+from datetime import datetime
 from tempfile import NamedTemporaryFile
+
+import yaml
+import zipfile
 
 from resaas.common.configs import ControllerConfigSchema
 from resaas.scheduler.config import load_scheduler_config
@@ -41,7 +40,7 @@ def get_storage_driver_container(scheduler_config):
     return storage_driver, container
 
 
-def get_blob_job_root(scheduler_config, job_id):
+def get_job_blob_root(scheduler_config, job_id):
     controller_config_path = scheduler_config.node_config.controller_config_path
     with open(controller_config_path) as f:
         raw_controller_config = yaml.load(f, Loader=yaml.FullLoader)
@@ -172,8 +171,6 @@ def get_signed_url(job_id):
     storage_driver, container = get_storage_driver_container(scheduler_config)
     job_blob_root = get_job_blob_root(scheduler_config, job_id)
     zip_blob = container.get_blob(os.path.join(job_blob_root, RESULTS_ARCHIVE_FILENAME))
-    if zip_blob not in container:
-        return ("Results not zipped yet", 404)
     signed_url = storage_driver.generate_blob_download_url(
         zip_blob, expires=scheduler_config.results_url_expiry_time
     )
@@ -198,8 +195,8 @@ def zip_results_task(job_id):
         job_id: The id of the job the results of which to zip and link to
     """
     scheduler_config = load_scheduler_config()
-    storage_driver, container = get_storage_driver_container()
-    job_blob_root = get_blob_job_root(scheduler_config, job_id)
+    storage_driver, container = get_storage_driver_container(scheduler_config)
+    job_blob_root = get_job_blob_root(scheduler_config, job_id)
 
     tmpfiles = []
     for blob in storage_driver.get_blobs(container):
