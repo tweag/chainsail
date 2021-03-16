@@ -37,8 +37,7 @@ const JobPageModal = ({ jobCreated, jobId, err, errMsg, setErr, setErrMsg }) => 
       {!err && (
         <>
           <div className="mb-7">
-            Job with id {jobId} created successfully. Please look at result page to check its latest
-            status.
+            Job with id {jobId} created successfully. Start it by clicking the button in the job table.
           </div>
           <FlexCenter>
             <Link href="/job/results">
@@ -48,7 +47,7 @@ const JobPageModal = ({ jobCreated, jobId, err, errMsg, setErr, setErrMsg }) => 
                   ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
                 }
               >
-                Checkout results!
+                View your jobs
               </a>
             </Link>
           </FlexCenter>
@@ -87,41 +86,39 @@ const Descs = ({ activeField }) => (
       name={['max_replicas', 'initial_number_of_replicas']}
       icon="fas fa-cloud"
     >
-      Max/Initial N° replicas: maximum/initial number of replicas to use. Specifics of the
-      environment in which these are created is configured on the scheduler itself
+	Max / initial N° replicas: maximum / initial number of replicas to use. The more replicas, the better the sampling, but the more compute quota you will use
     </FieldDescription>
     <FieldDescription
       activeField={activeField}
       name={['num_production_samples', 'num_optimization_samples']}
       icon="fas fa-stream"
     >
-      N° production/optimization samples: number of MCMC samples in production/optimization runs
+      N° production / optimization samples: number of MCMC samples in production / optimization runs
     </FieldDescription>
     <FieldDescription
       activeField={activeField}
       name={['tempered_distribution_family']}
       math="\{\mathbb{P}\}"
     >
-      Tempered distribution family: the family of tempered distributions to use. For now, the only
-      valid value is "Boltzmann"
+      Tempered distribution family: the family of tempered distributions to use. For now, only
+    tempering whole probabilities ("Boltzmann") is supported
     </FieldDescription>
     <FieldDescription activeField={activeField} name={['minimum_beta']} math="\beta_{min}">
       Beta min: the minimum inverse temperature (beta) which determines the flatness of the flattest
       distribution
     </FieldDescription>
     <FieldDescription activeField={activeField} name={['target_acceptance_rate']} math="\rho">
-      Target acceptance rate: the plausible acceptance rate that the algorithm aims to achieve
+      Target acceptance rate: the acceptance rate between neigboring replicas that the algorithm aims to achieve. 0.2 is a good value.
     </FieldDescription>
     <FieldDescription
       activeField={activeField}
       name={['probability_definition']}
       icon="fas fa-link"
     >
-      Probability definition: URL to archive including importable Python module providing the log
-      probability
+      Probability definition: URL to zip archive including importable Python module providing the probability density
     </FieldDescription>
     <FieldDescription activeField={activeField} name={['dependencies']} icon="fas fa-bolt">
-      Dependencies: list of dependencies to install on compute nodes
+      Dependencies: comma-separated list of dependencies to install on compute nodes
     </FieldDescription>
   </FlexCol>
 );
@@ -144,16 +141,16 @@ const Job = ({ authed }) => {
   const [jobCreated, setJobCreated] = useState(false);
 
   // Form fields state variables
-  const [job_name, setJobName] = useState('');
-  const [max_replicas, setMaxReplicas] = useState(2);
-  const [initial_number_of_replicas, setInitNReplicas] = useState(undefined);
+  const [job_name, setJobName] = useState('my_sampling_job');
+  const [max_replicas, setMaxReplicas] = useState(10);
+  const [initial_number_of_replicas, setInitNReplicas] = useState(3);
   const [tempered_distribution_family, setTemperedDist] = useState('boltzmann');
-  const [num_production_samples, setNumProductionSamples] = useState(2000);
-  const [num_optimization_samples, setNumOptimizationSamples] = useState(undefined);
+  const [num_production_samples, setNumProductionSamples] = useState(10000);
+  const [num_optimization_samples, setNumOptimizationSamples] = useState(3000);
   const [minimum_beta, setMinBeta] = useState(0.01);
   const [target_acceptance_rate, setTargetAcceptanceRate] = useState(0.2);
-  const [probability_definition, setProbDef] = useState('');
-  const [dependencies, setDeps] = useState([]);
+  const [probability_definition, setProbDef] = useState('https://storage.googleapis.com/resaas-dev-public/mixture.zip');
+  const [dependencies, setDeps] = useState(['numpy', 'scipy']);
 
   const [createdJobId, setCreatedJobID] = useState(null);
 
@@ -239,10 +236,10 @@ const Job = ({ authed }) => {
                   <i className="ml-3 fas fa-rocket"></i>
                 </div>
                 <div className="w-full mb-20 text-base md:text-xl lg:w-2/3 md:text-justify">
-                  Every sampling task is called a <em>job</em>. Every job is specified through
-                  several attributes. After a job is submitted, the user gets a link to a cloud
-                  bucket, which contains the samples, sampling statistics such as acceptance rates
-                  and an estimate of the density of states.
+		  Every sampling job is specified through several parameters. This form is
+		  populated with values for a simple example: a mixture of Gaussians in
+		  two dimensions. If you like to define your own probability, download the
+		  example .zip file and follow instructions in the source code.
                 </div>
                 <FlexRow between responsive media="lg" className="w-full lg:h-4/5 lg:space-x-20">
                   <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 w-96">
@@ -271,7 +268,7 @@ const Job = ({ authed }) => {
                             inputName="num_production_samples"
                             inputType="number"
                             setActiveField={setActiveField}
-                            minNumber={100}
+                            minNumber={1000}
                             value={num_production_samples}
                             onChange={(e) => setNumProductionSamples(e.target.value)}
                           />
@@ -280,7 +277,7 @@ const Job = ({ authed }) => {
                             inputName="max_replicas"
                             inputType="number"
                             setActiveField={setActiveField}
-                            minNumber={2}
+                            minNumber={3}
                             value={max_replicas}
                             onChange={(e) => setMaxReplicas(e.target.value)}
                           />
@@ -315,7 +312,7 @@ const Job = ({ authed }) => {
                             inputName="initial_number_of_replicas"
                             inputType="number"
                             setActiveField={setActiveField}
-                            minNumber={2}
+                            minNumber={3}
                             value={initial_number_of_replicas}
                             onChange={(e) => setInitNReplicas(e.target.value)}
                           />
@@ -326,7 +323,7 @@ const Job = ({ authed }) => {
                             inputName="num_optimization_samples"
                             inputType="number"
                             setActiveField={setActiveField}
-                            minNumber={100}
+                            minNumber={1000}
                             value={num_optimization_samples}
                             onChange={(e) => setNumOptimizationSamples(e.target.value)}
                           />
@@ -364,8 +361,8 @@ const Job = ({ authed }) => {
                             label="Target acceptance rate"
                             inputName="target_acceptance_rate"
                             inputType="number"
-                            minNumber={0}
-                            maxNumber={1}
+                            minNumber={0.1}
+                            maxNumber={0.9}
                             stepNumber={0.1}
                             setActiveField={setActiveField}
                             value={target_acceptance_rate}
@@ -381,11 +378,11 @@ const Job = ({ authed }) => {
                       >
                         {seeMoreFields ? (
                           <div>
-                            <i className="mr-1 fas fa-caret-square-up"></i> see less fields!
+                            <i className="mr-1 fas fa-caret-square-up"></i> less parameters
                           </div>
                         ) : (
                           <div>
-                            <i className="mr-1 fas fa-caret-square-down"></i> see more fields!
+                            <i className="mr-1 fas fa-caret-square-down"></i> more parameters
                           </div>
                         )}
                       </div>
