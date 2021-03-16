@@ -218,7 +218,7 @@ const JobInfo = ({ jobId }) => {
           <div>Finished at:</div>
           <div>{dateFormatter(job.finished_at)}</div>
           <div>Results:</div>
-          <div>{ResultsLink(job.signed_url)}</div>
+          <ResultsLink signed_url={job.signed_url} />
           <div className="mt-3 col-span-2">
             <FlexCenter>
               <JobButton jobId={job.id} jobStatus={job.status} width="w-full" />
