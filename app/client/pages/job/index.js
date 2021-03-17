@@ -170,7 +170,7 @@ const Job = ({ authed }) => {
       initial_number_of_replicas:
         seeMoreFields && initial_number_of_replicas
           ? initial_number_of_replicas
-          : Math.floor(max_replicas * 0.5),
+          : Math.max(2, Math.floor(max_replicas * 0.5)),
       max_replicas,
       tempered_dist_family: tempered_distribution_family,
       initial_schedule_parameters: {
