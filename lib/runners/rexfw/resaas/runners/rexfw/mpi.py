@@ -37,7 +37,7 @@ def mpiabort_excepthook(exc_type, exc_value, exc_traceback):
         "MPI process encountered an unchecked exception.",
         exc_info=(exc_type, exc_value, exc_traceback),
     )
-    mpicomm.Abort()
+    mpicomm.Abort(1)
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
 
@@ -218,6 +218,9 @@ def run_rexfw_mpi(
             stepsize = storage.load_initial_stepsizes()[rank - 1]
         else:
             stepsize = 0.1
+
+        if rank == 2:
+            raise
 
         ls_params = config["local_sampling"]
         sampler = get_sampler(ls_params["sampler"])
