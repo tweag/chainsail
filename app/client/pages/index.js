@@ -2,18 +2,18 @@ import { Layout, Button, FlexCenter, FlexCol, Container, Navbar } from '../compo
 
 const Heading = () => (
   <FlexCol center className="h-full">
-    <div className="mb-10 text-5xl md:text-9xl">Resaas</div>
+    <div className="mb-10 text-5xl md:text-9xl">RESAAS</div>
     <div className="mb-10 text-2xl lg:w-2/3 md:text-4xl md:mb-20">
-      scalable, automatically-tuning, cloud-based replica exchange implementation
+      sampling multimodal distributions made easy
     </div>
     <div className="text-base md:text-xl lg:w-2/3 md:text-justify mb-7">
-      Replica exchange runs multiple MCMC samplers in parallel, the required number of which
-      strongly depends on the probability distribution at hand and can go into the the hundreds. The
-      number of parallel samplers, each running in a separate process, can be iteratively optimized
-      by upscaling the cluster on the cloud platform.
+	RESAAS implements Replica Exchange, a MCMC algorithm which simulates several, increasingly
+    flatter MCMC chains ("replicas") in parallel and exchanges configurations. It uses HMC for sampling within
+    those chains. RESAAS automatically adapts the number of intermediate distributions. All
+    you need to provide is a Python module defining your probability density and its log-probability gradient.
     </div>
     <Button href="/job" className="bg-purple-600 hover:bg-purple-500">
-      Checkout more!
+      Give it a whirl
     </Button>
   </FlexCol>
 );
