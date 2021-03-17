@@ -128,7 +128,7 @@ def stop_job(job_id, user_id):
     db.session.commit()
 
     zip_chain = get_zip_chain(job_id)
-    stop_job_task.apply_async(link=zip_chain)
+    stop_job_task.apply_async((job_id, ), link=zip_chain)
 
     return ("ok", 200)
 
