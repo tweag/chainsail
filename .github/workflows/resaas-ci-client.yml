@@ -1,11 +1,7 @@
 
 name: resaas CI client (Linux)
 
-on:
-  push:
-    branches:
-      - main
-      - 'client**'
+on: [push]
 
 jobs:
   build:
