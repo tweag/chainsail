@@ -19,4 +19,6 @@ jobs:
         run: cd app/client && yarn install
       - name: Build client
         run: cd app/client && yarn build
+      - name: Check client format
+        run: cd app/client && yarn format-check
 
