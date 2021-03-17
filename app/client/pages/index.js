@@ -7,10 +7,11 @@ const Heading = () => (
       sampling multimodal distributions made easy
     </div>
     <div className="text-base md:text-xl lg:w-2/3 md:text-justify mb-7">
-	RESAAS implements Replica Exchange, a MCMC algorithm which simulates several, increasingly
-    flatter MCMC chains ("replicas") in parallel and exchanges configurations. It uses HMC for sampling within
-    those chains. RESAAS automatically adapts the number of intermediate distributions. All
-    you need to provide is a Python module defining your probability density and its log-probability gradient.
+      RESAAS implements Replica Exchange, a MCMC algorithm which simulates several, increasingly
+      flatter MCMC chains ("replicas") in parallel and exchanges configurations. It uses HMC for
+      sampling within those chains. RESAAS automatically adapts the number of intermediate
+      distributions. All you need to provide is a Python module defining your probability density
+      and its log-probability gradient.
     </div>
     <Button href="/job" className="bg-purple-600 hover:bg-purple-500">
       Give it a whirl
