@@ -37,7 +37,8 @@ const JobPageModal = ({ jobCreated, jobId, err, errMsg, setErr, setErrMsg }) => 
       {!err && (
         <>
           <div className="mb-7">
-            Job with id {jobId} created successfully. Start it by clicking the button in the job table.
+            Job with id {jobId} created successfully. Start it by clicking the button in the job
+            table.
           </div>
           <FlexCenter>
             <Link href="/job/results">
@@ -86,14 +87,16 @@ const Descs = ({ activeField }) => (
       name={['max_replicas', 'initial_number_of_replicas']}
       icon="fas fa-cloud"
     >
-	Max / initial N° replicas: maximum / initial number of replicas to use. The more replicas, the better the sampling, but the more compute quota you will use
+      Max / initial N° replicas: maximum / initial number of replicas to use. The more replicas,
+      the better the sampling, but the more compute quota you will use
     </FieldDescription>
     <FieldDescription
       activeField={activeField}
       name={['num_production_samples', 'num_optimization_samples']}
       icon="fas fa-stream"
     >
-      N° production / optimization samples: number of MCMC samples in production / optimization runs
+      N° production / optimization samples: number of MCMC samples in production / optimization
+      runs
     </FieldDescription>
     <FieldDescription
       activeField={activeField}
@@ -101,21 +104,23 @@ const Descs = ({ activeField }) => (
       math="\{\mathbb{P}\}"
     >
       Tempered distribution family: the family of tempered distributions to use. For now, only
-    tempering whole probabilities ("Boltzmann") is supported
+      tempering whole probabilities ("Boltzmann") is supported
     </FieldDescription>
     <FieldDescription activeField={activeField} name={['minimum_beta']} math="\beta_{min}">
-      Beta min: the minimum inverse temperature (beta) which determines the flatness of the flattest
-      distribution
+      Beta min: the minimum inverse temperature (beta) which determines the flatness of the
+      flattest distribution
     </FieldDescription>
     <FieldDescription activeField={activeField} name={['target_acceptance_rate']} math="\rho">
-      Target acceptance rate: the acceptance rate between neigboring replicas that the algorithm aims to achieve. 0.2 is a good value.
+      Target acceptance rate: the acceptance rate between neigboring replicas that the algorithm
+      aims to achieve. 0.2 is a good value.
     </FieldDescription>
     <FieldDescription
       activeField={activeField}
       name={['probability_definition']}
       icon="fas fa-link"
     >
-      Probability definition: URL to zip archive including importable Python module providing the probability density
+      Probability definition: URL to zip archive including importable Python module providing the
+      probability density
     </FieldDescription>
     <FieldDescription activeField={activeField} name={['dependencies']} icon="fas fa-bolt">
       Dependencies: comma-separated list of dependencies to install on compute nodes
@@ -149,7 +154,9 @@ const Job = ({ authed }) => {
   const [num_optimization_samples, setNumOptimizationSamples] = useState(3000);
   const [minimum_beta, setMinBeta] = useState(0.01);
   const [target_acceptance_rate, setTargetAcceptanceRate] = useState(0.2);
-  const [probability_definition, setProbDef] = useState('https://storage.googleapis.com/resaas-dev-public/mixture.zip');
+  const [probability_definition, setProbDef] = useState(
+    'https://storage.googleapis.com/resaas-dev-public/mixture.zip'
+  );
   const [dependencies, setDeps] = useState(['numpy', 'scipy']);
 
   const [createdJobId, setCreatedJobID] = useState(null);
@@ -236,12 +243,14 @@ const Job = ({ authed }) => {
                   <i className="ml-3 fas fa-rocket"></i>
                 </div>
                 <div className="w-full mb-20 text-base md:text-xl lg:w-2/3 md:text-justify">
-		  Every sampling job is specified through several parameters. This form is
-		  populated with values for a simple example: a mixture of Gaussians in
-		  two dimensions. If you like to define your own probability, download the
-                  example .zip file and follow instructions in the source code. You can extract
-	          the samples from your distribution from the downloaded results by using
-	          a script we provide here: {<a href="https://storage.googleapis.com/resaas-dev-public/concatenate_samples.py">link</a>
+                  Every sampling job is specified through several parameters. This form is
+                  populated with values for a simple example: a mixture of Gaussians in two
+                  dimensions. If you like to define your own probability, download the example .zip
+                  file and follow instructions in the source code. You can extract the samples from
+                  your distribution from the downloaded results by using a script we provide here:{' '}
+                  <a href="https://storage.googleapis.com/resaas-dev-public/concatenate_samples.py">
+                    link
+                  </a>
                 </div>
                 <FlexRow between responsive media="lg" className="w-full lg:h-4/5 lg:space-x-20">
                   <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 w-96">
