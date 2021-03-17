@@ -219,9 +219,6 @@ def run_rexfw_mpi(
         else:
             stepsize = 0.1
 
-        if rank == 2:
-            raise
-
         ls_params = config["local_sampling"]
         sampler = get_sampler(ls_params["sampler"])
         ls_params.pop("sampler")
