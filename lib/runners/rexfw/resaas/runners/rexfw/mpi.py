@@ -37,7 +37,7 @@ def mpiabort_excepthook(exc_type, exc_value, exc_traceback):
         "MPI process encountered an unchecked exception.",
         exc_info=(exc_type, exc_value, exc_traceback),
     )
-    mpicomm.Abort()
+    mpicomm.Abort(1)
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
 
