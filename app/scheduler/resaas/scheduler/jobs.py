@@ -183,7 +183,12 @@ class Job:
         else:
             # Scale down
             to_remove = current_size - requested_size
-            removeable = [i for i in range(len(self.nodes)) if i != self.control_node]
+            # TODO: this assumes that there is only one non-worker node for a given
+            # job and that that is necessarily the controller node. Is this always true?
+            # If this is a permanent fix, then remove the is_controller / control_node logic
+            # from the node class
+            controller_name = TblNodes.query.filter_by(is_worker=False).one().name
+            removeable = [i for i, node in enumerate(self.nodes) if node.name != controller_name]
             for _ in range(to_remove):
                 self._remove_node(removeable.pop())
         self.sync_representation()
