@@ -187,11 +187,14 @@ class Job:
             # job and that that is necessarily the controller node. Is this always true?
             # If this is a permanent fix, then remove the is_controller / control_node logic
             # from the node class
-            controller_name = TblNodes.query.filter_by(is_worker=False).one().name
+            controller_name = self._get_control_node_name()
             removeable = [i for i, node in enumerate(self.nodes) if node.name != controller_name]
             for _ in range(to_remove):
                 self._remove_node(removeable.pop())
         self.sync_representation()
+
+    def _get_control_node_name(self):
+        return TblNodes.query.filter_by(job_id=self.id, is_worker=False, in_use=True).one().name
 
     def watch(self) -> bool:
         # Await control node until it reports exit or dies
