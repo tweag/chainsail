@@ -15,22 +15,6 @@ import {
   Modal,
 } from '../../components';
 
-const FieldDescription = ({ children, name, activeField, icon, math }) => (
-  <div
-    className={`${
-      name.includes(activeField) ? 'text-blue-400' : ''
-    } transition duration-200 my-1 lg:my-0`}
-  >
-    {icon && <i className={`${icon} mr-5`}></i>}
-    {math && (
-      <MathTex inline className="mr-5">
-        {math}
-      </MathTex>
-    )}
-    {children}
-  </div>
-);
-
 const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) => {
   const buttonStyle =
     'px-6 py-2 text-base text-center rounded-lg cursor-pointer lg:transition lg:duration-300  text-white';
@@ -76,6 +60,22 @@ const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) =
     </Modal>
   );
 };
+
+const FieldDescription = ({ children, name, activeField, icon, math }) => (
+  <div
+    className={`${
+      name.includes(activeField) ? 'text-blue-400' : ''
+    } transition duration-200 my-1 lg:my-0`}
+  >
+    {icon && <i className={`${icon} mr-5`}></i>}
+    {math && (
+      <MathTex inline className="mr-5">
+        {math}
+      </MathTex>
+    )}
+    {children}
+  </div>
+);
 
 const Descs = ({ activeField }) => (
   <FlexCol between className="w-full h-full">
