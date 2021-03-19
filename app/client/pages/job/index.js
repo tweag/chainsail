@@ -261,7 +261,7 @@ const Job = ({ authed }) => {
                       className="h-full"
                       onSubmit={(e) => {
                         e.preventDefault();
-                        createJob(e);
+                        if (!isModalActive) createJob(e);
                       }}
                     >
                       <FlexCol between className="h-56">
