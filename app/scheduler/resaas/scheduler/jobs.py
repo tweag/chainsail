@@ -62,7 +62,7 @@ class Job:
             )
         self.status = JobStatus.INITIALIZED
         for _ in range(self.spec.initial_number_of_replicas):
-            a = self._add_node()
+            self._add_node()
         self.control_node = self._add_node(is_controller=True)
         self.sync_representation()
 
@@ -213,7 +213,8 @@ class Job:
         self.representation.spec = JobSpecSchema().dumps(self.spec)
         for node in self.nodes:
             node.sync_representation()
-        self.control_node.sync_representation()
+        if self.control_node:
+            self.control_node.sync_representation()
 
     @classmethod
     def from_representation(
