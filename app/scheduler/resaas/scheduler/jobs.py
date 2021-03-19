@@ -26,19 +26,6 @@ class JobStatus(Enum):
 
 
 N_CREATION_THREADS = 10
-_DEFAULT_CONTROL_NODE = 0
-
-
-# ---------------- BEGIN REXFW IMPLEMENTATION SPECIFIC STUFF ----------------
-# The index of the control node. The job will use this to query for
-# the health of the job node's main process.
-def n_replicas_to_nodes(n_replicas: int):
-    """Compute the number of nodes required to run N replicas"""
-    # N replicas + 1 control node
-    return n_replicas + 1
-
-
-# ---------------------------------------------------------------------
 
 
 class Job:
@@ -48,6 +35,7 @@ class Job:
         spec: JobSpec,
         config: SchedulerConfig,
         nodes=None,
+        control_node=None,
         node_registry: Dict[NodeType, Node] = NODE_CLS_REGISTRY,
         representation: Optional[TblJobs] = None,
         status: JobStatus = JobStatus.INITIALIZED,
@@ -61,20 +49,21 @@ class Job:
             self.nodes = []
         else:
             self.nodes = nodes
-        self.control_node = _DEFAULT_CONTROL_NODE
+        self.control_node = control_node
         self.status = status
         self._node_cls = node_registry[self.config.node_type]
         if not self.nodes:
             self._initialize_nodes()
 
     def _initialize_nodes(self):
-        if self.nodes:
+        if self.nodes or self.control_node:
             raise JobError(
                 "Cannot initialize nodes for a job which already has nodes assigned to it."
             )
         self.status = JobStatus.INITIALIZED
-        for _ in range(n_replicas_to_nodes(self.spec.initial_number_of_replicas)):
-            self._add_node()
+        for _ in range(self.spec.initial_number_of_replicas):
+            a = self._add_node()
+        self.control_node = self._add_node(is_controller=True)
         self.sync_representation()
 
     def start(self) -> None:
@@ -84,21 +73,18 @@ class Job:
         with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
             try:
                 # Create worker nodes first
-                for created, logs in ex.map(
-                    lambda n: n.create(),
-                    [n for i, n in enumerate(self.nodes) if i != self.control_node],
-                ):
+                for created, logs in ex.map(lambda n: n.create(), self.nodes):
                     if not created:
                         raise JobError(
                             f"Failed to start node for job {id}. Deployment logs: \n" + logs
                         )
-                self.sync_representation()
                 # Then create control node
-                created, logs = self.nodes[self.control_node].create()
+                created, logs = self.control_node.create()
                 if not created:
                     raise JobError(
                         f"Failed to start node for job {id}. Deployment logs: \n" + logs
                     )
+                self.sync_representation()
             except Exception as e:
                 # Cleanup created nodes on failure
                 for n in self.nodes:
@@ -110,12 +96,17 @@ class Job:
         self.sync_representation()
 
     def stop(self):
-        for i, node in enumerate(self.nodes):
+        for node in self.nodes:
             if not node.delete():
+                self.sync_representation()
+                raise JobError(f"Failed to delete node {node}")
+        if self.control_node:
+            if not self.control_node.delete():
                 self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
         # Dropping references to deleted nodes
         self.nodes = []
+        self.control_node = None
         self.status = JobStatus.STOPPED
         self.sync_representation()
 
@@ -128,37 +119,41 @@ class Job:
         self.start()
         self.sync_representation()
 
-    def _add_node(self) -> int:
+    def _add_node(self, is_controller=False) -> Node:
         """Add a new node to a job"""
         if self.status in (JobStatus.STOPPED, JobStatus.SUCCESS, JobStatus.FAILED):
             raise JobError(f"Attempted to add a node to a job ({self.id}) which has exited.")
-        i_new_node = len(self.nodes)
-        self.nodes.append(
-            self._node_cls.from_config(
-                f"node-{shortuuid.uuid()}".lower(),
-                self.config,
-                self.spec,
-                job_rep=self.representation,
-                is_controller=(i_new_node == self.control_node),
-            )
+        new_node = self._node_cls.from_config(
+            f"node-{shortuuid.uuid()}".lower(),
+            self.config,
+            self.spec,
+            job_rep=self.representation,
+            is_controller=is_controller,
         )
+        if not is_controller:
+            self.nodes.append(new_node)
+        else:
+            if self.control_node:
+                raise JobError(
+                    f"Attempted to add a controller node to job ({self.id}) which already has one."
+                )
+            self.control_node = new_node
         self.sync_representation()
-        return i_new_node
+        return new_node
 
-    def _remove_node(self, index: int):
+    def _remove_node(self, node: Node):
         """Remove a node from a job"""
-        if index == self.control_node:
+        if node == self.control_node:
             raise JobError(
                 "Cannot remove the control node from a job. To remove the control node use the stop() method."
             )
-        node = self.nodes[index]
         if not node.delete():
             self.sync_representation()
             raise JobError(f"Failed to delete node {node} for job {self.id}")
         if node.representation:
             node.representation.in_use = False
         self.sync_representation()
-        self.nodes.pop(index)
+        self.nodes.remove(node)
 
     def scale_to(self, n_replicas: int):
         if n_replicas < 0:
@@ -167,7 +162,7 @@ class Job:
             print(self.id)
             print(self.status)
             raise JobError(f"Attempted to scale job ({self.id}) which is not currently running.")
-        requested_size = n_replicas_to_nodes(n_replicas)
+        requested_size = n_replicas
         current_size = len(self.nodes)
         if requested_size == current_size:
             return None
@@ -176,33 +171,21 @@ class Job:
             to_add = requested_size - current_size
             for _ in range(to_add):
                 new_node = self._add_node()
-                started, logs = self.nodes[new_node].create()
+                started, logs = new_node.create()
                 if not started:
                     self.sync_representation()
                     raise JobError(f"Failed to start new node while scaling up. Logs: \n {logs}")
         else:
             # Scale down
             to_remove = current_size - requested_size
-            # TODO: this assumes that there is only one non-worker node for a given
-            # job and that that is necessarily the controller node. Is this always true?
-            # If this is a permanent fix, then remove the is_controller / control_node logic
-            # from the node class
-            controller_name = self._get_control_node_name()
-            removeable = [i for i, node in enumerate(self.nodes) if node.name != controller_name]
-            for _ in range(to_remove):
-                self._remove_node(removeable.pop())
+            for node in self.nodes[-to_remove:]:
+                self._remove_node(node)
         self.sync_representation()
-
-    def _get_control_node_name(self):
-        return TblNodes.query.filter_by(job_id=self.id, is_worker=False, in_use=True).one().name
 
     def watch(self) -> bool:
         # Await control node until it reports exit or dies
-        control_node: Node = self.nodes[self.control_node]
-        ip = control_node.address
-        # TODO: node rep is getting messed up
-        port = 50051
-        # port = control_node.listening_ports[0]
+        ip = self.control_node.address
+        port = self.control_node.listening_ports[0]
         with grpc.insecure_channel(f"{ip}:{port}") as channel:
             stub = HealthStub(channel)
             while True:
@@ -230,6 +213,7 @@ class Job:
         self.representation.spec = JobSpecSchema().dumps(self.spec)
         for node in self.nodes:
             node.sync_representation()
+        self.control_node.sync_representation()
 
     @classmethod
     def from_representation(
@@ -240,6 +224,7 @@ class Job:
     ) -> "Job":
         spec = JobSpecSchema().loads(job_rep.spec)
         nodes = []
+        control_node = None
         for node_rep in job_rep.nodes:
             # Ignore nodes which are no longer in use
             if not node_rep.in_use:
@@ -251,12 +236,22 @@ class Job:
             except ObjectConstructionError:
                 node_rep.in_use = False
             else:
-                nodes.append(node)
+                if node_rep.is_worker:
+                    nodes.append(node)
+                else:
+                    if not control_node:
+                        control_node = node
+                    else:
+                        raise JobError("Job representation has more than one control node.")
+        if not control_node:
+            JobError("Job representation has no control node.")
+
         return cls(
             id=job_rep.id,
             spec=spec,
             config=config,
             nodes=nodes,
+            control_node=control_node,
             node_registry=node_registry,
             representation=job_rep,
             status=JobStatus(job_rep.status),

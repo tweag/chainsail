@@ -84,6 +84,10 @@ class Node(ABC):
     ) -> "Node":
         pass
 
+    def __eq__(self, other):
+        # assumes that nodes have unique names (which they currently do)
+        return self.name == other.name
+
     def sync_representation(self) -> None:
         """
         Updates the state of a node's database representation, if it exists,

@@ -192,14 +192,16 @@ def prepare_deployment(
             FileDeployment(
                 vm_node._vm_config.storage_config_path,
                 os.path.join(
-                    install_dir, os.path.basename(vm_node._vm_config.storage_config_path)
+                    install_dir,
+                    os.path.basename(vm_node._vm_config.storage_config_path),
                 ),
             ),
             # Controller config
             FileDeployment(
                 vm_node._vm_config.controller_config_path,
                 os.path.join(
-                    install_dir, os.path.basename(vm_node._vm_config.controller_config_path)
+                    install_dir,
+                    os.path.basename(vm_node._vm_config.controller_config_path),
                 ),
             ),
             # private ssh key for openmpi to use
