@@ -62,7 +62,7 @@ class Job:
             )
         self.status = JobStatus.INITIALIZED
         for _ in range(self.spec.initial_number_of_replicas):
-            a = self._add_node()
+            self._add_node()
         self.control_node = self._add_node(is_controller=True)
         self.sync_representation()
 
@@ -78,13 +78,14 @@ class Job:
                         raise JobError(
                             f"Failed to start node for job {id}. Deployment logs: \n" + logs
                         )
+                self.sync_representation()
                 # Then create control node
                 created, logs = self.control_node.create()
+                self.sync_representation()
                 if not created:
                     raise JobError(
                         f"Failed to start node for job {id}. Deployment logs: \n" + logs
                     )
-                self.sync_representation()
             except Exception as e:
                 # Cleanup created nodes on failure
                 for n in self.nodes:
@@ -185,7 +186,10 @@ class Job:
     def watch(self) -> bool:
         # Await control node until it reports exit or dies
         ip = self.control_node.address
-        port = self.control_node.listening_ports[0]
+        # TODO: this unfortunately still doesn't work.
+        # Something is still off with the node representation.
+        # self.control_node.listening_ports[0]
+        port = 50051
         with grpc.insecure_channel(f"{ip}:{port}") as channel:
             stub = HealthStub(channel)
             while True:
@@ -213,7 +217,8 @@ class Job:
         self.representation.spec = JobSpecSchema().dumps(self.spec)
         for node in self.nodes:
             node.sync_representation()
-        self.control_node.sync_representation()
+        if self.control_node:
+            self.control_node.sync_representation()
 
     @classmethod
     def from_representation(
