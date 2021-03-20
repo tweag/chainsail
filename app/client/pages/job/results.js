@@ -110,6 +110,7 @@ export async function getServerSideProps(context) {
       props: { email, uid, authed: true },
     };
   } catch (err) {
+    nookies.set(context, 'latestPage', '/job/results', {});
     return {
       redirect: {
         permanent: false,

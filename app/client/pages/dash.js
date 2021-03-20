@@ -340,6 +340,7 @@ export async function getServerSideProps(context) {
       props: { email, uid, authed: true },
     };
   } catch (err) {
+    nookies.set(context, 'latestPage', '/dash', {});
     return {
       redirect: {
         permanent: false,
