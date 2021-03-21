@@ -35,7 +35,7 @@ const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) =
                 className={buttonStyle + 'bg-blue-700 hover:bg-blue-900'}
                 onClick={() => setIsModelActive(false)}
               >
-                Go back to form
+                Create another job
               </div>
             </FlexRow>
           </FlexCenter>
