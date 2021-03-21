@@ -46,10 +46,10 @@ const Navbar = () => {
           Home
         </NavItem>
         <NavItem internal href="/job">
-          Create a new job!
+          Create new job
         </NavItem>
         <NavItem internal href="/job/results">
-          Latest jobs
+          My jobs
         </NavItem>
       </FlexRow>
       <div>
