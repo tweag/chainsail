@@ -23,8 +23,8 @@ const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) =
       {!err && (
         <>
           <div className="mb-7">
-            Job with id {jobId} created successfully. Start it by clicking the button in the job
-            table.
+            Job with id {jobId} created successfully. Start it by clicking the button on the
+            "My jobs" page.
           </div>
           <FlexCenter>
             <FlexRow className="space-x-3">
