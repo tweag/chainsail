@@ -124,10 +124,10 @@ def run_rexfw_mpi(
     is_local_run = name.split(".")[0] == "job-1"
 
     if is_local_run:
-        logging.info("Attempting to load user-defined pdf and initial state")
+        logging.debug("Attempting to load user-defined pdf and initial state")
         bare_pdf, init_state = import_from_user()
     else:
-        logging.info("Instantiating safe, wrapped user-defined PDF and getting initial state")
+        logging.debug("Instantiating safe, wrapped user-defined PDF and getting initial state")
         bare_pdf = SafeUserPDF(user_code_host, user_code_port)
         initial_state_bytes = bare_pdf.stub.InitialState(
             user_code_pb2.InitialStateRequest()

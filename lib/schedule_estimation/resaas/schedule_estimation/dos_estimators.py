@@ -7,7 +7,7 @@ import logging
 import numpy as np
 from resaas.common.util import log_sum_exp
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("resaas.controller")
 
 
 def stopping_criterion(log_L, previous_log_L, stopping_threshold):
@@ -131,6 +131,7 @@ class WHAM:
             :class:`np.array`: an estimate of the DOS at the sampled energies
         """
         validate_shapes(energies, parameters)
+        logger.info("Estimating density of states...")
         f = np.zeros(energies.shape[0])
         log_qs = self._calculate_log_qs(energies, parameters)
 
@@ -142,7 +143,7 @@ class WHAM:
 
             log_L = calculate_log_L(f, log_gs)
             if i % 10 == 0:
-                logger.info("Likelihood of energies given DOS: {}".format(log_L))
+                logger.debug("Likelihood of energies given DOS: {}".format(log_L))
             if stopping_criterion(log_L, old_log_L, stopping_threshold):
                 break
             old_log_L = log_L

@@ -495,7 +495,7 @@ class CloudREJobController(BaseREJobController):
         """
         for i in range(self.connection_retries):
             try:
-                logger.info(f"Asking scheduler to add controller iteration {iteration}")
+                logger.debug(f"Asking scheduler to add controller iteration {iteration}")
                 add_iteration_endpoint = self.SCHEDULER_ADD_ITERATION_ENDPOINT.format(
                     id=self.job_id, iteration=iteration
                 )
@@ -543,7 +543,7 @@ def update_nodes_mpi(
     # Query the scheduler for a list of peers
     for i in range(controller.connection_retries):
         try:
-            logger.info("Querying peer addresses")
+            logger.debug("Querying peer addresses")
             r = requests.get(
                 f"http://{controller.scheduler_address}:{controller.scheduler_port}{controller.SCHEDULER_NODE_ENDPOINT.format(id=controller.job_id)}"
             )
@@ -565,7 +565,7 @@ def update_nodes_mpi(
             # Note: this may also include t he controller host
             logger.debug(f"Found peer with name: {n['name']}")
             hosts.append(n["address"])
-    logger.info(f"Found a total of {len(hosts)} peers")
+    logger.debug(f"Found a total of {len(hosts)} peers")
     with open(hostfile_path, "w") as f:
         logger.debug(f"Updating hostfile at {hostfile_path}")
         for h in hosts:

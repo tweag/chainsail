@@ -1,7 +1,6 @@
 """
 Main entrypoint to the resaas controller
 """
-import logging
 import os
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
@@ -9,7 +8,7 @@ from typing import Tuple
 
 import click
 import yaml
-from resaas.common.logging import configure_controller_logging
+from resaas.common.logging import configure_logging
 from resaas.common.runners import runner_config
 from resaas.common.spec import (
     JobSpec,
@@ -21,7 +20,6 @@ from resaas.runners.rexfw import MPIRERunner
 
 ProcessStatus = Tuple[bool, str]
 
-logger = logging.getLogger("resaas.controller")
 ##############################################################################
 # ENTRYPOINT
 ##############################################################################
@@ -40,39 +38,23 @@ def check_status(proc: Process) -> ProcessStatus:
     "--job-spec", required=True, type=click.Path(exists=True), help="path to job spec json file"
 )
 @click.option(
-    "--enable-remote-logging/--disable-remote-logging",
-    default=False,
+    "--remote-logging-config",
+    default=None,
+    type=click.Path(),
     help="Enables remote logging to a Graphite server listening at 127.0.0.1:8080 (for development purposes)",
 )
-def run(basename, job_spec, enable_remote_logging):
+def run(basename, job_spec, remote_logging_config):
     """
     The resaas node controller.
     """
     # Configure logging
-    if enable_remote_logging:
-        # enable remote logging; verify that port number matches the one given
-        # in docker/docker-compose.yaml
-        # This is for dash page testing / development
-        configure_controller_logging(
-            "DEBUG",
-            job_id=-1,
-            remote_logging=True,
-            metrics_address="localhost",
-            remote_logging_port=8080,
-            remote_logging_buffer_size=5,
-            format_string="%(message)s",
-        )
-    else:
-        # disable remote logging
-        configure_controller_logging(
-            "DEBUG",
-            job_id=-1,
-            remote_logging=False,
-            metrics_address=None,
-            remote_logging_port=None,
-            remote_logging_buffer_size=None,
-            format_string="%(message)s",
-        )
+    configure_logging(
+        "resaas.controller",
+        "DEBUG",
+        job_id=-1,
+        remote_logging_config=remote_logging_config,
+        format_string="%(message)s",
+    )
 
     # Load the job spec
     with open(job_spec) as f:
