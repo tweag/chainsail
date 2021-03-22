@@ -4,7 +4,8 @@ VALID_CONTROLLER_CONFIG = """
     "scheduler_port": 1001,
     "metrics_address": "127.0.0.1",
     "metrics_port": 2004,
-    "runner": "some.module:MyRunner"
+    "runner": "some.module:MyRunner",
+    "remote_logging_config": "/this/is/my/favorite/path.yaml"
 }
 
 """

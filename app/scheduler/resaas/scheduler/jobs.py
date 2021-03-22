@@ -1,7 +1,8 @@
+import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
-from typing import Callable, Dict, List, Optional
+from typing import Dict, Optional
 
 import grpc
 import shortuuid
@@ -26,6 +27,8 @@ class JobStatus(Enum):
 
 
 N_CREATION_THREADS = 10
+
+logger = logging.getLogger("resaas.scheduler")
 
 
 class Job:
@@ -73,6 +76,7 @@ class Job:
         with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
             try:
                 # Create worker nodes first
+                logger.debug(f"Creating {len(self.nodes) - 1} worker nodes...")
                 for created, logs in ex.map(lambda n: n.create(), self.nodes):
                     if not created:
                         raise JobError(
@@ -80,6 +84,7 @@ class Job:
                         )
                 self.sync_representation()
                 # Then create control node
+                logger.debug("Creating control node...")
                 created, logs = self.control_node.create()
                 self.sync_representation()
                 if not created:
@@ -97,7 +102,8 @@ class Job:
         self.sync_representation()
 
     def stop(self):
-        for node in self.nodes:
+        for i, node in enumerate(self.nodes):
+            logger.debug(f"Deleting node {i+1}/{len(self.nodes) - 1} worker nodes...")
             if not node.delete():
                 self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
@@ -140,6 +146,7 @@ class Job:
                 )
             self.control_node = new_node
         self.sync_representation()
+        logger.debug("Added new node")
         return new_node
 
     def _remove_node(self, node: Node):
@@ -148,6 +155,7 @@ class Job:
             raise JobError(
                 "Cannot remove the control node from a job. To remove the control node use the stop() method."
             )
+        logger.debug(f"Removing node {node}...")
         if not node.delete():
             self.sync_representation()
             raise JobError(f"Failed to delete node {node} for job {self.id}")
@@ -160,8 +168,6 @@ class Job:
         if n_replicas < 0:
             raise ValueError("Can only scale to >= 0 replicas")
         if self.status != JobStatus.RUNNING:
-            print(self.id)
-            print(self.status)
             raise JobError(f"Attempted to scale job ({self.id}) which is not currently running.")
         requested_size = n_replicas
         current_size = len(self.nodes)

@@ -2,6 +2,7 @@
 Scheduler REST API and endpoint specifications
 """
 from datetime import datetime
+import logging
 import os
 
 from celery import chain
@@ -25,6 +26,7 @@ from resaas.scheduler.tasks import (
 )
 
 config = load_scheduler_config()
+logger = logging.getLogger("resaas.scheduler")
 
 
 def _is_dev_mode():
@@ -95,6 +97,7 @@ def create_job(user_id):
     )
     db.session.add(job)
     db.session.commit()
+    logger.info(f"Created job #{job.id}.")
     return jsonify({"job_id": job.id})
 
 
@@ -116,6 +119,7 @@ def start_job(job_id, user_id):
             link_error=stop_job_task.si(job_id, exit_status="failed"),
         ),
     )
+    logger.info(f"Starting job #{job_id}...")
     return ("ok", 200)
 
 
@@ -129,6 +133,7 @@ def stop_job(job_id, user_id):
 
     zip_chain = get_zip_chain(job_id)
     stop_job_task.apply_async((job_id,), link=zip_chain)
+    logger.info(f"Stopping job #{job_id}...")
 
     return ("ok", 200)
 
@@ -168,6 +173,7 @@ def scale_job(job_id, n_replicas):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
     find_job(job_id)
+    logger.info(f"Scaling up job #{job_id} to {n_replicas} replicas...")
     scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
     # Await the result, raising any exceptions that get thrown
     scaled = scaling_task.get()

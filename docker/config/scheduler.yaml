@@ -29,6 +29,8 @@ results_url_expiry_time: 604800
 
 node_type: LibcloudVM
 
+remote_logging_config: TODO
+
 node_config:
   # Custom resaas-dev-node image
   vm_image_id: "8373025462420862349"
