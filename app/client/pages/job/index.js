@@ -27,12 +27,14 @@ const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) =
             jobs" page.
           </div>
           <FlexCenter>
-            <FlexRow className="space-x-3">
+            <FlexRow className="space-x-10">
               <Link href="/job/results">
-                <a className={buttonStyle + 'bg-purple-700 hover:bg-purple-900'}>View your jobs</a>
+                <a className={buttonStyle + ' bg-purple-700 hover:bg-purple-900'}>
+                  View your jobs
+                </a>
               </Link>
               <div
-                className={buttonStyle + 'bg-blue-700 hover:bg-blue-900'}
+                className={buttonStyle + ' bg-gray-700 hover:bg-gray-800'}
                 onClick={() => setIsModelActive(false)}
               >
                 Create another job
