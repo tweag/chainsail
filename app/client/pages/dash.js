@@ -80,7 +80,7 @@ const NegLogPChart = ({ job, simulationRun }) => {
       },
     };
     return (
-      <FlexCenter className="w-full h-1/2">
+      <FlexCenter className={`w-full h-1/2 ${job.status == 'initialized' ? 'opacity-20' : ''}`}>
         {!error && <Line data={chartData} options={options} width="5" height="1" />}
       </FlexCenter>
     );
@@ -166,7 +166,7 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
     };
 
     return (
-      <FlexCenter className="w-full h-1/2">
+      <FlexCenter className={`w-full h-1/2 ${job.status == 'initialized' ? 'opacity-20' : ''}`}>
         {!error && <Line data={chartData} options={options} width="5" height="1" />}
       </FlexCenter>
     );
