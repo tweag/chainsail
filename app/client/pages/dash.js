@@ -249,7 +249,11 @@ const Dash = ({ authed }) => {
   const Dropdown = () => (
     <div className="mx-20 mt-10">
       <div
-        className="cursor-pointer opacity-60 hover:opacity-100 transition duration-300"
+        className={`transition duration-300 ${
+          runs.length > 0
+            ? 'cursor-pointer opacity-60 hover:opacity-100'
+            : 'select-none opacity-10'
+        }`}
         onClick={() => setDropdownIsAcitve((s) => !s)}
       >
         <div>
