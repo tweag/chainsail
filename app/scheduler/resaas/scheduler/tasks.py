@@ -78,6 +78,7 @@ def start_job_task(job_id):
         # TODO: Log that the row could not be queried
         return
     job = Job.from_representation(job_rep, scheduler_config)
+    _configure_logging(job_id)
     try:
         job.start()
         job.representation.started_at = datetime.utcnow()
@@ -104,6 +105,7 @@ def stop_job_task(job_id, exit_status=None):
     job = Job.from_representation(TblJobs.query.filter_by(id=job_id).one(), scheduler_config)
     if exit_status:
         exit_status = JobStatus(exit_status)
+    _configure_logging(job_id)
     try:
         job.stop()
         job.representation.finished_at = datetime.utcnow()
@@ -167,6 +169,7 @@ def scale_job_task(job_id, n_replicas) -> bool:
         return False
     # Load Job object from database entry
     job = Job.from_representation(job_rep, scheduler_config)
+    _configure_logging(job_id)
     try:
         job.scale_to(n_replicas)
         logger.info(f"Scaled job #{job_id} to {n_replicas} replicas.")
@@ -180,6 +183,7 @@ def scale_job_task(job_id, n_replicas) -> bool:
 
 
 def get_signed_url(job_id):
+    _configure_logging(job_id)
     logger.info(f"Getting signed URL for results of job #{job_id}...")
     storage_driver, container = get_storage_driver_container(scheduler_config)
     job_blob_root = get_job_blob_root(scheduler_config, job_id)
@@ -208,6 +212,7 @@ def zip_results_task(job_id):
     Args:
         job_id: The id of the job the results of which to zip and link to
     """
+    _configure_logging(job_id)
     logger.info(f"Zipping results of job #{job_id}...")
     storage_driver, container = get_storage_driver_container(scheduler_config)
     job_blob_root = get_job_blob_root(scheduler_config, job_id)

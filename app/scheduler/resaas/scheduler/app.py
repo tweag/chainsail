@@ -10,6 +10,7 @@ from cloudstorage.exceptions import NotFoundError
 import functools
 from flask import abort, jsonify, request
 from firebase_admin.auth import verify_id_token
+from resaas.common.logging import configure_logging
 from resaas.common.spec import JobSpecSchema
 from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import app, db, firebase_app
@@ -27,6 +28,10 @@ from resaas.scheduler.tasks import (
 
 config = load_scheduler_config()
 logger = logging.getLogger("resaas.scheduler")
+
+
+def _configure_logging(job_id):
+    configure_logging("resaas.scheduler", "DEBUG", job_id, config.remote_logging_config)
 
 
 def _is_dev_mode():
@@ -97,6 +102,7 @@ def create_job(user_id):
     )
     db.session.add(job)
     db.session.commit()
+    _configure_logging(job.id)
     logger.info(f"Created job #{job.id}.")
     return jsonify({"job_id": job.id})
 
@@ -107,6 +113,8 @@ def start_job(job_id, user_id):
     """Start a single job"""
     job = find_job(job_id, user_id)
     job.status = JobStatus.STARTING.value
+    _configure_logging(job_id)
+    logger.info(f"Starting job #{job_id}...")
     db.session.commit()
     # Starts the watch process once the job is successfully started
     # The watch process will stop the job once it either succeeds or fails.
@@ -119,7 +127,6 @@ def start_job(job_id, user_id):
             link_error=stop_job_task.si(job_id, exit_status="failed"),
         ),
     )
-    logger.info(f"Starting job #{job_id}...")
     return ("ok", 200)
 
 
@@ -129,6 +136,7 @@ def stop_job(job_id, user_id):
     """Start a single job"""
     job = find_job(job_id, user_id)
     job.status = JobStatus.STOPPING.value
+    _configure_logging(job_id)
     db.session.commit()
 
     zip_chain = get_zip_chain(job_id)
@@ -173,6 +181,7 @@ def scale_job(job_id, n_replicas):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
     find_job(job_id)
+    _configure_logging(job_id)
     logger.info(f"Scaling up job #{job_id} to {n_replicas} replicas...")
     scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
     # Await the result, raising any exceptions that get thrown

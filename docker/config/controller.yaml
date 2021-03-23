@@ -5,3 +5,4 @@ metrics_port: 2004
 runner: "resaas.runners.rexfw:MPIRERunner"
 storage_basename: "/storage"
 log_level: DEBUG
+remote_logging_config: TODO

@@ -103,7 +103,7 @@ class Job:
 
     def stop(self):
         for i, node in enumerate(self.nodes):
-            logger.debug(f"Deleting node {i+1}/{len(self.nodes) - 1} worker nodes...")
+            logger.debug(f"Deleting worker node {i+1}/{len(self.nodes) - 1}...")
             if not node.delete():
                 self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
