@@ -1,3 +1,4 @@
+import logging
 import os
 import traceback
 from tempfile import TemporaryDirectory
@@ -23,6 +24,9 @@ from resaas.scheduler.errors import (
     ObjectConstructionError,
 )
 from resaas.scheduler.nodes.base import Node, NodeStatus
+
+
+logger = logging.getLogger("resaas.scheduler")
 
 
 def _raise_for_exit_status(node: LibcloudNode, deployment: Deployment):
@@ -320,6 +324,7 @@ class VMNode(Node):
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
             raise NodeError("Attempted to created a node which has already been created")
+        logger.info("Creating node...")
         self._status = NodeStatus.CREATING
         with TemporaryDirectory() as tmpdir:
             deployment_steps = self._deployment(
@@ -372,6 +377,7 @@ class VMNode(Node):
     def restart(self) -> bool:
         if not self._node:
             raise MissingNodeError
+        logger.info("Restarting node...")
         rebooted = self._node.reboot()
         self.refresh_status()
         self.sync_representation()
@@ -380,6 +386,7 @@ class VMNode(Node):
     def delete(self) -> bool:
         if not self._node:
             return True
+        logger.info("Deleting node...")
         deleted = self._node.destroy()
         if deleted:
             # If the delete request was successful we can go ahead
