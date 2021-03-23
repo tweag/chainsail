@@ -31,7 +31,10 @@ const FirebaseAuth = () => {
           <FlexCenter className="w-full h-full pb-52">
             <div className="px-5 py-8 bg-indigo-500 shadow-lg w-96 rounded-xl">
               <FlexCenter className="mb-5 w-full">
-                Please login using your Google account
+                Please login using your Google account.<br/><br/>
+		No personal data is gathered. This is only<br/>
+		to link your jobs to your identity and to<br/>
+		calculate your compute time quota.
               </FlexCenter>
               <StyledFirebaseAuth uiConfig={firebaseAuthConfig} firebaseAuth={firebase.auth()} />
             </div>
