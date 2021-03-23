@@ -1,5 +1,5 @@
 import functools
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 
 import pytest
 from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
@@ -56,9 +56,25 @@ def mk_mock_node_cls(
     """
     Creates a mock Node whose various methods can be set to either succeed or fail.
     """
-    from copy import deepcopy
+    from resaas.scheduler.nodes.base import Node
 
-    node_cls = Mock("resaas.scheduler.nodes.base.Node")
+    # https://stackoverflow.com/a/59019431/1656472
+    class NodeClassMeta(type):
+        static_instance = MagicMock(spec="resaas.scheduler.nodes.base.Node")
+
+        def __getattr__(cls, key):
+            return NodeClassMeta.static_instance.__getattr__(key)
+
+    class NodeClass(metaclass=NodeClassMeta):
+        original_cls = Node
+        instances = []
+
+        def __new__(cls, *args, **kwargs):
+            NodeClass.instances.append(MagicMock(spec=NodeClass.original_cls))
+            NodeClass.instances[-1].__class__ = NodeClass
+            return NodeClass.instances[-1]
+
+    node_cls = NodeClass
 
     def from_config(
         name,
@@ -67,9 +83,7 @@ def mk_mock_node_cls(
         is_controller,
         job_rep=None,
     ):
-        # When not deepcopying, all created node objects are actually references
-        # to the same object. Seems like Mock() creates a singleton or something?!?
-        node = deepcopy(node_cls())
+        node = node_cls()
         node.name = name
         node.address = "127.0.0.1"
         node.listening_ports = [8080]
@@ -219,7 +233,6 @@ def test_job_scale_up(mock_config, mock_spec):
     job.scale_to(8)
 
     assert job.status == JobStatus.RUNNING
-    # One extra node for the control process
     assert len(job.nodes) == 8
     assert all([n.status == NodeStatus.RUNNING for n in job.nodes])
 
