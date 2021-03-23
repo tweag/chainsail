@@ -128,6 +128,7 @@ def mock_config():
             {},
         ),
         results_url_expiry_time=42,
+        remote_logging_config=None,
     )
     return config
 
