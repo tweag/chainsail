@@ -193,15 +193,17 @@ const Logs = () => {
   useEffect(() => {
     var element = document.getElementById('logs');
     element.scrollTop = element.scrollHeight;
-  });
+  }, []);
   const { data, error } = useSWR('/api/graphite/logs', fetcher, {
     refreshInterval: 10000,
   });
+  const logs =
+    data && data.length > 0 ? data : [{ data: 'Please start the job to see the logs!' }];
   if (error) console.log(error);
   return (
     <FlexCenter className="py-5 h-1/2">
       <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl" id="logs">
-        {(data && !error ? data : []).map((log) => (
+        {logs.map((log) => (
           <div key={uuidv4()} className="my-3 break-words">
             <div className="text-sm">{log.data}</div>
           </div>
