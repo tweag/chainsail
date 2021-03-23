@@ -254,6 +254,10 @@ const Dash = ({ authed }) => {
   const [dropdownIsAcitve, setDropdownIsAcitve] = useState(false);
   const [simulationRun, setSimulationRun] = useState(undefined);
 
+  useEffect(() => {
+    if (runs.length > 0) setSimulationRun(runs[0]);
+  }, [runs]);
+
   const Dropdown = () => (
     <div className="mx-20 mt-10">
       <div
