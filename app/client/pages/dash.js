@@ -79,10 +79,13 @@ const NegLogPChart = ({ job, simulationRun }) => {
         ],
       },
     };
+
+    const jobRunOrStop =
+      job.status == 'running' || job.status == 'stopping' || job.status == 'stopped';
     return (
       <FlexCenter
         className={`w-full h-1/2 transition duration-300 ${
-          job.status == 'initialized' ? 'opacity-20' : 'opacity-100'
+          jobRunOrStop ? 'opacity-100' : 'opacity-20'
         }`}
       >
         {!error && <Line data={chartData} options={options} width="5" height="1" />}
@@ -169,10 +172,13 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
       },
     };
 
+    const jobRunOrStop =
+      job.status == 'running' || job.status == 'stopping' || job.status == 'stopped';
+
     return (
       <FlexCenter
         className={`w-full h-1/2 transition duration-300 ${
-          job.status == 'initialized' ? 'opacity-20' : 'opacity-100'
+          jobRunOrStop ? 'opacity-100' : 'opacity-20'
         }`}
       >
         {!error && <Line data={chartData} options={options} width="5" height="1" />}
@@ -247,6 +253,7 @@ const Dash = ({ authed }) => {
   if (error) console.log(error);
   const jobFound = !error && data && data.id;
   const jobNotFound = !error && data && !data.id;
+  const job = jobFound ? data : undefined;
   const isLoading = !data;
   const runs = jobFound && data.controller_iterations ? data.controller_iterations : [];
 
@@ -298,6 +305,9 @@ const Dash = ({ authed }) => {
     </div>
   );
 
+  const jobRunOrStop =
+    jobFound && (job.status == 'running' || job.status == 'stopping' || job.status == 'stopped');
+
   if (authed)
     return (
       <Layout>
@@ -318,10 +328,15 @@ const Dash = ({ authed }) => {
                 <Dropdown />
               </FlexCol>
               <FlexCol between className="w-2/3 p-10">
-                <NegLogPChart job={data} simulationRun={simulationRun} />
-                <AcceptanceRateChart job={data} simulationRun={simulationRun} />
+                <NegLogPChart job={job} simulationRun={simulationRun} />
+                <AcceptanceRateChart job={job} simulationRun={simulationRun} />
                 <Logs />
               </FlexCol>
+              {!jobRunOrStop && (
+                <div className="fixed w-2/3 text-3xl left-1/3 opacity-80 h-2/3">
+                  <FlexCenter className="w-full h-full">No data to plot</FlexCenter>
+                </div>
+              )}
             </FlexRow>
           )}
           {jobNotFound && (
