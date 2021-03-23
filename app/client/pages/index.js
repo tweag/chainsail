@@ -9,12 +9,33 @@ const Heading = () => (
     <div className="text-base md:text-xl lg:w-2/3 md:text-justify mb-7">
       RESAAS helps to sample multimodal distributions by implementing an automatically scaling
       Replica Exchange MCMC algorithm. All you need to provide is a Python module defining your
-    probability density and its log-probability gradient.<br/>
-	This beta version of RESAAS is free (you have a compute time quota of 20 replicas x 2 hours).<br/>
-	<br/>
-	To learn more about the MCMC algorithms used in RESAAS, see our blog posts:<br/>
-	- <span className="underline"><a style={{display: "table-cell"}} href="https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/" target="_blank">Replica Exchange</a></span><br/>
-	- <span className="underline"><a style={{display: "table-cell"}} href="https://www.tweag.io/blog/2020-08-06-mcmc-intro3/" target="_blank">Hamiltonian Monte Carlo</a></span><br/>
+      probability density and its log-probability gradient.
+      <br />
+      This beta version of RESAAS is free (you have a compute time quota of 20 replicas x 2 hours).
+      <br />
+      <br />
+      To learn more about the MCMC algorithms used in RESAAS, see our blog posts:
+      <br />-{' '}
+      <span className="underline">
+        <a
+          style={{ display: 'table-cell' }}
+          href="https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/"
+          target="_blank"
+        >
+          Replica Exchange
+        </a>
+      </span>
+      <br />-{' '}
+      <span className="underline">
+        <a
+          style={{ display: 'table-cell' }}
+          href="https://www.tweag.io/blog/2020-08-06-mcmc-intro3/"
+          target="_blank"
+        >
+          Hamiltonian Monte Carlo
+        </a>
+      </span>
+      <br />
     </div>
     <Button href="/job" className="bg-purple-600 hover:bg-purple-500">
       Give it a whirl

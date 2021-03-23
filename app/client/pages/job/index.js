@@ -185,7 +185,7 @@ const Job = ({ authed }) => {
         num_optimization_samples:
           seeMoreFields && num_optimization_samples
             ? num_optimization_samples
-              : Math.ceil(Math.floor(num_production_samples * 0.25) / 1000) * 1000,
+            : Math.ceil(Math.floor(num_production_samples * 0.25) / 1000) * 1000,
       },
       optimization_parameters: {
         optimization_quantity_target: target_acceptance_rate,
@@ -245,9 +245,30 @@ const Job = ({ authed }) => {
                 <div className="w-full mb-20 text-base md:text-xl lg:w-2/3 md:text-justify">
                   Every sampling job is specified through several parameters. This form is
                   populated with values for a simple example: a mixture of Gaussians in two
-        dimensions.
-	    <br/>If you like to define your own probability, <span className="underline"><a style={{display: "table-cell"}} target="_blank" href="https://storage.googleapis.com/resaas-dev-public/mixture.zip">download</a></span> the example and follow instructions in the source code. You can extract the samples from
-                  your distribution from the downloaded results by using a small <span className="underline"><a style={{display: "table-cell"}} target="_blank" href="https://storage.googleapis.com/resaas-dev-public/concatenate_samples.py">script</a></span>.
+                  dimensions.
+                  <br />
+                  If you like to define your own probability,{' '}
+                  <span className="underline">
+                    <a
+                      style={{ display: 'table-cell' }}
+                      target="_blank"
+                      href="https://storage.googleapis.com/resaas-dev-public/mixture.zip"
+                    >
+                      download
+                    </a>
+                  </span>{' '}
+                  the example and follow instructions in the source code. You can extract the
+                  samples from your distribution from the downloaded results by using a small{' '}
+                  <span className="underline">
+                    <a
+                      style={{ display: 'table-cell' }}
+                      target="_blank"
+                      href="https://storage.googleapis.com/resaas-dev-public/concatenate_samples.py"
+                    >
+                      script
+                    </a>
+                  </span>
+                  .
                 </div>
                 <FlexRow between responsive media="lg" className="w-full lg:h-4/5 lg:space-x-20">
                   <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 w-96">
