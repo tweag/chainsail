@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import nookies from 'nookies';
-import firebaseClient from '../../utils/firebaseClient';
-import { verifyIdToken } from '../../utils/firebaseAdmin';
+import firebaseClient from '../utils/firebaseClient';
+import { verifyIdToken } from '../utils/firebaseAdmin';
 import {
   Container,
   Link,
@@ -13,7 +13,7 @@ import {
   MathTex,
   Navbar,
   Modal,
-} from '../../components';
+} from '../components';
 
 const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) => {
   const buttonStyle =
