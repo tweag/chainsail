@@ -27,7 +27,9 @@ scheduler_config = load_scheduler_config()
 
 
 def _configure_logging(job_id):
-    configure_logging("resaas.scheduler", "DEBUG", job_id, scheduler_config.remote_logging_config)
+    configure_logging(
+        "resaas.scheduler", "DEBUG", job_id, scheduler_config.remote_logging_config_path
+    )
 
 
 def get_storage_driver_container(scheduler_config):

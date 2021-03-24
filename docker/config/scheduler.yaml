@@ -29,7 +29,7 @@ results_url_expiry_time: 604800
 
 node_type: LibcloudVM
 
-remote_logging_config: TODO
+remote_logging_config_path: TODO
 
 node_config:
   # Custom resaas-dev-node image

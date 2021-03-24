@@ -15,7 +15,12 @@ from libcloud.compute.deployment import (
 )
 from libcloud.compute.types import DeploymentException, NodeState
 from resaas.common.spec import JobSpec, JobSpecSchema
-from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
+from resaas.scheduler.config import (
+    GeneralNodeConfig,
+    SchedulerConfig,
+    VMNodeConfig,
+    load_scheduler_config,
+)
 from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import (
     ConfigurationError,
@@ -168,6 +173,7 @@ def prepare_deployment(
         user_code_cmd=user_code_cmd,
     )
 
+    scheduler_config = load_scheduler_config()
     steps = MultiStepDeployment(
         [
             # The very first thing to do is run the initialization script to ensure
@@ -206,6 +212,14 @@ def prepare_deployment(
                 os.path.join(
                     install_dir,
                     os.path.basename(vm_node._vm_config.controller_config_path),
+                ),
+            ),
+            # Remote logging config
+            FileDeployment(
+                scheduler_config.remote_logging_config_path,
+                os.path.join(
+                    install_dir,
+                    os.path.basename(scheduler_config.remote_logging_config_path),
                 ),
             ),
             # private ssh key for openmpi to use

@@ -16,7 +16,7 @@ class ControllerConfig:
     metrics_address: str
     metrics_port: int
     runner: str
-    remote_logging_config: str
+    remote_logging_config_path: str
     storage_basename: str = ""
     port: int = 50051
     n_threads: int = 10
@@ -29,7 +29,7 @@ class ControllerConfigSchema(Schema):
     metrics_address = fields.String(required=True)
     metrics_port = fields.Integer(required=True)
     runner = fields.String(required=True)
-    remote_logging_config = fields.String(required=True)
+    remote_logging_config_path = fields.String(required=True)
     storage_basename = fields.String()
     port = fields.Integer()
     n_threads = fields.Integer()

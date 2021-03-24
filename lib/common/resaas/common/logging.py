@@ -59,7 +59,7 @@ def configure_logging(
     logger_name,
     log_level,
     job_id,
-    remote_logging_config,
+    remote_logging_config_path,
     format_string=None,
 ):
     """
@@ -69,7 +69,7 @@ def configure_logging(
         logger_name(str): logger name; e.g. "resaas.controller"
         log_level (str): log level
         job_id (int): job id
-        remote_logging_config (bool): whether to enable remote logging
+        remote_logging_config_path (str): path to remote logging config file
         format_string (str): format string for the logging formatter
     """
     logger = logging.getLogger(logger_name)
@@ -83,9 +83,9 @@ def configure_logging(
     basic_handler.setFormatter(basic_formatter)
     base_logger.addHandler(basic_handler)
 
-    if remote_logging_config:
+    if remote_logging_config_path:
         logger.info("Configuring remote logging")
-        with open(remote_logging_config) as f:
+        with open(remote_logging_config_path) as f:
             config = RemoteLoggingConfigSchema().load(yaml.safe_load(f))
 
         # Add graphite remote logging

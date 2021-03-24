@@ -90,7 +90,7 @@ def run(job, config, storage, hostsfile, job_spec):
         "resaas.controller",
         config.log_level,
         job,
-        config.remote_logging_config,
+        config.remote_logging_config_path,
     )
 
     logger.debug("Loading job spec from file")

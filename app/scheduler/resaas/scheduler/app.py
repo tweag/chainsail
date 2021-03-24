@@ -31,7 +31,7 @@ logger = logging.getLogger("resaas.scheduler")
 
 
 def _configure_logging(job_id):
-    configure_logging("resaas.scheduler", "DEBUG", job_id, config.remote_logging_config)
+    configure_logging("resaas.scheduler", "DEBUG", job_id, config.remote_logging_config_path)
 
 
 def _is_dev_mode():
