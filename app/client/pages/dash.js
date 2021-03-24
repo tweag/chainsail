@@ -349,7 +349,7 @@ const Dash = ({ authed }) => {
                   one of the jobs listed in the table.
                 </div>
                 <FlexCenter>
-                  <Link href="/job/results">
+                  <Link href="/results">
                     <a className="px-6 py-2 text-base text-center text-white bg-purple-700 rounded-lg cursor-pointer w-72 lg:transition lg:duration-300 hover:bg-purple-900">
                       Go back to results page!
                     </a>

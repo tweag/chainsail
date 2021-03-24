@@ -28,7 +28,7 @@ const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) =
           </div>
           <FlexCenter>
             <FlexRow className="space-x-10">
-              <Link href="/job/results">
+              <Link href="/results">
                 <a className={buttonStyle + ' bg-purple-700 hover:bg-purple-900'}>
                   View your jobs
                 </a>
