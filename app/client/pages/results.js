@@ -2,7 +2,7 @@ import useSWR from 'swr';
 import nookies from 'nookies';
 import { v4 as uuidv4 } from 'uuid';
 
-import { verifyIdToken } from '../../utils/firebaseAdmin';
+import { verifyIdToken } from '../utils/firebaseAdmin';
 import {
   Layout,
   FlexCenter,
@@ -11,9 +11,9 @@ import {
   Container,
   Link,
   ResultsLink,
-} from '../../components';
-import { dateFormatter } from '../../utils/date';
-import fetcher from '../../utils/fetcher';
+} from '../components';
+import { dateFormatter } from '../utils/date';
+import fetcher from '../utils/fetcher';
 
 const JobsTable = ({ data }) => {
   const headersName = [
@@ -110,6 +110,7 @@ export async function getServerSideProps(context) {
       props: { email, uid, authed: true },
     };
   } catch (err) {
+    nookies.set(context, 'latestPage', '/results', {});
     return {
       redirect: {
         permanent: false,
