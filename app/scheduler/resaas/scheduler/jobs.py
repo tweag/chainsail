@@ -76,7 +76,7 @@ class Job:
         with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
             try:
                 # Create worker nodes first
-                logger.info(f"Creating {len(self.nodes)} worker nodes...")
+                logger.info(f"Creating {len(self.nodes)} worker nodes...", extra={"job_id": self.id})
                 for created, logs in ex.map(lambda n: n.create(), self.nodes):
                     if not created:
                         raise JobError(
@@ -84,7 +84,7 @@ class Job:
                         )
                 self.sync_representation()
                 # Then create control node
-                logger.debug("Creating control node...")
+                logger.debug("Creating control node...", extra={"job_id": self.id})
                 created, logs = self.control_node.create()
                 self.sync_representation()
                 if not created:
@@ -103,7 +103,7 @@ class Job:
 
     def stop(self):
         for i, node in enumerate(self.nodes):
-            logger.info(f"Deleting worker node {i+1}/{len(self.nodes) - 1}...")
+            logger.info(f"Deleting worker node {i+1}/{len(self.nodes) - 1}...", extra={"job_id": self.id})
             if not node.delete():
                 self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
@@ -146,7 +146,7 @@ class Job:
                 )
             self.control_node = new_node
         self.sync_representation()
-        logger.debug("Added new node")
+        logger.debug("Added new node", extra={"job_id": self.id})
         return new_node
 
     def _remove_node(self, node: Node):
@@ -155,7 +155,7 @@ class Job:
             raise JobError(
                 "Cannot remove the control node from a job. To remove the control node use the stop() method."
             )
-        logger.debug(f"Removing node {node}...")
+        logger.debug(f"Removing node {node}...", extra={"job_id": self.id})
         if not node.delete():
             self.sync_representation()
             raise JobError(f"Failed to delete node {node} for job {self.id}")
@@ -171,6 +171,7 @@ class Job:
             raise JobError(f"Attempted to scale job ({self.id}) which is not currently running.")
         requested_size = n_replicas
         current_size = len(self.nodes)
+        print("current / requested size", current_size, n_replicas)
         if requested_size == current_size:
             return None
         elif requested_size > current_size:

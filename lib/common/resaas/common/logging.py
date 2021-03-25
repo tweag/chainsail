@@ -40,13 +40,14 @@ class GraphiteHTTPHandler(logging.Handler):
 
     def emit(self, record: logging.LogRecord):
         try:
-            if job_id := self.job_id:
+            if self.job_id is not None:
                 # use job ID attribute
-                if record["job_id"] and record["job_id"] != job_id:
+                job_id = str(self.job_id)
+                if record.job_id != "n/a" and record.job_id != job_id:
                     raise ValueError("Inconsistent job IDs during log emission")
-            elif job_id := record["job_id"]:
+            elif record.job_id != "n/a":
                 # use job ID in log record
-                pass
+                job_id = record.job_id
             else:
                 # no job id given: don't log to Graphite
                 return
@@ -92,15 +93,15 @@ def configure_logging(
     # adds job ID to log record extras
     class JobIDAddingFilter:
         def filter(self, log_record):
-            if not hasattr(record, "job_id"):
-                log_record.job_id = str(job_id) or "n/a"
+            if not hasattr(log_record, "job_id"):
+                log_record.job_id = str(job_id) if job_id is not None else "n/a"
             return True
 
     basic_handler.addFilter(JobIDAddingFilter())
     base_logger.addHandler(basic_handler)
 
     if remote_logging_config_path:
-        logger.info("Configuring remote logging")
+        logger.debug("Configuring remote logging")
         with open(remote_logging_config_path) as f:
             config = RemoteLoggingConfigSchema().load(yaml.safe_load(f))
 
@@ -122,5 +123,5 @@ def configure_logging(
                 return log_record.levelno >= logging.INFO
 
         buffered_graphite_handler.addFilter(InfoFilter())
-        buffered_graphite_handler.setFormatter(logging.Formatter(config.format_string))
+        buffered_graphite_handler.setFormatter(logging.Formatter(config.format_string, datefmt='%H:%M'))
         base_logger.addHandler(buffered_graphite_handler)
