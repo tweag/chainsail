@@ -247,34 +247,36 @@ const Job = ({ authed }) => {
                   Create a sampling job
                   <i className="ml-3 fas fa-rocket"></i>
                 </div>
-                <div className="w-full mb-20 text-base md:text-xl lg:w-2/3 md:text-justify">
-                  Every sampling job is specified through several parameters. This form is
-                  populated with values for a simple example: a mixture of Gaussians in two
-                  dimensions.
-                  <br />
-                  If you like to define your own probability,{' '}
-                  <span className="underline">
+                <FlexCol
+                  between
+                  className="w-full mb-10 text-base h-36 md:text-xl lg:w-2/3 md:text-justify"
+                >
+                  <div>
+                    Every sampling job is specified through several parameters. This form is
+                    populated with values for a simple example: a mixture of Gaussians in two
+                    dimensions.
+                  </div>
+                  <div>
+                    If you like to define your own probability,{' '}
                     <a
-                      style={{ display: 'table-cell' }}
                       target="_blank"
                       href="https://storage.googleapis.com/resaas-dev-public/mixture.zip"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
                     >
                       download
-                    </a>
-                  </span>{' '}
-                  the example and follow instructions in the source code. You can extract the
-                  samples from your distribution from the downloaded results by using a small{' '}
-                  <span className="underline">
+                    </a>{' '}
+                    the example and follow instructions in the source code. You can extract the
+                    samples from your distribution from the downloaded results by using a small{' '}
                     <a
-                      style={{ display: 'table-cell' }}
                       target="_blank"
                       href="https://storage.googleapis.com/resaas-dev-public/concatenate_samples.py"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
                     >
                       script
                     </a>
-                  </span>
-                  .
-                </div>
+                    .
+                  </div>
+                </FlexCol>
                 <FlexRow between responsive media="lg" className="w-full lg:h-4/5 lg:space-x-20">
                   <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 w-96">
                     <form
