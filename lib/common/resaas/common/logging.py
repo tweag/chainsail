@@ -12,6 +12,8 @@ import requests
 
 from resaas.common.configs import RemoteLoggingConfigSchema
 
+NO_JOB_ID = "n/a"
+
 
 class GraphiteHTTPHandler(logging.Handler):
     """A logging handler for writing Graphite events.
@@ -45,7 +47,7 @@ class GraphiteHTTPHandler(logging.Handler):
                 job_id = str(self.job_id)
                 if record.job_id != "n/a" and record.job_id != job_id:
                     raise ValueError("Inconsistent job IDs during log emission")
-            elif record.job_id != "n/a":
+            elif record.job_id != NO_JOB_ID:
                 # use job ID in log record
                 job_id = record.job_id
             else:
@@ -94,7 +96,7 @@ def configure_logging(
     class JobIDAddingFilter:
         def filter(self, log_record):
             if not hasattr(log_record, "job_id"):
-                log_record.job_id = str(job_id) if job_id is not None else "n/a"
+                log_record.job_id = str(job_id) if job_id is not None else NO_JOB_ID
             return True
 
     basic_handler.addFilter(JobIDAddingFilter())
