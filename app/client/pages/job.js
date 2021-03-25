@@ -189,7 +189,7 @@ const Job = ({ authed }) => {
         num_optimization_samples:
           seeMoreFields && num_optimization_samples
             ? num_optimization_samples
-            : Math.floor(num_production_samples * 0.25),
+            : Math.ceil(Math.floor(num_production_samples * 0.25) / 1000) * 1000,
       },
       optimization_parameters: {
         optimization_quantity_target: target_acceptance_rate,
@@ -213,7 +213,7 @@ const Job = ({ authed }) => {
       } else {
         setErr(true);
         setErrMsg(
-          "Something went wrong. For more information, see your browser's console. Please contact our support team if you require assistance."
+          "Something went wrong. For more information, see your browser's console. To help us debug, please contact simeon.carstens@tweag.io."
         );
         console.log(data);
         setIsModelActive(true);
@@ -221,7 +221,7 @@ const Job = ({ authed }) => {
     } catch (e) {
       setErr(true);
       setErrMsg(
-        "Something went wrong. For more information, see your browser's console. Please contact our support team if you require assistance."
+        "Something went wrong. For more information, see your browser's console. To help us debug, please contact simeon.carstens@tweag.io."
       );
       console.log(e);
       setIsModelActive(true);
@@ -244,19 +244,39 @@ const Job = ({ authed }) => {
             <FlexCenter className="w-full h-full py-5 md:py-20">
               <FlexCol center className="w-full h-full">
                 <div className="mb-10 text-2xl md:text-5xl lg:text-6xl">
-                  Run a sampling task
+                  Create a sampling job
                   <i className="ml-3 fas fa-rocket"></i>
                 </div>
-                <div className="w-full mb-20 text-base md:text-xl lg:w-2/3 md:text-justify">
-                  Every sampling job is specified through several parameters. This form is
-                  populated with values for a simple example: a mixture of Gaussians in two
-                  dimensions. If you like to define your own probability, download the example .zip
-                  file and follow instructions in the source code. You can extract the samples from
-                  your distribution from the downloaded results by using a script we provide here:{' '}
-                  <a href="https://storage.googleapis.com/resaas-dev-public/concatenate_samples.py">
-                    link
-                  </a>
-                </div>
+                <FlexCol
+                  between
+                  className="w-full mb-10 text-base h-36 md:text-xl lg:w-2/3 md:text-justify"
+                >
+                  <div>
+                    Every sampling job is specified through several parameters. This form is
+                    populated with values for a simple example: a mixture of Gaussians in two
+                    dimensions.
+                  </div>
+                  <div>
+                    If you like to define your own probability,{' '}
+                    <a
+                      target="_blank"
+                      href="https://storage.googleapis.com/resaas-dev-public/mixture.zip"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
+                    >
+                      download
+                    </a>{' '}
+                    the example and follow instructions in the source code. You can extract the
+                    samples from your distribution from the downloaded results by using a small{' '}
+                    <a
+                      target="_blank"
+                      href="https://storage.googleapis.com/resaas-dev-public/concatenate_samples.py"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
+                    >
+                      script
+                    </a>
+                    .
+                  </div>
+                </FlexCol>
                 <FlexRow between responsive media="lg" className="w-full lg:h-4/5 lg:space-x-20">
                   <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 w-96">
                     <form
@@ -285,6 +305,8 @@ const Job = ({ authed }) => {
                             inputType="number"
                             setActiveField={setActiveField}
                             minNumber={1000}
+                            maxNumber={50000}
+                            stepNumber={1000}
                             value={num_production_samples}
                             onChange={(e) => setNumProductionSamples(e.target.value)}
                           />
@@ -293,7 +315,8 @@ const Job = ({ authed }) => {
                             inputName="max_replicas"
                             inputType="number"
                             setActiveField={setActiveField}
-                            minNumber={3}
+                            minNumber={2}
+                            maxNumber={20}
                             value={max_replicas}
                             onChange={(e) => setMaxReplicas(e.target.value)}
                           />
@@ -328,7 +351,7 @@ const Job = ({ authed }) => {
                             inputName="initial_number_of_replicas"
                             inputType="number"
                             setActiveField={setActiveField}
-                            minNumber={3}
+                            minNumber={2}
                             value={initial_number_of_replicas}
                             onChange={(e) => setInitNReplicas(e.target.value)}
                           />
@@ -340,6 +363,8 @@ const Job = ({ authed }) => {
                             inputType="number"
                             setActiveField={setActiveField}
                             minNumber={1000}
+                            maxNumber={50000}
+                            stepNumber={1000}
                             value={num_optimization_samples}
                             onChange={(e) => setNumOptimizationSamples(e.target.value)}
                           />
@@ -406,7 +431,7 @@ const Job = ({ authed }) => {
                       <FlexCenter>
                         <input
                           type="submit"
-                          value="Submit"
+                          value="Create job"
                           className={
                             'w-52 px-6 pt-3 pb-4 text-base text-center bg-purple-700  ' +
                             ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
