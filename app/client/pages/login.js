@@ -4,7 +4,7 @@ import StyledFirebaseAuth from 'react-firebaseui/StyledFirebaseAuth';
 import firebase from 'firebase/app';
 import 'firebase/auth';
 
-import { FlexCenter, Layout } from '../components';
+import { FlexCenter, FlexCol, Layout } from '../components';
 
 import firebaseClient from '../utils/firebaseClient';
 
@@ -28,20 +28,15 @@ const FirebaseAuth = ({ latestPage }) => {
     <Layout>
       <div className="h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
         {renderAuth ? (
-          <FlexCenter className="w-full h-full pb-52">
-            <div className="px-5 py-8 bg-indigo-500 shadow-lg w-96 rounded-xl">
-              <FlexCenter className="mb-5 w-full">
-                Please login using your Google account.
-                <br />
-                <br />
-                No personal data is gathered. This is only
-                <br />
-                to link your jobs to your identity and to
-                <br />
-                calculate your compute time quota.
-              </FlexCenter>
+          <FlexCenter className="w-full h-full pb-72">
+            <FlexCol between className="px-10 pt-12 pb-5 bg-indigo-500 shadow-lg w-96 rounded-xl">
+              <div className="text-lg mb-5">Please login using your Google account *</div>
+              <div className="mb-8 text-xs">
+                * No personal data is gathered. This is only to link your jobs to your identity and
+                to calculate your compute time quota.
+              </div>
               <StyledFirebaseAuth uiConfig={firebaseAuthConfig} firebaseAuth={firebase.auth()} />
-            </div>
+            </FlexCol>
           </FlexCenter>
         ) : null}
       </div>
