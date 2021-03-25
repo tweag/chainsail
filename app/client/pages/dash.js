@@ -79,8 +79,15 @@ const NegLogPChart = ({ job, simulationRun }) => {
         ],
       },
     };
+
+    const jobRunOrStop =
+      job.status == 'running' || job.status == 'stopping' || job.status == 'stopped';
     return (
-      <FlexCenter className="w-full h-1/2">
+      <FlexCenter
+        className={`w-full h-1/2 transition duration-300 ${
+          jobRunOrStop ? 'opacity-100' : 'opacity-20'
+        }`}
+      >
         {!error && <Line data={chartData} options={options} width="5" height="1" />}
       </FlexCenter>
     );
@@ -165,8 +172,15 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
       },
     };
 
+    const jobRunOrStop =
+      job.status == 'running' || job.status == 'stopping' || job.status == 'stopped';
+
     return (
-      <FlexCenter className="w-full h-1/2">
+      <FlexCenter
+        className={`w-full h-1/2 transition duration-300 ${
+          jobRunOrStop ? 'opacity-100' : 'opacity-20'
+        }`}
+      >
         {!error && <Line data={chartData} options={options} width="5" height="1" />}
       </FlexCenter>
     );
@@ -179,15 +193,17 @@ const Logs = () => {
   useEffect(() => {
     var element = document.getElementById('logs');
     element.scrollTop = element.scrollHeight;
-  });
+  }, []);
   const { data, error } = useSWR('/api/graphite/logs', fetcher, {
     refreshInterval: 10000,
   });
+  const logs =
+    data && data.length > 0 ? data : [{ data: 'Please start the job to see the logs!' }];
   if (error) console.log(error);
   return (
     <FlexCenter className="py-5 h-1/2">
       <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl" id="logs">
-        {(data && !error ? data : []).map((log) => (
+        {logs.map((log) => (
           <div key={uuidv4()} className="my-3 break-words">
             <div className="text-sm">{log.data}</div>
           </div>
@@ -239,6 +255,7 @@ const Dash = ({ authed }) => {
   if (error) console.log(error);
   const jobFound = !error && data && data.id;
   const jobNotFound = !error && data && !data.id;
+  const job = jobFound ? data : undefined;
   const isLoading = !data;
   const runs = jobFound && data.controller_iterations ? data.controller_iterations : [];
 
@@ -246,10 +263,18 @@ const Dash = ({ authed }) => {
   const [dropdownIsAcitve, setDropdownIsAcitve] = useState(false);
   const [simulationRun, setSimulationRun] = useState(undefined);
 
+  useEffect(() => {
+    if (runs.length > 0) setSimulationRun(runs[0]);
+  }, [runs]);
+
   const Dropdown = () => (
     <div className="mx-20 mt-10">
       <div
-        className="cursor-pointer opacity-60 hover:opacity-100 transition duration-300"
+        className={`transition duration-300 ${
+          runs.length > 0
+            ? 'cursor-pointer opacity-60 hover:opacity-100'
+            : 'select-none opacity-10'
+        }`}
         onClick={() => setDropdownIsAcitve((s) => !s)}
       >
         <div>
@@ -282,6 +307,9 @@ const Dash = ({ authed }) => {
     </div>
   );
 
+  const jobRunOrStop =
+    jobFound && (job.status == 'running' || job.status == 'stopping' || job.status == 'stopped');
+
   if (authed)
     return (
       <Layout>
@@ -302,10 +330,15 @@ const Dash = ({ authed }) => {
                 <Dropdown />
               </FlexCol>
               <FlexCol between className="w-2/3 p-10">
-                <NegLogPChart job={data} simulationRun={simulationRun} />
-                <AcceptanceRateChart job={data} simulationRun={simulationRun} />
+                <NegLogPChart job={job} simulationRun={simulationRun} />
+                <AcceptanceRateChart job={job} simulationRun={simulationRun} />
                 <Logs />
               </FlexCol>
+              {!jobRunOrStop && (
+                <div className="fixed w-2/3 text-3xl left-1/3 opacity-80 h-2/3">
+                  <FlexCenter className="w-full h-full">No data to plot</FlexCenter>
+                </div>
+              )}
             </FlexRow>
           )}
           {jobNotFound && (
@@ -316,7 +349,7 @@ const Dash = ({ authed }) => {
                   one of the jobs listed in the table.
                 </div>
                 <FlexCenter>
-                  <Link href="/job/results">
+                  <Link href="/results">
                     <a className="px-6 py-2 text-base text-center text-white bg-purple-700 rounded-lg cursor-pointer w-72 lg:transition lg:duration-300 hover:bg-purple-900">
                       Go back to results page!
                     </a>
@@ -340,6 +373,7 @@ export async function getServerSideProps(context) {
       props: { email, uid, authed: true },
     };
   } catch (err) {
+    nookies.set(context, 'latestPage', '/dash', {});
     return {
       redirect: {
         permanent: false,

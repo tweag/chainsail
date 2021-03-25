@@ -1,5 +1,5 @@
 import functools
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 
 import pytest
 from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
@@ -56,7 +56,25 @@ def mk_mock_node_cls(
     """
     Creates a mock Node whose various methods can be set to either succeed or fail.
     """
-    node_cls = Mock("resaas.scheduler.nodes.base.Node")
+    from resaas.scheduler.nodes.base import Node
+
+    # https://stackoverflow.com/a/59019431/1656472
+    class NodeClassMeta(type):
+        static_instance = MagicMock(spec="resaas.scheduler.nodes.base.Node")
+
+        def __getattr__(cls, key):
+            return NodeClassMeta.static_instance.__getattr__(key)
+
+    class NodeClass(metaclass=NodeClassMeta):
+        original_cls = Node
+        instances = []
+
+        def __new__(cls, *args, **kwargs):
+            NodeClass.instances.append(MagicMock(spec=NodeClass.original_cls))
+            NodeClass.instances[-1].__class__ = NodeClass
+            return NodeClass.instances[-1]
+
+    node_cls = NodeClass
 
     def from_config(
         name,
@@ -122,9 +140,9 @@ def mock_spec():
 
 
 def test_job_init(mock_config, mock_spec):
-    from resaas.scheduler.jobs import Job, JobStatus, n_replicas_to_nodes
+    from resaas.scheduler.jobs import Job, JobStatus
 
-    expected_n_nodes = n_replicas_to_nodes(mock_spec.initial_number_of_replicas)
+    expected_n_nodes = mock_spec.initial_number_of_replicas
     job = Job(
         id=1,
         spec=mock_spec,
@@ -212,12 +230,10 @@ def test_job_scale_up(mock_config, mock_spec):
         node_registry={"mock": mk_mock_node_cls()},
     )
     job.start()
-
     job.scale_to(8)
 
     assert job.status == JobStatus.RUNNING
-    # One extra node for the control process
-    assert len(job.nodes) == 9
+    assert len(job.nodes) == 8
     assert all([n.status == NodeStatus.RUNNING for n in job.nodes])
 
 
@@ -236,7 +252,7 @@ def test_job_scale_down(mock_config, mock_spec):
 
     assert job.status == JobStatus.RUNNING
     # One extra node for the control process
-    assert len(job.nodes) == 2
+    assert len(job.nodes) == 1
     assert all([n.status == NodeStatus.RUNNING for n in job.nodes])
 
 
@@ -255,21 +271,11 @@ def test_scale_non_running_job_raises(mock_config, mock_spec):
         job.scale_to(2)
 
 
-def test_vm_job_from_db_representation(mock_config):
-    # Note: this test uses a concrete Node implementation with a *Mock*
-    # node driver.
-    from resaas.scheduler.db import TblJobs, TblNodes
-    from resaas.scheduler.jobs import Job, JobStatus
+def _add_nodes_to_job_rep(job_rep, num_nodes, num_controllers):
+    from resaas.scheduler.db import TblNodes
     from resaas.scheduler.nodes.base import NodeStatus
 
-    spec = """
-    {
-        "probability_definition": "gs://bucket/sub/path/script_and_data"
-    }
-    """
-    mock_config.node_type = NodeType.LIBCLOUD_VM
-    job_rep = TblJobs(spec=spec, status=JobStatus.RUNNING)
-    for i in range(2):
+    for i in range(num_nodes):
         job_rep.nodes.append(
             TblNodes(
                 name=f"dummy-{i+1}",
@@ -279,9 +285,40 @@ def test_vm_job_from_db_representation(mock_config):
                 address=f"127.0.0.{i}",
                 ports="[8080, 8081]",
                 in_use=True,
+                is_worker=i == 0,
             )
         )
 
+
+def test_vm_job_from_db_representation(mock_config):
+    # Note: this test uses a concrete Node implementation with a *Mock*
+    # node driver.
+    from resaas.scheduler.db import TblJobs
+    from resaas.scheduler.errors import JobError
+    from resaas.scheduler.jobs import Job, JobStatus
+
+    spec = """
+    {
+        "probability_definition": "gs://bucket/sub/path/script_and_data"
+    }
+    """
+    mock_config.node_type = NodeType.LIBCLOUD_VM
+
+    job_rep = TblJobs(spec=spec, status=JobStatus.RUNNING)
+
+    # all good here
+    _add_nodes_to_job_rep(job_rep, num_nodes=2, num_controllers=1)
     job = Job.from_representation(job_rep, mock_config)
     assert job.representation
     assert all([node.representation is not None for node in job.nodes])
+    assert job.control_node.representation is not None
+
+    # no controller: not good
+    _add_nodes_to_job_rep(job_rep, num_nodes=2, num_controllers=0)
+    with pytest.raises(JobError):
+        job = Job.from_representation(job_rep, mock_config)
+
+    # more than one controller: not good either
+    _add_nodes_to_job_rep(job_rep, num_nodes=2, num_controllers=3)
+    with pytest.raises(JobError):
+        job = Job.from_representation(job_rep, mock_config)

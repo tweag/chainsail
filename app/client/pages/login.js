@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import nookies from 'nookies';
 import StyledFirebaseAuth from 'react-firebaseui/StyledFirebaseAuth';
 import firebase from 'firebase/app';
 import 'firebase/auth';
@@ -7,16 +8,7 @@ import { FlexCenter, Layout } from '../components';
 
 import firebaseClient from '../utils/firebaseClient';
 
-const firebaseAuthConfig = {
-  signInFlow: 'popup',
-  // Auth providers
-  // https://github.com/firebase/firebaseui-web#configure-oauth-providers
-  signInOptions: [firebase.auth.GoogleAuthProvider.PROVIDER_ID],
-  signInSuccessUrl: '/',
-  credentialHelper: 'none',
-};
-
-const FirebaseAuth = () => {
+const FirebaseAuth = ({ latestPage }) => {
   firebaseClient();
   const [renderAuth, setRenderAuth] = useState(false);
   useEffect(() => {
@@ -24,6 +16,14 @@ const FirebaseAuth = () => {
       setRenderAuth(true);
     }
   }, []);
+  const firebaseAuthConfig = {
+    signInFlow: 'popup',
+    // Auth providers
+    // https://github.com/firebase/firebaseui-web#configure-oauth-providers
+    signInOptions: [firebase.auth.GoogleAuthProvider.PROVIDER_ID],
+    signInSuccessUrl: latestPage,
+    credentialHelper: 'none',
+  };
   return (
     <Layout>
       <div className="h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
@@ -48,5 +48,11 @@ const FirebaseAuth = () => {
     </Layout>
   );
 };
+
+export async function getServerSideProps(ctx) {
+  // Parse
+  const cookies = nookies.get(ctx);
+  return { props: { latestPage: cookies.latestPage || '/' } };
+}
 
 export default FirebaseAuth;

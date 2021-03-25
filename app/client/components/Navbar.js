@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import firebase from 'firebase/app';
+import nookies from 'nookies';
 
 import { FlexCenter, FlexRow } from './Flex';
 import { useAuth } from './Auth';
@@ -39,6 +41,7 @@ const Navbar = () => {
   const { user } = useAuth();
   const providerData = user ? user.providerData : undefined;
   const styleLogInOut = 'border-gray-100 border-2 hover:border-opacity-0 border-opacity-20';
+  const { route } = useRouter();
   return (
     <FlexRow between className="items-center h-16 text-sm md:text-base text-white">
       <FlexRow className="items-center space-x-2">
@@ -46,15 +49,21 @@ const Navbar = () => {
           Home
         </NavItem>
         <NavItem internal href="/job">
-          Create a new job!
+          Create new job
         </NavItem>
-        <NavItem internal href="/job/results">
-          Latest jobs
+        <NavItem internal href="/results">
+          My jobs
         </NavItem>
       </FlexRow>
       <div>
         {!user && (
-          <NavItem internal href="/login" className={styleLogInOut}>
+          <NavItem
+            className={styleLogInOut}
+            onClick={() => {
+              nookies.set(undefined, 'latestPage', route, {});
+              window.location = '/login';
+            }}
+          >
             Login
           </NavItem>
         )}

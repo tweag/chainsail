@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import nookies from 'nookies';
-import firebaseClient from '../../utils/firebaseClient';
-import { verifyIdToken } from '../../utils/firebaseAdmin';
+import firebaseClient from '../utils/firebaseClient';
+import { verifyIdToken } from '../utils/firebaseAdmin';
 import {
   Container,
   Link,
@@ -13,7 +13,55 @@ import {
   MathTex,
   Navbar,
   Modal,
-} from '../../components';
+} from '../components';
+
+const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) => {
+  const buttonStyle =
+    'px-6 py-2 text-base text-center rounded-lg cursor-pointer lg:transition lg:duration-300  text-white';
+  return (
+    <Modal isActive={isModalActive}>
+      {!err && (
+        <>
+          <div className="mb-7">
+            Job with id {jobId} created successfully. Start it by clicking the button on the "My
+            jobs" page.
+          </div>
+          <FlexCenter>
+            <FlexRow className="space-x-10">
+              <Link href="/results">
+                <a className={buttonStyle + ' bg-purple-700 hover:bg-purple-900'}>
+                  View your jobs
+                </a>
+              </Link>
+              <div
+                className={buttonStyle + ' bg-gray-700 hover:bg-gray-800'}
+                onClick={() => setIsModelActive(false)}
+              >
+                Create another job
+              </div>
+            </FlexRow>
+          </FlexCenter>
+        </>
+      )}
+      {err && (
+        <>
+          <div className="mb-7">{errMsg}</div>
+          <FlexCenter>
+            <a
+              className={
+                'px-6 py-2 text-base text-center bg-purple-700  ' +
+                ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
+              }
+              onClick={() => setIsModelActive(false)}
+            >
+              Try again!
+            </a>
+          </FlexCenter>
+        </>
+      )}
+    </Modal>
+  );
+};
 
 const FieldDescription = ({ children, name, activeField, icon, math }) => (
   <div
@@ -30,52 +78,6 @@ const FieldDescription = ({ children, name, activeField, icon, math }) => (
     {children}
   </div>
 );
-
-const JobPageModal = ({ jobCreated, jobId, err, errMsg, setErr, setErrMsg }) => {
-  return (
-    <Modal isActive={jobCreated || err}>
-      {!err && (
-        <>
-          <div className="mb-7">
-            Job with id {jobId} created successfully. Start it by clicking the button in the job
-            table.
-          </div>
-          <FlexCenter>
-            <Link href="/job/results">
-              <a
-                className={
-                  'px-6 py-2 text-base text-center bg-purple-700  ' +
-                  ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
-                }
-              >
-                View your jobs
-              </a>
-            </Link>
-          </FlexCenter>
-        </>
-      )}
-      {err && (
-        <>
-          <div className="mb-7">{errMsg}</div>
-          <FlexCenter>
-            <a
-              className={
-                'px-6 py-2 text-base text-center bg-purple-700  ' +
-                ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
-              }
-              onClick={() => {
-                setErr(false);
-                setErrMsg('');
-              }}
-            >
-              Try again!
-            </a>
-          </FlexCenter>
-        </>
-      )}
-    </Modal>
-  );
-};
 
 const Descs = ({ activeField }) => (
   <FlexCol between className="w-full h-full">
@@ -143,7 +145,6 @@ const Job = ({ authed }) => {
   firebaseClient();
 
   const [activeField, setActiveField] = useState('other');
-  const [jobCreated, setJobCreated] = useState(false);
 
   // Form fields state variables
   const [job_name, setJobName] = useState('my_sampling_job');
@@ -167,6 +168,9 @@ const Job = ({ authed }) => {
 
   // See more job form options
   const [seeMoreFields, setSeeMoreFields] = useState(false);
+
+  // Active model state
+  const [isModalActive, setIsModelActive] = useState(false);
 
   const createJob = async () => {
     const body = JSON.stringify({
@@ -202,16 +206,17 @@ const Job = ({ authed }) => {
     try {
       let response = await fetch('/api/job/create', requestOptions);
       let data = await response.json();
-      if (response.ok) {
-        setJobCreated(true);
+      if (response.ok && data.job_id) {
         setErr(false);
-        if (data.job_id) setCreatedJobID(data.job_id);
+        setCreatedJobID(data.job_id);
+        setIsModelActive(true);
       } else {
         setErr(true);
         setErrMsg(
           "Something went wrong. For more information, see your browser's console. To help us debug, please contact simeon.carstens@tweag.io."
         );
         console.log(data);
+        setIsModelActive(true);
       }
     } catch (e) {
       setErr(true);
@@ -219,6 +224,7 @@ const Job = ({ authed }) => {
         "Something went wrong. For more information, see your browser's console. To help us debug, please contact simeon.carstens@tweag.io."
       );
       console.log(e);
+      setIsModelActive(true);
     }
   };
 
@@ -226,12 +232,11 @@ const Job = ({ authed }) => {
     return (
       <Layout>
         <JobPageModal
-          jobCreated={jobCreated}
+          isModalActive={isModalActive}
+          setIsModelActive={setIsModelActive}
           jobId={createdJobId}
           err={err}
           errMsg={errMsg}
-          setErr={setErr}
-          setErrMsg={setErrMsg}
         />
         <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
           <FlexCol between className="h-full">
@@ -276,7 +281,7 @@ const Job = ({ authed }) => {
                       className="h-full"
                       onSubmit={(e) => {
                         e.preventDefault();
-                        createJob(e);
+                        if (!isModalActive) createJob(e);
                       }}
                     >
                       <FlexCol between className="h-56">
@@ -455,6 +460,7 @@ export async function getServerSideProps(context) {
       props: { email, uid, authed: true },
     };
   } catch (err) {
+    nookies.set(context, 'latestPage', '/job', {});
     return {
       redirect: {
         permanent: false,
