@@ -123,5 +123,7 @@ def configure_logging(
                 return log_record.levelno >= logging.INFO
 
         buffered_graphite_handler.addFilter(InfoFilter())
-        buffered_graphite_handler.setFormatter(logging.Formatter(config.format_string, datefmt='%H:%M'))
+        buffered_graphite_handler.setFormatter(
+            logging.Formatter(config.format_string, datefmt="%H:%M")
+        )
         base_logger.addHandler(buffered_graphite_handler)

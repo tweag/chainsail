@@ -76,7 +76,9 @@ class Job:
         with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
             try:
                 # Create worker nodes first
-                logger.info(f"Creating {len(self.nodes)} worker nodes...", extra={"job_id": self.id})
+                logger.info(
+                    f"Creating {len(self.nodes)} worker nodes...", extra={"job_id": self.id}
+                )
                 for created, logs in ex.map(lambda n: n.create(), self.nodes):
                     if not created:
                         raise JobError(
@@ -103,7 +105,9 @@ class Job:
 
     def stop(self):
         for i, node in enumerate(self.nodes):
-            logger.info(f"Deleting worker node {i+1}/{len(self.nodes) - 1}...", extra={"job_id": self.id})
+            logger.info(
+                f"Deleting worker node {i+1}/{len(self.nodes) - 1}...", extra={"job_id": self.id}
+            )
             if not node.delete():
                 self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
