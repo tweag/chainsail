@@ -51,9 +51,9 @@ def run(basename, job_spec, remote_logging_config_path):
     configure_logging(
         "resaas.controller",
         "DEBUG",
-        job_id=-1,
         remote_logging_config_path=remote_logging_config_path,
         format_string="%(message)s",
+        job_id=-1,
     )
 
     # Load the job spec

@@ -24,12 +24,7 @@ RESULTS_ARCHIVE_FILENAME = "results.zip"
 logger = logging.getLogger("resaas.scheduler")
 
 scheduler_config = load_scheduler_config()
-
-
-def _configure_logging(job_id):
-    configure_logging(
-        "resaas.scheduler", "DEBUG", job_id, scheduler_config.remote_logging_config_path
-    )
+configure_logging("resaas.scheduler", "DEBUG", scheduler_config.remote_logging_config_path)
 
 
 def get_storage_driver_container(scheduler_config):
@@ -80,14 +75,13 @@ def start_job_task(job_id):
         # TODO: Log that the row could not be queried
         return
     job = Job.from_representation(job_rep, scheduler_config)
-    _configure_logging(job_id)
     try:
         job.start()
         job.representation.started_at = datetime.utcnow()
-        logger.info(f"Started job #{job_id}.")
+        logger.info(f"Started job #{job_id}.", extras={"job_id": job_id})
     except JobError as e:
         db.session.commit()
-        logger.error(f"Failed to start job #{job_id}.")
+        logger.error(f"Failed to start job #{job_id}.", extras={"job_id": job_id})
         raise e
     else:
         db.session.commit()
@@ -107,16 +101,15 @@ def stop_job_task(job_id, exit_status=None):
     job = Job.from_representation(TblJobs.query.filter_by(id=job_id).one(), scheduler_config)
     if exit_status:
         exit_status = JobStatus(exit_status)
-    _configure_logging(job_id)
     try:
         job.stop()
         job.representation.finished_at = datetime.utcnow()
-        logger.info(f"Stopped job #{job_id}.")
+        logger.info(f"Stopped job #{job_id}.", extras={"job_id": job_id})
         if exit_status:
             job.status = exit_status
     except JobError as e:
         db.session.commit()
-        logger.error(f"Failed to stop stop job #{job_id}.")
+        logger.error(f"Failed to stop stop job #{job_id}.", extras={"job_id": job_id})
         raise e
     else:
         db.session.commit()
@@ -171,13 +164,12 @@ def scale_job_task(job_id, n_replicas) -> bool:
         return False
     # Load Job object from database entry
     job = Job.from_representation(job_rep, scheduler_config)
-    _configure_logging(job_id)
     try:
         job.scale_to(n_replicas)
-        logger.info(f"Scaled job #{job_id} to {n_replicas} replicas.")
+        logger.info(f"Scaled job #{job_id} to {n_replicas} replicas.", extras={"job_id": job_id})
     except JobError as e:
         db.session.commit()
-        logger.error(f"Failed to stop #{job_id}.")
+        logger.error(f"Failed to stop #{job_id}.", extras={"job_id": job_id})
         raise e
     else:
         db.session.commit()
@@ -185,15 +177,14 @@ def scale_job_task(job_id, n_replicas) -> bool:
 
 
 def get_signed_url(job_id):
-    _configure_logging(job_id)
-    logger.info(f"Getting signed URL for results of job #{job_id}...")
+    logger.info(f"Getting signed URL for results of job #{job_id}...", extras={"job_id": job_id})
     storage_driver, container = get_storage_driver_container(scheduler_config)
     job_blob_root = get_job_blob_root(scheduler_config, job_id)
     zip_blob = container.get_blob(os.path.join(job_blob_root, RESULTS_ARCHIVE_FILENAME))
     signed_url = storage_driver.generate_blob_download_url(
         zip_blob, expires=scheduler_config.results_url_expiry_time
     )
-    logger.info(f"Obtained signed URL for results of job #{job_id}.")
+    logger.info(f"Obtained signed URL for results of job #{job_id}.", extras={"job_id": job_id})
 
     return signed_url
 
@@ -214,8 +205,7 @@ def zip_results_task(job_id):
     Args:
         job_id: The id of the job the results of which to zip and link to
     """
-    _configure_logging(job_id)
-    logger.info(f"Zipping results of job #{job_id}...")
+    logger.info(f"Zipping results of job #{job_id}...", extras={"job_id": job_id})
     storage_driver, container = get_storage_driver_container(scheduler_config)
     job_blob_root = get_job_blob_root(scheduler_config, job_id)
 
@@ -240,4 +230,4 @@ def zip_results_task(job_id):
         blob_name = os.path.join(job_blob_root, RESULTS_ARCHIVE_FILENAME)
         storage_driver.upload_blob(container, tmpzipfile, blob_name=blob_name)
 
-    logger.info(f"Zipped results of job #{job_id}.")
+    logger.info(f"Zipped results of job #{job_id}.", extras={"job_id": job_id})

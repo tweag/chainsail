@@ -87,10 +87,7 @@ def run(job, config, storage, hostsfile, job_spec):
     with open(config) as f:
         config: ControllerConfig = ControllerConfigSchema().load(yaml.safe_load(f))
     configure_logging(
-        "resaas.controller",
-        config.log_level,
-        job,
-        config.remote_logging_config_path,
+        "resaas.controller", config.log_level, config.remote_logging_config_path, job_id=job
     )
 
     logger.debug("Loading job spec from file")

@@ -27,7 +27,7 @@ class GraphiteHTTPHandler(logging.Handler):
 
     """
 
-    def __init__(self, url: str, what="log", tags=None, timeout=5):
+    def __init__(self, url: str, what="log", tags=None, timeout=5, job_id=None):
         super().__init__()
         self.url = url
         self.timeout = timeout
@@ -36,12 +36,23 @@ class GraphiteHTTPHandler(logging.Handler):
             self.tags = ["log"]
         else:
             self.tags = tags
+        self.job_id = job_id
 
     def emit(self, record: logging.LogRecord):
         try:
+            if job_id := self.job_id:
+                # use job ID attribute
+                if record["job_id"] and record["job_id"] != job_id:
+                    raise ValueError("Inconsistent job IDs during log emission")
+            elif job_id := record["job_id"]:
+                # use job ID in log record
+                pass
+            else:
+                # no job id given: don't log to Graphite
+                return
             payload = {
                 "what": self.what,
-                "tags": self.tags + [record.levelname],
+                "tags": self.tags + [record.levelname, f"job{job_id}"],
                 "when": floor(datetime.utcnow().timestamp()),
                 "data": self.format(record),
             }
@@ -56,11 +67,7 @@ class GraphiteHTTPHandler(logging.Handler):
 
 
 def configure_logging(
-    logger_name,
-    log_level,
-    job_id,
-    remote_logging_config_path,
-    format_string=None,
+    logger_name, log_level, remote_logging_config_path, format_string=None, job_id=None
 ):
     """
     Configures logging.
@@ -68,9 +75,9 @@ def configure_logging(
     Args:
         logger_name(str): logger name; e.g. "resaas.controller"
         log_level (str): log level
-        job_id (int): job id
         remote_logging_config_path (str): path to remote logging config file
         format_string (str): format string for the logging formatter
+        job_id (int): job id
     """
     logger = logging.getLogger(logger_name)
     log_level = logging.getLevelName(log_level)
@@ -78,9 +85,18 @@ def configure_logging(
     base_logger.setLevel(log_level)
     basic_handler = logging.StreamHandler()
     if format_string is None:
-        format_string = "[%(levelname)s] %(asctime)s - %(name)s - %(message)s"
+        format_string = f"[%(levelname)s] %(asctime)s - %(name)s - job #%(job_id)s - %(message)s"
     basic_formatter = logging.Formatter(format_string)
     basic_handler.setFormatter(basic_formatter)
+
+    # adds job ID to log record extras
+    class JobIDAddingFilter:
+        def filter(self, log_record):
+            if not hasattr(record, "job_id"):
+                log_record.job_id = str(job_id) or "n/a"
+            return True
+
+    basic_handler.addFilter(JobIDAddingFilter())
     base_logger.addHandler(basic_handler)
 
     if remote_logging_config_path:
@@ -92,7 +108,8 @@ def configure_logging(
         graphite_handler = GraphiteHTTPHandler(
             url=f"http://{config.address}:{config.port}/events",
             what="log",
-            tags=["log", f"job{job_id}"],
+            tags=["log"],
+            job_id=job_id,
         )
         graphite_handler.setFormatter(basic_formatter)
         # Use buffering to avoid having to making excessive calls
