@@ -5,7 +5,7 @@ VALID_CONTROLLER_CONFIG = """
     "metrics_address": "127.0.0.1",
     "metrics_port": 2004,
     "runner": "some.module:MyRunner",
-    "remote_logging_config": "/this/is/my/favorite/path.yaml"
+    "remote_logging_config_path": "/this/is/my/favorite/path.yaml"
 }
 
 """
