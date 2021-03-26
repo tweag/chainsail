@@ -114,9 +114,7 @@ def configure_logging(
             tags=["log"],
             job_id=job_id,
         )
-        graphite_handler.setFormatter(
-            logging.Formatter(config.format_string, datefmt="%H:%M")
-        )
+        graphite_handler.setFormatter(logging.Formatter(config.format_string, datefmt="%H:%M"))
         # Use buffering to avoid having to making excessive calls
         buffered_graphite_handler = MemoryHandler(config.buffer_size, target=graphite_handler)
 

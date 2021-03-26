@@ -21,7 +21,7 @@ from resaas.scheduler.tasks import (
     zip_results_task,
     get_signed_url,
     update_signed_url_task,
-    logger
+    logger,
 )
 
 
