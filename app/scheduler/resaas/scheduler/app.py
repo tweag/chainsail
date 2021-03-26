@@ -2,7 +2,6 @@
 Scheduler REST API and endpoint specifications
 """
 from datetime import datetime
-import logging
 import os
 
 from celery import chain
@@ -10,9 +9,7 @@ from cloudstorage.exceptions import NotFoundError
 import functools
 from flask import abort, jsonify, request
 from firebase_admin.auth import verify_id_token
-from resaas.common.logging import configure_logging
 from resaas.common.spec import JobSpecSchema
-from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import app, db, firebase_app
 from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.jobs import JobStatus
@@ -24,13 +21,8 @@ from resaas.scheduler.tasks import (
     zip_results_task,
     get_signed_url,
     update_signed_url_task,
+    logger
 )
-
-config = load_scheduler_config()
-logger = logging.getLogger("resaas.scheduler")
-
-
-configure_logging("resaas.scheduler", "DEBUG", config.remote_logging_config_path)
 
 
 def _is_dev_mode():
