@@ -7,7 +7,12 @@ import logging
 from logging.handlers import MemoryHandler
 from math import floor
 
+import yaml
 import requests
+
+from resaas.common.configs import RemoteLoggingConfigSchema
+
+NO_JOB_ID = "n/a"
 
 
 class GraphiteHTTPHandler(logging.Handler):
@@ -24,7 +29,7 @@ class GraphiteHTTPHandler(logging.Handler):
 
     """
 
-    def __init__(self, url: str, what="log", tags=None, timeout=5):
+    def __init__(self, url: str, what="log", tags=None, timeout=5, job_id=None):
         super().__init__()
         self.url = url
         self.timeout = timeout
@@ -33,12 +38,24 @@ class GraphiteHTTPHandler(logging.Handler):
             self.tags = ["log"]
         else:
             self.tags = tags
+        self.job_id = job_id
 
     def emit(self, record: logging.LogRecord):
         try:
+            if self.job_id is not None:
+                # use job ID attribute
+                job_id = str(self.job_id)
+                if record.job_id != "n/a" and record.job_id != job_id:
+                    raise ValueError("Inconsistent job IDs during log emission")
+            elif record.job_id != NO_JOB_ID:
+                # use job ID in log record
+                job_id = record.job_id
+            else:
+                # no job id given: don't log to Graphite
+                return
             payload = {
                 "what": self.what,
-                "tags": self.tags + [record.levelname],
+                "tags": self.tags + [record.levelname, f"job{job_id}"],
                 "when": floor(datetime.utcnow().timestamp()),
                 "data": self.format(record),
             }
@@ -52,50 +69,60 @@ class GraphiteHTTPHandler(logging.Handler):
             self.handleError(record)
 
 
-def configure_controller_logging(
-    log_level,
-    job_id,
-    remote_logging,
-    metrics_address,
-    remote_logging_port,
-    remote_logging_buffer_size,
-    format_string=None,
+def configure_logging(
+    logger_name, log_level, remote_logging_config_path, format_string=None, job_id=None
 ):
     """
-    Configures controller logging.
+    Configures logging.
 
     Args:
+        logger_name(str): logger name; e.g. "resaas.controller"
         log_level (str): log level
-        job_id (int): job id
-        remote_logging (bool): whether to enable remote logging
-        metrics_address (str): IP address / hostname of remote logging server
-        remote_logging_port (int): port on which remote logging server is listening
-        remote_logging_buffer_size (int): remote logging buffer size
+        remote_logging_config_path (str): path to remote logging config file
         format_string (str): format string for the logging formatter
+        job_id (int): job id
     """
-    logger = logging.getLogger("resaas.controller")
+    logger = logging.getLogger(logger_name)
     log_level = logging.getLevelName(log_level)
     base_logger = logging.getLogger("resaas")
     base_logger.setLevel(log_level)
     basic_handler = logging.StreamHandler()
     if format_string is None:
-        format_string = "[%(levelname)s] %(asctime)s - %(name)s - %(message)s"
+        format_string = f"[%(levelname)s] %(asctime)s - %(name)s - job #%(job_id)s - %(message)s"
     basic_formatter = logging.Formatter(format_string)
     basic_handler.setFormatter(basic_formatter)
+
+    # adds job ID to log record extras
+    class JobIDAddingFilter:
+        def filter(self, log_record):
+            if not hasattr(log_record, "job_id"):
+                log_record.job_id = str(job_id) if job_id is not None else NO_JOB_ID
+            return True
+
+    basic_handler.addFilter(JobIDAddingFilter())
     base_logger.addHandler(basic_handler)
 
-    if remote_logging:
-        logger.info("Configuring remote logging")
+    if remote_logging_config_path:
+        logger.debug("Configuring remote logging")
+        with open(remote_logging_config_path) as f:
+            config = RemoteLoggingConfigSchema().load(yaml.safe_load(f))
 
         # Add graphite remote logging
         graphite_handler = GraphiteHTTPHandler(
-            url=f"http://{metrics_address}:{remote_logging_port}/events",
+            url=f"http://{config.address}:{config.port}/events",
             what="log",
-            tags=["log", f"job{job_id}"],
+            tags=["log"],
+            job_id=job_id,
         )
-        graphite_handler.setFormatter(basic_formatter)
+        graphite_handler.setFormatter(logging.Formatter(config.format_string, datefmt="%H:%M"))
         # Use buffering to avoid having to making excessive calls
-        buffered_graphite_handler = MemoryHandler(
-            remote_logging_buffer_size, target=graphite_handler
-        )
+        buffered_graphite_handler = MemoryHandler(config.buffer_size, target=graphite_handler)
+
+        # don't log debug messages to Graphite - they might contain internal
+        # IP addresses / info about the service architecture
+        class InfoFilter:
+            def filter(self, log_record):
+                return log_record.levelno >= logging.INFO
+
+        buffered_graphite_handler.addFilter(InfoFilter())
         base_logger.addHandler(buffered_graphite_handler)

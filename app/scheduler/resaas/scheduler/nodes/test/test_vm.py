@@ -34,6 +34,7 @@ def mock_scheduler_config():
         node_type=NodeType.LIBCLOUD_VM,
         node_config=node_config,
         results_url_expiry_time=42,
+        remote_logging_config_path=None,
     )
     return scheduler_config
 

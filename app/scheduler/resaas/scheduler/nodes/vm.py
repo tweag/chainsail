@@ -1,3 +1,4 @@
+import logging
 import os
 import traceback
 from tempfile import TemporaryDirectory
@@ -14,7 +15,12 @@ from libcloud.compute.deployment import (
 )
 from libcloud.compute.types import DeploymentException, NodeState
 from resaas.common.spec import JobSpec, JobSpecSchema
-from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
+from resaas.scheduler.config import (
+    GeneralNodeConfig,
+    SchedulerConfig,
+    VMNodeConfig,
+    load_scheduler_config,
+)
 from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import (
     ConfigurationError,
@@ -23,6 +29,9 @@ from resaas.scheduler.errors import (
     ObjectConstructionError,
 )
 from resaas.scheduler.nodes.base import Node, NodeStatus
+
+
+logger = logging.getLogger("resaas.scheduler")
 
 
 def _raise_for_exit_status(node: LibcloudNode, deployment: Deployment):
@@ -164,6 +173,7 @@ def prepare_deployment(
         user_code_cmd=user_code_cmd,
     )
 
+    scheduler_config = load_scheduler_config()
     steps = MultiStepDeployment(
         [
             # The very first thing to do is run the initialization script to ensure
@@ -202,6 +212,14 @@ def prepare_deployment(
                 os.path.join(
                     install_dir,
                     os.path.basename(vm_node._vm_config.controller_config_path),
+                ),
+            ),
+            # Remote logging config
+            FileDeployment(
+                scheduler_config.remote_logging_config_path,
+                os.path.join(
+                    install_dir,
+                    os.path.basename(scheduler_config.remote_logging_config_path),
                 ),
             ),
             # private ssh key for openmpi to use
@@ -320,6 +338,7 @@ class VMNode(Node):
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
             raise NodeError("Attempted to created a node which has already been created")
+        logger.info("Creating node...")
         self._status = NodeStatus.CREATING
         with TemporaryDirectory() as tmpdir:
             deployment_steps = self._deployment(
@@ -372,6 +391,7 @@ class VMNode(Node):
     def restart(self) -> bool:
         if not self._node:
             raise MissingNodeError
+        logger.info("Restarting node...")
         rebooted = self._node.reboot()
         self.refresh_status()
         self.sync_representation()
@@ -380,6 +400,7 @@ class VMNode(Node):
     def delete(self) -> bool:
         if not self._node:
             return True
+        logger.info("Deleting node...")
         deleted = self._node.destroy()
         if deleted:
             # If the delete request was successful we can go ahead

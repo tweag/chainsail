@@ -149,6 +149,7 @@ class SchedulerConfig:
     node_type: NodeType
     node_config: HasDriver
     results_url_expiry_time: int
+    remote_logging_config_path: str
 
     def create_node_driver(self):
         """Create a new node driver instance using the scheduler config"""
@@ -159,6 +160,7 @@ class SchedulerConfigSchema(Schema):
     controller = fields.Nested(GeneralNodeConfigSchema, required=True)
     worker = fields.Nested(GeneralNodeConfigSchema, required=True)
     node_type = EnumField(NodeType, by_value=True, required=True)
+    remote_logging_config_path = fields.String(required=True)
     results_url_expiry_time = fields.Int()
     node_config = fields.Dict(keys=fields.String())
 

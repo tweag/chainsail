@@ -12,7 +12,7 @@ import click
 import grpc
 import yaml
 from resaas.common.configs import ControllerConfig, ControllerConfigSchema
-from resaas.common.logging import configure_controller_logging
+from resaas.common.logging import configure_logging
 from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.spec import JobSpec, JobSpecSchema
 from resaas.common.storage import load_storage_config
@@ -40,7 +40,7 @@ def load_runner(runner_path: str) -> AbstractRERunner:
             by a colon. e.g. 'some.module:MyRunner'
     """
     module, runner_name = runner_path.split(":")
-    logger.info(f"Attempting to load runner '{runner_name}' from {module}")
+    logger.debug(f"Attempting to load runner '{runner_name}' from {module}")
     module = import_module(module)
     return getattr(module, runner_name)
 
@@ -86,23 +86,17 @@ def run(job, config, storage, hostsfile, job_spec):
     # Load the controller configuration file
     with open(config) as f:
         config: ControllerConfig = ControllerConfigSchema().load(yaml.safe_load(f))
-    # Configure logging
-    configure_controller_logging(
-        config.log_level,
-        job,
-        config.remote_logging,
-        config.metrics_address,
-        config.remote_logging_port,
-        config.remote_logging_buffer_size,
+    configure_logging(
+        "resaas.controller", config.log_level, config.remote_logging_config_path, job_id=job
     )
 
-    logger.info("Loading job spec from file")
+    logger.debug("Loading job spec from file")
     with open(job_spec) as f:
         job_spec: JobSpec = JobSpecSchema().loads(f.read())
 
-    logger.info("Loading storage config file")
+    logger.debug("Loading storage config file")
     backend_config = load_storage_config(storage)
-    logger.info("Initializing storage backend using config")
+    logger.debug("Initializing storage backend using config")
     storage_backend = backend_config.get_storage_backend()
 
     # Load the controller

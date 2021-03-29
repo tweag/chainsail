@@ -10,7 +10,6 @@ import functools
 from flask import abort, jsonify, request
 from firebase_admin.auth import verify_id_token
 from resaas.common.spec import JobSpecSchema
-from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import app, db, firebase_app
 from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
 from resaas.scheduler.jobs import JobStatus
@@ -22,9 +21,8 @@ from resaas.scheduler.tasks import (
     zip_results_task,
     get_signed_url,
     update_signed_url_task,
+    logger,
 )
-
-config = load_scheduler_config()
 
 
 def _is_dev_mode():
@@ -95,6 +93,7 @@ def create_job(user_id):
     )
     db.session.add(job)
     db.session.commit()
+    logger.info(f"Created job #{job.id}.", extra={"job_id": job.id})
     return jsonify({"job_id": job.id})
 
 
@@ -104,6 +103,7 @@ def start_job(job_id, user_id):
     """Start a single job"""
     job = find_job(job_id, user_id)
     job.status = JobStatus.STARTING.value
+    logger.info(f"Starting job #{job_id}...", extra={"job_id": job_id})
     db.session.commit()
     # Starts the watch process once the job is successfully started
     # The watch process will stop the job once it either succeeds or fails.
@@ -129,6 +129,7 @@ def stop_job(job_id, user_id):
 
     zip_chain = get_zip_chain(job_id)
     stop_job_task.apply_async((job_id,), link=zip_chain)
+    logger.info(f"Stopping job #{job_id}...", extra={"job_id": job_id})
 
     return ("ok", 200)
 
@@ -168,6 +169,7 @@ def scale_job(job_id, n_replicas):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
     find_job(job_id)
+    logger.info(f"Scaling up job #{job_id} to {n_replicas} replicas...", extra={"job_id": job_id})
     scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
     # Await the result, raising any exceptions that get thrown
     scaled = scaling_task.get()

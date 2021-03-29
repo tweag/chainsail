@@ -16,13 +16,11 @@ class ControllerConfig:
     metrics_address: str
     metrics_port: int
     runner: str
+    remote_logging_config_path: str
     storage_basename: str = ""
     port: int = 50051
     n_threads: int = 10
     log_level: str = "INFO"
-    remote_logging: bool = True
-    remote_logging_port: int = 80
-    remote_logging_buffer_size: int = 5
 
 
 class ControllerConfigSchema(Schema):
@@ -31,14 +29,37 @@ class ControllerConfigSchema(Schema):
     metrics_address = fields.String(required=True)
     metrics_port = fields.Integer(required=True)
     runner = fields.String(required=True)
+    remote_logging_config_path = fields.String(required=True)
     storage_basename = fields.String()
     port = fields.Integer()
     n_threads = fields.Integer()
     log_level = fields.String()
-    remote_logging = fields.Boolean()
-    remote_logging_port = fields.Integer()
-    remote_logging_buffer_size = fields.Integer()
 
     @post_load
     def make_controller_config(self, data, **kwargs) -> ControllerConfig:
         return ControllerConfig(**data)
+
+
+@dataclass
+class RemoteLoggingConfig:
+    """Gaphite logging configurations"""
+
+    address: str
+    enabled: bool
+    log_level: str = "INFO"
+    port: int = 80
+    buffer_size: int = 5
+    format_string: str = "[%(levelname)s] %(asctime)s - %(message)s"
+
+
+class RemoteLoggingConfigSchema(Schema):
+    enabled = fields.Boolean(required=True)
+    address = fields.String(required=True)
+    log_level = fields.String()
+    port = fields.Integer()
+    buffer_size = fields.Integer()
+    format_string = fields.String()
+
+    @post_load
+    def make_remote_logging_config(self, data, **kwargs) -> RemoteLoggingConfig:
+        return RemoteLoggingConfig(**data)

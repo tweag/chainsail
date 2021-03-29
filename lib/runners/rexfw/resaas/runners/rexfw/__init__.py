@@ -8,7 +8,7 @@ import time
 from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.storage import AbstractStorageBackend
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("resaas.controller")
 
 
 def format_metric_name(run_id: int, storage: AbstractStorageBackend):
