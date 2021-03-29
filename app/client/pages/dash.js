@@ -189,12 +189,14 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
   }
 };
 
-const Logs = () => {
+const Logs = ({ job }) => {
   useEffect(() => {
     var element = document.getElementById('logs');
     element.scrollTop = element.scrollHeight;
   }, []);
-  const { data, error } = useSWR('/api/graphite/logs', fetcher, {
+  const jobId = job.id;
+  console.log(jobId);
+  const { data, error } = useSWR(`/api/graphite/logs/${jobId}`, fetcher, {
     refreshInterval: 10000,
   });
   const logs =
@@ -332,7 +334,7 @@ const Dash = ({ authed }) => {
               <FlexCol between className="w-2/3 p-10">
                 <NegLogPChart job={job} simulationRun={simulationRun} />
                 <AcceptanceRateChart job={job} simulationRun={simulationRun} />
-                <Logs />
+                <Logs job={job} />
               </FlexCol>
               {!jobRunOrStop && (
                 <div className="fixed w-2/3 text-3xl left-1/3 opacity-80 h-2/3">
