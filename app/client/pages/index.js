@@ -25,7 +25,7 @@ const Heading = () => (
               target="_blank"
               className="transition duration-300 hover:opacity-50"
             >
-              <i class="fas fa-chevron-right ml-2 mr-5"></i>
+              <i className="fas fa-chevron-right ml-2 mr-5"></i>
               Replica Exchange
             </a>
             <a
@@ -33,7 +33,7 @@ const Heading = () => (
               target="_blank"
               className="transition duration-300 hover:opacity-50"
             >
-              <i class="fas fa-chevron-right ml-2 mr-5"></i>
+              <i className="fas fa-chevron-right ml-2 mr-5"></i>
               Hamiltonian Monte Carlo
             </a>
           </FlexCol>
