@@ -25,7 +25,7 @@ const NegLogPChart = ({ job, simulationRun }) => {
   if (job && job.id) {
     const jobId = job.id;
     const { data, error } = useSWR(`/api/graphite/neglogp/${jobId}/${simulationRun}`, fetcher, {
-      refreshInterval: 10000,
+      refreshInterval: 5000,
     });
     if (error) console.log(error);
     const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
@@ -35,7 +35,7 @@ const NegLogPChart = ({ job, simulationRun }) => {
           labels: ds ? ds.map((d) => moment.unix(d[1]).format()) : [],
           xAxisID: 'x',
           yAxisID: 'y',
-          label: 'negative total log-probability',
+          label: 'total negative log-probability',
           data: ds
             ? ds.map((d) => {
                 return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
