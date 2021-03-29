@@ -79,42 +79,27 @@ const FieldDescription = ({ children, name, activeField, icon, math }) => (
   </div>
 );
 
-const Descs = ({ activeField }) => (
+const Descs = ({ activeField, seeMoreFields }) => (
   <FlexCol between className="w-full h-full">
     <FieldDescription activeField={activeField} name={['job_name']} icon="fas fa-bars">
       Job name: a unique key id for your job.
     </FieldDescription>
     <FieldDescription
       activeField={activeField}
-      name={['max_replicas', 'initial_number_of_replicas']}
-      icon="fas fa-cloud"
-    >
-      Max / initial N° replicas: maximum / initial number of replicas to use. The more replicas,
-      the better the sampling, but the more compute quota you will use
-    </FieldDescription>
-    <FieldDescription
-      activeField={activeField}
       name={['num_production_samples', 'num_optimization_samples']}
       icon="fas fa-stream"
     >
-      N° production / optimization samples: number of MCMC samples in production / optimization
-      runs
+      N° production {seeMoreFields ? '/ optimization samples' : ''} : number of MCMC samples in
+      production {seeMoreFields ? '/ optimization runs' : ''}
     </FieldDescription>
     <FieldDescription
       activeField={activeField}
-      name={['tempered_distribution_family']}
-      math="\{\mathbb{P}\}"
+      name={['max_replicas', 'initial_number_of_replicas']}
+      icon="fas fa-cloud"
     >
-      Tempered distribution family: the family of tempered distributions to use. For now, only
-      tempering whole probabilities ("Boltzmann") is supported
-    </FieldDescription>
-    <FieldDescription activeField={activeField} name={['minimum_beta']} math="\beta_{min}">
-      Beta min: the minimum inverse temperature (beta) which determines the flatness of the
-      flattest distribution
-    </FieldDescription>
-    <FieldDescription activeField={activeField} name={['target_acceptance_rate']} math="\rho">
-      Target acceptance rate: the acceptance rate between neigboring replicas that the algorithm
-      aims to achieve. 0.2 is a good value.
+      Max {seeMoreFields ? '/ initial' : ''} N° replicas: maximum{' '}
+      {seeMoreFields ? '/ initial' : ''} number of replicas to use. The more replicas, the better
+      the sampling, but the more compute quota you will use
     </FieldDescription>
     <FieldDescription
       activeField={activeField}
@@ -127,6 +112,28 @@ const Descs = ({ activeField }) => (
     <FieldDescription activeField={activeField} name={['dependencies']} icon="fas fa-bolt">
       Dependencies: comma-separated list of dependencies to install on compute nodes
     </FieldDescription>
+    {seeMoreFields && (
+      <FieldDescription
+        activeField={activeField}
+        name={['tempered_distribution_family']}
+        math="\{\mathbb{P}\}"
+      >
+        Tempered distribution family: the family of tempered distributions to use. For now, only
+        tempering whole probabilities ("Boltzmann") is supported
+      </FieldDescription>
+    )}
+    {seeMoreFields && (
+      <FieldDescription activeField={activeField} name={['minimum_beta']} math="\beta_{min}">
+        Beta min: the minimum inverse temperature (beta) which determines the flatness of the
+        flattest distribution
+      </FieldDescription>
+    )}
+    {seeMoreFields && (
+      <FieldDescription activeField={activeField} name={['target_acceptance_rate']} math="\rho">
+        Target acceptance rate: the acceptance rate between neigboring replicas that the algorithm
+        aims to achieve. 0.2 is a good value.
+      </FieldDescription>
+    )}
   </FlexCol>
 );
 
@@ -441,8 +448,12 @@ const Job = ({ authed }) => {
                     </form>
                   </FlexCenter>
 
-                  <FlexCenter className="w-full p-5 bg-gray-700 md:p-10 lg:w-1/2 lg:h-full rounded-xl">
-                    <Descs activeField={activeField} />
+                  <FlexCenter
+                    className={`w-full p-5 bg-gray-700 md:p-10 lg:w-1/2 rounded-xl duration-300 transition ${
+                      seeMoreFields ? 'h-full' : 'h-72'
+                    }`}
+                  >
+                    <Descs activeField={activeField} seeMoreFields={seeMoreFields} />
                   </FlexCenter>
                 </FlexRow>
               </FlexCol>
