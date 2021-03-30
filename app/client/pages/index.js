@@ -86,7 +86,7 @@ export default function Home() {
     const anim = setInterval(() => {
       fireAnimation();
     }, 3000);
-    return () => clearTimeout(anim);
+    return () => clearInterval(anim);
   }, []);
   return (
     <Layout>
