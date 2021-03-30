@@ -29,7 +29,7 @@ const Heading = () => (
               target="_blank"
               className="transition duration-300 hover:opacity-50"
             >
-              <i className="fas fa-chevron-right ml-2 mr-5"></i>
+              <i className="ml-2 mr-5 fas fa-chevron-right"></i>
               Replica Exchange
             </a>
             <a
@@ -71,7 +71,7 @@ const fireAnimation = () => {
   parent.appendChild(div);
   const duration = 4000;
   ReactDOM.render(
-    <svg className="fixed top-0 left-0 w-screen h-screen opacity-10">
+    <svg className="fixed top-0 left-0 z-0 w-screen h-screen">
       <AnimationMainPage duration={duration} />
     </svg>,
     document.getElementById(id)
@@ -92,7 +92,7 @@ export default function Home() {
     <Layout>
       <FlexCol
         between
-        className="z-20 h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body"
+        className="h-screen text-white bg-gradient-to-r opacity-95 from-purple-900 to-indigo-600 font-body"
       >
         <Container>
           <Navbar />
@@ -102,7 +102,11 @@ export default function Home() {
         </Container>
         <CopyrightFooter />
       </FlexCol>
-      <div id="animation-main-page" className="fixed top-0 left-0 z-0 w-screen h-screen"></div>
+      <div
+        id="animation-main-page"
+        className="fixed top-0 left-0 w-screen h-screen"
+        style={{ zIndex: -1 }}
+      ></div>
     </Layout>
   );
 }
