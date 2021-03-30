@@ -41,7 +41,7 @@ function ReactSpring({ duration }) {
     return path;
   };
 
-  const props = useSpring({ t: 1, from: { t: 0 }, config: { duration } });
+  const props = useSpring({ t: 1 + eps, from: { t: 0 }, config: { duration } });
 
   return (
     <animated.path
