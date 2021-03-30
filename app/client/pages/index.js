@@ -77,7 +77,10 @@ const fireAnimation = () => {
     document.getElementById(id)
   );
   setTimeout(() => {
-    document.getElementById(id).remove();
+    const div_to_del = document.getElementById(id);
+    if (div_to_del) {
+      div_to_del.remove();
+    }
   }, 6000);
 };
 
