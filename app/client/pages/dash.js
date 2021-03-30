@@ -81,7 +81,10 @@ const NegLogPChart = ({ job, simulationRun }) => {
     };
 
     const jobRunOrStop =
-      job.status == 'running' || job.status == 'stopping' || job.status == 'stopped';
+      job.status == 'running' ||
+      job.status == 'stopping' ||
+      job.status == 'stopped' ||
+      job.status == 'success';
     return (
       <FlexCenter
         className={`w-full h-1/2 transition duration-300 ${
@@ -173,7 +176,10 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
     };
 
     const jobRunOrStop =
-      job.status == 'running' || job.status == 'stopping' || job.status == 'stopped';
+      job.status == 'running' ||
+      job.status == 'stopping' ||
+      job.status == 'stopped' ||
+      job.status == 'success';
 
     return (
       <FlexCenter
@@ -310,7 +316,11 @@ const Dash = ({ authed }) => {
   );
 
   const jobRunOrStop =
-    jobFound && (job.status == 'running' || job.status == 'stopping' || job.status == 'stopped');
+    jobFound &&
+    (job.status == 'running' ||
+      job.status == 'stopping' ||
+      job.status == 'stopped' ||
+      job.status == 'success');
 
   if (authed)
     return (
