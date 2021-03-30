@@ -1,5 +1,19 @@
 # docker
 
+`docker-compose` can be used to spin up a full RESAAS deployment.
+
+## client
+
+TODO
+
+## scheduler
+
+Docker image containing the scheduler app behind a uWSGI app server and an NGINX reverse proxy.
+
+## celery-worker
+
+Docker image containing the celery worker.
+
 ## node
 
 Docker image containing all dependencies required to run resaas job nodes, including 

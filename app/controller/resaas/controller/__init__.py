@@ -342,9 +342,6 @@ class BaseREJobController:
         Args:
             storage(:class:`SimulationStorage`): storage for simulation
               to be set up
-
-        Returns:
-          :class:`np.array`: density of states estimate
         """
         self._re_runner.run_sampling(storage)
         energies = storage.load_all_energies(*self._get_dos_subsample_params(storage))
@@ -376,6 +373,7 @@ class BaseREJobController:
 class CloudREJobController(BaseREJobController):
     SCHEDULER_SCALE_ENDPOINT = "/internal/job/{id}/scale/{n}"
     SCHEDULER_NODE_ENDPOINT = "/job/{id}/nodes"
+    SCHEDULER_ADD_ITERATION_ENDPOINT = "/internal/job/{id}/add_iteration/{iteration}"
 
     def __init__(
         self,
@@ -490,6 +488,47 @@ class CloudREJobController(BaseREJobController):
                 break
         self._node_updater(self)
 
+    def _ask_scheduler_to_add_iteration(self, iteration):
+        """
+        Sends the scheduler a request to add an entry to the list of main controller loop
+        iterations.
+        """
+        for i in range(self.connection_retries):
+            try:
+                logger.debug(f"Asking scheduler to add controller iteration {iteration}")
+                add_iteration_endpoint = self.SCHEDULER_ADD_ITERATION_ENDPOINT.format(
+                    id=self.job_id, iteration=iteration
+                )
+                url = "http://{}:{}{}".format(
+                    self.scheduler_address, self.scheduler_port, add_iteration_endpoint
+                )
+                r = requests.post(url)
+                r.raise_for_status()
+                break
+            except Exception as e:
+                logger.error(
+                    f"Failed to ask scheduler to add controller iteration {iteration} with response: {repr(r)}"
+                )
+                if (i + 1) == self.connection_retries:
+                    logger.critical(
+                        "Used all attempts for asking scheduler to add controller iteration {iteration}."
+                    )
+                    raise e
+                time.sleep(self.connection_retry_interval)
+
+    def _do_single_run(self, storage):
+        """
+        Run a single Replica Exchange simulation, estimate the density of
+        states and write it to the simulation folder.
+
+        Args:
+            storage(:class:`SimulationStorage`): storage for simulation
+              to be set up
+        """
+        iteration = storage.sim_path
+        self._ask_scheduler_to_add_iteration(iteration)
+        super()._do_single_run(storage)
+
 
 def update_nodes_mpi(
     controller: CloudREJobController,
@@ -504,7 +543,7 @@ def update_nodes_mpi(
     # Query the scheduler for a list of peers
     for i in range(controller.connection_retries):
         try:
-            logger.info("Querying peer addresses")
+            logger.debug("Querying peer addresses")
             r = requests.get(
                 f"http://{controller.scheduler_address}:{controller.scheduler_port}{controller.SCHEDULER_NODE_ENDPOINT.format(id=controller.job_id)}"
             )
@@ -526,7 +565,7 @@ def update_nodes_mpi(
             # Note: this may also include t he controller host
             logger.debug(f"Found peer with name: {n['name']}")
             hosts.append(n["address"])
-    logger.info(f"Found a total of {len(hosts)} peers")
+    logger.debug(f"Found a total of {len(hosts)} peers")
     with open(hostfile_path, "w") as f:
         logger.debug(f"Updating hostfile at {hostfile_path}")
         for h in hosts:

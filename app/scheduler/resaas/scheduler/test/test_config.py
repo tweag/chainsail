@@ -35,14 +35,18 @@ VALID_CONFIG_VM = {
         "ports": [8080, 22],
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
+        "user_code_image": "some-docker-image",
     },
     "worker": {
         "image": "some-docker-image:latest",
         "ports": [22],
         "cmd": "ls",
+        "user_code_image": "some-docker-image",
     },
     "node_type": "LibcloudVM",
     "node_config": VM_NODE_CONFIG,
+    "results_url_expiry_time": 42,
+    "remote_logging_config_path": "/I/am/some/path",
 }
 
 VALID_CONFIG_VM_RESAAS_DRIVER = {
@@ -51,14 +55,18 @@ VALID_CONFIG_VM_RESAAS_DRIVER = {
         "ports": [8080, 22],
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
+        "user_code_image": "some-docker-image",
     },
     "worker": {
         "image": "some-docker-image:latest",
         "ports": [22],
         "cmd": "ls",
+        "user_code_image": "some-docker-image",
     },
     "node_type": "LibcloudVM",
     "node_config": VM_NODE_CONFIG_RESAAS_DRIVER,
+    "results_url_expiry_time": 42,
+    "remote_logging_config_path": "/I/am/some/path",
 }
 
 # The below config fails to specify inputs for the driver
@@ -68,14 +76,18 @@ CONFIG_INVALID_TYPE = {
         "ports": [8080, 22],
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
+        "user_code_image": "some-docker-image",
     },
     "worker": {
         "image": "some-docker-image:latest",
         "ports": [22],
         "cmd": "ls",
+        "user_code_image": "some-docker-image",
     },
     "node_type": "DoesNotExist",
     "node_config": VM_NODE_CONFIG,
+    "results_url_expiry_time": 42,
+    "remote_logging_config_path": "/I/am/some/path",
 }
 
 

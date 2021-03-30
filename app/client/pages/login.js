@@ -1,22 +1,14 @@
 import { useState, useEffect } from 'react';
+import nookies from 'nookies';
 import StyledFirebaseAuth from 'react-firebaseui/StyledFirebaseAuth';
 import firebase from 'firebase/app';
 import 'firebase/auth';
 
-import { FlexCenter, Layout } from '../components';
+import { FlexCenter, FlexCol, Layout } from '../components';
 
 import firebaseClient from '../utils/firebaseClient';
 
-const firebaseAuthConfig = {
-  signInFlow: 'popup',
-  // Auth providers
-  // https://github.com/firebase/firebaseui-web#configure-oauth-providers
-  signInOptions: [firebase.auth.GoogleAuthProvider.PROVIDER_ID],
-  signInSuccessUrl: '/',
-  credentialHelper: 'none',
-};
-
-const FirebaseAuth = () => {
+const FirebaseAuth = ({ latestPage }) => {
   firebaseClient();
   const [renderAuth, setRenderAuth] = useState(false);
   useEffect(() => {
@@ -24,22 +16,41 @@ const FirebaseAuth = () => {
       setRenderAuth(true);
     }
   }, []);
+  const firebaseAuthConfig = {
+    signInFlow: 'popup',
+    // Auth providers
+    // https://github.com/firebase/firebaseui-web#configure-oauth-providers
+    signInOptions: [firebase.auth.GoogleAuthProvider.PROVIDER_ID],
+    signInSuccessUrl: latestPage,
+    credentialHelper: 'none',
+  };
   return (
     <Layout>
       <div className="h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
         {renderAuth ? (
-          <FlexCenter className="w-full h-full pb-52">
-            <div className="px-5 py-8 bg-indigo-500 shadow-lg w-96 rounded-xl">
-              <FlexCenter className="mb-5 w-full">
-                Please login using your Google account
-              </FlexCenter>
+          <FlexCenter className="w-full h-full pb-72">
+            <FlexCol
+              between
+              className="px-10 py-7 space-y-5 bg-indigo-500 shadow-lg w-96 rounded-xl"
+            >
+              <div className="text-lg">Please login using your Google account *</div>
+              <div className="text-xs">
+                * No personal data is gathered. This is only to link your jobs to your identity and
+                to calculate your compute time quota.
+              </div>
               <StyledFirebaseAuth uiConfig={firebaseAuthConfig} firebaseAuth={firebase.auth()} />
-            </div>
+            </FlexCol>
           </FlexCenter>
         ) : null}
       </div>
     </Layout>
   );
 };
+
+export async function getServerSideProps(ctx) {
+  // Parse
+  const cookies = nookies.get(ctx);
+  return { props: { latestPage: cookies.latestPage || '/' } };
+}
 
 export default FirebaseAuth;

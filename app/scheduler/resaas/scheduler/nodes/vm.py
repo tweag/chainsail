@@ -1,22 +1,26 @@
-import json
+import logging
 import os
 import traceback
 from tempfile import TemporaryDirectory
-from typing import IO, Callable, List, Optional, Tuple, Union
+from typing import Callable, Optional, Tuple
 
 from libcloud.compute.base import Node as LibcloudNode
-from libcloud.compute.base import NodeAuthSSHKey, NodeDriver, NodeImage, NodeSize
+from libcloud.compute.base import NodeDriver, NodeImage, NodeSize
 from libcloud.compute.deployment import (
     Deployment,
     FileDeployment,
     MultiStepDeployment,
     ScriptDeployment,
-    ScriptFileDeployment,
     SSHKeyDeployment,
 )
 from libcloud.compute.types import DeploymentException, NodeState
-from resaas.common.spec import Dependencies, JobSpec, JobSpecSchema
-from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
+from resaas.common.spec import JobSpec, JobSpecSchema
+from resaas.scheduler.config import (
+    GeneralNodeConfig,
+    SchedulerConfig,
+    VMNodeConfig,
+    load_scheduler_config,
+)
 from resaas.scheduler.db import TblJobs, TblNodes
 from resaas.scheduler.errors import (
     ConfigurationError,
@@ -25,6 +29,9 @@ from resaas.scheduler.errors import (
     ObjectConstructionError,
 )
 from resaas.scheduler.nodes.base import Node, NodeStatus
+
+
+logger = logging.getLogger("resaas.scheduler")
 
 
 def _raise_for_exit_status(node: LibcloudNode, deployment: Deployment):
@@ -60,11 +67,20 @@ set -ex
 docker run -d \
     -e "USER_PROB_URL={prob_def}" \
     -e "USER_INSTALL_SCRIPT=/resaas/{install_script}" \
+    -e "USER_CODE_SERVER_PORT=50052" \
+    -v {config_dir}:/resaas \
+    --network host \
+    -p 50052 \
+    --log-driver=gcplogs \
+    {user_code_image} {user_code_cmd}
+
+docker run -d \
     --network host \
     -v {config_dir}:/resaas \
     -v {authorized_keys}:/app/config/ssh/authorized_keys \
     -v {pem_file}:/root/.ssh/id.pem \
     -p 50051 \
+    --log-driver=gcplogs \
     {image} {cmd}
 """
 
@@ -143,6 +159,7 @@ def prepare_deployment(
         container_cmd += " ".join([a for a in vm_node._config.args])
 
     container_cmd = container_cmd.format(job_id=vm_node.representation.job.id)
+    user_code_cmd = "python /app/app/user_code_server/resaas/user_code_server/__init__.py"
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
         install_script=os.path.basename(install_script_target),
@@ -152,8 +169,11 @@ def prepare_deployment(
         pem_file=ssh_private_key_target,
         image=vm_node._config.image,
         cmd=container_cmd,
+        user_code_image=vm_node._config.user_code_image,
+        user_code_cmd=user_code_cmd,
     )
 
+    scheduler_config = load_scheduler_config()
     steps = MultiStepDeployment(
         [
             # The very first thing to do is run the initialization script to ensure
@@ -182,14 +202,24 @@ def prepare_deployment(
             FileDeployment(
                 vm_node._vm_config.storage_config_path,
                 os.path.join(
-                    install_dir, os.path.basename(vm_node._vm_config.storage_config_path)
+                    install_dir,
+                    os.path.basename(vm_node._vm_config.storage_config_path),
                 ),
             ),
             # Controller config
             FileDeployment(
                 vm_node._vm_config.controller_config_path,
                 os.path.join(
-                    install_dir, os.path.basename(vm_node._vm_config.controller_config_path)
+                    install_dir,
+                    os.path.basename(vm_node._vm_config.controller_config_path),
+                ),
+            ),
+            # Remote logging config
+            FileDeployment(
+                scheduler_config.remote_logging_config_path,
+                os.path.join(
+                    install_dir,
+                    os.path.basename(scheduler_config.remote_logging_config_path),
                 ),
             ),
             # private ssh key for openmpi to use
@@ -308,6 +338,7 @@ class VMNode(Node):
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
             raise NodeError("Attempted to created a node which has already been created")
+        logger.info("Creating node...")
         self._status = NodeStatus.CREATING
         with TemporaryDirectory() as tmpdir:
             deployment_steps = self._deployment(
@@ -360,6 +391,7 @@ class VMNode(Node):
     def restart(self) -> bool:
         if not self._node:
             raise MissingNodeError
+        logger.info("Restarting node...")
         rebooted = self._node.reboot()
         self.refresh_status()
         self.sync_representation()
@@ -368,6 +400,7 @@ class VMNode(Node):
     def delete(self) -> bool:
         if not self._node:
             return True
+        logger.info("Deleting node...")
         deleted = self._node.destroy()
         if deleted:
             # If the delete request was successful we can go ahead

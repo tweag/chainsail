@@ -10,7 +10,11 @@ from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 @pytest.fixture
 def mock_scheduler_config():
     config = GeneralNodeConfig(
-        image="foo:latest", cmd="bash", args=["-c", "'echo foo'"], ports=[8080]
+        image="foo:latest",
+        cmd="bash",
+        args=["-c", "'echo foo'"],
+        ports=[8080],
+        user_code_image="bar:earliest",
     )
     node_config = VMNodeConfig(
         "1",
@@ -29,6 +33,8 @@ def mock_scheduler_config():
         worker=config,
         node_type=NodeType.LIBCLOUD_VM,
         node_config=node_config,
+        results_url_expiry_time=42,
+        remote_logging_config_path=None,
     )
     return scheduler_config
 

@@ -1,3 +1,5 @@
+from sqlalchemy.types import ARRAY
+
 from resaas.scheduler.core import db, ma
 
 
@@ -8,11 +10,15 @@ class TblJobs(db.Model):
 
     __tablename__ = "jobs"
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(50), nullable=False)
     spec = db.Column(db.Unicode(), nullable=True)
     status = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime(), nullable=False)
     started_at = db.Column(db.DateTime(), nullable=True)
     finished_at = db.Column(db.DateTime(), nullable=True)
+    # the ARRAY type limits us to postgresql databases
+    controller_iterations = db.Column(ARRAY(db.String(50)), nullable=True)
+    signed_url = db.Column(db.String(1000), nullable=True)
 
 
 class TblNodes(db.Model):

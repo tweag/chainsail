@@ -23,6 +23,9 @@ celery = {extras = ["gevent", "redis"], version = "^5.0.5"}
 Flask-Cors = "^3.0.10"
 grpcio = "^1.35.0"
 resaas-grpc = { path = "../../lib/grpc", develop = true }
+firebase-admin = "^4.5.2"
+uWSGI = "^2.0.19"
+cloudstorage = {extras = ["google"], version = "^0.11.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

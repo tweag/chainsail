@@ -6,18 +6,46 @@ import AnimationMainPage from '../components/AnimationMainPage';
 
 const Heading = () => (
   <FlexCol center className="h-full">
-    <div className="mb-10 text-5xl md:text-9xl">Resaas</div>
+    <div className="mb-10 text-5xl md:text-9xl">RESAAS</div>
     <div className="mb-10 text-2xl lg:w-2/3 md:text-4xl md:mb-20">
-      scalable, automatically-tuning, cloud-based replica exchange implementation
+      sampling multimodal distributions made easy
     </div>
     <div className="text-base md:text-xl lg:w-2/3 md:text-justify mb-7">
-      Replica exchange runs multiple MCMC samplers in parallel, the required number of which
-      strongly depends on the probability distribution at hand and can go into the the hundreds. The
-      number of parallel samplers, each running in a separate process, can be iteratively optimized
-      by upscaling the cluster on the cloud platform.
+      <FlexCol className="space-y-5">
+        <div>
+          RESAAS helps to sample multimodal distributions by implementing an automatically scaling
+          Replica Exchange MCMC algorithm. All you need to provide is a Python module defining your
+          probability density and its log-probability gradient.
+        </div>
+        <div>
+          This beta version of RESAAS is free (you have a compute time quota of 20 replicas x 2
+          hours).
+        </div>
+        <FlexCol className="space-y-2">
+          <div>To learn more about the MCMC algorithms used in RESAAS, see our blog posts:</div>
+          <FlexCol>
+            <a
+              href="https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/"
+              target="_blank"
+              className="transition duration-300 hover:opacity-50"
+            >
+              <i className="fas fa-chevron-right ml-2 mr-5"></i>
+              Replica Exchange
+            </a>
+            <a
+              href="https://www.tweag.io/blog/2020-08-06-mcmc-intro3/"
+              target="_blank"
+              className="transition duration-300 hover:opacity-50"
+            >
+              <i className="fas fa-chevron-right ml-2 mr-5"></i>
+              Hamiltonian Monte Carlo
+            </a>
+          </FlexCol>
+        </FlexCol>
+      </FlexCol>
     </div>
-    <Button href="/job" className="bg-purple-600 hover:bg-purple-500">
-      Checkout more!
+    <Button href="/job" className="bg-purple-600 hover:bg-purple-700">
+      Give it a whirl
     </Button>
   </FlexCol>
 );

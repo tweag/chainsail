@@ -2,12 +2,11 @@
 Classes for calculating a schedule given the density of states (DOS)
 """
 from abc import abstractmethod, ABC
+import logging
 
 import numpy as np
 
-
-def log(msg):
-    print(msg)
+logger = logging.getLogger("resaas.controller")
 
 
 class AbstractScheduleOptimizer(ABC):
@@ -123,7 +122,7 @@ class SingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
         """
         params = [self._max_param]
         delta = self._decrement
-        log("Optimizing schedule...")
+        logger.info("Optimizing schedule...")
         new_param_msg = (
             "Added new parameter to schedule. Value: " "{:.4f}, expected target value: {}"
         )
@@ -138,24 +137,24 @@ class SingleParameterScheduleOptimizer(AbstractScheduleOptimizer):
             est_q = self._optimization_quantity(dos, energies, params[-1], new_param)
             if est_q <= self._target_value:
                 params.append(new_param)
-                log(new_param_msg.format(new_param, est_q))
+                logger.debug(new_param_msg.format(new_param, est_q))
                 delta = self._decrement
             else:
                 delta += self._decrement
         else:
             params.append(self._min_param)
             est_q = self._optimization_quantity(dos, energies, params[-2], params[-1])
-            log(new_param_msg.format(params[-1], est_q))
+            logger.debug(new_param_msg.format(params[-1], est_q))
 
         if len(params) > self._max_replicas:
             params = self._squeeze_parameters(params)
-            log(
+            logger.warning(
                 (
                     "Optimized schedule longer than allowed maximum number "
                     "of replicas. Schedule has been squeezed. Expect lower "
                     "acceptance rates."
                 )
             )
-        log(("Schedule optimization completed. Length of new schedule: " f"{len(params)}"))
+        logger.info(("Schedule optimization completed. Length of new schedule: " f"{len(params)}"))
 
         return {self._param_name: np.array(params)}

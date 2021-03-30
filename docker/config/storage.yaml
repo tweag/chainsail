@@ -1,0 +1,12 @@
+backend: cloud
+backend_config:
+  local: {}
+  cloud:
+    libcloud_provider: GOOGLE_STORAGE
+    container_name: "resaas-dev"
+    driver_kwargs:
+      key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      secret: XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      project: resaas-simeon-dev
+    storage_key_path: /config/storage_key.json
+

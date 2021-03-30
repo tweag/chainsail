@@ -32,14 +32,16 @@ services:
         max-size: "200k"
         max-file: "10"
   graphite:
-    image: "graphiteapp/graphite-statsd"
+    image: "graphiteapp/graphite-statsd@sha256:f611a3b4c9b176957a95abdc419366da35bd92d228d3935fc7ae3a5247be5307"
     restart: "always"
     ports:
-      - "80:80"
+      - "8080:80"
       - "2003-2004:2003-2004"
       - "2023-2024:2023-2024"
       - "8125:8125/udp"
       - "8126:8126"
+    volumes:
+      - ./graphite-storage-schemas.conf:/opt/graphite/conf/storage-schemas.conf
 volumes:
   redis:
   postgres:

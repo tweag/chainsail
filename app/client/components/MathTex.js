@@ -1,5 +1,5 @@
 import { InlineMath, BlockMath } from 'react-katex';
-const Math = ({ inline, children, className }) => {
+const MathTex = ({ inline, children, className }) => {
   if (inline) {
     return (
       <div className={`${className} inline`}>
@@ -15,4 +15,4 @@ const Math = ({ inline, children, className }) => {
   }
 };
 
-export default Math;
+export default MathTex;

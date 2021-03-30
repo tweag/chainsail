@@ -110,6 +110,7 @@ class CloudBackendConfigSchema(Schema):
     libcloud_provider = fields.String(required=True)
     container_name = fields.String(required=True)
     driver_kwargs = fields.Dict(fields.String, fields.String, required=True)
+    storage_key_path = fields.String(required=True)
 
 
 # Registry used for looking up schema during deserialization

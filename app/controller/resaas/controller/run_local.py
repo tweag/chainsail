@@ -1,7 +1,6 @@
 """
 Main entrypoint to the resaas controller
 """
-import logging
 import os
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
@@ -9,13 +8,11 @@ from typing import Tuple
 
 import click
 import yaml
+from resaas.common.logging import configure_logging
 from resaas.common.runners import runner_config
 from resaas.common.spec import (
     JobSpec,
     JobSpecSchema,
-    NaiveHMCParameters,
-    OptimizationParameters,
-    ReplicaExchangeParameters,
 )
 from resaas.common.storage import LocalStorageBackend
 from resaas.controller import BaseREJobController, optimization_objects_from_spec
@@ -23,7 +20,6 @@ from resaas.runners.rexfw import MPIRERunner
 
 ProcessStatus = Tuple[bool, str]
 
-logger = logging.getLogger("resaas.controller")
 ##############################################################################
 # ENTRYPOINT
 ##############################################################################
@@ -41,18 +37,24 @@ def check_status(proc: Process) -> ProcessStatus:
 @click.option(
     "--job-spec", required=True, type=click.Path(exists=True), help="path to job spec json file"
 )
-def run(basename, job_spec):
+@click.option(
+    "--remote-logging-config-path",
+    default=None,
+    type=click.Path(),
+    help="Config file with remote logging settings",
+)
+def run(basename, job_spec, remote_logging_config_path):
     """
     The resaas node controller.
     """
     # Configure logging
-    base_logger = logging.getLogger("resaas")
-    base_logger.setLevel("DEBUG")
-    basic_handler = logging.StreamHandler()
-    # basic_formatter = logging.Formatter("[%(levelname)s] %(asctime)s - %(name)s - %(message)s")
-    basic_formatter = logging.Formatter("%(message)s")
-    basic_handler.setFormatter(basic_formatter)
-    base_logger.addHandler(basic_handler)
+    configure_logging(
+        "resaas.controller",
+        "DEBUG",
+        remote_logging_config_path=remote_logging_config_path,
+        format_string="%(message)s",
+        job_id=-1,
+    )
 
     # Load the job spec
     with open(job_spec) as f:
@@ -72,7 +74,7 @@ def run(basename, job_spec):
         yaml.dump({"backend": "local", "backend_config": {"local": {}}}, f)
 
     runner_config["hostsfile"] = hostsfile
-    runner_config["run_id"] = "local"
+    runner_config["run_id"] = -1
     runner_config["storage_config"] = storage
     runner_config["storage_config"] = storage
 
