@@ -24,7 +24,7 @@ def import_from_user(job_id=None) -> Tuple[AbstractPDF, np.ndarray]:
             "Failed to import user-defined pdf and initial_states. Does "
             "the `probability` module exist on the PYTHONPATH? "
             f"PYTHONPATH={sys.path}",
-            extra={"job_id": job_id or NO_JOB_ID}
+            extra={"job_id": job_id or NO_JOB_ID},
         )
         raise e
     return (pdf, initial_states)

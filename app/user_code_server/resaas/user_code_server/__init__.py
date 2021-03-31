@@ -40,14 +40,14 @@ class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
     help="the port the gRPC server listens on",
 )
 @click.option(
-    "--remote_logging_config", type=click.Path(exists=False), default=None, help="path to remote logging config file"
+    "--remote_logging_config",
+    type=click.Path(exists=False),
+    default=None,
+    help="path to remote logging config file",
 )
 def run(port, remote_logging_config):
     # Configure logging
-    configure_logging("resaas.controller",
-                      "INFO",
-                      remote_logging_config
-    )
+    configure_logging("resaas.controller", "INFO", remote_logging_config)
 
     logger.debug("Starting user code gRPC server")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
