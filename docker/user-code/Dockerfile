@@ -62,6 +62,7 @@ ENV PATH=/app/app/user_code_server/.venv/bin:$PATH
 
 WORKDIR /probability
 
-EXPOSE 50052
+ENV USER_CODE_SERVER_PORT=50052
+EXPOSE $USER_CODE_SERVER_PORT
 
 ENTRYPOINT ["/app/entrypoint.sh"]
