@@ -12,7 +12,7 @@ import click
 import grpc
 import yaml
 from resaas.common.configs import ControllerConfig, ControllerConfigSchema
-from resaas.common.logging import configure_logging
+from resaas.common.custom_logging import configure_logging
 from resaas.common.runners import AbstractRERunner, runner_config
 from resaas.common.spec import JobSpec, JobSpecSchema
 from resaas.common.storage import load_storage_config
