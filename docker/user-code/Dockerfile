@@ -57,7 +57,6 @@ ENV PYTHONPATH=$PYTHONPATH:/probability
 
 COPY docker/user-code/entrypoint.sh /app/entrypoint.sh
 RUN chmod 555 /app/entrypoint.sh
-COPY docker/config/controller.yaml /app/controller.yaml
 # Adding the app venv bin to the front of path so it is the default pip, etc.
 ENV PATH=/app/app/user_code_server/.venv/bin:$PATH
 
