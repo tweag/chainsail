@@ -71,7 +71,7 @@ services:
   client:
     image: "resaas-client:latest"
     volumes:
-      - /home/simeon/projects/resaas/app/client/next.config.js:/opt/app/next.config.js
+      - XXXXXXXXXXXXXXX:/opt/app/next.config.js
     ports:
       - "3000:3000"
     environment:
