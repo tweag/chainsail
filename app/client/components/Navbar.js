@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/router';
 import firebase from 'firebase/app';
 import nookies from 'nookies';
@@ -71,7 +70,7 @@ const Navbar = () => {
           <FlexRow className="items-center space-x-2">
             {providerData && (
               <FlexCenter>
-                <Image
+                <img
                   width="35"
                   height="35"
                   src={providerData[0].photoURL}

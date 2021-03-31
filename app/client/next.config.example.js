@@ -1,7 +1,4 @@
 module.exports = {
-  images: {
-    domains: ['lh3.googleusercontent.com'],
-  },
   serverRuntimeConfig: {
     firebaseAdminSecrets: {
       // Move firebase admin secrets here:
