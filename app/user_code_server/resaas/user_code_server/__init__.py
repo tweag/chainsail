@@ -47,7 +47,7 @@ class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
 )
 def run(port, remote_logging_config):
     # Configure logging
-    configure_logging("resaas.controller", "INFO", remote_logging_config)
+    configure_logging("resaas.controller", "DEBUG", remote_logging_config)
 
     logger.debug("Starting user code gRPC server")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
