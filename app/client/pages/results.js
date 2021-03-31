@@ -37,7 +37,7 @@ const JobsTable = ({ data }) => {
         <TableData d={dateFormatter(row.created_at)} />
         <TableData d={dateFormatter(row.started_at)} />
         <TableData d={dateFormatter(row.finished_at)} />
-        <TableData className="w-30">
+        <TableData className="w-48">
           <ResultsLink signed_url={row.signed_url} />
         </TableData>
         <TableData d={row.status} className="w-40" />
