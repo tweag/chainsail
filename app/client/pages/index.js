@@ -1,4 +1,8 @@
+import { useEffect } from 'react';
+import ReactDOM from 'react-dom';
+
 import { Layout, Button, FlexCenter, FlexCol, Container, Navbar } from '../components';
+import AnimationMainPage from '../components/AnimationMainPage';
 
 const Heading = () => (
   <FlexCol center className="h-full">
@@ -25,7 +29,7 @@ const Heading = () => (
               target="_blank"
               className="transition duration-300 hover:opacity-50"
             >
-              <i className="fas fa-chevron-right ml-2 mr-5"></i>
+              <i className="ml-2 mr-5 fas fa-chevron-right"></i>
               Replica Exchange
             </a>
             <a
@@ -33,7 +37,7 @@ const Heading = () => (
               target="_blank"
               className="transition duration-300 hover:opacity-50"
             >
-              <i className="fas fa-chevron-right ml-2 mr-5"></i>
+              <i className="ml-2 mr-5 fas fa-chevron-right"></i>
               Hamiltonian Monte Carlo
             </a>
           </FlexCol>
@@ -58,12 +62,40 @@ const CopyrightFooter = () => (
   </FlexCenter>
 );
 
+const fireAnimation = () => {
+  console.log('Animation fired');
+  const parent = document.getElementById('animation-main-page');
+  const id = Math.random(); //or some such identifier
+  const div = document.createElement('div');
+  div.id = id;
+  parent.appendChild(div);
+  const duration = 4000;
+  ReactDOM.render(
+    <svg className="fixed top-0 left-0 z-0 w-screen h-screen">
+      <AnimationMainPage duration={duration} />
+    </svg>,
+    document.getElementById(id)
+  );
+  setTimeout(() => {
+    const div_to_del = document.getElementById(id);
+    if (div_to_del) {
+      div_to_del.remove();
+    }
+  }, 6000);
+};
+
 export default function Home() {
+  useEffect(() => {
+    const anim = setInterval(() => {
+      fireAnimation();
+    }, 3000);
+    return () => clearInterval(anim);
+  }, []);
   return (
     <Layout>
       <FlexCol
         between
-        className="h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body"
+        className="h-screen text-white bg-gradient-to-r opacity-95 from-purple-900 to-indigo-600 font-body"
       >
         <Container>
           <Navbar />
@@ -73,6 +105,11 @@ export default function Home() {
         </Container>
         <CopyrightFooter />
       </FlexCol>
+      <div
+        id="animation-main-page"
+        className="fixed top-0 left-0 w-screen h-screen"
+        style={{ zIndex: -1 }}
+      ></div>
     </Layout>
   );
 }
