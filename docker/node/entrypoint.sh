@@ -39,4 +39,11 @@ else
       bash "$USER_INSTALL_SCRIPT"
 fi
 
-exec "$@"
+# wait up to 15 seconds for user code server to be ready
+if wait-for-it localhost:50052; then
+    echo User code gRPC server is ready
+    exec "$@"
+else
+    echo User code gRPC server unreachable
+    exit 1
+fi
