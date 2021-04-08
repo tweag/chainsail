@@ -96,7 +96,7 @@ const Results = ({ authed }) => {
             {error && <div>Failed to load. Please refresh the page.</div>}
             {!error && data && data.errno && <div>Failed to load. Please refresh the page.</div>}
             {!error && data == undefined && <div>Loading ...</div>}
-            {!error && Array.isArray(data) && data.length == 0 && <div>No jobs created yet!</div>}
+            {!error && Array.isArray(data) && data.length == 0 && <div>no jobs created yet</div>}
             {!error && Array.isArray(data) && data.length > 0 && <JobsTable data={data} />}
           </FlexCenter>
         </Container>
