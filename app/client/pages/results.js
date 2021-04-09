@@ -86,6 +86,7 @@ const Results = ({ authed }) => {
     refreshInterval: 3000,
   });
   if (error) console.log(error);
+
   if (authed)
     return (
       <Layout>
@@ -93,8 +94,10 @@ const Results = ({ authed }) => {
           <Navbar />
           <FlexCenter className="py-5 md:py-32">
             {error && <div>Failed to load. Please refresh the page.</div>}
-            {!error && (data == undefined || data.length == 0) && <div>Loading...</div>}
-            {data != undefined && data.length > 0 && <JobsTable data={data} />}
+            {!error && data && data.errno && <div>Failed to load. Please refresh the page.</div>}
+            {!error && data == undefined && <div>Loading ...</div>}
+            {!error && Array.isArray(data) && data.length == 0 && <div>no jobs created yet</div>}
+            {!error && Array.isArray(data) && data.length > 0 && <JobsTable data={data} />}
           </FlexCenter>
         </Container>
       </Layout>
