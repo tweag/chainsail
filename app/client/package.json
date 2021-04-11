@@ -10,6 +10,7 @@
     "format-check": "prettier --check ."
   },
   "dependencies": {
+    "@google-cloud/secret-manager": "^3.6.0",
     "@reactchartjs/react-chart.js": "^1.0.0-rc.3",
     "autoprefixer": "^10.2.1",
     "chart.js": "^2.9.4",
