@@ -2,6 +2,7 @@ syntax = "proto3";
 
 message LogProbRequest {
   bytes state_bytes = 1;
+  int32 job_id = 2;
 }
 
 message LogProbResponse {
@@ -10,6 +11,7 @@ message LogProbResponse {
 
 message LogProbGradientRequest {
   bytes state_bytes = 1;
+  int32 job_id = 2;
 }
 
 message LogProbGradientResponse {
@@ -17,6 +19,7 @@ message LogProbGradientResponse {
 }
 
 message InitialStateRequest {
+  int32 job_id = 1;
 }
 
 message InitialStateResponse {

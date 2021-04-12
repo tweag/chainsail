@@ -10,7 +10,7 @@ import yaml
 import zipfile
 
 from resaas.common.configs import ControllerConfigSchema
-from resaas.common.logging import configure_logging
+from resaas.common.custom_logging import configure_logging
 from resaas.scheduler.config import load_scheduler_config
 from resaas.scheduler.core import celery, db
 from resaas.scheduler.db import TblJobs

@@ -8,7 +8,7 @@ from typing import Tuple
 
 import click
 import yaml
-from resaas.common.logging import configure_logging
+from resaas.common.custom_logging import configure_logging
 from resaas.common.runners import runner_config
 from resaas.common.spec import (
     JobSpec,
