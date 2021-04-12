@@ -3,8 +3,8 @@ runtime: nodejs12
 service: default
 
 env_variables:
-  GRAPHITE_URL: "http://10.156.0.2:8080"
-  SCHEDULER_URL: "http://10.156.0.2:80"
+  GRAPHITE_URL: 'http://10.156.0.2:8080'
+  SCHEDULER_URL: 'http://10.156.0.2:80'
 
 vpc_access_connector:
   name: projects/164370646194/locations/europe-west3/connectors/client-vm-connector

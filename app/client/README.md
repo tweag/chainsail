@@ -29,6 +29,7 @@ The desired interface for `.env.local` is given in `.env.local.example`.
 ### Deployment
 
 ## ... with Docker
+
 Create a `.env.local` file in the client directory and feed it with the appropriate environment variables
 (see `.env.local.example` for the interface). Then use the `Dockerfile` provided in the client
 directory to build an image:
@@ -49,7 +50,9 @@ $ docker run -v $PWD/next.config.js:/opt/app/next.config.js\
 ```
 
 ## ... to AppEngine
+
 Run
+
 ```shell
 $ npm run deploy
 ```

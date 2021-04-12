@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-      "build": "rm -rf ./build && NODE_ENV=production next build",
-      "deploy": "npm run build && gcloud app deploy",
+    "build": "rm -rf ./build && NODE_ENV=production next build",
+    "deploy": "npm run build && gcloud app deploy",
     "start": "next start -p 8080",
     "format": "prettier --write .",
     "format-check": "prettier --check ."
