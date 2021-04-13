@@ -18,8 +18,9 @@ async function accessSecretVersion() {
 
 export const verifyIdToken = async (token) => {
   if (!admin.apps.length) {
+    const accessSecret = await accessSecretVersion();
     admin.initializeApp({
-      credential: admin.credential.cert(await accessSecretVersion()),
+      credential: admin.credential.cert(accessSecret),
       databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
     });
   }
