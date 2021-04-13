@@ -1,4 +1,5 @@
 import logging
+import datetime
 import time
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
@@ -27,6 +28,7 @@ class JobStatus(Enum):
 
 
 N_CREATION_THREADS = 10
+MAX_REPLICAS = 20
 
 logger = logging.getLogger("resaas.scheduler")
 
@@ -195,6 +197,27 @@ class Job:
                 self._remove_node(node)
         self.sync_representation()
 
+    def _total_compute_hours_by_same_user(self):
+        # approximates the total compuation time used by a user
+        # by assuming each job is running / ran constantly with a certain maximum
+        # number of replicas
+        this_jobs_rep = self.representation
+        if not this_jobs_rep:
+            this_jobs_rep = TblJobs.query.filter_by(id=self.id).first()
+        user_id = this_jobs_rep.user_id
+        all_user_jobs = TblJobs.query.filter_by(user_id=user_id)
+        total_runtime = datetime.timedelta()
+        for job_rep in all_user_jobs:
+            if not job_rep.started_at:
+                continue
+            else:
+                if job_rep.finished_at:
+                    total_runtime += job_rep.finished_at - job_rep.started_at
+                else:
+                    total_runtime += datetime.datetime() - job_rep.started_at
+        hour = 60 * 60
+        return total_runtime.seconds / hour * MAX_REPLICAS
+
     def watch(self) -> bool:
         # Await control node until it reports exit or dies
         ip = self.control_node.address
@@ -209,7 +232,15 @@ class Job:
                 if response.status != HealthCheckResponse.SERVING:
                     break
                 else:
-                    time.sleep(1)
+                    if self._total_compute_hours_by_same_user() > self.config.compute_hour_quota:
+                        logger.info(
+                            "Exceeded maximum compute time quota. Job is being killed.",
+                            extra={"job_id", self.id},
+                        )
+                        self.stop()
+                        return False
+                    else:
+                        time.sleep(1)
         if response.status == HealthCheckResponse.SUCCESS:
             self.status = JobStatus.SUCCESS
             return True
