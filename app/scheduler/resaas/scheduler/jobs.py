@@ -106,12 +106,15 @@ class Job:
     def stop(self):
         for i, node in enumerate(self.nodes):
             logger.info(
-                f"Deleting worker node {i+1}/{len(self.nodes) - 1}...", extra={"job_id": self.id}
+                f"Deleting worker node {i+1}/{len(self.nodes)}...", extra={"job_id": self.id}
             )
             if not node.delete():
                 self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
         if self.control_node:
+            logger.info(
+                f"Deleting controller node...", extra={"job_id": self.id}
+            )
             if not self.control_node.delete():
                 self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
