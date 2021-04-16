@@ -70,6 +70,7 @@ docker run -d \
     -e "USER_CODE_SERVER_PORT=50052" \
     -e "REMOTE_LOGGING_CONFIG_PATH=/resaas/remote_logging.yaml" \
     -v {config_dir}/remote_logging.yaml:/resaas/remote_logging.yaml \
+    -v {config_dir}/{install_script}:/resaas/{install_script} \
     --network host \
     -p 50052 \
     --log-driver=gcplogs \
