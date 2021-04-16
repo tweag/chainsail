@@ -18,7 +18,7 @@ It helps all developers to have an identical environment with the required build
 Then come back to the `client` directory, install the dependencies and run the development server:
 
 ```bash
-$ cd client 
+$ cd client
 $ GOOGLE_APPLICATION_CREDENTIALS=client_sa_key.json yarn install && yarn dev
 ```
 
