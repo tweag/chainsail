@@ -6,9 +6,16 @@ import os
 
 import numpy as np
 
-parser = argparse.ArgumentParser(description="Concatenate batches of MCMC samples into a single .npy file")
+parser = argparse.ArgumentParser(
+    description="Concatenate batches of MCMC samples into a single .npy file"
+)
 parser.add_argument("out", type=str, help="Output file")
-parser.add_argument("--simulation_run", type=str, default="production_run", help='Simulation run, e.g. "optimization_run1" or "production_run". Default: "production_run"')
+parser.add_argument(
+    "--simulation_run",
+    type=str,
+    default="production_run",
+    help='Simulation run, e.g. "optimization_run1" or "production_run". Default: "production_run"',
+)
 args = parser.parse_args()
 
 with open(os.path.join(args.simulation_run, "config.yml")) as f:
