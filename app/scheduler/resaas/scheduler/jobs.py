@@ -112,9 +112,7 @@ class Job:
                 self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
         if self.control_node:
-            logger.info(
-                f"Deleting controller node...", extra={"job_id": self.id}
-            )
+            logger.info(f"Deleting controller node...", extra={"job_id": self.id})
             if not self.control_node.delete():
                 self.sync_representation()
                 raise JobError(f"Failed to delete node {node}")
