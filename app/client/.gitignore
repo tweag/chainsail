@@ -39,6 +39,3 @@ package-lock.json
 # firebase admin secrets
 firebase-admin-secrets.json
 firebase-admin-secrets.local.json
-
-# next config includes secrets
-next.config.js
