@@ -3,14 +3,23 @@
 The `client` is based on [Next.js](https://nextjs.org/) framework and bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 We use [Tailwindcss](https://tailwindcss.com/) for CSS styling.
 
+### Firebase
+
+Make sure to copy your [firebase](https://firebase.google.com/) credentials to the project directory
+for the login to work properly. Client configuration should be placed in `.env.local`.
+The desired interface for `.env.local` is given in `.env.local.example`.
+
 ### Develop
 
-First use `nix-shell` from the project root directory.
+Get a key for the `resaas-client@resaas-simeon-dev.iam.gserviceaccount.com` service account, which has the correct permissions to access the Firebase admin secrets in Google Cloud Secret Manager.
+Save that key to, say, `client_sa_key.json`.
+Then use `nix-shell` from the project root directory.
 It helps all developers to have an identical environment with the required build inputs.
 Then come back to the `client` directory, install the dependencies and run the development server:
 
 ```bash
-cd client && yarn install && yarn dev
+$ cd client 
+$ GOOGLE_APPLICATION_CREDENTIALS=client_sa_key.json yarn install && yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -18,13 +27,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 [API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
-### Firebase
-
-Make sure to copy your [firebase](https://firebase.google.com/) credentials to the project directory
-for the login to work properly. Firebase admin configuration information should be placed in
-`firebase-admin-secrets.json` and client configuration in `.env.local`.
-The desired interface for `.env.local` is given in `.env.local.example`.
 
 ### Deployment
 
