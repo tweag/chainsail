@@ -11,7 +11,6 @@ async function accessSecretVersion() {
   const [version] = await client.accessSecretVersion({
     name: serverRuntimeConfig.secret_name,
   });
-  process.stdout.write(version.payload.data + '\nOHOO\n');
   const json_obj = JSON.parse(version.payload.data.toString());
   return json_obj;
 }
