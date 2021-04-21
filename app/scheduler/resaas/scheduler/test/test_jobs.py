@@ -5,8 +5,7 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 from resaas.common.spec import JobSpec, JobSpecSchema
-from resaas.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
-                                     VMNodeConfig)
+from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from resaas.scheduler.nodes.base import NodeStatus, NodeType
 from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 
@@ -339,8 +338,6 @@ def test_job_from_representation_preserves_status(mock_config):
         status=JobStatus.STOPPED,
     )
 
-    job = Job.from_representation(
-        rep, mock_config, node_registry={"mock": mk_mock_node_cls()}
-    )
+    job = Job.from_representation(rep, mock_config, node_registry={"mock": mk_mock_node_cls()})
 
     assert job.status == JobStatus.STOPPED

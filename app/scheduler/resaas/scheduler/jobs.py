@@ -6,7 +6,6 @@ from typing import Dict, Optional
 
 import grpc
 import shortuuid
-
 from resaas.common.spec import JobSpec, JobSpecSchema
 from resaas.grpc import HealthCheckRequest, HealthCheckResponse, HealthStub
 from resaas.scheduler.config import SchedulerConfig
@@ -62,10 +61,10 @@ class Job:
             raise JobError(
                 "Cannot initialize nodes for a job which already has nodes assigned to it."
             )
-        self.status = JobStatus.INITIALIZED
         for _ in range(self.spec.initial_number_of_replicas):
             self._add_node()
         self.control_node = self._add_node(is_controller=True)
+        self.status = JobStatus.INITIALIZED
         self.sync_representation()
 
     def start(self) -> None:
@@ -83,8 +82,7 @@ class Job:
                 for created, logs in ex.map(lambda n: n.create(), self.nodes):
                     if not created:
                         raise JobError(
-                            f"Failed to start node for job {id}. Deployment logs: \n"
-                            + logs
+                            f"Failed to start node for job {id}. Deployment logs: \n" + logs
                         )
                 self.sync_representation()
                 # Then create control node
@@ -130,6 +128,7 @@ class Job:
         Delete all nodes and restart the job from scratch
         """
         self.stop()
+        # Indicate restart state
         self.status = JobStatus.RESTART
         self.start()
         self.sync_representation()
@@ -137,9 +136,7 @@ class Job:
     def _add_node(self, is_controller=False) -> Node:
         """Add a new node to a job"""
         if self.status in (JobStatus.STOPPED, JobStatus.SUCCESS, JobStatus.FAILED):
-            raise JobError(
-                f"Attempted to add a node to a job ({self.id}) which has exited."
-            )
+            raise JobError(f"Attempted to add a node to a job ({self.id}) which has exited.")
         new_node = self._node_cls.from_config(
             f"node-{shortuuid.uuid()}".lower(),
             self.config,
@@ -178,9 +175,7 @@ class Job:
         if n_replicas < 0:
             raise ValueError("Can only scale to >= 0 replicas")
         if self.status != JobStatus.RUNNING:
-            raise JobError(
-                f"Attempted to scale job ({self.id}) which is not currently running."
-            )
+            raise JobError(f"Attempted to scale job ({self.id}) which is not currently running.")
         requested_size = n_replicas
         current_size = len(self.nodes)
         print("current / requested size", current_size, n_replicas)
@@ -194,9 +189,7 @@ class Job:
                 started, logs = new_node.create()
                 if not started:
                     self.sync_representation()
-                    raise JobError(
-                        f"Failed to start new node while scaling up. Logs: \n {logs}"
-                    )
+                    raise JobError(f"Failed to start new node while scaling up. Logs: \n {logs}")
         else:
             # Scale down
             to_remove = current_size - requested_size
@@ -268,9 +261,7 @@ class Job:
                     if not control_node:
                         control_node = node
                     else:
-                        raise JobError(
-                            "Job representation has more than one control node."
-                        )
+                        raise JobError("Job representation has more than one control node.")
         if not control_node:
             JobError("Job representation has no control node.")
 
