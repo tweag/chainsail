@@ -212,16 +212,16 @@ class Job:
         all_user_jobs = TblJobs.query.filter_by(user_id=user_id)
         total_runtime = datetime.timedelta()
         for job_rep in all_user_jobs:
-            print("checking job", job_rep)
             if not job_rep.started_at:
                 continue
             else:
                 if job_rep.finished_at:
                     total_runtime += job_rep.finished_at - job_rep.started_at
                 else:
-                    total_runtime += datetime.datetime.fromtimestamp(time.time()) - job_rep.started_at
+                    total_runtime += (
+                        datetime.datetime.fromtimestamp(time.time()) - job_rep.started_at
+                    )
         hour = 60 * 60
-        print("calcuylated total time")
         return total_runtime.seconds / hour * MAX_REPLICAS
 
     def watch(self) -> bool:
