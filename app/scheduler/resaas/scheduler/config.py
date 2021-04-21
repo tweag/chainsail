@@ -162,7 +162,7 @@ class SchedulerConfigSchema(Schema):
     worker = fields.Nested(GeneralNodeConfigSchema, required=True)
     node_type = EnumField(NodeType, by_value=True, required=True)
     remote_logging_config_path = fields.String(required=True)
-    copmute_hour_quota = fields.Int(required=True)
+    compute_hour_quota = fields.Int(required=True)
     results_url_expiry_time = fields.Int()
     node_config = fields.Dict(keys=fields.String())
 
