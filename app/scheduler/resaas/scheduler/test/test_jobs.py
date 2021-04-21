@@ -1,8 +1,12 @@
 import functools
-from unittest.mock import Mock, MagicMock
+from datetime import datetime
+from unittest.mock import MagicMock, Mock
 
 import pytest
-from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
+
+from resaas.common.spec import JobSpec, JobSpecSchema
+from resaas.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
+                                     VMNodeConfig)
 from resaas.scheduler.nodes.base import NodeStatus, NodeType
 from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
 
@@ -143,7 +147,6 @@ def mock_spec():
 def test_job_init(mock_config, mock_spec):
     from resaas.scheduler.jobs import Job, JobStatus
 
-    expected_n_nodes = mock_spec.initial_number_of_replicas
     job = Job(
         id=1,
         spec=mock_spec,
@@ -151,8 +154,7 @@ def test_job_init(mock_config, mock_spec):
         node_registry={"mock": mk_mock_node_cls()},
     )
     assert job.status == JobStatus.INITIALIZED
-    assert len(job.nodes) == expected_n_nodes
-    assert all([n.status == NodeStatus.INITIALIZED for n in job.nodes])
+    assert not job.nodes
 
 
 def test_job_start(mock_config, mock_spec):
@@ -323,3 +325,22 @@ def test_vm_job_from_db_representation(mock_config):
     _add_nodes_to_job_rep(job_rep, num_nodes=2, num_controllers=3)
     with pytest.raises(JobError):
         job = Job.from_representation(job_rep, mock_config)
+
+
+def test_job_from_representation_preserves_status(mock_config):
+    from resaas.scheduler.db import TblJobs
+    from resaas.scheduler.jobs import Job, JobStatus
+
+    # This job rep has no active nodes associated with it. This state
+    # can happen once a job has been stopped since the nodes are
+    # shut down and no longer in use.
+    rep = TblJobs(
+        spec=JobSpecSchema().dumps(JobSpec(probability_definition="foobar")),
+        status=JobStatus.STOPPED,
+    )
+
+    job = Job.from_representation(
+        rep, mock_config, node_registry={"mock": mk_mock_node_cls()}
+    )
+
+    assert job.status == JobStatus.STOPPED
