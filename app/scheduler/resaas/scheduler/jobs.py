@@ -214,7 +214,7 @@ class Job:
                 if job_rep.finished_at:
                     total_runtime += job_rep.finished_at - job_rep.started_at
                 else:
-                    total_runtime += datetime.datetime() - job_rep.started_at
+                    total_runtime += datetime.datetime.fromtimestamp(time.time()) - job_rep.started_at
         hour = 60 * 60
         return total_runtime.seconds / hour * MAX_REPLICAS
 
