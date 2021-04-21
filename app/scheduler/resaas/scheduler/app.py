@@ -169,7 +169,10 @@ def scale_job(job_id, n_replicas):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
     find_job(job_id)
-    logger.info(f"Scaling up job #{job_id} to {n_replicas} replicas...", extra={"job_id": job_id})
+    logger.info(
+        f"Scaling up job #{job_id} to {n_replicas} replicas...",
+        extra={"job_id": job_id},
+    )
     scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
     # Await the result, raising any exceptions that get thrown
     scaled = scaling_task.get()

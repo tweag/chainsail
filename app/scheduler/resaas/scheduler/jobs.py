@@ -83,7 +83,8 @@ class Job:
             try:
                 # Create worker nodes first
                 logger.info(
-                    f"Creating {len(self.nodes)} worker nodes...", extra={"job_id": self.id}
+                    f"Creating {len(self.nodes)} worker nodes...",
+                    extra={"job_id": self.id},
                 )
                 for created, logs in ex.map(lambda n: n.create(), self.nodes):
                     if not created:
@@ -112,7 +113,8 @@ class Job:
     def stop(self):
         for i, node in enumerate(self.nodes):
             logger.info(
-                f"Deleting worker node {i+1}/{len(self.nodes)}...", extra={"job_id": self.id}
+                f"Deleting worker node {i+1}/{len(self.nodes)}...",
+                extra={"job_id": self.id},
             )
             if not node.delete():
                 self.sync_representation()
