@@ -76,7 +76,7 @@ class Job:
             raise JobError("Attempted to start a job which has already been started")
         if self._total_compute_hours_by_same_user() > self.config.compute_hour_quota:
             msg = "Can't start job: compute time quota exceeded"
-            logger.error(msg)
+            logger.error(msg, extra={"job_id": self.id})
             raise JobError(msg)
         self.status = JobStatus.STARTING
         with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
@@ -212,6 +212,7 @@ class Job:
         all_user_jobs = TblJobs.query.filter_by(user_id=user_id)
         total_runtime = datetime.timedelta()
         for job_rep in all_user_jobs:
+            print("checking job", job_rep)
             if not job_rep.started_at:
                 continue
             else:
@@ -220,6 +221,7 @@ class Job:
                 else:
                     total_runtime += datetime.datetime.fromtimestamp(time.time()) - job_rep.started_at
         hour = 60 * 60
+        print("calcuylated total time")
         return total_runtime.seconds / hour * MAX_REPLICAS
 
     def watch(self) -> bool:
@@ -238,7 +240,7 @@ class Job:
                 else:
                     if self._total_compute_hours_by_same_user() > self.config.compute_hour_quota:
                         logger.warning(
-                            "Exceeded maximum compute time quota. Job is being killed.",
+                            "Exceeded maximum compute time quota. Job is being stopped.",
                             extra={"job_id": self.id},
                         )
                         self.stop()
