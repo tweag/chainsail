@@ -74,6 +74,12 @@ class Job:
     def start(self) -> None:
         if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING):
             raise JobError("Attempted to start a job which has already been started")
+        quota = self.config.compute_hour_quota
+        total_hours = self._total_compute_hours_by_same_user()
+        if total_hours > quota:
+            msg = "Can't start job: maximum compute time quota exceeded"
+            logger.error(msg, extra={"job_id": self.id})
+            raise JobError(msg)
         self.status = JobStatus.STARTING
         with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
             try:
@@ -214,7 +220,7 @@ class Job:
                 if job_rep.finished_at:
                     total_runtime += job_rep.finished_at - job_rep.started_at
                 else:
-                    total_runtime += datetime.datetime() - job_rep.started_at
+                    total_runtime += datetime.datetime.fromtimestamp(time.time()) - job_rep.started_at
         hour = 60 * 60
         return total_runtime.seconds / hour * MAX_REPLICAS
 
@@ -232,14 +238,20 @@ class Job:
                 if response.status != HealthCheckResponse.SERVING:
                     break
                 else:
-                    if self._total_compute_hours_by_same_user() > self.config.compute_hour_quota:
+                    quota = self.config.compute_hour_quota
+                    print("Quota:", quota)
+                    total_hours = self._total_compute_hours_by_same_user()
+                    print("total hours:", total_hours)
+                    if False:#total_hours > quota:
                         logger.info(
                             "Exceeded maximum compute time quota. Job is being killed.",
-                            extra={"job_id", self.id},
+                            extra={"job_id": self.id},
                         )
+                        print("stopping")
                         self.stop()
                         return False
                     else:
+                        print("zzzZZZzzzZZZZZzz")
                         time.sleep(1)
         if response.status == HealthCheckResponse.SUCCESS:
             self.status = JobStatus.SUCCESS
