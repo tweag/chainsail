@@ -74,6 +74,10 @@ class Job:
     def start(self) -> None:
         if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING):
             raise JobError("Attempted to start a job which has already been started")
+        if self._total_compute_hours_by_same_user() > self.config.compute_hour_quota:
+            msg = "Can't start job: compute time quota exceeded"
+            logger.error(msg)
+            raise JobError(msg)
         self.status = JobStatus.STARTING
         with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
             try:
@@ -233,9 +237,9 @@ class Job:
                     break
                 else:
                     if self._total_compute_hours_by_same_user() > self.config.compute_hour_quota:
-                        logger.info(
+                        logger.warning(
                             "Exceeded maximum compute time quota. Job is being killed.",
-                            extra={"job_id", self.id},
+                            extra={"job_id": self.id},
                         )
                         self.stop()
                         return False
