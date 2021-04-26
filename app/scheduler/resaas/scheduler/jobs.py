@@ -68,7 +68,7 @@ class Job:
         self.sync_representation()
 
     def start(self) -> None:
-        if self.status not in (JobStatus.INITIALIZED, JobStatus.RESTART):
+        if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING, JobStatus.RESTART):
             raise JobError("Attempted to start a job which has already been started")
         self._initialize_nodes()
         self.status = JobStatus.STARTING
