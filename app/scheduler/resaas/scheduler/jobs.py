@@ -19,7 +19,7 @@ class JobStatus(Enum):
     INITIALIZED = "initialized"
     STARTING = "starting"
     RUNNING = "running"
-    RESTARTING = "restarting"
+    RESTART = "restarting"
     STOPPING = "stopping"
     STOPPED = "stopped"
     SUCCESS = "success"
@@ -55,29 +55,29 @@ class Job:
         self.control_node = control_node
         self.status = status
         self._node_cls = node_registry[self.config.node_type]
-        if not self.nodes:
-            self._initialize_nodes()
 
     def _initialize_nodes(self):
         if self.nodes or self.control_node:
             raise JobError(
                 "Cannot initialize nodes for a job which already has nodes assigned to it."
             )
-        self.status = JobStatus.INITIALIZED
         for _ in range(self.spec.initial_number_of_replicas):
             self._add_node()
         self.control_node = self._add_node(is_controller=True)
+        self.status = JobStatus.INITIALIZED
         self.sync_representation()
 
     def start(self) -> None:
-        if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING):
+        if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING, JobStatus.RESTART):
             raise JobError("Attempted to start a job which has already been started")
+        self._initialize_nodes()
         self.status = JobStatus.STARTING
         with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
             try:
                 # Create worker nodes first
                 logger.info(
-                    f"Creating {len(self.nodes)} worker nodes...", extra={"job_id": self.id}
+                    f"Creating {len(self.nodes)} worker nodes...",
+                    extra={"job_id": self.id},
                 )
                 for created, logs in ex.map(lambda n: n.create(), self.nodes):
                     if not created:
@@ -106,7 +106,8 @@ class Job:
     def stop(self):
         for i, node in enumerate(self.nodes):
             logger.info(
-                f"Deleting worker node {i+1}/{len(self.nodes)}...", extra={"job_id": self.id}
+                f"Deleting worker node {i+1}/{len(self.nodes)}...",
+                extra={"job_id": self.id},
             )
             if not node.delete():
                 self.sync_representation()
@@ -127,7 +128,8 @@ class Job:
         Delete all nodes and restart the job from scratch
         """
         self.stop()
-        self._initialize_nodes()
+        # Indicate restart state
+        self.status = JobStatus.RESTART
         self.start()
         self.sync_representation()
 
