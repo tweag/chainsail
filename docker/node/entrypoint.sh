@@ -39,8 +39,8 @@ else
       bash "$USER_INSTALL_SCRIPT"
 fi
 
-# wait up to 15 seconds for user code server to be ready
-if wait-for-it localhost:50052; then
+# wait up to 30 seconds for user code server to be ready
+if wait-for-it -t 30 localhost:50052; then
     echo User code gRPC server is ready
     exec "$@"
 else
