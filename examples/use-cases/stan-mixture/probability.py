@@ -10,10 +10,10 @@ class PDF:
         try:
             r = requests.post(
                 f"{self.STAN_SERVER_ADDRESS}:{self._port}/v1/models",
-                json={"program_code": model_code}
+                json={"program_code": model_code},
             )
             r.raise_for_status()
-            self._model_id = r.json()['name']
+            self._model_id = r.json()["name"]
         except Exception as e:
             raise Exception(f"Model compilation failed. Error: {e}")
         self._data = data or {}
@@ -22,9 +22,11 @@ class PDF:
         try:
             r = requests.post(
                 f"{self.STAN_SERVER_ADDRESS}:{self._port}/v1/{self._model_id}/log_prob",
-                json={"unconstrained_parameters": x.tolist(),
-                      "data": self._data,
-                      "adjust_transform": False}
+                json={
+                    "unconstrained_parameters": x.tolist(),
+                    "data": self._data,
+                    "adjust_transform": False,
+                },
             )
             r.raise_for_status()
             return r.json()["log_prob"]
@@ -35,9 +37,11 @@ class PDF:
         try:
             r = requests.post(
                 f"{self.STAN_SERVER_ADDRESS}:{self._port}/v1/{self._model_id}/log_prob_grad",
-                json={"unconstrained_parameters": x.tolist(),
-                      "data": self._data,
-                      "adjust_transform": False}
+                json={
+                    "unconstrained_parameters": x.tolist(),
+                    "data": self._data,
+                    "adjust_transform": False,
+                },
             )
             r.raise_for_status()
             return np.array(r.json()["log_prob_grad"])
