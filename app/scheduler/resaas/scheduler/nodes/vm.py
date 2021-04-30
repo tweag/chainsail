@@ -68,7 +68,7 @@ docker run -d \
     -e "HTTPSTAN_PORT=8082" \
     --network host \
     --log-driver=gcplogs \
-    httpstan-server:latest
+    {httpstan_image}
 
 docker run -d \
     -e "USER_PROB_URL={prob_def}" \
@@ -178,6 +178,7 @@ def prepare_deployment(
         image=vm_node._config.image,
         cmd=container_cmd,
         user_code_image=vm_node._config.user_code_image,
+        httpstan_image=vm_node._config.httpstan_image,
         user_code_cmd=user_code_cmd,
     )
 
