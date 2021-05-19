@@ -1,30 +1,30 @@
 [tool.poetry]
-name = "resaas-re-job-controller"
+name = "chainsail-re-job-controller"
 version = "0.1.0"
-description = "RESAAS component which, within a job received from the scheduler, manages optimization and final runs"
+description = "Chainsail component which, within a job received from the scheduler, manages optimization and final runs"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
-packages = [ { include = 'resaas' } ]
+packages = [ { include = 'chainsail' } ]
 
 
 
 [tool.poetry.scripts]
-resaas-controller = 'resaas.controller.run:run'
-resaas-controller-local = 'resaas.controller.run_local:run'
+chainsail-controller = 'chainsail.controller.run:run'
+chainsail-controller-local = 'chainsail.controller.run_local:run'
 
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "*"
-resaas-common = { path = "../../lib/common", develop = true }
-resaas-grpc = { path = "../../lib/grpc", develop = true }
-resaas-schedule-optimization = { path = "../../lib/schedule_estimation", develop = true }
+chainsail-common = { path = "../../lib/common", develop = true }
+chainsail-grpc = { path = "../../lib/grpc", develop = true }
+chainsail-schedule-optimization = { path = "../../lib/schedule_estimation", develop = true }
 click = "^7.1.2"
 
 # Runners can be installed as extras for convenience
-resaas-runner-rexfw = { path = "../../lib/runners/rexfw", optional = true, develop = true }
+chainsail-runner-rexfw = { path = "../../lib/runners/rexfw", optional = true, develop = true }
 grpcio = "^1.35.0"
 
 [tool.poetry.extras]
-rexfw = ["resaas-runner-rexfw"]
+rexfw = ["chainsail-runner-rexfw"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

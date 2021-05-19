@@ -1,22 +1,22 @@
 [tool.poetry]
-name = "resaas-runner-rexfw"
+name = "chainsail-runner-rexfw"
 version = "0.1.0"
-description = "RESAAS runner for Replica Exchange sampling with rexfw"
+description = "Chainsail runner for Replica Exchange sampling with rexfw"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
-packages = [ {include = "resaas" } ]
+packages = [ {include = "chainsail" } ]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "*"
 pyyaml = "*"
-resaas-common = { path = "../../common", develop = true }
-rexfw = { git = "https://github.com/tweag/rexfw", branch = "resaas" }
+chainsail-common = { path = "../../common", develop = true }
+rexfw = { git = "https://github.com/tweag/rexfw", branch = "chainsail" }
 mpi4py = "^3.0.3"
 click = "^7.1.2"
 
 
 [tool.poetry.scripts]
-run-rexfw-mpi = 'resaas.runners.rexfw.mpi:run_rexfw_mpi'
+run-rexfw-mpi = 'chainsail.runners.rexfw.mpi:run_rexfw_mpi'
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

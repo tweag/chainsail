@@ -8,8 +8,8 @@ authors = ["Simeon Carstens <simeon.carstens@tweag.io>"]
 python = "^3.8"
 matplotlib = "^3.3.4"
 numpy = "^1.20.0"
-resaas-common = {path = "../../lib/common"}
-rexfw = { git = "https://github.com/tweag/rexfw", branch = "resaas" }
+chainsail-common = {path = "../../lib/common"}
+rexfw = { git = "https://github.com/tweag/rexfw", branch = "chainsail" }
 scipy = "^1.6.0"
 
 [tool.poetry.dev-dependencies]

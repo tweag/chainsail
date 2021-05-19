@@ -1,18 +1,18 @@
 [tool.poetry]
-name = "resaas-user-code-service"
+name = "chainsail-user-code-service"
 version = "0.1.0"
-description = "RESAAS component which wraps the user code into a gRPC server"
+description = "Chainsail component which wraps the user code into a gRPC server"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
-packages = [ { include = 'resaas' } ]
+packages = [ { include = 'chainsail' } ]
 
 [tool.poetry.scripts]
-resaas-user-code-server = 'resaas.user_code_server:run'
+chainsail-user-code-server = 'chainsail.user_code_server:run'
 
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "*"
-resaas-common = { path = "../../lib/common", develop = true }
-resaas-grpc = { path = "../../lib/grpc", develop = true }
+chainsail-common = { path = "../../lib/common", develop = true }
+chainsail-grpc = { path = "../../lib/grpc", develop = true }
 click = "^7.1.2"
 grpcio = "^1.35.0"
 
