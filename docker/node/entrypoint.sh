@@ -14,29 +14,12 @@ else
     echo "No ssh public keys found for server."
 fi
 
-# Allow for fetching of user-defined zip file with data / PDF 
-if [ -z "$USER_PROB_URL" ]
-then
-      echo 'USER_PROB_URL not specified. No user defined data to fetch.'
+# wait up to 5 minutes for user code server to be ready
+# during that time, the user code server can install dependencies
+if wait-for-it -t 300 localhost:50052; then
+    echo User code gRPC server is ready
+    exec "$@"
 else
-      echo "Fetching user probability definition zipfile at $USER_PROB_URL"
-      mkdir -p /probability
-      wget -O /probability/prob_def.zip "$USER_PROB_URL"
-      # Flattening directory structure (-j flag) on unzip for initial prototype. This
-      # means that nested directory structures in the zipfile are NOT 
-      # supported.
-      echo $(ls -lah /probability)
-      unzip -o -j /probability/prob_def.zip -d /probability
+    echo User code gRPC server unreachable
+    exit 1
 fi
-
-# Allow for the specification of an additional install script
-# for fetching and installing user dependencies.
-if [ -z "$USER_INSTALL_SCRIPT" ]
-then
-      echo 'USER_INSTALL_SCRIPT not specified. No extra install steps.'
-else
-      echo "Executing additional install script at $USER_INSTALL_SCRIPT"
-      bash "$USER_INSTALL_SCRIPT"
-fi
-
-exec "$@"
