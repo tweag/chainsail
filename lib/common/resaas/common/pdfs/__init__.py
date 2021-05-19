@@ -1,16 +1,16 @@
 """
-Defines the interface for RESAAS-compatible PDFs.
+Defines the interface for Chainsail-compatible PDFs.
 """
 from abc import abstractmethod
 
 import grpc
 import numpy as np
 
-from resaas.grpc import user_code_pb2_grpc, user_code_pb2
+from chainsail.grpc import user_code_pb2_grpc, user_code_pb2
 
 
 class AbstractPDF(object):
-    """Defines the interface for PDFs compatible with RESAAS."""
+    """Defines the interface for PDFs compatible with Chainsail."""
 
     @abstractmethod
     def log_prob(self, x):

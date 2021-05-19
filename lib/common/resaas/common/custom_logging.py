@@ -10,7 +10,7 @@ from math import floor
 import yaml
 import requests
 
-from resaas.common.configs import RemoteLoggingConfigSchema
+from chainsail.common.configs import RemoteLoggingConfigSchema
 
 NO_JOB_ID = "n/a"
 
@@ -76,7 +76,7 @@ def configure_logging(
     Configures logging.
 
     Args:
-        logger_name(str): logger name; e.g. "resaas.controller"
+        logger_name(str): logger name; e.g. "chainsail.controller"
         log_level (str): log level
         remote_logging_config_path (str): path to remote logging config file
         format_string (str): format string for the logging formatter
@@ -84,7 +84,7 @@ def configure_logging(
     """
     logger = logging.getLogger(logger_name)
     log_level = logging.getLevelName(log_level)
-    base_logger = logging.getLogger("resaas")
+    base_logger = logging.getLogger("chainsail")
     base_logger.setLevel(log_level)
     basic_handler = logging.StreamHandler()
     if format_string is None:

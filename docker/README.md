@@ -1,6 +1,6 @@
 # docker
 
-`docker-compose` can be used to spin up a full RESAAS deployment.
+`docker-compose` can be used to spin up a full Chainsail deployment.
 
 ## client
 

@@ -57,7 +57,7 @@ Create a `.env.local` file in the client directory and feed it with the appropri
 directory to build an image:
 
 ```shell
-$ docker build -t resaas-client:latest .
+$ docker build -t chainsail-client:latest .
 ```
 
 To run the docker image make sure to fill `next.config.js` file with firebase secrets and mirror it
@@ -68,7 +68,7 @@ $ docker run -v $PWD/next.config.js:/opt/app/next.config.js\
   -p 3000:3000\
   -e GRAPHITE_URL=<GRAPHITE_URL> \
   -e SCHEDULER_URL=<SCHEDULER_URL> \
-  resaas-client:latest
+  chainsail-client:latest
 ```
 
 ## ... to AppEngine

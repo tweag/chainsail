@@ -9,11 +9,11 @@ from cloudstorage.exceptions import NotFoundError
 import functools
 from flask import abort, jsonify, request
 from firebase_admin.auth import verify_id_token
-from resaas.common.spec import JobSpecSchema
-from resaas.scheduler.core import app, db, firebase_app
-from resaas.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
-from resaas.scheduler.jobs import JobStatus
-from resaas.scheduler.tasks import (
+from chainsail.common.spec import JobSpecSchema
+from chainsail.scheduler.core import app, db, firebase_app
+from chainsail.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
+from chainsail.scheduler.jobs import JobStatus
+from chainsail.scheduler.tasks import (
     scale_job_task,
     start_job_task,
     stop_job_task,

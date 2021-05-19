@@ -13,14 +13,14 @@ from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from marshmallow.exceptions import ValidationError
 from marshmallow_enum import EnumField
-from resaas.scheduler.errors import ConfigurationError
-from resaas.scheduler.nodes.base import NodeType
-from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
+from chainsail.scheduler.errors import ConfigurationError
+from chainsail.scheduler.nodes.base import NodeType
+from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
 
 
 def lookup_driver_cls(provider_name: str) -> type:
     """Looks up the libcloud driver using its libcloud provider name (case-sensitive). Also
-    supports the 'RESAAS_DUMMY' driver.
+    supports the 'CHAINSAIL_DUMMY' driver.
 
     Args:
         provider_name: The provider attribute name. See `libcloud.compute.providers.Provider`
@@ -32,7 +32,7 @@ def lookup_driver_cls(provider_name: str) -> type:
     Raises:
         ConfigurationError: If the provider name does not match any known providers.
     """
-    if provider_name == "RESAAS_DUMMY":
+    if provider_name == "CHAINSAIL_DUMMY":
         return DeployableDummyNodeDriver
     else:
         try:
@@ -181,10 +181,10 @@ def load_scheduler_config():
     """Loads SchedulerConfig from a yaml config file
 
     The default path is "scheduler.yaml". To provide a custom
-    config file path use the RESAAS_SCHEDULER_CONFIG environment
+    config file path use the CHAINSAIL_SCHEDULER_CONFIG environment
     variable.
     """
-    config_file = os.environ.get("RESAAS_SCHEDULER_CONFIG", "scheduler.yaml")
+    config_file = os.environ.get("CHAINSAIL_SCHEDULER_CONFIG", "scheduler.yaml")
     with open(config_file) as f:
         raw_config = yaml.load(f, Loader=yaml.FullLoader)
     return SchedulerConfigSchema().load(raw_config)

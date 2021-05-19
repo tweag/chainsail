@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 import numpy as np
 
-from resaas.common.storage import SimulationStorage, pickle_to_stream, LocalStorageBackend
+from chainsail.common.storage import SimulationStorage, pickle_to_stream, LocalStorageBackend
 
 obj = ["a", "list", 42]
 
@@ -39,12 +39,12 @@ class MockStorageBackend:
 
 class testStorageBackendConfig(unittest.TestCase):
     def testLoadLocalStorageConfigValid(self):
-        from resaas.common.storage import StorageBackendConfigSchema
+        from chainsail.common.storage import StorageBackendConfigSchema
 
         StorageBackendConfigSchema().load(LOCAL_STORAGE_CONFIG)
 
     def testLoadCloudStorageConfigValid(self):
-        from resaas.common.storage import StorageBackendConfigSchema
+        from chainsail.common.storage import StorageBackendConfigSchema
 
         StorageBackendConfigSchema().load(CLOUD_STORAGE_CONFIG)
 
@@ -63,7 +63,7 @@ class testSimulationStorage(unittest.TestCase):
             "re": {"dump_interval": 5},
         }
         patcher = patch(
-            "resaas.common.storage.SimulationStorage.load_config", return_value=mock_config
+            "chainsail.common.storage.SimulationStorage.load_config", return_value=mock_config
         )
         patcher.start()
         self.addCleanup(patcher, patcher.stop)

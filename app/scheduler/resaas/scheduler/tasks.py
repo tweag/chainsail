@@ -9,22 +9,22 @@ from tempfile import NamedTemporaryFile
 import yaml
 import zipfile
 
-from resaas.common.configs import ControllerConfigSchema
-from resaas.common.custom_logging import configure_logging
-from resaas.scheduler.config import load_scheduler_config
-from resaas.scheduler.core import celery, db
-from resaas.scheduler.db import TblJobs
-from resaas.scheduler.errors import JobError
-from resaas.scheduler.jobs import Job, JobStatus
+from chainsail.common.configs import ControllerConfigSchema
+from chainsail.common.custom_logging import configure_logging
+from chainsail.scheduler.config import load_scheduler_config
+from chainsail.scheduler.core import celery, db
+from chainsail.scheduler.db import TblJobs
+from chainsail.scheduler.errors import JobError
+from chainsail.scheduler.jobs import Job, JobStatus
 from sqlalchemy.exc import OperationalError
 from cloudstorage.drivers.google import GoogleStorageDriver
 
 
 RESULTS_ARCHIVE_FILENAME = "results.zip"
-logger = logging.getLogger("resaas.scheduler")
+logger = logging.getLogger("chainsail.scheduler")
 
 scheduler_config = load_scheduler_config()
-configure_logging("resaas.scheduler", "DEBUG", scheduler_config.remote_logging_config_path)
+configure_logging("chainsail.scheduler", "DEBUG", scheduler_config.remote_logging_config_path)
 
 
 def get_storage_driver_container(scheduler_config):

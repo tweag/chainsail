@@ -32,16 +32,16 @@ services:
         max-size: "200k"
         max-file: "10"
   celery-worker:
-    image: "resaas-celery-worker:latest"
+    image: "chainsail-celery-worker:latest"
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - SQLALCHEMY_DATABASE_URI=postgresql://postgres:resaas-dev@postgres:5432/postgres
-      - RESAAS_SCHEDULER_CONFIG=/config/scheduler.yaml
+      - CHAINSAIL_SCHEDULER_CONFIG=/config/scheduler.yaml
     volumes:
       - ./config:/config
   scheduler:
-    image: "resaas-scheduler:latest"
+    image: "chainsail-scheduler:latest"
     volumes:
       - ./config:/config
     ports:
@@ -50,11 +50,11 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - SQLALCHEMY_DATABASE_URI=postgresql://postgres:resaas-dev@postgres:5432/postgres
-      - RESAAS_SCHEDULER_CONFIG=/config/scheduler.yaml
+      - CHAINSAIL_SCHEDULER_CONFIG=/config/scheduler.yaml
       - GOOGLE_APPLICATION_CREDENTIALS=/config/firebase_service_account.json
     depends_on: [postgres, celery-worker, redis, graphite]
   nginx:
-    image: "resaas-nginx:latest"
+    image: "chainsail-nginx:latest"
     ports:
       - "80:80"
     depends_on:
@@ -69,9 +69,9 @@ services:
       - "8125:8125/udp"
       - "8126:8126"
   client:
-    image: "resaas-client:latest"
+    image: "chainsail-client:latest"
     volumes:
-      - /home/simeon/projects/resaas/app/client/next.config.js:/opt/app/next.config.js
+      - /home/simeon/projects/chainsail/app/client/next.config.js:/opt/app/next.config.js
     ports:
       - "3000:3000"
     environment:

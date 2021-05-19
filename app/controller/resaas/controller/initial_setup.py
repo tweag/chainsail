@@ -3,8 +3,8 @@ Logic to set up initial states and values for Replica Exchange simulations
 """
 import numpy as np
 
-from resaas.common.util import log_sum_exp
-from resaas.controller.util import schedule_length
+from chainsail.common.util import log_sum_exp
+from chainsail.controller.util import schedule_length
 
 
 def setup_stepsizes(current_storage, schedule, previous_storage=None):

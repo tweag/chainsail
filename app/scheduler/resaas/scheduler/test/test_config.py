@@ -13,11 +13,11 @@ VM_NODE_CONFIG = {
     "libcloud_driver_inputs": {
         "key": "XXXXXXXXXXX",
         "secret": "XXXXXXXXXXX",
-        "ex_security_groups": ["default", "resaas"],
+        "ex_security_groups": ["default", "chainsail"],
     },
 }
 
-VM_NODE_CONFIG_RESAAS_DRIVER = {
+VM_NODE_CONFIG_CHAINSAIL_DRIVER = {
     "vm_image_id": "ami-12345",
     "vm_size": "Small",
     "ssh_user": "ubuntu",
@@ -25,7 +25,7 @@ VM_NODE_CONFIG_RESAAS_DRIVER = {
     "ssh_private_key_path": "/home/someone/.ssh/key.pem",
     "controller_config_path": "/foo/bar/controller.yaml",
     "storage_config_path": "/foo/bar/storage.yaml",
-    "libcloud_provider": "RESAAS_DUMMY",
+    "libcloud_provider": "CHAINSAIL_DUMMY",
     "libcloud_driver_inputs": {"creds": "foobar"},
 }
 
@@ -51,7 +51,7 @@ VALID_CONFIG_VM = {
     "remote_logging_config_path": "/I/am/some/path",
 }
 
-VALID_CONFIG_VM_RESAAS_DRIVER = {
+VALID_CONFIG_VM_CHAINSAIL_DRIVER = {
     "controller": {
         "image": "some-docker-image:latest",
         "ports": [8080, 22],
@@ -68,7 +68,7 @@ VALID_CONFIG_VM_RESAAS_DRIVER = {
         "httpstan_image": "another-docker-image",
     },
     "node_type": "LibcloudVM",
-    "node_config": VM_NODE_CONFIG_RESAAS_DRIVER,
+    "node_config": VM_NODE_CONFIG_CHAINSAIL_DRIVER,
     "results_url_expiry_time": 42,
     "remote_logging_config_path": "/I/am/some/path",
 }
@@ -98,27 +98,27 @@ CONFIG_INVALID_TYPE = {
 
 
 def test_parse_valid_scheduler_config():
-    from resaas.scheduler.config import SchedulerConfigSchema
+    from chainsail.scheduler.config import SchedulerConfigSchema
 
     SchedulerConfigSchema().load(VALID_CONFIG_VM)
 
 
-def test_parse_scheduler_config_finds_resaas_dummy():
-    from resaas.scheduler.config import SchedulerConfigSchema
+def test_parse_scheduler_config_finds_chainsail_dummy():
+    from chainsail.scheduler.config import SchedulerConfigSchema
 
-    config = SchedulerConfigSchema().load(VALID_CONFIG_VM_RESAAS_DRIVER)
+    config = SchedulerConfigSchema().load(VALID_CONFIG_VM_CHAINSAIL_DRIVER)
     config.node_config.create_node_driver()
 
 
 def test_create_driver_from_config():
-    from resaas.scheduler.config import SchedulerConfigSchema
+    from chainsail.scheduler.config import SchedulerConfigSchema
 
-    config = SchedulerConfigSchema().load(VALID_CONFIG_VM_RESAAS_DRIVER)
+    config = SchedulerConfigSchema().load(VALID_CONFIG_VM_CHAINSAIL_DRIVER)
     config.node_config.create_node_driver()
 
 
 def test_parse_scheduler_config_invalid_type():
-    from resaas.scheduler.config import SchedulerConfigSchema
+    from chainsail.scheduler.config import SchedulerConfigSchema
 
     with pytest.raises(ValidationError):
         SchedulerConfigSchema().load(CONFIG_INVALID_TYPE)

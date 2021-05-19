@@ -8,15 +8,15 @@ from typing import Tuple
 
 import click
 import yaml
-from resaas.common.custom_logging import configure_logging
-from resaas.common.runners import runner_config
-from resaas.common.spec import (
+from chainsail.common.custom_logging import configure_logging
+from chainsail.common.runners import runner_config
+from chainsail.common.spec import (
     JobSpec,
     JobSpecSchema,
 )
-from resaas.common.storage import LocalStorageBackend
-from resaas.controller import BaseREJobController, optimization_objects_from_spec
-from resaas.runners.rexfw import MPIRERunner
+from chainsail.common.storage import LocalStorageBackend
+from chainsail.controller import BaseREJobController, optimization_objects_from_spec
+from chainsail.runners.rexfw import MPIRERunner
 
 ProcessStatus = Tuple[bool, str]
 
@@ -49,7 +49,7 @@ def run(basename, job_spec, remote_logging_config_path):
     """
     # Configure logging
     configure_logging(
-        "resaas.controller",
+        "chainsail.controller",
         "DEBUG",
         remote_logging_config_path=remote_logging_config_path,
         format_string="%(message)s",

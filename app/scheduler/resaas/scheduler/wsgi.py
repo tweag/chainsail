@@ -3,8 +3,8 @@
 ####################
 # FOR PRODUCTION
 ####################
-from resaas.scheduler.app import app
-from resaas.scheduler.core import db
+from chainsail.scheduler.app import app
+from chainsail.scheduler.core import db
 
 db.create_all()
 

@@ -1,5 +1,5 @@
-from resaas.scheduler.nodes.base import NodeType
-from resaas.scheduler.nodes.vm import VMNode
+from chainsail.scheduler.nodes.base import NodeType
+from chainsail.scheduler.nodes.vm import VMNode
 
 # Map node types to node implementations. In the case
 # of vm node the details on the driver, etc. are expected

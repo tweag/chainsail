@@ -2,9 +2,9 @@ import unittest
 
 import numpy as np
 
-from resaas.common.pdfs import AbstractPDF
-from resaas.common.samplers.hmc import _leapfrog, BasicHMCSampler
-from resaas.common.samplers.rwmc import RWMCSampler
+from chainsail.common.pdfs import AbstractPDF
+from chainsail.common.samplers.hmc import _leapfrog, BasicHMCSampler
+from chainsail.common.samplers.rwmc import RWMCSampler
 
 
 class Normal(AbstractPDF):

@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from resaas.schedule_estimation.optimization_quantities import (
+from chainsail.schedule_estimation.optimization_quantities import (
     acceptance_rate,
     log_partition_function,
 )

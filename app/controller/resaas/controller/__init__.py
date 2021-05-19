@@ -3,20 +3,20 @@ import time
 from dataclasses import asdict
 
 import requests
-from resaas.common.spec import (
+from chainsail.common.spec import (
     BoltzmannInitialScheduleParameters,
     TemperedDistributionFamily,
     get_sampler_from_params,
 )
-from resaas.common.storage import SimulationStorage
-from resaas.common.storage import default_dir_structure as dir_structure
-from resaas.common.tempering.ensembles import BoltzmannEnsemble
-from resaas.controller.initial_schedules import make_geometric_schedule
-from resaas.controller.initial_setup import setup_initial_states, setup_stepsizes
-from resaas.controller.util import schedule_length
-from resaas.schedule_estimation.dos_estimators import WHAM
-from resaas.schedule_estimation.optimization_quantities import get_quantity_function
-from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
+from chainsail.common.storage import SimulationStorage
+from chainsail.common.storage import default_dir_structure as dir_structure
+from chainsail.common.tempering.ensembles import BoltzmannEnsemble
+from chainsail.controller.initial_schedules import make_geometric_schedule
+from chainsail.controller.initial_setup import setup_initial_states, setup_stepsizes
+from chainsail.controller.util import schedule_length
+from chainsail.schedule_estimation.dos_estimators import WHAM
+from chainsail.schedule_estimation.optimization_quantities import get_quantity_function
+from chainsail.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +132,7 @@ class BaseREJobController:
     ):
         """
         Initializes a basic Replica Exchange job controller, which can be used
-        locally independently from the scheduler and other RESAAS components.
+        locally independently from the scheduler and other Chainsail components.
 
         Arguments contain everything required for running simulations and
         optimizing schedules.
@@ -397,7 +397,7 @@ class CloudREJobController(BaseREJobController):
     ):
         """
         Initializes a Replica Exchange job controller which runs within a
-        cloud-deployed RESAAS service.
+        cloud-deployed Chainsail service.
 
         Arguments contain everything required for running simulations and
         optimizing schedules.

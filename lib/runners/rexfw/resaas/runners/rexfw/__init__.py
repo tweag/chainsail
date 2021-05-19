@@ -5,10 +5,10 @@ import logging
 import subprocess
 import time
 
-from resaas.common.runners import AbstractRERunner, runner_config
-from resaas.common.storage import AbstractStorageBackend
+from chainsail.common.runners import AbstractRERunner, runner_config
+from chainsail.common.storage import AbstractStorageBackend
 
-logger = logging.getLogger("resaas.controller")
+logger = logging.getLogger("chainsail.controller")
 
 
 def format_metric_name(run_id: int, storage: AbstractStorageBackend):

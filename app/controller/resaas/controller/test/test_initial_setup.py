@@ -3,7 +3,7 @@ from itertools import cycle
 
 import numpy as np
 
-from resaas.controller.initial_setup import draw_initial_states, interpolate_stepsizes
+from chainsail.controller.initial_setup import draw_initial_states, interpolate_stepsizes
 
 
 class MockStorage:

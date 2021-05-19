@@ -2,11 +2,11 @@ import unittest
 
 import numpy as np
 
-from resaas.common.tempering.tempered_distributions import (
+from chainsail.common.tempering.tempered_distributions import (
     BoltzmannTemperedDistribution,
     LikelihoodTemperedPosterior,
 )
-from resaas.common.pdfs import AbstractPDF
+from chainsail.common.pdfs import AbstractPDF
 
 
 class FakePDF(AbstractPDF):

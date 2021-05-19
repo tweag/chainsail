@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import resaas.grpc.user_code_pb2 as user__code__pb2
+import chainsail.grpc.user_code_pb2 as user__code__pb2
 
 
 class UserCodeStub(object):

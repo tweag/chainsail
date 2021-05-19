@@ -1,6 +1,6 @@
 from sqlalchemy.types import ARRAY
 
-from resaas.scheduler.core import db, ma
+from chainsail.scheduler.core import db, ma
 
 
 class TblJobs(db.Model):

@@ -5,7 +5,7 @@ from collections import namedtuple
 
 import numpy as np
 
-from resaas.common.samplers import AbstractSampler
+from chainsail.common.samplers import AbstractSampler
 
 
 HMCSampleStats = namedtuple("HMCSampleStats", "accepted stepsize neg_log_prob")

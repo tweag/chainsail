@@ -1,5 +1,5 @@
-from resaas.grpc.health_checking_pb2 import HealthCheckRequest, HealthCheckResponse
-from resaas.grpc.health_checking_pb2_grpc import (
+from chainsail.grpc.health_checking_pb2 import HealthCheckRequest, HealthCheckResponse
+from chainsail.grpc.health_checking_pb2_grpc import (
     HealthServicer,
     HealthStub,
     add_HealthServicer_to_server,

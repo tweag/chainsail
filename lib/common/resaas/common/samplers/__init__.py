@@ -1,12 +1,12 @@
 """
-Defines the interface for RESAAS-compatible samplers.
+Defines the interface for Chainsail-compatible samplers.
 """
 from abc import abstractmethod, abstractproperty
 
 import numpy as np
 
-from resaas.common.pdfs import AbstractPDF
-from resaas.common.spec import LocalSampler
+from chainsail.common.pdfs import AbstractPDF
+from chainsail.common.spec import LocalSampler
 
 
 class AbstractSampler(object):
@@ -79,11 +79,11 @@ def get_sampler(sampler):
       ValueError: If no matches were found for the specified `sampler`.
     """
     if sampler == LocalSampler.RWMC.value:
-        from resaas.common.samplers.rwmc import RWMCSampler
+        from chainsail.common.samplers.rwmc import RWMCSampler
 
         return RWMCSampler
     elif sampler == LocalSampler.NAIVE_HMC.value:
-        from resaas.common.samplers.hmc import BasicHMCSampler
+        from chainsail.common.samplers.hmc import BasicHMCSampler
 
         return BasicHMCSampler
     else:

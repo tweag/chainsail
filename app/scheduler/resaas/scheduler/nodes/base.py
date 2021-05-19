@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List, Optional, Tuple
 
-from resaas.scheduler.db import TblJobs, TblNodes
+from chainsail.scheduler.db import TblJobs, TblNodes
 
 
 class NodeType(Enum):

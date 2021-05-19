@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from resaas.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
+from chainsail.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
 
 
 def mock_quantity(_, __, param1, param2):

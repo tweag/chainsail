@@ -5,9 +5,9 @@ will execute the sampling job, exposing a gRPC endpoint for health monitoring.
 Running a single sampling job entails optimizing the schedule parameters and performing a production run.
 Optimizing the schedule is an iterative procedure consisting of the following steps:
 1. perform a Replica Exchange run using a [runner](../lib/runners/)
-2. estimate the density of states (DOS) from the results using multiple histogram reweighting ([implementation](../../lib/schedule_estimation/resaas/schedule_estimation/dos_estimators.py))
-3. determine improved schedule with approximatively constant acceptance rates based on DOS estimate ([implementation](../../lib/schedule_estimation/resaas/schedule_estimation/schedule_optimizers.py))
-4. draw initial states for the next iteration's simulation by reweighting samples using the DOS estimate ([implementation](./resaas/controller/initial_setup.py)) and interpolate sampling stepsizes
+2. estimate the density of states (DOS) from the results using multiple histogram reweighting ([implementation](../../lib/schedule_estimation/chainsail/schedule_estimation/dos_estimators.py))
+3. determine improved schedule with approximatively constant acceptance rates based on DOS estimate ([implementation](../../lib/schedule_estimation/chainsail/schedule_estimation/schedule_optimizers.py))
+4. draw initial states for the next iteration's simulation by reweighting samples using the DOS estimate ([implementation](./chainsail/controller/initial_setup.py)) and interpolate sampling stepsizes
 
 For the very first run, an initial schedule is determined heuristically. Currently, the only option is a schedule that follows a geometric progression in an inverse temperature-like parameter.
 These for points are iterated several times, until finally a production run is started with an optimized schedule and good initial states.
@@ -40,7 +40,7 @@ The controller can be used as a stand-alone app on a single machine. To that end
 5. prepare a job configuration JSON file (an example is provided in `examples/local_run/job.json`).
 6. execute the local controller run script via
    ```bash
-   $ poetry run resaas-controller-local --job_spec <job config file> --basename <some file system path>
+   $ poetry run chainsail-controller-local --job_spec <job config file> --basename <some file system path>
    ```
 
 , which will run the main optimization loop and a production run and write all results to the directory specified via the `--basename` argument.

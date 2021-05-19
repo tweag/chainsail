@@ -3,11 +3,11 @@
 The resaas scheduler handles spinning up new sampling job clusters, tearing them down, and querying their metadata.
 It is a single application with two main components:
 
-1. A flask REST API ([resaas/scheduler/app.py](resaas/scheduler/app.py)) which is what clients use to interact with the resaas system.
+1. A flask REST API ([chainsail/scheduler/app.py](chainsail/scheduler/app.py)) which is what clients use to interact with the resaas system.
 2. A celery task runner for processing asynchronous tasks spawned by the flask application
 
 The resaas scheduler is designed to work with Postgres (for flask) and Redis (for celery). An example docker-compose file can be found in the [example directory](./example) along with
-an example configuration file. The configuration file's schema is defined in [resaas/scheduler/config.py](resaas/scheduler/config.py).
+an example configuration file. The configuration file's schema is defined in [chainsail/scheduler/config.py](chainsail/scheduler/config.py).
 
 ## Running locally
 
@@ -33,8 +33,8 @@ are in a nix-shell environment.
       CELERY_BROKER_URL="redis://localhost:6379/0" \
       CELERY_RESULT_BACKEND="redis://localhost:6379/1" \
       SQLALCHEMY_DATABASE_URI="postgresql://postgres:resaas-dev@localhost:5432/postgres" \
-      RESAAS_SCHEDULER_CONFIG="$PWD/app/scheduler/example/scheduler.yaml" \
-        celery --app "resaas.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=1
+      CHAINSAIL_SCHEDULER_CONFIG="$PWD/app/scheduler/example/scheduler.yaml" \
+        celery --app "chainsail.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=1
     ```
 
 1.  Download the JSON file that contains your firebase service account key by following [this instruction](https://firebase.google.com/docs/admin/setup/#initialize-sdk) and set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to it:
@@ -50,9 +50,9 @@ are in a nix-shell environment.
       CELERY_BROKER_URL="redis://localhost:6379/0" \
       CELERY_RESULT_BACKEND="redis://localhost:6379/1" \
       SQLALCHEMY_DATABASE_URI="postgresql://postgres:resaas-dev@localhost:5432/postgres" \
-      RESAAS_SCHEDULER_CONFIG="$PWD/app/scheduler/example/scheduler.yaml" \
+      CHAINSAIL_SCHEDULER_CONFIG="$PWD/app/scheduler/example/scheduler.yaml" \
       PYTHON_ENV=dev \
-          python -m 'resaas.scheduler.app'
+          python -m 'chainsail.scheduler.app'
     ```
 
     Make sure to drop `PYTHON_ENV=dev` for production.
@@ -73,7 +73,7 @@ curl --request POST \
 ```shell
 $ nix-shell ../../shell.nix
 $ poetry shell
-$ PYTHONPATH="$PYTHONPATH:$PWD" pytest --cov-report html --cov=resaas
+$ PYTHONPATH="$PYTHONPATH:$PWD" pytest --cov-report html --cov=chainsail
 ```
 
 ## Resources:

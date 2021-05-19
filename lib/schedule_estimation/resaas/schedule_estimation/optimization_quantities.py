@@ -7,8 +7,8 @@ from typing import Callable
 import logging
 
 import numpy as np
-from resaas.common.spec import OptimizationQuantity
-from resaas.common.util import log_sum_exp
+from chainsail.common.spec import OptimizationQuantity
+from chainsail.common.util import log_sum_exp
 
 logger = logging.getLogger(__name__)
 

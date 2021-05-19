@@ -11,22 +11,22 @@ from typing import Tuple
 import click
 import grpc
 import yaml
-from resaas.common.configs import ControllerConfig, ControllerConfigSchema
-from resaas.common.custom_logging import configure_logging
-from resaas.common.runners import AbstractRERunner, runner_config
-from resaas.common.spec import JobSpec, JobSpecSchema
-from resaas.common.storage import load_storage_config
-from resaas.controller import (
+from chainsail.common.configs import ControllerConfig, ControllerConfigSchema
+from chainsail.common.custom_logging import configure_logging
+from chainsail.common.runners import AbstractRERunner, runner_config
+from chainsail.common.spec import JobSpec, JobSpecSchema
+from chainsail.common.storage import load_storage_config
+from chainsail.controller import (
     CloudREJobController,
     optimization_objects_from_spec,
     update_nodes_mpi,
 )
-from resaas.grpc import Health, add_HealthServicer_to_server
+from chainsail.grpc import Health, add_HealthServicer_to_server
 
 ProcessStatus = Tuple[bool, str]
 
 
-logger = logging.getLogger("resaas.controller")
+logger = logging.getLogger("chainsail.controller")
 ##############################################################################
 # ENTRYPOINT
 ##############################################################################
@@ -87,7 +87,7 @@ def run(job, config, storage, hostsfile, job_spec):
     with open(config) as f:
         config: ControllerConfig = ControllerConfigSchema().load(yaml.safe_load(f))
     configure_logging(
-        "resaas.controller", config.log_level, config.remote_logging_config_path, job_id=job
+        "chainsail.controller", config.log_level, config.remote_logging_config_path, job_id=job
     )
 
     logger.debug("Loading job spec from file")

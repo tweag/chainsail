@@ -77,7 +77,7 @@ class LocalSampler(Enum):
     """
     "Local" refers to sampling within a single replica, which usually
     locally explores a single mode of a probability distribution.
-    It has nothing to do with running RESAAS locally or on the cloud.
+    It has nothing to do with running Chainsail locally or on the cloud.
     """
 
     NAIVE_HMC = "naive_hmc"

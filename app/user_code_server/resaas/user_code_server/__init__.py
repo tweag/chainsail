@@ -8,12 +8,12 @@ import click
 import grpc
 import numpy as np
 
-from resaas.common import import_from_user
-from resaas.common.custom_logging import configure_logging
-from resaas.grpc import user_code_pb2_grpc, user_code_pb2
+from chainsail.common import import_from_user
+from chainsail.common.custom_logging import configure_logging
+from chainsail.grpc import user_code_pb2_grpc, user_code_pb2
 
 
-logger = logging.getLogger("resaas.controller")
+logger = logging.getLogger("chainsail.controller")
 pdf, initial_states = import_from_user()
 
 
@@ -47,7 +47,7 @@ class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
 )
 def run(port, remote_logging_config):
     # Configure logging
-    configure_logging("resaas.controller", "DEBUG", remote_logging_config)
+    configure_logging("chainsail.controller", "DEBUG", remote_logging_config)
 
     logger.debug("Starting user code gRPC server")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))

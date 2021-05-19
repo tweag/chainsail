@@ -6,7 +6,7 @@ import logging
 
 import numpy as np
 
-logger = logging.getLogger("resaas.controller")
+logger = logging.getLogger("chainsail.controller")
 
 
 class AbstractScheduleOptimizer(ABC):

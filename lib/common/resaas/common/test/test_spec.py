@@ -3,7 +3,7 @@ from marshmallow.exceptions import ValidationError
 
 
 def test_pip_deps_eq():
-    from resaas.common.spec import PipDependencies
+    from chainsail.common.spec import PipDependencies
 
     dep_1 = PipDependencies(["numpy>1.15", "scipy"])
     dep_2 = PipDependencies(["numpy>1.15", "scipy"])
@@ -12,7 +12,7 @@ def test_pip_deps_eq():
 
 
 def test_pip_deps_not_eq():
-    from resaas.common.spec import PipDependencies
+    from chainsail.common.spec import PipDependencies
 
     dep_1 = PipDependencies(["tensorflow", "scipy"])
     dep_2 = PipDependencies(["numpy>1.15", "scipy"])
@@ -21,7 +21,7 @@ def test_pip_deps_not_eq():
 
 
 def test_spec_eq():
-    from resaas.common.spec import JobSpec, PipDependencies
+    from chainsail.common.spec import JobSpec, PipDependencies
 
     spec_1 = JobSpec("foo/bar")
     spec_2 = JobSpec("foo/bar")
@@ -30,7 +30,7 @@ def test_spec_eq():
 
 
 def test_spec_not_eq():
-    from resaas.common.spec import JobSpec, PipDependencies
+    from chainsail.common.spec import JobSpec, PipDependencies
 
     spec_1 = JobSpec("foo/bar")
     spec_2 = JobSpec("other")
@@ -40,7 +40,7 @@ def test_spec_not_eq():
 
 def test_parse_job_spec_extra_fields():
     from marshmallow.exceptions import ValidationError
-    from resaas.common.spec import JobSpecSchema
+    from chainsail.common.spec import JobSpecSchema
 
     data = """
     {
@@ -54,7 +54,7 @@ def test_parse_job_spec_extra_fields():
 
 
 def test_parse_partial_job_spec():
-    from resaas.common.spec import JobSpecSchema
+    from chainsail.common.spec import JobSpecSchema
 
     data = """
     {
@@ -75,7 +75,7 @@ def test_parse_partial_job_spec():
 
 
 def test_parse_job_spec_empty_dependencies():
-    from resaas.common.spec import JobSpecSchema
+    from chainsail.common.spec import JobSpecSchema
 
     data = """
     {
@@ -93,7 +93,7 @@ def test_parse_job_spec_empty_dependencies():
 
 
 def test_parse_wrong_initial_schedule_params_job_spec():
-    from resaas.common.spec import JobSpecSchema
+    from chainsail.common.spec import JobSpecSchema
 
     data = """
     {
@@ -109,7 +109,7 @@ def test_parse_wrong_initial_schedule_params_job_spec():
 
 def test_job_spec_serialization_round_trip():
 
-    from resaas.common.spec import JobSpecSchema
+    from chainsail.common.spec import JobSpecSchema
 
     data = """
     {

@@ -23,7 +23,7 @@ mean_lp_re = np.mean([pdf.log_prob(x) for x in re_all_samples[ensemble]])
 plot_data_samples(
     ax2,
     re_all_samples[ensemble, ::step_factor],
-    "RE via RESAAS\nlog-prob: {:.2f}".format(mean_lp_re),
+    "RE via Chainsail\nlog-prob: {:.2f}".format(mean_lp_re),
 )
 fig.tight_layout()
 plt.show()

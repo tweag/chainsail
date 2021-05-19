@@ -5,7 +5,7 @@ from collections import namedtuple
 
 import numpy as np
 
-from resaas.common.samplers import AbstractSampler
+from chainsail.common.samplers import AbstractSampler
 
 
 RWMCSampleStats = namedtuple("RWMCSampleStats", "accepted stepsize neg_log_prob")

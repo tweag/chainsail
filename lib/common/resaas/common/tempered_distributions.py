@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from resaas.common.tempering.ensembles import BoltzmannEnsemble
+from chainsail.common.tempering.ensembles import BoltzmannEnsemble
 
 
 class AbstractTemperedDistribution(ABC):

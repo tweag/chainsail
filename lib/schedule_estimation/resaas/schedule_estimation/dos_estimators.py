@@ -5,9 +5,9 @@ distribution at different "temperatures".
 import logging
 
 import numpy as np
-from resaas.common.util import log_sum_exp
+from chainsail.common.util import log_sum_exp
 
-logger = logging.getLogger("resaas.controller")
+logger = logging.getLogger("chainsail.controller")
 
 
 def stopping_criterion(log_L, previous_log_L, stopping_threshold):

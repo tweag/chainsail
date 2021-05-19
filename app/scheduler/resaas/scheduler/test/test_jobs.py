@@ -4,10 +4,10 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from resaas.common.spec import JobSpec, JobSpecSchema
-from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
-from resaas.scheduler.nodes.base import NodeStatus, NodeType
-from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
+from chainsail.common.spec import JobSpec, JobSpecSchema
+from chainsail.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
+from chainsail.scheduler.nodes.base import NodeStatus, NodeType
+from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
 
 FAILURE_LOG = "deployment failed for some reason..."
 SUCCESS_LOG = "deployment succeeded"
@@ -59,11 +59,11 @@ def mk_mock_node_cls(
     """
     Creates a mock Node whose various methods can be set to either succeed or fail.
     """
-    from resaas.scheduler.nodes.base import Node
+    from chainsail.scheduler.nodes.base import Node
 
     # https://stackoverflow.com/a/59019431/1656472
     class NodeClassMeta(type):
-        static_instance = MagicMock(spec="resaas.scheduler.nodes.base.Node")
+        static_instance = MagicMock(spec="chainsail.scheduler.nodes.base.Node")
 
         def __getattr__(cls, key):
             return NodeClassMeta.static_instance.__getattr__(key)
@@ -146,7 +146,7 @@ def mock_spec():
 
 
 def test_job_init(mock_config, mock_spec):
-    from resaas.scheduler.jobs import Job, JobStatus
+    from chainsail.scheduler.jobs import Job, JobStatus
 
     job = Job(
         id=1,
@@ -159,7 +159,7 @@ def test_job_init(mock_config, mock_spec):
 
 
 def test_job_start(mock_config, mock_spec):
-    from resaas.scheduler.jobs import Job, JobStatus
+    from chainsail.scheduler.jobs import Job, JobStatus
 
     job = Job(
         id=1,
@@ -173,7 +173,7 @@ def test_job_start(mock_config, mock_spec):
 
 
 def test_job_stop_running(mock_config, mock_spec):
-    from resaas.scheduler.jobs import Job, JobStatus
+    from chainsail.scheduler.jobs import Job, JobStatus
 
     job = Job(
         id=1,
@@ -190,7 +190,7 @@ def test_job_stop_running(mock_config, mock_spec):
 
 
 def test_job_restart_running(mock_config, mock_spec):
-    from resaas.scheduler.jobs import Job, JobStatus
+    from chainsail.scheduler.jobs import Job, JobStatus
 
     job = Job(
         id=1,
@@ -207,7 +207,7 @@ def test_job_restart_running(mock_config, mock_spec):
 
 
 def test_job_restart_stopped(mock_config, mock_spec):
-    from resaas.scheduler.jobs import Job, JobStatus
+    from chainsail.scheduler.jobs import Job, JobStatus
 
     job = Job(
         id=1,
@@ -225,7 +225,7 @@ def test_job_restart_stopped(mock_config, mock_spec):
 
 
 def test_job_scale_up(mock_config, mock_spec):
-    from resaas.scheduler.jobs import Job, JobStatus
+    from chainsail.scheduler.jobs import Job, JobStatus
 
     job = Job(
         id=1,
@@ -242,7 +242,7 @@ def test_job_scale_up(mock_config, mock_spec):
 
 
 def test_job_scale_down(mock_config, mock_spec):
-    from resaas.scheduler.jobs import Job, JobStatus
+    from chainsail.scheduler.jobs import Job, JobStatus
 
     job = Job(
         id=1,
@@ -261,8 +261,8 @@ def test_job_scale_down(mock_config, mock_spec):
 
 
 def test_scale_non_running_job_raises(mock_config, mock_spec):
-    from resaas.scheduler.errors import JobError
-    from resaas.scheduler.jobs import Job
+    from chainsail.scheduler.errors import JobError
+    from chainsail.scheduler.jobs import Job
 
     job = Job(
         id=1,
@@ -276,8 +276,8 @@ def test_scale_non_running_job_raises(mock_config, mock_spec):
 
 
 def _add_nodes_to_job_rep(job_rep, num_nodes, num_controllers):
-    from resaas.scheduler.db import TblNodes
-    from resaas.scheduler.nodes.base import NodeStatus
+    from chainsail.scheduler.db import TblNodes
+    from chainsail.scheduler.nodes.base import NodeStatus
 
     for i in range(num_nodes):
         job_rep.nodes.append(
@@ -297,9 +297,9 @@ def _add_nodes_to_job_rep(job_rep, num_nodes, num_controllers):
 def test_vm_job_from_db_representation(mock_config):
     # Note: this test uses a concrete Node implementation with a *Mock*
     # node driver.
-    from resaas.scheduler.db import TblJobs
-    from resaas.scheduler.errors import JobError
-    from resaas.scheduler.jobs import Job, JobStatus
+    from chainsail.scheduler.db import TblJobs
+    from chainsail.scheduler.errors import JobError
+    from chainsail.scheduler.jobs import Job, JobStatus
 
     spec = """
     {
@@ -329,8 +329,8 @@ def test_vm_job_from_db_representation(mock_config):
 
 
 def test_job_from_representation_preserves_status(mock_config):
-    from resaas.scheduler.db import TblJobs
-    from resaas.scheduler.jobs import Job, JobStatus
+    from chainsail.scheduler.db import TblJobs
+    from chainsail.scheduler.jobs import Job, JobStatus
 
     # This job rep has no active nodes associated with it. This state
     # can happen once a job has been stopped since the nodes are

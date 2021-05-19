@@ -11,7 +11,7 @@ For `beta=1`, we recover the distribution of interest, while for any other `beta
 The question is then how many flatter distributions of this family we should simulate and which `beta` values to choose, in short, how the "schedule" looks like.
 
 ### Iterative schedule optimization
-RESAAS automatizes determination of the schedule by iteratively estimating increasingly better schedules from increasingly better Replica Exchange simulations.
+Chainsail automatizes determination of the schedule by iteratively estimating increasingly better schedules from increasingly better Replica Exchange simulations.
 After running a Replica Exchange simulation, its resulting samples are used to estimate an improved schedule.
 That improved schedule is then used to run a better Replica Exchange simulation, the results of which can then be used to calculate an even better schedule and so on and so forth.
 We refer to one such iteration as an `optimization super-iteration`.
@@ -47,7 +47,7 @@ The parameters of this procedure are thus:
 - **`max_replicas`**: upper limit of temperatures to simulate. If the result of the schedule optimization exceeds this value, optimization is aborted and the current schedule is interpolated to fit the maximum number of allowed replicas. This number crucially determines the computational cost: the higher it is, the more processors and thus VMs are required. Default: 100.
 
 ### Other Replica Exchange parameters
-RESAAS currently supports a single way of choosing exchange partners, namely, in an alternating manner, a simulation tries to exchange its state with its lower- or higher-temperature neighbor:
+Chainsail currently supports a single way of choosing exchange partners, namely, in an alternating manner, a simulation tries to exchange its state with its lower- or higher-temperature neighbor:
 in the first round of exchanges, the exchange partners are given by the replicas with indice `(1,2), (3,4), (5,6),...` and then, after a certain number of samples, in the next round of exchanges, replicas with indices `(2,3), (4,5), (6,7)` attempt pairwise exchanges.
 That way, optimal "communication" between all replicas is assured.
 The only parameters here are
@@ -57,7 +57,7 @@ The only parameters here are
 
 
 ## Local sampling parameters
-For local sampling, meaning sampling within a single replica, RESAAS currently supports only a naive implementation of Hamiltionian Monte Carlo (HMC) with a very simple heuristic for automatic timestep adaption.
+For local sampling, meaning sampling within a single replica, Chainsail currently supports only a naive implementation of Hamiltionian Monte Carlo (HMC) with a very simple heuristic for automatic timestep adaption.
 The parameters are
 - **`hmc_trajectory_length`**: length of the HMC trajectory. Default: 20
 - `hmc_adaption_percentage`: upon acceptance / rejection, the HMC time step is increased / decreased by this percentage to eventually converge to an acceptance rate of 50%. Default: 0.95

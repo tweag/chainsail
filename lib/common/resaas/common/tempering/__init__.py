@@ -1,3 +1,3 @@
 """
-Various tempered distributions and ensembles supported by RESAAS.
+Various tempered distributions and ensembles supported by Chainsail.
 """

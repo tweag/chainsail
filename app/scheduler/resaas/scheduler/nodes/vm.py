@@ -14,24 +14,24 @@ from libcloud.compute.deployment import (
     SSHKeyDeployment,
 )
 from libcloud.compute.types import DeploymentException, NodeState
-from resaas.common.spec import JobSpec, JobSpecSchema
-from resaas.scheduler.config import (
+from chainsail.common.spec import JobSpec, JobSpecSchema
+from chainsail.scheduler.config import (
     GeneralNodeConfig,
     SchedulerConfig,
     VMNodeConfig,
     load_scheduler_config,
 )
-from resaas.scheduler.db import TblJobs, TblNodes
-from resaas.scheduler.errors import (
+from chainsail.scheduler.db import TblJobs, TblNodes
+from chainsail.scheduler.errors import (
     ConfigurationError,
     MissingNodeError,
     NodeError,
     ObjectConstructionError,
 )
-from resaas.scheduler.nodes.base import Node, NodeStatus
+from chainsail.scheduler.nodes.base import Node, NodeStatus
 
 
-logger = logging.getLogger("resaas.scheduler")
+logger = logging.getLogger("chainsail.scheduler")
 
 
 def _raise_for_exit_status(node: LibcloudNode, deployment: Deployment):
@@ -72,11 +72,11 @@ docker run -d \
 
 docker run -d \
     -e "USER_PROB_URL={prob_def}" \
-    -e "USER_INSTALL_SCRIPT=/resaas/{install_script}" \
+    -e "USER_INSTALL_SCRIPT=/chainsail/{install_script}" \
     -e "USER_CODE_SERVER_PORT=50052" \
-    -e "REMOTE_LOGGING_CONFIG_PATH=/resaas/remote_logging.yaml" \
-    -v {config_dir}/remote_logging.yaml:/resaas/remote_logging.yaml \
-    -v {config_dir}/{install_script}:/resaas/{install_script} \
+    -e "REMOTE_LOGGING_CONFIG_PATH=/chainsail/remote_logging.yaml" \
+    -v {config_dir}/remote_logging.yaml:/chainsail/remote_logging.yaml \
+    -v {config_dir}/{install_script}:/chainsail/{install_script} \
     --network host \
     -p 50052 \
     --log-driver=gcplogs \
@@ -84,7 +84,7 @@ docker run -d \
 
 docker run -d \
     --network host \
-    -v {config_dir}:/resaas \
+    -v {config_dir}:/chainsail \
     -v {authorized_keys}:/app/config/ssh/authorized_keys \
     -v {pem_file}:/root/.ssh/id.pem \
     -p 50051 \
@@ -167,7 +167,7 @@ def prepare_deployment(
         container_cmd += " ".join([a for a in vm_node._config.args])
 
     container_cmd = container_cmd.format(job_id=vm_node.representation.job.id)
-    user_code_cmd = "python /app/app/user_code_server/resaas/user_code_server/__init__.py"
+    user_code_cmd = "python /app/app/user_code_server/chainsail/user_code_server/__init__.py"
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
         install_script=os.path.basename(install_script_target),
@@ -351,7 +351,7 @@ class VMNode(Node):
         self._status = NodeStatus.CREATING
         with TemporaryDirectory() as tmpdir:
             deployment_steps = self._deployment(
-                self, tmpdir, install_dir=f"/home/{self._vm_config.ssh_user}/resaas"
+                self, tmpdir, install_dir=f"/home/{self._vm_config.ssh_user}/chainsail"
             )
             for s in deployment_steps.steps:
                 print(s)
@@ -362,7 +362,7 @@ class VMNode(Node):
                     image=self._image,
                     ssh_username=self._vm_config.ssh_user,
                     # Some common fallback options for username
-                    ssh_alternate_usernames=["root", "ubuntu", "resaas"],
+                    ssh_alternate_usernames=["root", "ubuntu", "chainsail"],
                     deploy=deployment_steps,
                     # auth=NodeAuthSSHKey(self._vm_config.ssh_public_key),
                     ssh_key=self._vm_config.ssh_private_key_path,

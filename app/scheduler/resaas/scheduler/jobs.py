@@ -6,13 +6,13 @@ from typing import Dict, Optional
 
 import grpc
 import shortuuid
-from resaas.common.spec import JobSpec, JobSpecSchema
-from resaas.grpc import HealthCheckRequest, HealthCheckResponse, HealthStub
-from resaas.scheduler.config import SchedulerConfig
-from resaas.scheduler.db import TblJobs, TblNodes
-from resaas.scheduler.errors import JobError, ObjectConstructionError
-from resaas.scheduler.nodes.base import Node, NodeType
-from resaas.scheduler.nodes.registry import NODE_CLS_REGISTRY
+from chainsail.common.spec import JobSpec, JobSpecSchema
+from chainsail.grpc import HealthCheckRequest, HealthCheckResponse, HealthStub
+from chainsail.scheduler.config import SchedulerConfig
+from chainsail.scheduler.db import TblJobs, TblNodes
+from chainsail.scheduler.errors import JobError, ObjectConstructionError
+from chainsail.scheduler.nodes.base import Node, NodeType
+from chainsail.scheduler.nodes.registry import NODE_CLS_REGISTRY
 
 
 class JobStatus(Enum):
@@ -28,7 +28,7 @@ class JobStatus(Enum):
 
 N_CREATION_THREADS = 10
 
-logger = logging.getLogger("resaas.scheduler")
+logger = logging.getLogger("chainsail.scheduler")
 
 
 class Job:

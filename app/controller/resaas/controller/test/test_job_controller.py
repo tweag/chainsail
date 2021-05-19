@@ -2,13 +2,13 @@ import unittest
 from unittest.mock import patch
 
 import numpy as np
-from resaas.common.storage import AbstractStorageBackend
-from resaas.common.spec import (
+from chainsail.common.storage import AbstractStorageBackend
+from chainsail.common.spec import (
     NaiveHMCParameters,
     ReplicaExchangeParameters,
     OptimizationParameters,
 )
-from resaas.controller import BaseREJobController
+from chainsail.controller import BaseREJobController
 
 
 def mock_setup_initial_states(current_storage, schedule, previous_storage):
@@ -46,12 +46,12 @@ class MockStorageBackend(AbstractStorageBackend):
 
 class testREJobController(unittest.TestCase):
     def setUp(self):
-        initial_states_patcher = patch("resaas.controller.setup_initial_states")
+        initial_states_patcher = patch("chainsail.controller.setup_initial_states")
         initial_states_patcher.start()
         self.addCleanup(initial_states_patcher.stop)
 
         load_all_energies_patcher = patch(
-            "resaas.common.storage.SimulationStorage.load_all_energies", return_value=3
+            "chainsail.common.storage.SimulationStorage.load_all_energies", return_value=3
         )
         load_all_energies_patcher.start()
         self.addCleanup(load_all_energies_patcher.stop)

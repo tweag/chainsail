@@ -1,10 +1,10 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from resaas.common.spec import JobSpec
-from resaas.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
-from resaas.scheduler.nodes.base import NodeType
-from resaas.scheduler.nodes.mock import DeployableDummyNodeDriver
+from chainsail.common.spec import JobSpec
+from chainsail.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
+from chainsail.scheduler.nodes.base import NodeType
+from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
 
 
 @pytest.fixture
@@ -41,10 +41,10 @@ def mock_scheduler_config():
 
 
 def test_vm_node_from_representation(mock_scheduler_config):
-    from resaas.common.spec import JobSpec
-    from resaas.scheduler.db import TblNodes
-    from resaas.scheduler.nodes.base import NodeStatus, NodeType
-    from resaas.scheduler.nodes.vm import VMNode
+    from chainsail.common.spec import JobSpec
+    from chainsail.scheduler.db import TblNodes
+    from chainsail.scheduler.nodes.base import NodeStatus, NodeType
+    from chainsail.scheduler.nodes.vm import VMNode
 
     job_spec = JobSpec("gs://my-bucket/scripts")
     node_rep = TblNodes(
@@ -65,10 +65,10 @@ def test_vm_node_from_representation(mock_scheduler_config):
 
 
 def test_vm_node_from_config_with_job(mock_scheduler_config):
-    from resaas.common.spec import JobSpec
-    from resaas.scheduler.db import TblJobs, TblNodes
-    from resaas.scheduler.nodes.base import NodeStatus, NodeType
-    from resaas.scheduler.nodes.vm import VMNode
+    from chainsail.common.spec import JobSpec
+    from chainsail.scheduler.db import TblJobs, TblNodes
+    from chainsail.scheduler.nodes.base import NodeStatus, NodeType
+    from chainsail.scheduler.nodes.vm import VMNode
 
     job_spec = JobSpec("gs://my-bucket/scripts")
     node = VMNode.from_config("dummy-1", mock_scheduler_config, job_spec, job_rep=TblJobs(id=1))
@@ -77,11 +77,11 @@ def test_vm_node_from_config_with_job(mock_scheduler_config):
 
 
 def test_vm_node_from_representation_no_match_raises(mock_scheduler_config):
-    from resaas.common.spec import JobSpec
-    from resaas.scheduler.db import TblNodes
-    from resaas.scheduler.errors import ObjectConstructionError
-    from resaas.scheduler.nodes.base import NodeStatus, NodeType
-    from resaas.scheduler.nodes.vm import VMNode
+    from chainsail.common.spec import JobSpec
+    from chainsail.scheduler.db import TblNodes
+    from chainsail.scheduler.errors import ObjectConstructionError
+    from chainsail.scheduler.nodes.base import NodeStatus, NodeType
+    from chainsail.scheduler.nodes.vm import VMNode
 
     job_spec = JobSpec("gs://my-bucket/scripts")
     node_rep = TblNodes(
@@ -100,10 +100,10 @@ def test_vm_node_from_representation_no_match_raises(mock_scheduler_config):
 
 
 def test_vm_node_from_representation_then_create(mock_scheduler_config):
-    from resaas.common.spec import JobSpec, PipDependencies
-    from resaas.scheduler.db import TblJobs, TblNodes
-    from resaas.scheduler.nodes.base import NodeStatus, NodeType
-    from resaas.scheduler.nodes.vm import VMNode
+    from chainsail.common.spec import JobSpec, PipDependencies
+    from chainsail.scheduler.db import TblJobs, TblNodes
+    from chainsail.scheduler.nodes.base import NodeStatus, NodeType
+    from chainsail.scheduler.nodes.vm import VMNode
 
     job_spec = JobSpec("gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])])
     node_rep = TblNodes(
@@ -117,7 +117,7 @@ def test_vm_node_from_representation_then_create(mock_scheduler_config):
         job=TblJobs(),
     )
 
-    with patch("resaas.scheduler.nodes.vm.prepare_deployment") as mock_prepare_deployment:
+    with patch("chainsail.scheduler.nodes.vm.prepare_deployment") as mock_prepare_deployment:
         # Create the node object
         node = VMNode.from_representation(
             job_spec,
@@ -133,13 +133,13 @@ def test_vm_node_from_representation_then_create(mock_scheduler_config):
 
 
 def test_vm_node_lifecycle(mock_scheduler_config):
-    from resaas.scheduler.nodes.base import NodeStatus
-    from resaas.scheduler.nodes.vm import VMNode
+    from chainsail.scheduler.nodes.base import NodeStatus
+    from chainsail.scheduler.nodes.vm import VMNode
 
     driver = mock_scheduler_config.create_node_driver()
     job_spec = JobSpec("gs://my-bucket/scripts")
 
-    with patch("resaas.scheduler.nodes.vm.prepare_deployment"):
+    with patch("chainsail.scheduler.nodes.vm.prepare_deployment"):
         node = VMNode(
             name="test",
             driver=driver,
