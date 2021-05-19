@@ -12,8 +12,10 @@ WORKDIR /app
 ##############################################################################
 FROM base as system-deps
 
-RUN apt-get update && \
-    apt-get install -y curl wget unzip && \
+# up-to-date GCC
+RUN echo 'deb http://deb.debian.org/debian testing main' >> /etc/apt/sources.list
+RUN apt update -y
+RUN apt-get install -y gcc build-essential curl wget unzip && \
     rm -rf /var/lib/apt/lists/*
 
 
