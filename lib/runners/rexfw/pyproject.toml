@@ -10,7 +10,7 @@ python = "^3.8"
 numpy = "*"
 pyyaml = "*"
 chainsail-common = { path = "../../common", develop = true }
-rexfw = { git = "https://github.com/tweag/rexfw", branch = "chainsail" }
+rexfw = { git = "https://github.com/tweag/rexfw", branch = "resaas" }
 mpi4py = "^3.0.3"
 click = "^7.1.2"
 
