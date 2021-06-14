@@ -80,7 +80,7 @@ const FieldDescription = ({ children, name, activeField, icon, math }) => (
 );
 
 const Descs = ({ activeField, seeMoreFields }) => (
-  <FlexCol between className="w-full h-full">
+  <FlexCol between className="w-full min-h-full p-5 bg-gray-700 md:p-10 rounded-xl">
     <FieldDescription activeField={activeField} name={['job_name']} icon="fas fa-bars">
       Job name: a unique key id for your job.
     </FieldDescription>
@@ -245,7 +245,7 @@ const Job = ({ authed }) => {
           err={err}
           errMsg={errMsg}
         />
-        <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
+        <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:min-h-screen font-body">
           <FlexCol between className="h-full">
             <Navbar />
             <FlexCenter className="w-full h-full py-5 md:py-20">
@@ -256,7 +256,7 @@ const Job = ({ authed }) => {
                 </div>
                 <FlexCol
                   between
-                  className="w-full mb-10 text-base h-36 md:text-xl lg:w-2/3 md:text-justify"
+                  className="w-full mb-10 text-base md:text-xl lg:w-2/3 md:text-justify"
                 >
                   <div>
                     Every sampling job is specified through several parameters. This form is
@@ -449,7 +449,7 @@ const Job = ({ authed }) => {
                   </FlexCenter>
 
                   <FlexCenter
-                    className={`w-full p-5 bg-gray-700 md:p-10 lg:w-1/2 rounded-xl duration-300 transition ${
+                    className={`w-full lg:w-1/2 duration-300 transition ${
                       seeMoreFields ? 'h-full' : 'h-72'
                     }`}
                   >
