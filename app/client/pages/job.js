@@ -139,10 +139,9 @@ const Descs = ({ activeField, seeMoreFields }) => (
 
 const OptionalFormSection = ({ children, active }) => (
   <FlexCol
-    between
     className={`${
       active ? 'h-36' : 'opacity-0 h-0 pointer-events-none'
-    } w-full transition-all duration-900 `}
+    } w-full transition-all duration-900 space-y-1`}
   >
     {children}
   </FlexCol>
@@ -293,7 +292,7 @@ const Job = ({ authed }) => {
                         if (!isModalActive) createJob(e);
                       }}
                     >
-                      <FlexCol between className="space-y-2">
+                      <FlexCol between className="mb-1 space-y-1">
                         <FormField
                           label="Job name"
                           inputName="job_name"
@@ -344,7 +343,7 @@ const Job = ({ authed }) => {
                         <FlexRow
                           responsive
                           media="md"
-                          className="space-y-1 md:space-y-0 md:space-x-5"
+                          className="space-y-1 md:space-y-0 md:space-x-2"
                         >
                           <FormField
                             optional
@@ -384,7 +383,7 @@ const Job = ({ authed }) => {
                         <FlexRow
                           responsive
                           media="md"
-                          className="space-y-1 md:space-y-0 md:space-x-5"
+                          className="space-y-1 md:space-y-0 md:space-x-2"
                         >
                           <FormField
                             label="Beta min"
