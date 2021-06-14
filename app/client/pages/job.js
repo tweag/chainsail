@@ -293,7 +293,7 @@ const Job = ({ authed }) => {
                         if (!isModalActive) createJob(e);
                       }}
                     >
-                      <FlexCol between className="h-56">
+                      <FlexCol between className="space-y-2">
                         <FormField
                           label="Job name"
                           inputName="job_name"
@@ -301,33 +301,27 @@ const Job = ({ authed }) => {
                           value={job_name}
                           onChange={(e) => setJobName(e.target.value)}
                         />
-                        <FlexRow
-                          responsive
-                          media="md"
-                          className="space-y-1 md:space-y-0 md:space-x-5"
-                        >
-                          <FormField
-                            label="N° production samples"
-                            inputName="num_production_samples"
-                            inputType="number"
-                            setActiveField={setActiveField}
-                            minNumber={1000}
-                            maxNumber={50000}
-                            stepNumber={1000}
-                            value={num_production_samples}
-                            onChange={(e) => setNumProductionSamples(e.target.value)}
-                          />
-                          <FormField
-                            label="Max N° replicas"
-                            inputName="max_replicas"
-                            inputType="number"
-                            setActiveField={setActiveField}
-                            minNumber={2}
-                            maxNumber={20}
-                            value={max_replicas}
-                            onChange={(e) => setMaxReplicas(e.target.value)}
-                          />
-                        </FlexRow>
+                        <FormField
+                          label="N° production samples"
+                          inputName="num_production_samples"
+                          inputType="number"
+                          setActiveField={setActiveField}
+                          minNumber={1000}
+                          maxNumber={50000}
+                          stepNumber={1000}
+                          value={num_production_samples}
+                          onChange={(e) => setNumProductionSamples(e.target.value)}
+                        />
+                        <FormField
+                          label="Max N° replicas"
+                          inputName="max_replicas"
+                          inputType="number"
+                          setActiveField={setActiveField}
+                          minNumber={2}
+                          maxNumber={20}
+                          value={max_replicas}
+                          onChange={(e) => setMaxReplicas(e.target.value)}
+                        />
                         <FormField
                           label="Probability definition"
                           inputName="probability_definition"
