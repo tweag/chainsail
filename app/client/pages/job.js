@@ -80,7 +80,7 @@ const FieldDescription = ({ children, name, activeField, icon, math }) => (
 );
 
 const Descs = ({ activeField, seeMoreFields }) => (
-  <FlexCol between className="w-full h-full">
+  <FlexCol between className="w-full min-h-full p-5 bg-gray-700 md:p-10 rounded-xl">
     <FieldDescription activeField={activeField} name={['job_name']} icon="fas fa-bars">
       Job name: a unique key id for your job.
     </FieldDescription>
@@ -139,10 +139,9 @@ const Descs = ({ activeField, seeMoreFields }) => (
 
 const OptionalFormSection = ({ children, active }) => (
   <FlexCol
-    between
     className={`${
       active ? 'h-36' : 'opacity-0 h-0 pointer-events-none'
-    } w-full transition-all duration-900 `}
+    } w-full transition-all duration-900 space-y-1`}
   >
     {children}
   </FlexCol>
@@ -245,7 +244,7 @@ const Job = ({ authed }) => {
           err={err}
           errMsg={errMsg}
         />
-        <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
+        <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:min-h-screen font-body">
           <FlexCol between className="h-full">
             <Navbar />
             <FlexCenter className="w-full h-full py-5 md:py-20">
@@ -256,7 +255,7 @@ const Job = ({ authed }) => {
                 </div>
                 <FlexCol
                   between
-                  className="w-full mb-10 text-base h-36 md:text-xl lg:w-2/3 md:text-justify"
+                  className="w-full mb-10 text-base md:text-xl lg:w-2/3 md:text-justify"
                 >
                   <div>
                     Every sampling job is specified through several parameters. This form is
@@ -284,8 +283,13 @@ const Job = ({ authed }) => {
                     .
                   </div>
                 </FlexCol>
-                <FlexRow between responsive media="lg" className="w-full lg:h-4/5 lg:space-x-20">
-                  <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 w-96">
+                <FlexRow
+                  between
+                  responsive
+                  media="lg"
+                  className="w-full space-y-28 lg:space-y-0 lg:h-4/5 lg:space-x-10"
+                >
+                  <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 lg:w-1/2">
                     <form
                       className="h-full"
                       onSubmit={(e) => {
@@ -293,7 +297,7 @@ const Job = ({ authed }) => {
                         if (!isModalActive) createJob(e);
                       }}
                     >
-                      <FlexCol between className="h-56">
+                      <FlexCol between className="mb-1 space-y-1">
                         <FormField
                           label="Job name"
                           inputName="job_name"
@@ -301,33 +305,27 @@ const Job = ({ authed }) => {
                           value={job_name}
                           onChange={(e) => setJobName(e.target.value)}
                         />
-                        <FlexRow
-                          responsive
-                          media="md"
-                          className="space-y-1 md:space-y-0 md:space-x-5"
-                        >
-                          <FormField
-                            label="N° production samples"
-                            inputName="num_production_samples"
-                            inputType="number"
-                            setActiveField={setActiveField}
-                            minNumber={1000}
-                            maxNumber={50000}
-                            stepNumber={1000}
-                            value={num_production_samples}
-                            onChange={(e) => setNumProductionSamples(e.target.value)}
-                          />
-                          <FormField
-                            label="Max N° replicas"
-                            inputName="max_replicas"
-                            inputType="number"
-                            setActiveField={setActiveField}
-                            minNumber={2}
-                            maxNumber={20}
-                            value={max_replicas}
-                            onChange={(e) => setMaxReplicas(e.target.value)}
-                          />
-                        </FlexRow>
+                        <FormField
+                          label="N° production samples"
+                          inputName="num_production_samples"
+                          inputType="number"
+                          setActiveField={setActiveField}
+                          minNumber={1000}
+                          maxNumber={50000}
+                          stepNumber={1000}
+                          value={num_production_samples}
+                          onChange={(e) => setNumProductionSamples(e.target.value)}
+                        />
+                        <FormField
+                          label="Max N° replicas"
+                          inputName="max_replicas"
+                          inputType="number"
+                          setActiveField={setActiveField}
+                          minNumber={2}
+                          maxNumber={20}
+                          value={max_replicas}
+                          onChange={(e) => setMaxReplicas(e.target.value)}
+                        />
                         <FormField
                           label="Probability definition"
                           inputName="probability_definition"
@@ -350,7 +348,7 @@ const Job = ({ authed }) => {
                         <FlexRow
                           responsive
                           media="md"
-                          className="space-y-1 md:space-y-0 md:space-x-5"
+                          className="space-y-1 md:space-y-0 md:space-x-2"
                         >
                           <FormField
                             optional
@@ -390,7 +388,7 @@ const Job = ({ authed }) => {
                         <FlexRow
                           responsive
                           media="md"
-                          className="space-y-1 md:space-y-0 md:space-x-5"
+                          className="space-y-1 md:space-y-0 md:space-x-2"
                         >
                           <FormField
                             label="Beta min"
@@ -449,7 +447,7 @@ const Job = ({ authed }) => {
                   </FlexCenter>
 
                   <FlexCenter
-                    className={`w-full p-5 bg-gray-700 md:p-10 lg:w-1/2 rounded-xl duration-300 transition ${
+                    className={`w-full lg:w-1/2 duration-300 transition ${
                       seeMoreFields ? 'h-full' : 'h-72'
                     }`}
                   >

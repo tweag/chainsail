@@ -19,7 +19,8 @@ Then come back to the `client` directory, install the dependencies and run the d
 
 ```bash
 $ cd client
-$ GOOGLE_APPLICATION_CREDENTIALS=client_sa_key.json yarn install && yarn dev
+$ yarn # install the dependencies
+$ GOOGLE_APPLICATION_CREDENTIALS=client_sa_key.json yarn dev # run a dev server
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

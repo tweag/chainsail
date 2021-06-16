@@ -95,7 +95,7 @@ export default function Home() {
     <Layout>
       <FlexCol
         between
-        className="h-screen text-white bg-gradient-to-r opacity-95 from-purple-900 to-indigo-600 font-body"
+        className="min-h-screen text-white bg-gradient-to-r opacity-95 from-purple-900 to-indigo-600 font-body"
       >
         <Container>
           <Navbar />
