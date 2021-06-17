@@ -27,7 +27,9 @@ const JobsTable = ({ data }) => {
     '',
     '',
   ];
-  const TableHeader = ({ children }) => <th className="px-4 py-2 text-left ">{children}</th>;
+  const TableHeader = ({ children }) => (
+    <th className="px-2 py-1 text-left lg:px-4 lg:py-2">{children}</th>
+  );
   const TableRow = ({ row }) => {
     const job_name = JSON.parse(row.spec).name;
     return (
@@ -38,32 +40,32 @@ const JobsTable = ({ data }) => {
         <TableData d={dateFormatter(row.started_at)} />
         <TableData d={dateFormatter(row.finished_at)} />
         <TableData className="w-48">
-          <ResultsLink signed_url={row.signed_url} />
+          <ResultsLink signed_url={row.signed_url} width="w-20 lg:w-32" />
         </TableData>
         <TableData d={row.status} className="w-40" />
         <TableData className="w-48">
           <Link href={`/dash?jobId=${row.id}`}>
-            <div className="w-32 py-1 text-center text-white bg-purple-600 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700">
+            <div className="w-16 py-1 text-center text-white bg-purple-600 rounded-lg cursor-pointer lg:w-32 lg:transition lg:duration-100 hover:bg-purple-700">
               dash site
             </div>
           </Link>
         </TableData>
         <TableData className="w-48">
-          <JobButton jobId={row.id} jobStatus={row.status} />
+          <JobButton jobId={row.id} jobStatus={row.status} width="w-16 lg:w-32" />
         </TableData>
       </tr>
     );
   };
   const TableData = ({ d, children, className }) => (
     <td
-      className={`px-4 py-2 border-t-2 transition duration-100
+      className={`px-2 py-1 text-left lg:px-4 lg:py-2 border-t-2
 		  ${className}`}
     >
       {d ? d : children}
     </td>
   );
   return (
-    <div className="w-full overflow-hidden text-white bg-gray-900 rounded-lg shadow-xl">
+    <div className="w-full overflow-x-auto text-xs text-white bg-gray-900 rounded-lg shadow-xl lg:text-base">
       <table className="w-full">
         <tr className="bg-blue-900 hover:bg-blue-800">
           {headersName.map((h) => (
@@ -90,7 +92,7 @@ const Results = ({ authed }) => {
   if (authed)
     return (
       <Layout>
-        <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
+        <Container className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
           <Navbar />
           <FlexCenter className="py-5 md:py-32">
             {error && <div>Failed to load. Please refresh the page.</div>}
