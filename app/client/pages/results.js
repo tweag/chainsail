@@ -51,7 +51,7 @@ const JobsTable = ({ data }) => {
           </Link>
         </TableData>
         <TableData className="w-48">
-          <JobButton jobId={row.id} jobStatus={row.status} width="w-16 lg:w-32" />
+          <JobButton jobId={row.id} jobStatus={row.status} width="w-24 lg:w-32" />
         </TableData>
       </tr>
     );
