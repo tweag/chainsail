@@ -67,16 +67,20 @@ const JobsTable = ({ data }) => {
   return (
     <div className="w-full overflow-x-auto text-xs text-white bg-gray-900 rounded-lg shadow-xl lg:text-base">
       <table className="w-full">
-        <tr className="bg-blue-900 hover:bg-blue-800">
-          {headersName.map((h) => (
-            <TableHeader key={uuidv4()}>{h}</TableHeader>
-          ))}
-        </tr>
-        {data
-          .sort((a, b) => (a.id > b.id ? 1 : -1))
-          .map((row) => (
-            <TableRow row={row} key={uuidv4()} />
-          ))}
+        <thead>
+          <tr className="bg-blue-900 hover:bg-blue-800">
+            {headersName.map((h) => (
+              <TableHeader key={uuidv4()}>{h}</TableHeader>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data
+            .sort((a, b) => (a.id > b.id ? 1 : -1))
+            .map((row) => (
+              <TableRow row={row} key={uuidv4()} />
+            ))}
+        </tbody>
       </table>
     </div>
   );
