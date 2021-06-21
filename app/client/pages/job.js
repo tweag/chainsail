@@ -80,7 +80,7 @@ const FieldDescription = ({ children, name, activeField, icon, math }) => (
 );
 
 const Descs = ({ activeField, seeMoreFields }) => (
-  <FlexCol between className="w-full min-h-full p-5 bg-gray-700 md:p-10 rounded-xl">
+  <FlexCol between className="w-full p-5 bg-gray-700 space-y-1 lg:space-y-3 md:p-10 rounded-xl">
     <FieldDescription activeField={activeField} name={['job_name']} icon="fas fa-bars">
       Job name: a unique key id for your job.
     </FieldDescription>
@@ -140,7 +140,7 @@ const Descs = ({ activeField, seeMoreFields }) => (
 const OptionalFormSection = ({ children, active }) => (
   <FlexCol
     className={`${
-      active ? 'h-36' : 'opacity-0 h-0 pointer-events-none'
+      active ? 'h-56 md:h-36' : 'opacity-0 h-0 pointer-events-none'
     } w-full transition-all duration-900 space-y-1`}
   >
     {children}
@@ -244,7 +244,7 @@ const Job = ({ authed }) => {
           err={err}
           errMsg={errMsg}
         />
-        <Container className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:min-h-screen font-body">
+        <Container className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
           <FlexCol between className="h-full">
             <Navbar />
             <FlexCenter className="w-full h-full py-5 md:py-20">
@@ -287,7 +287,9 @@ const Job = ({ authed }) => {
                   between
                   responsive
                   media="lg"
-                  className="w-full space-y-28 lg:space-y-0 lg:h-4/5 lg:space-x-10"
+                  className={`${
+                    seeMoreFields ? 'space-y-28' : ''
+                  } w-full lg:space-y-0 lg:h-4/5 lg:space-x-10`}
                 >
                   <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 lg:w-1/2">
                     <form
@@ -417,9 +419,7 @@ const Job = ({ authed }) => {
                         </FlexRow>
                       </OptionalFormSection>
                       <div
-                        className={`${
-                          seeMoreFields ? 'mt-5' : 'mt-0'
-                        } text-sm cursor-pointer opacity-60 hover:opacity-100 transition duration-300`}
+                        className="mb-2 text-sm cursor-pointer md:mb-0 opacity-60 hover:opacity-100 transition duration-300"
                         onClick={() => setSeeMoreFields((s) => !s)}
                       >
                         {seeMoreFields ? (
@@ -446,11 +446,7 @@ const Job = ({ authed }) => {
                     </form>
                   </FlexCenter>
 
-                  <FlexCenter
-                    className={`w-full lg:w-1/2 duration-300 transition ${
-                      seeMoreFields ? 'h-full' : 'h-72'
-                    }`}
-                  >
+                  <FlexCenter className="w-full lg:w-1/2 duration-300 transition">
                     <Descs activeField={activeField} seeMoreFields={seeMoreFields} />
                   </FlexCenter>
                 </FlexRow>
