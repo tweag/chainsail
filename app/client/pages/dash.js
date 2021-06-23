@@ -20,8 +20,10 @@ import {
 } from '../components';
 import { dateFormatter } from '../utils/date';
 import fetcher from '../utils/fetcher';
+import useWindowDimensions from '../utils/windowDimensions';
+import { sm } from '../utils/breakPoints';
 
-const NegLogPChart = ({ job, simulationRun }) => {
+const NegLogPChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
     const { data, error } = useSWR(`/api/graphite/neglogp/${jobId}/${simulationRun}`, fetcher, {
@@ -91,7 +93,8 @@ const NegLogPChart = ({ job, simulationRun }) => {
           jobRunOrStop ? 'opacity-100' : 'opacity-20'
         }`}
       >
-        {!error && <Line data={chartData} options={options} width="5" height="1" />}
+        {!error && !isMobile && <Line data={chartData} options={options} width="5" height="1" />}
+        {!error && isMobile && <Line data={chartData} options={options} width="1" height="1" />}
       </FlexCenter>
     );
   } else {
@@ -99,7 +102,7 @@ const NegLogPChart = ({ job, simulationRun }) => {
   }
 };
 
-const AcceptanceRateChart = ({ job, simulationRun }) => {
+const AcceptanceRateChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
     const { data, error } = useSWR(
@@ -187,7 +190,8 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
           jobRunOrStop ? 'opacity-100' : 'opacity-20'
         }`}
       >
-        {!error && <Line data={chartData} options={options} width="5" height="1" />}
+        {!error && !isMobile && <Line data={chartData} options={options} width="5" height="1" />}
+        {!error && isMobile && <Line data={chartData} options={options} width="1" height="1" />}
       </FlexCenter>
     );
   } else {
@@ -277,6 +281,10 @@ const Dash = ({ authed }) => {
     if (runs.length > 0) setSimulationRun(runs[0]);
   }, [runs]);
 
+  // To check if the screen is for mobile
+  const { width } = useWindowDimensions();
+  const isMobile = width <= sm;
+
   const Dropdown = () => (
     <div className="relative mt-10">
       <div
@@ -344,8 +352,8 @@ const Dash = ({ authed }) => {
                 <Dropdown />
               </FlexCol>
               <FlexCol between className="p-10 lg:w-2/3">
-                <NegLogPChart job={job} simulationRun={simulationRun} />
-                <AcceptanceRateChart job={job} simulationRun={simulationRun} />
+                <NegLogPChart job={job} simulationRun={simulationRun} isMobile={isMobile} />
+                <AcceptanceRateChart job={job} simulationRun={simulationRun} isMobile={isMobile} />
                 <Logs job={job} />
               </FlexCol>
               {!jobRunOrStop && (
