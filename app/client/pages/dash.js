@@ -20,8 +20,10 @@ import {
 } from '../components';
 import { dateFormatter } from '../utils/date';
 import fetcher from '../utils/fetcher';
+import useWindowDimensions from '../utils/windowDimensions';
+import { sm } from '../utils/breakPoints';
 
-const NegLogPChart = ({ job, simulationRun }) => {
+const NegLogPChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
     const { data, error } = useSWR(`/api/graphite/neglogp/${jobId}/${simulationRun}`, fetcher, {
@@ -87,11 +89,12 @@ const NegLogPChart = ({ job, simulationRun }) => {
       job.status == 'success';
     return (
       <FlexCenter
-        className={`w-full h-1/2 transition duration-300 ${
+        className={`w-full lg:h-1/2 transition duration-300 ${
           jobRunOrStop ? 'opacity-100' : 'opacity-20'
         }`}
       >
-        {!error && <Line data={chartData} options={options} width="5" height="1" />}
+        {!error && !isMobile && <Line data={chartData} options={options} width="5" height="1" />}
+        {!error && isMobile && <Line data={chartData} options={options} width="1" height="1" />}
       </FlexCenter>
     );
   } else {
@@ -99,7 +102,7 @@ const NegLogPChart = ({ job, simulationRun }) => {
   }
 };
 
-const AcceptanceRateChart = ({ job, simulationRun }) => {
+const AcceptanceRateChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
     const { data, error } = useSWR(
@@ -183,11 +186,12 @@ const AcceptanceRateChart = ({ job, simulationRun }) => {
 
     return (
       <FlexCenter
-        className={`w-full h-1/2 transition duration-300 ${
+        className={`w-full lg:h-1/2 transition duration-300 ${
           jobRunOrStop ? 'opacity-100' : 'opacity-20'
         }`}
       >
-        {!error && <Line data={chartData} options={options} width="5" height="1" />}
+        {!error && !isMobile && <Line data={chartData} options={options} width="5" height="1" />}
+        {!error && isMobile && <Line data={chartData} options={options} width="1" height="1" />}
       </FlexCenter>
     );
   } else {
@@ -201,7 +205,6 @@ const Logs = ({ job }) => {
     element.scrollTop = element.scrollHeight;
   }, []);
   const jobId = job.id;
-  console.log(jobId);
   const { data, error } = useSWR(`/api/graphite/logs/${jobId}`, fetcher, {
     refreshInterval: 10000,
   });
@@ -210,7 +213,10 @@ const Logs = ({ job }) => {
   if (error) console.log(error);
   return (
     <FlexCenter className="py-5 h-1/2">
-      <div className="w-full h-full p-8 overflow-auto text-white bg-gray-900 rounded-xl" id="logs">
+      <div
+        className="w-full h-64 p-5 overflow-auto text-white bg-gray-900 lg:h-full lg:p-8 rounded-xl"
+        id="logs"
+      >
         {logs.map((log) => (
           <div key={uuidv4()} className="my-3 break-words">
             <div className="text-sm">{log.data}</div>
@@ -229,7 +235,7 @@ const JobInfo = ({ jobId }) => {
     const job = data;
     const jobSpec = job.spec ? JSON.parse(job.spec) : {};
     return (
-      <FlexCenter className="p-8 mx-20 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+      <FlexCenter className="p-5 bg-indigo-900 border-2 shadow-xl lg:p-8 border-gray-50 border-opacity-30 rounded-xl">
         <div className="w-full grid grid-cols-2 gap-y-2">
           <div>Name:</div>
           <div>{jobSpec.name}</div>
@@ -275,8 +281,12 @@ const Dash = ({ authed }) => {
     if (runs.length > 0) setSimulationRun(runs[0]);
   }, [runs]);
 
+  // To check if the screen is for mobile
+  const { width } = useWindowDimensions();
+  const isMobile = width <= sm;
+
   const Dropdown = () => (
-    <div className="mx-20 mt-10">
+    <div className="relative mt-10">
       <div
         className={`transition duration-300 ${
           runs.length > 0
@@ -297,7 +307,7 @@ const Dash = ({ authed }) => {
       <div
         className={`${
           dropdownIsAcitve ? 'visible' : 'hidden h-0'
-        } fixed bg-gray-800 bg-opacity-50 mt-1 transition-all duration-300 w-48`}
+        } absolute z-1 bg-gray-800 bg-opacity-50 mt-1 transition-all duration-300 w-48`}
       >
         {runs.map((r) => (
           <div
@@ -325,14 +335,14 @@ const Dash = ({ authed }) => {
   if (authed)
     return (
       <Layout>
-        <FlexCol className="text-white bg-gradient-to-r from-purple-900 to-indigo-600 lg:h-screen font-body">
+        <FlexCol className="min-h-screen text-white lg:h-screen bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
           <Container>
             <Navbar />
           </Container>
           {jobFound && (
-            <FlexRow className="w-full h-full">
-              <FlexCol className="w-1/3 pt-20">
-                <div className="p-8 mx-20 mb-10 bg-indigo-900 border-2 shadow-xl border-gray-50 border-opacity-30 rounded-xl">
+            <FlexRow responsive className="w-full h-full">
+              <FlexCol className="pt-20 mx-10 lg:w-1/3 lg:mx-20">
+                <div className="p-5 mb-10 bg-indigo-900 border-2 shadow-xl lg:p-8 border-gray-50 border-opacity-30 rounded-xl">
                   The plot of the total negative log-probability of all replicas helps to monitor
                   sampling convergence. If it scatters around a fixed value, your target
                   distribution is, given good Replica Exchange acceptance rates, likely to be
@@ -341,13 +351,13 @@ const Dash = ({ authed }) => {
                 <JobInfo jobId={jobId} />
                 <Dropdown />
               </FlexCol>
-              <FlexCol between className="w-2/3 p-10">
-                <NegLogPChart job={job} simulationRun={simulationRun} />
-                <AcceptanceRateChart job={job} simulationRun={simulationRun} />
+              <FlexCol between className="p-10 lg:w-2/3">
+                <NegLogPChart job={job} simulationRun={simulationRun} isMobile={isMobile} />
+                <AcceptanceRateChart job={job} simulationRun={simulationRun} isMobile={isMobile} />
                 <Logs job={job} />
               </FlexCol>
               {!jobRunOrStop && (
-                <div className="fixed w-2/3 text-3xl left-1/3 opacity-80 h-2/3">
+                <div className="fixed invisible w-2/3 text-3xl lg:visible left-1/3 opacity-80 h-2/3">
                   <FlexCenter className="w-full h-full">No data to plot</FlexCenter>
                 </div>
               )}

@@ -23,6 +23,25 @@ $ yarn # install the dependencies
 $ GOOGLE_APPLICATION_CREDENTIALS=client_sa_key.json yarn dev # run a dev server
 ```
 
+To get the local client connect to the cloud backend, first set the GCP ssh keys :
+
+```
+$ gcloud config set project resaas-simeon-dev
+$ gcloud compute config-ssh
+```
+
+And then open an ssh channel to the Google Cloud VM like so:
+
+```
+$ ssh -L 8080:localhost:8080 -L 5000:localhost:5000 resaas-dev.europe-west3-c.resaas-simeon-dev
+```
+
+That opens a new shell, which you don't use. Then open a new shell (on your local machine) and run the client locally with
+
+```
+GOOGLE_APPLICATION_CREDENTIALS=client_sa_key.json GRAPHITE_URL=http://localhost:8080 SCHEDULER_URL=http://localhost:5000 yarn run dev
+```
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 [API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
