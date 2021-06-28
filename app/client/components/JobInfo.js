@@ -27,9 +27,7 @@ const JobInfo = ({ jobId }) => {
         <div>Results:</div>
         <ResultsLink signed_url={job.signed_url} />
         <div className="mt-3 col-span-2">
-          <FlexCenter>
-            <JobButton jobId={job.id} jobStatus={job.status} width="w-full" />
-          </FlexCenter>
+          <JobButton jobId={job.id} jobStatus={job.status} width="w-32" />
         </div>
       </div>
     );
