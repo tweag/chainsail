@@ -24,8 +24,8 @@ const JobInfo = ({ jobId }) => {
         <div>{dateFormatter(job.started_at)}</div>
         <div>Finished at:</div>
         <div>{dateFormatter(job.finished_at)}</div>
-        <div>Results:</div>
-        <ResultsLink signed_url={job.signed_url} />
+        {job.signed_url && <div>Results:</div>}
+        {job.signed_url && <ResultsLink signed_url={job.signed_url} />}
         <div className="mt-3 col-span-2">
           <JobButton jobId={job.id} jobStatus={job.status} width="w-32" />
         </div>
