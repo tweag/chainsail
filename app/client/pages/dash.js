@@ -333,7 +333,7 @@ const Dash = ({ authed, isMobile }) => {
           <Navbar isMobile={isMobile} />
           {jobFound && (
             <FlexRow responsive className="w-full h-full">
-              <FlexCol className="pt-20 mx-10 lg:w-1/3 lg:mx-20">
+              <FlexCol className="pt-5 mx-10 md:pt-20 lg:w-1/3 lg:mx-20">
                 <div className="p-5 mb-10 bg-indigo-900 border-2 shadow-xl lg:p-8 border-gray-50 border-opacity-30 rounded-xl">
                   The plot of the total negative log-probability of all replicas helps to monitor
                   sampling convergence. If it scatters around a fixed value, your target
