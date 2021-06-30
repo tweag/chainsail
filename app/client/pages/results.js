@@ -87,7 +87,7 @@ const JobsTable = ({ data }) => {
   );
 };
 
-const Results = ({ authed }) => {
+const Results = ({ authed, isMobile }) => {
   // Data fetching
   const { data, error } = useSWR('/api/job/get-all', fetcher, {
     refreshInterval: 3000,

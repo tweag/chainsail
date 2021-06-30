@@ -147,7 +147,7 @@ const OptionalFormSection = ({ children, active }) => (
   </FlexCol>
 );
 
-const Job = ({ authed }) => {
+const Job = ({ authed, isMobile }) => {
   firebaseClient();
 
   const [activeField, setActiveField] = useState('other');

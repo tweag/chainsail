@@ -84,7 +84,7 @@ const fireAnimation = () => {
   }, 6000);
 };
 
-export default function Home() {
+export default function Home({ isMobile }) {
   useEffect(() => {
     const anim = setInterval(() => {
       fireAnimation();

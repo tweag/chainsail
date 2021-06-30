@@ -20,8 +20,6 @@ import {
 } from '../components';
 import { dateFormatter } from '../utils/date';
 import fetcher from '../utils/fetcher';
-import useWindowDimensions from '../utils/windowDimensions';
-import { sm } from '../utils/breakPoints';
 
 const NegLogPChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
@@ -262,7 +260,7 @@ const JobInfo = ({ jobId }) => {
   }
 };
 
-const Dash = ({ authed }) => {
+const Dash = ({ authed, isMobile }) => {
   const router = useRouter();
   const { jobId } = router.query;
   const { data, error } = useSWR(`/api/job/get/${jobId}`, fetcher);
@@ -280,10 +278,6 @@ const Dash = ({ authed }) => {
   useEffect(() => {
     if (runs.length > 0) setSimulationRun(runs[0]);
   }, [runs]);
-
-  // To check if the screen is for mobile
-  const { width } = useWindowDimensions();
-  const isMobile = width <= sm;
 
   const Dropdown = () => (
     <div className="relative mt-10">
