@@ -245,7 +245,7 @@ const Job = ({ authed, isMobile }) => {
           errMsg={errMsg}
         />
         <FlexCol className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
-          <Navbar />
+          <Navbar isMobile={isMobile} />
           <Container>
             <FlexCenter className="w-full h-full py-5 md:py-20">
               <FlexCol center className="w-full h-full">

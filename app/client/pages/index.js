@@ -97,7 +97,7 @@ export default function Home({ isMobile }) {
         between
         className="min-h-screen text-white bg-gradient-to-r opacity-95 from-purple-900 to-indigo-600 font-body"
       >
-        <Navbar />
+        <Navbar isMobile={isMobile} />
         <Container>
           <Heading />
         </Container>

@@ -98,7 +98,7 @@ const Results = ({ authed, isMobile }) => {
     return (
       <Layout>
         <FlexCol className="min-h-screen text-white lg:h-screen bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
-          <Navbar />
+          <Navbar isMobile={isMobile} />
           <Container>
             <FlexCenter className="py-5 md:py-32">
               {error && <div>Failed to load. Please refresh the page.</div>}

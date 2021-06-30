@@ -330,7 +330,7 @@ const Dash = ({ authed, isMobile }) => {
     return (
       <Layout>
         <FlexCol className="min-h-screen text-white lg:h-screen bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
-          <Navbar />
+          <Navbar isMobile={isMobile} />
           {jobFound && (
             <FlexRow responsive className="w-full h-full">
               <FlexCol className="pt-20 mx-10 lg:w-1/3 lg:mx-20">
