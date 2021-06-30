@@ -6,6 +6,7 @@ import { verifyIdToken } from '../utils/firebaseAdmin';
 import {
   Layout,
   FlexCenter,
+  FlexCol,
   JobButton,
   Navbar,
   Container,
@@ -96,16 +97,18 @@ const Results = ({ authed }) => {
   if (authed)
     return (
       <Layout>
-        <Container className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
+        <FlexCol className="min-h-screen text-white lg:h-screen bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
           <Navbar />
-          <FlexCenter className="py-5 md:py-32">
-            {error && <div>Failed to load. Please refresh the page.</div>}
-            {!error && data && data.errno && <div>Failed to load. Please refresh the page.</div>}
-            {!error && data == undefined && <div>Loading ...</div>}
-            {!error && Array.isArray(data) && data.length == 0 && <div>no jobs created yet</div>}
-            {!error && Array.isArray(data) && data.length > 0 && <JobsTable data={data} />}
-          </FlexCenter>
-        </Container>
+          <Container>
+            <FlexCenter className="py-5 md:py-32">
+              {error && <div>Failed to load. Please refresh the page.</div>}
+              {!error && data && data.errno && <div>Failed to load. Please refresh the page.</div>}
+              {!error && data == undefined && <div>Loading ...</div>}
+              {!error && Array.isArray(data) && data.length == 0 && <div>no jobs created yet</div>}
+              {!error && Array.isArray(data) && data.length > 0 && <JobsTable data={data} />}
+            </FlexCenter>
+          </Container>
+        </FlexCol>
       </Layout>
     );
 };
