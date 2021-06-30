@@ -58,13 +58,14 @@ const FlexRow = ({
   );
 };
 
-const FlexCenter = ({ children, className, style }) => {
+const FlexCenter = ({ children, className, style, onClick }) => {
   return (
     <div
       className={`flex flex-row items-center justify-center
 	  ${className}
 	  `}
       style={style}
+      onClick={onClick}
     >
       {children}
     </div>
