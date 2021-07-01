@@ -74,7 +74,8 @@ const LogInLogOut = ({ user, providerData, route }) => {
   );
 };
 
-const MobileNavbar = ({ user, providerData, route, navActive, setNavActive }) => {
+const MobileNavbar = ({ user, providerData, route }) => {
+  const [navActive, setNavActive] = useState(false);
   return (
     <div className="relative">
       <FlexCenter
@@ -84,8 +85,8 @@ const MobileNavbar = ({ user, providerData, route, navActive, setNavActive }) =>
         <i className="fas fa-bars"></i>
       </FlexCenter>
       <FlexCol
-        className={`fixed top-0 left-0 z-10 h-screen bg-gray-900 w-screen transition duration-500 ${
-          navActive ? 'opacity-100' : 'hidden opacity-0'
+        className={`fixed top-0 left-0 z-10 h-screen bg-gray-900 w-screen transition duration-500 transform ${
+          navActive ? '' : '-translate-x-full'
         }`}
       >
         <FlexCenter
@@ -137,17 +138,8 @@ const Navbar = ({ isMobile }) => {
   const { user } = useAuth();
   const providerData = user ? user.providerData : undefined;
   const { route } = useRouter();
-  const [navActive, setNavActive] = useState(false);
   if (isMobile) {
-    return (
-      <MobileNavbar
-        user={user}
-        providerData={providerData}
-        route={route}
-        navActive={navActive}
-        setNavActive={setNavActive}
-      />
-    );
+    return <MobileNavbar user={user} providerData={providerData} route={route} />;
   } else {
     return <BigScreensNavbar user={user} providerData={providerData} route={route} />;
   }
