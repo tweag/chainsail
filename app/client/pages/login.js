@@ -28,10 +28,10 @@ const FirebaseAuth = ({ latestPage }) => {
     <Layout>
       <div className="h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
         {renderAuth ? (
-          <FlexCenter className="w-full h-full pb-72">
+          <FlexCenter className="w-full h-full p-5 md:pb-72">
             <FlexCol
               between
-              className="px-10 py-7 space-y-5 bg-indigo-500 shadow-lg w-96 rounded-xl"
+              className="px-10 py-7 space-y-5 bg-indigo-500 shadow-lg md:w-96 rounded-xl"
             >
               <div className="text-lg">Please login using your Google account *</div>
               <div className="text-xs">
