@@ -85,14 +85,13 @@ const MobileNavbar = ({ user, providerData, route }) => {
         <i className="fas fa-bars"></i>
       </FlexCenter>
       <FlexCol
-        className={`fixed top-0 left-0 z-10 h-screen bg-gray-900 w-screen transition duration-500 transform ${
-          navActive ? '' : '-translate-x-full'
+        className={`fixed top-0 left-0 z-10 pb-8 opacity-95 bg-gray-900 w-screen transition duration-500 transform ${
+          navActive ? '' : '-translate-y-full'
         }`}
       >
         <FlexCenter
           className="w-10 h-10 m-6 border-2 rounded-full"
           onClick={() => {
-            window.scrollTo(0, 0);
             setNavActive((s) => !s);
           }}
         >
