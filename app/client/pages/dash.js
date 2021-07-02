@@ -20,8 +20,6 @@ import {
 } from '../components';
 import { dateFormatter } from '../utils/date';
 import fetcher from '../utils/fetcher';
-import useWindowDimensions from '../utils/windowDimensions';
-import { sm } from '../utils/breakPoints';
 
 const NegLogPChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
@@ -262,7 +260,7 @@ const JobInfo = ({ jobId }) => {
   }
 };
 
-const Dash = ({ authed }) => {
+const Dash = ({ authed, isMobile }) => {
   const router = useRouter();
   const { jobId } = router.query;
   const { data, error } = useSWR(`/api/job/get/${jobId}`, fetcher);
@@ -280,10 +278,6 @@ const Dash = ({ authed }) => {
   useEffect(() => {
     if (runs.length > 0) setSimulationRun(runs[0]);
   }, [runs]);
-
-  // To check if the screen is for mobile
-  const { width } = useWindowDimensions();
-  const isMobile = width <= sm;
 
   const Dropdown = () => (
     <div className="relative mt-10">
@@ -336,12 +330,10 @@ const Dash = ({ authed }) => {
     return (
       <Layout>
         <FlexCol className="min-h-screen text-white lg:h-screen bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
-          <Container>
-            <Navbar />
-          </Container>
+          <Navbar isMobile={isMobile} />
           {jobFound && (
             <FlexRow responsive className="w-full h-full">
-              <FlexCol className="pt-20 mx-10 lg:w-1/3 lg:mx-20">
+              <FlexCol className="pt-5 mx-10 md:pt-20 lg:w-1/3 lg:mx-20">
                 <div className="p-5 mb-10 bg-indigo-900 border-2 shadow-xl lg:p-8 border-gray-50 border-opacity-30 rounded-xl">
                   The plot of the total negative log-probability of all replicas helps to monitor
                   sampling convergence. If it scatters around a fixed value, your target

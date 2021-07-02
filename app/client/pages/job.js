@@ -147,7 +147,7 @@ const OptionalFormSection = ({ children, active }) => (
   </FlexCol>
 );
 
-const Job = ({ authed }) => {
+const Job = ({ authed, isMobile }) => {
   firebaseClient();
 
   const [activeField, setActiveField] = useState('other');
@@ -244,9 +244,9 @@ const Job = ({ authed }) => {
           err={err}
           errMsg={errMsg}
         />
-        <Container className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
-          <FlexCol between className="h-full">
-            <Navbar />
+        <FlexCol className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
+          <Navbar isMobile={isMobile} />
+          <Container>
             <FlexCenter className="w-full h-full py-5 md:py-20">
               <FlexCol center className="w-full h-full">
                 <div className="mb-10 text-2xl md:text-5xl lg:text-6xl">
@@ -452,8 +452,8 @@ const Job = ({ authed }) => {
                 </FlexRow>
               </FlexCol>
             </FlexCenter>
-          </FlexCol>
-        </Container>
+          </Container>
+        </FlexCol>
       </Layout>
     );
 };

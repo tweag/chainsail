@@ -84,7 +84,7 @@ const fireAnimation = () => {
   }, 6000);
 };
 
-export default function Home() {
+export default function Home({ isMobile }) {
   useEffect(() => {
     const anim = setInterval(() => {
       fireAnimation();
@@ -97,9 +97,7 @@ export default function Home() {
         between
         className="min-h-screen text-white bg-gradient-to-r opacity-95 from-purple-900 to-indigo-600 font-body"
       >
-        <Container>
-          <Navbar />
-        </Container>
+        <Navbar isMobile={isMobile} />
         <Container>
           <Heading />
         </Container>
