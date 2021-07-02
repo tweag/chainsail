@@ -77,7 +77,7 @@ const LogInLogOut = ({ user, providerData, route }) => {
 const MobileNavbar = ({ user, providerData, route }) => {
   const [navActive, setNavActive] = useState(false);
   return (
-    <div className="relative">
+    <div>
       <FlexCenter
         className="w-10 h-10 m-6 border-2 rounded-full"
         onClick={() => setNavActive((s) => !s)}
