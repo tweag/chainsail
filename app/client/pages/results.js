@@ -3,7 +3,7 @@ import nookies from 'nookies';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
-import { Layout, FlexCenter, Navbar, Container, Link } from '../components';
+import { Layout, FlexCenter, FlexCol, Navbar, Container, Link } from '../components';
 import JobInfo from '../components/JobInfo';
 import fetcher from '../utils/fetcher';
 import { useState } from 'react';
@@ -79,18 +79,20 @@ const Results = ({ authed, isMobile }) => {
   if (authed)
     return (
       <Layout>
-        <Container className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
+        <FlexCol className="min-h-screen text-white lg:h-screen bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
           <Navbar isMobile={isMobile} />
-          <FlexCenter className="py-5 md:py-32">
-            {error && <div>Failed to load. Please refresh the page.</div>}
-            {!error && data && data.errno && <div>Failed to load. Please refresh the page.</div>}
-            {!error && data == undefined && <div>Loading ...</div>}
-            {!error && Array.isArray(data) && data.length == 0 && <div>no jobs created yet</div>}
-            {!error && Array.isArray(data) && data.length > 0 && (
-              <JobsTable data={data} activeJobId={activeJobId} setActiveJobId={setActiveJobId} />
-            )}
-          </FlexCenter>
-        </Container>
+          <Container>
+            <FlexCenter className="py-5 md:py-32">
+              {error && <div>Failed to load. Please refresh the page.</div>}
+              {!error && data && data.errno && <div>Failed to load. Please refresh the page.</div>}
+              {!error && data == undefined && <div>Loading ...</div>}
+              {!error && Array.isArray(data) && data.length == 0 && <div>no jobs created yet</div>}
+              {!error && Array.isArray(data) && data.length > 0 && (
+                <JobsTable data={data} activeJobId={activeJobId} setActiveJobId={setActiveJobId} />
+              )}
+            </FlexCenter>
+          </Container>
+        </FlexCol>
       </Layout>
     );
 };
