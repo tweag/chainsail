@@ -90,6 +90,9 @@ const JobsTableForNonMobile = ({ data }) => {
 };
 
 const JobsTableForMobile = ({ data }) => {
+  // Sort data
+  const dataSorted = data.sort((a, b) => (a.id > b.id ? 1 : -1));
+
   // To keep track of clicked job row
   const [activeJobId, setActiveJobId] = useState(undefined);
 
@@ -130,16 +133,18 @@ const JobsTableForMobile = ({ data }) => {
             </div>
           </Link>
         </TableData>
-        <div
-          className={`absolute left-0 top-full z-10 bg-indigo-900 w-full p-5 ${
-            row.id == activeJobId ? '' : 'hidden'
-          }`}
-        >
-          <JobInfo jobId={activeJobId} />
-        </div>
       </tr>
     );
   };
+
+  const JobInfoRow = ({ row, activeJobId }) => (
+    <tr className={`bg-indigo-900 ${row.id == activeJobId ? '' : 'hidden'}`}>
+      <td colSpan={headersName.length} className="p-2">
+        <JobInfo jobId={activeJobId} />
+      </td>
+    </tr>
+  );
+
   const TableData = ({ d, children, className }) => (
     <td
       className={`px-2 py-1 text-left lg:px-4 lg:py-2 border-t-2
@@ -159,11 +164,15 @@ const JobsTableForMobile = ({ data }) => {
           </tr>
         </thead>
         <tbody>
-          {data
-            .sort((a, b) => (a.id > b.id ? 1 : -1))
-            .map((row) => (
-              <TableRow row={row} key={uuidv4()} activeJobId={activeJobId} />
-            ))}
+          {[...Array(2 * dataSorted.length).keys()].map((i) => {
+            if (i % 2 == 0) {
+              const row = dataSorted[i / 2];
+              return <TableRow key={uuidv4()} row={row} activeJobId={activeJobId} />;
+            } else {
+              const row = dataSorted[(i - 1) / 2];
+              return <JobInfoRow key={uuidv4()} row={row} activeJobId={activeJobId} />;
+            }
+          })}
         </tbody>
       </table>
     </div>
