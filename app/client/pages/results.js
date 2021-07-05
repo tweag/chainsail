@@ -104,7 +104,7 @@ const JobsTableForMobile = ({ data }) => {
     const job_name = JSON.parse(row.spec).name;
     return (
       <tr
-        className={`hover:bg-gray-800 transition duration-100 cursor-pointer ${
+        className={`relative hover:bg-gray-800 transition duration-100 cursor-pointer ${
           activeJobId == row.id ? 'bg-indigo-900' : ''
         }`}
         onClick={() => {
@@ -130,6 +130,13 @@ const JobsTableForMobile = ({ data }) => {
             </div>
           </Link>
         </TableData>
+        <div
+          className={`absolute left-0 top-full z-10 bg-indigo-900 w-full p-5 ${
+            row.id == activeJobId ? '' : 'hidden'
+          }`}
+        >
+          <JobInfo jobId={activeJobId} />
+        </div>
       </tr>
     );
   };
@@ -159,7 +166,6 @@ const JobsTableForMobile = ({ data }) => {
             ))}
         </tbody>
       </table>
-      <JobInfo jobId={activeJobId} />
     </div>
   );
 };
