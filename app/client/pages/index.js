@@ -13,9 +13,9 @@ const Heading = () => (
     <div className="text-base md:text-xl lg:w-2/3 md:text-justify mb-7">
       <FlexCol className="space-y-5">
         <div>
-          Chainsail helps to sample multimodal distributions by implementing an automatically scaling
-          Replica Exchange MCMC algorithm. All you need to provide is a Python module defining your
-          probability density and its log-probability gradient.
+          Chainsail helps to sample multimodal distributions by implementing an automatically
+          scaling Replica Exchange MCMC algorithm. All you need to provide is a Python module
+          defining your probability density and its log-probability gradient.
         </div>
         <div>
           This beta version of Chainsail is free (you have a compute time quota of 20 replicas x 2
