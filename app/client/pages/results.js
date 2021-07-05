@@ -8,25 +8,43 @@ import JobInfo from '../components/JobInfo';
 import fetcher from '../utils/fetcher';
 import { useState } from 'react';
 
-const JobsTable = ({ data, activeJobId, setActiveJobId }) => {
-  const headersName = ['Id', 'Name', ''];
+const JobsTableForMobile = ({ data }) => {
+  // To keep track of clicked job row
+  const [activeJobId, setActiveJobId] = useState(undefined);
+
+  // Table headers
+  const headersName = ['', 'Id', 'Name', ''];
   const TableHeader = ({ children }) => (
     <th className="px-2 py-1 text-left lg:px-4 lg:py-2">{children}</th>
   );
+
+  // Table Rows
   const TableRow = ({ row, activeJobId }) => {
     const job_name = JSON.parse(row.spec).name;
     return (
       <tr
         className={`hover:bg-gray-800 transition duration-100 cursor-pointer ${
-          activeJobId == row.id ? 'bg-gray-800' : ''
+          activeJobId == row.id ? 'bg-indigo-900' : ''
         }`}
-        onClick={() => setActiveJobId(row.id)}
+        onClick={() => {
+          // Only trigger the job row if it's not the latest chosen row
+          if (activeJobId == row.id) {
+            setActiveJobId(undefined);
+          } else {
+            setActiveJobId(row.id);
+          }
+        }}
       >
+        <TableData>
+          <FlexCenter className={`transform ${activeJobId == row.id ? 'rotate-90' : 'rotate-0'}`}>
+            <i className="fas fa-arrow-right"></i>
+          </FlexCenter>
+        </TableData>
         <TableData d={row.id} />
         <TableData d={job_name} />
         <TableData className="w-36">
           <Link href={`/dash?jobId=${row.id}`}>
-            <div className="py-1 text-center text-white bg-purple-600 rounded-lg cursor-pointer w-32 lg:transition lg:duration-100 hover:bg-purple-700">
+            <div className="w-32 py-1 text-center text-white bg-purple-600 rounded-lg cursor-pointer lg:transition lg:duration-100 hover:bg-purple-700">
               dash site
             </div>
           </Link>
@@ -60,9 +78,7 @@ const JobsTable = ({ data, activeJobId, setActiveJobId }) => {
             ))}
         </tbody>
       </table>
-      <div className={`bg-gray-900 ${activeJobId ? 'p-5 border-t-2' : 'h-0'}`}>
-        <JobInfo jobId={activeJobId} />
-      </div>
+      <JobInfo jobId={activeJobId} />
     </div>
   );
 };
@@ -73,8 +89,6 @@ const Results = ({ authed, isMobile }) => {
     refreshInterval: 3000,
   });
   if (error) console.log(error);
-
-  const [activeJobId, setActiveJobId] = useState(undefined);
 
   if (authed)
     return (
@@ -87,8 +101,8 @@ const Results = ({ authed, isMobile }) => {
               {!error && data && data.errno && <div>Failed to load. Please refresh the page.</div>}
               {!error && data == undefined && <div>Loading ...</div>}
               {!error && Array.isArray(data) && data.length == 0 && <div>no jobs created yet</div>}
-              {!error && Array.isArray(data) && data.length > 0 && (
-                <JobsTable data={data} activeJobId={activeJobId} setActiveJobId={setActiveJobId} />
+              {!error && Array.isArray(data) && data.length > 0 && isMobile && (
+                <JobsTableForMobile data={data} />
               )}
             </FlexCenter>
           </Container>
