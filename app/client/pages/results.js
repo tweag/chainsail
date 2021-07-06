@@ -140,7 +140,7 @@ const JobsTableForMobile = ({ data }) => {
   const JobInfoRow = ({ row, activeJobId }) => (
     <tr className={`bg-indigo-900 ${row.id == activeJobId ? '' : 'hidden'}`}>
       <td colSpan={headersName.length} className="p-2">
-        <JobInfo jobId={activeJobId} />
+        <JobInfo job={row} />
       </td>
     </tr>
   );
