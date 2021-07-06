@@ -17,7 +17,7 @@ import {
 
 const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) => {
   const buttonStyle =
-    'px-6 py-2 text-base text-center rounded-lg cursor-pointer lg:transition lg:duration-300  text-white';
+    'px-6 py-2 text-xs md:text-base text-center rounded-lg cursor-pointer lg:transition lg:duration-300  text-white';
   return (
     <Modal isActive={isModalActive}>
       {!err && (
