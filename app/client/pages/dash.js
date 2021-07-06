@@ -8,17 +8,8 @@ import { Line } from '@reactchartjs/react-chart.js';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyIdToken } from '../utils/firebaseAdmin';
-import {
-  Layout,
-  FlexCol,
-  FlexCenter,
-  FlexRow,
-  JobButton,
-  Container,
-  Navbar,
-  ResultsLink,
-} from '../components';
-import { dateFormatter } from '../utils/date';
+import { Layout, FlexCol, FlexCenter, FlexRow, Container, Navbar } from '../components';
+import JobInfo from '../components/JobInfo';
 import fetcher from '../utils/fetcher';
 
 const NegLogPChart = ({ job, simulationRun, isMobile }) => {
@@ -225,39 +216,12 @@ const Logs = ({ job }) => {
   );
 };
 
-const JobInfo = ({ jobId }) => {
-  const { data } = useSWR(`/api/job/get/${jobId}`, fetcher, {
-    refreshInterval: 3000,
-  });
-  if (data && data.id) {
-    const job = data;
-    const jobSpec = job.spec ? JSON.parse(job.spec) : {};
-    return (
-      <FlexCenter className="p-5 bg-indigo-900 border-2 shadow-xl lg:p-8 border-gray-50 border-opacity-30 rounded-xl">
-        <div className="w-full grid grid-cols-2 gap-y-2">
-          <div>Name:</div>
-          <div>{jobSpec.name}</div>
-          <div>Status: </div>
-          <div>{job.status}</div>
-          <div>Created at:</div>
-          <div>{dateFormatter(job.created_at)}</div>
-          <div>Started at:</div>
-          <div>{dateFormatter(job.started_at)}</div>
-          <div>Finished at:</div>
-          <div>{dateFormatter(job.finished_at)}</div>
-          <div>Results:</div>
-          <ResultsLink signed_url={job.signed_url} />
-          <div className="mt-3 col-span-2">
-            <FlexCenter>
-              <JobButton jobId={job.id} jobStatus={job.status} width="w-full" />
-            </FlexCenter>
-          </div>
-        </div>
-      </FlexCenter>
-    );
-  } else {
-    return <></>;
-  }
+const JobInfoDiv = ({ jobId }) => {
+  return (
+    <FlexCenter className="p-5 bg-indigo-900 border-2 shadow-xl lg:p-8 border-gray-50 border-opacity-30 rounded-xl">
+      <JobInfo jobId={jobId} />
+    </FlexCenter>
+  );
 };
 
 const Dash = ({ authed, isMobile }) => {
@@ -340,7 +304,7 @@ const Dash = ({ authed, isMobile }) => {
                   distribution is, given good Replica Exchange acceptance rates, likely to be
                   sampled exhaustively.
                 </div>
-                <JobInfo jobId={jobId} />
+                <JobInfoDiv jobId={jobId} />
                 <Dropdown />
               </FlexCol>
               <FlexCol between className="p-10 lg:w-2/3">
