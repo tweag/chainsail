@@ -46,6 +46,19 @@ class TblNodes(db.Model):
     job = db.relationship("TblJobs", backref="nodes", lazy=True)
 
 
+class TblUsers(db.Model):
+    """
+    Users info
+    """
+
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(50), nullable=False)
+    # whether a user is allowed to use our services
+    is_allowed = db.Column(db.Boolean(), default=False)
+    ## TODO: Add user quotas
+
+
 class JobViewSchema(ma.SQLAlchemyAutoSchema):
     """Schema for returning jobs"""
 
