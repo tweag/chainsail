@@ -11,7 +11,7 @@ from flask import abort, jsonify, request
 from firebase_admin.auth import verify_id_token
 from chainsail.common.spec import JobSpecSchema
 from chainsail.scheduler.core import app, db, firebase_app
-from chainsail.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
+from chainsail.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes, TblUsers
 from chainsail.scheduler.jobs import JobStatus
 from chainsail.scheduler.tasks import (
     scale_job_task,
@@ -40,13 +40,18 @@ def check_user(func):
             id_token = request.headers["Authorization"].split(" ").pop()
             claims = verify_id_token(id_token, app=firebase_app)
             user_id = claims.get("user_id", None)
+            user = TblUsers.query.filter_by(id=user_id).first()
+            user_is_allowed = user.is_allowed
         except:
             user_id = None
             claims = None
+            user_is_allowed = False
         user_not_found = not claims or not user_id
         # Verify user id token in non dev mode
         if (not _is_dev_mode()) and user_not_found:
             return "Unauthorized", 401
+        if (not _is_dev_mode()) and not user_is_allowed:
+            return "User is not autorized", 401
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
         return value
