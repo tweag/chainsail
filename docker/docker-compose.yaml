@@ -7,7 +7,7 @@ services:
     command: ["postgres", "-c", "log_statement=all"]
     environment:
       # Using default "postgres" database and "postgres" user
-      - POSTGRES_PASSWORD=resaas-dev
+nn      - POSTGRES_PASSWORD=resaas-dev
     volumes:
       - postgres:/var/lib/postgresql/data
     ports:
@@ -71,12 +71,13 @@ services:
   client:
     image: "chainsail-client:latest"
     volumes:
-      - /home/simeon/projects/chainsail/app/client/next.config.js:/opt/app/next.config.js
+      - /home/simeon/projects/resaas/app/client/next.config.js:/opt/app/next.config.js
     ports:
       - "3000:3000"
     environment:
       - GRAPHITE_URL=http://graphite:8080
       - SCHEDULER_URL=http://nginx:80
+      - GOOGLE_APPLICATION_CREDENTIALS=/config/client_sa_key.json
     depends_on: [scheduler, graphite, nginx]
 volumes:
   redis:
