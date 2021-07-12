@@ -18,6 +18,16 @@ nn      - POSTGRES_PASSWORD=resaas-dev
       options:
         max-size: "200k"
         max-file: "10"
+  # postgres admin
+  pgadmin:
+    image: dpage/pgadmin4:5.4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=user@domain.com
+      - PGADMIN_DEFAULT_PASSWORD=SuperSecret
+    ports:
+      - 80:81
+    depends_on:
+      - postgres
   # For async-task message passing
   redis:
     image: redis:6.2-rc2-alpine
