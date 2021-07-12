@@ -48,10 +48,8 @@ def check_user(func):
             user_is_allowed = False
         user_not_found = not claims or not user_id
         # Verify user id token in non dev mode
-        if (not _is_dev_mode()) and user_not_found:
+        if (not _is_dev_mode()) and (user_not_found or not user_is_allowed):
             return "Unauthorized", 401
-        if (not _is_dev_mode()) and not user_is_allowed:
-            return "User is not autorized", 401
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
         return value
