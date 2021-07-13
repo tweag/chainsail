@@ -82,16 +82,13 @@ def post_user():
     display_name = body.displayName
     user = TblUsers.query.filter_by(id=user_id, email=email, display_name=display_name).first()
     if user:
-        return (
-            f"User with id {user_id} already exists in users table.",
-            406,
-        )  # Not Acceptable
+        return f"User with id {user_id} already exists in users table.", 200
     else:
         user = TblUsers(id=user_id)
         db.session.add(user)
         db.session.commit()
         logger.info(f"User with id {user.id} registered in users table.")
-        return f"User with id {user_id} registered in users table", 200
+        return f"User with id {user_id} registered in users table", 201  # Created
 
 
 @app.route("/job/<job_id>", methods=["GET"])

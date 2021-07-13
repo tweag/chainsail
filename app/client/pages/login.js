@@ -33,7 +33,7 @@ const FirebaseAuth = ({ latestPage }) => {
           headers: { 'Content-Type': 'application/json' },
           body: { uid, email, displayName },
         };
-        fetch('/api/user/create', requestOptions);
+        fetch('/api/user/create', requestOptions).catch((e) => console.log(e));
         return true;
       },
     },
