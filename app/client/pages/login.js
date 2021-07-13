@@ -23,6 +23,20 @@ const FirebaseAuth = ({ latestPage }) => {
     signInOptions: [firebase.auth.GoogleAuthProvider.PROVIDER_ID],
     signInSuccessUrl: latestPage,
     credentialHelper: 'none',
+    callbacks: {
+      signInSuccessWithAuthResult: (authResult) => {
+        const {
+          user: { uid },
+        } = authResult;
+        const requestOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: { uid },
+        };
+        fetch('/api/user/create', requestOptions);
+        return true;
+      },
+    },
   };
   return (
     <Layout>
@@ -31,7 +45,7 @@ const FirebaseAuth = ({ latestPage }) => {
           <FlexCenter className="w-full h-full p-5 md:pb-72">
             <FlexCol
               between
-              className="px-10 py-7 space-y-5 bg-indigo-500 shadow-lg md:w-96 rounded-xl"
+              className="px-10 bg-indigo-500 shadow-lg py-7 space-y-5 md:w-96 rounded-xl"
             >
               <div className="text-lg">Please login using your Google account *</div>
               <div className="text-xs">
