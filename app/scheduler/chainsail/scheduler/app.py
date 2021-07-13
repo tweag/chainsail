@@ -36,20 +36,32 @@ def _is_dev_mode():
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        is_dev = _is_dev_mode()  # Verify user id token in non dev mode
         try:
             id_token = request.headers["Authorization"].split(" ").pop()
             claims = verify_id_token(id_token, app=firebase_app)
-            user_id = claims.get("user_id", None)
-            user = TblUsers.query.filter_by(id=user_id).first()
-            user_is_allowed = user.is_allowed
         except:
-            user_id = None
-            claims = None
-            user_is_allowed = False
-        user_not_found = not claims or not user_id
-        # Verify user id token in non dev mode
-        if (not _is_dev_mode()) and (user_not_found or not user_is_allowed):
+            # invalid token
+            if not is_dev:
+                return "Unauthorized", 401
+
+        user_id = claims.get("user_id", None)
+        if not is_dev and not user_id:
+            # empty uid
             return "Unauthorized", 401
+
+        user = TblUsers.query.filter_by(id=user_id).first()
+        if not is_dev and not user:
+            # unregistered user
+            return (
+                f"User with id {user_id} is not registered. Please contact our supporting team.",
+                401,
+            )
+
+        if not is_dev and not user.is_allowed:
+            # user not allowed
+            return "User with id {user_id} is not allowed to use services.", 401
+
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
         return value
