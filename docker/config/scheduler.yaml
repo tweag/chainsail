@@ -14,6 +14,7 @@ controller:
     - /resaas/controller.yaml
   ports: [50051, 26]
   user_code_image: TODO
+  httpstan_image: TODO
 
 worker:
   image: TODO
@@ -22,6 +23,7 @@ worker:
     - -D
   ports: [26]
   user_code_image: TODO
+  httpstan_image: TODO
 
 node_type: LibcloudVM
 results_url_expiry_time: 604800
