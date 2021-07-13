@@ -75,20 +75,20 @@ def get_zip_chain(job_id):
 
 @app.route("/user", methods=["POST"])
 def post_user():
-    """Register new user in user table"""
-    user_id = request.json.user_id
+    """Register new user in users table"""
+    user_id = request.json.uid
     user = TblUsers.query.filter_by(id=user_id).first()
     if user:
         return (
-            f"User with id {user_id} has been already registered in user table.",
+            f"User with id {user_id} already exists in users table.",
             406,
         )  # Not Acceptable
     else:
         user = TblUsers(id=user_id)
         db.session.add(user)
         db.session.commit()
-        logger.info(f"User with id {user.id} registered in user table.")
-        return f"User with id {user_id} registered in user table", 200
+        logger.info(f"User with id {user.id} registered in users table.")
+        return f"User with id {user_id} registered in users table", 200
 
 
 @app.route("/job/<job_id>", methods=["GET"])
