@@ -24,8 +24,10 @@ nn      - POSTGRES_PASSWORD=resaas-dev
     environment:
       - PGADMIN_DEFAULT_EMAIL=user@domain.com
       - PGADMIN_DEFAULT_PASSWORD=SuperSecret
+    volumes:
+      - ./config/pg-servers.json:/pgadmin4/servers.json
     ports:
-      - 80:81
+      - "81:80"
     depends_on:
       - postgres
   # For async-task message passing
