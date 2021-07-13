@@ -26,12 +26,12 @@ const FirebaseAuth = ({ latestPage }) => {
     callbacks: {
       signInSuccessWithAuthResult: (authResult) => {
         const {
-          user: { uid },
+          user: { uid, email, displayName },
         } = authResult;
         const requestOptions = {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: { uid },
+          body: { uid, email, displayName },
         };
         fetch('/api/user/create', requestOptions);
         return true;

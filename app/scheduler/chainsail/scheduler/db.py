@@ -54,6 +54,7 @@ class TblUsers(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(50), nullable=False)
+    display_name = db.Column(db.String(50), nullable=True)
     # whether a user is allowed to use our services
     is_allowed = db.Column(db.Boolean(), default=False)
     ## TODO: Add user quotas

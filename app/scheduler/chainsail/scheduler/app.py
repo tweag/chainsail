@@ -76,8 +76,11 @@ def get_zip_chain(job_id):
 @app.route("/user", methods=["POST"])
 def post_user():
     """Register new user in users table"""
-    user_id = request.json.uid
-    user = TblUsers.query.filter_by(id=user_id).first()
+    body = request.json
+    user_id = body.uid
+    email = body.email
+    display_name = body.displayName
+    user = TblUsers.query.filter_by(id=user_id, email=email, display_name=display_name).first()
     if user:
         return (
             f"User with id {user_id} already exists in users table.",
