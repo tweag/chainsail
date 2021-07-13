@@ -1,8 +1,8 @@
-scheduler_address: scheduler
+scheduler_address: TODO
 scheduler_port: 5000
-metrics_address: graphite
+metrics_address: TODO
 metrics_port: 2004
 runner: "resaas.runners.rexfw:MPIRERunner"
-storage_basename: "/storage"
+storage_basename: "/TODO"
 log_level: DEBUG
 remote_logging_config_path: TODO

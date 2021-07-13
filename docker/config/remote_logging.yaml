@@ -1,5 +1,5 @@
 enabled: True
 log_level: DEBUG
-address: xxxxxxxxxxxxx
+address: TODO
 port: 8080
-buffer_size: 5
+buffer_size: 0
