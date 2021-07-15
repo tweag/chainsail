@@ -5,7 +5,6 @@ export const JOB_START_URL = (jobId) => `${SCHEDULER_URL}/job/${jobId}/start`;
 export const JOB_STOP_URL = (jobId) => `${SCHEDULER_URL}/job/${jobId}/stop`;
 export const JOB_GET_URL = (jobId) => `${SCHEDULER_URL}/job/${jobId}`;
 export const JOBS_LIST_URL = `${SCHEDULER_URL}/jobs`;
-export const USER_CREATION_URL = `${SCHEDULER_URL}/user`;
 
 // Graphite
 export const GRAPHITE_URL = process.env.GRAPHITE_URL || 'http://127.0.0.1:8080';
