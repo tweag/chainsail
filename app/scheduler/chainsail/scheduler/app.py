@@ -8,8 +8,12 @@ from celery import chain
 from cloudstorage.exceptions import NotFoundError
 import functools
 from flask import abort, jsonify, request
-from firebase_admin.auth import verify_id_token
-from firebase_admin.exceptions import InvalidIdTokenError, ExpiredIdTokenError, RevokedIdTokenError
+from firebase_admin.auth import (
+    verify_id_token,
+    InvalidIdTokenError,
+    ExpiredIdTokenError,
+    RevokedIdTokenError,
+)
 from chainsail.common.spec import JobSpecSchema
 from chainsail.scheduler.core import app, db, firebase_app
 from chainsail.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes, TblUsers
