@@ -9,6 +9,7 @@ from cloudstorage.exceptions import NotFoundError
 import functools
 from flask import abort, jsonify, request
 from firebase_admin.auth import verify_id_token
+from firebase_admin.exceptions import InvalidIdTokenError, ExpiredIdTokenError, RevokedIdTokenError
 from chainsail.common.spec import JobSpecSchema
 from chainsail.scheduler.core import app, db, firebase_app
 from chainsail.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes, TblUsers
@@ -40,10 +41,9 @@ def check_user(func):
         try:
             id_token = request.headers["Authorization"].split(" ").pop()
             claims = verify_id_token(id_token, app=firebase_app)
-        except:
-            # invalid token
+        except (InvalidIdTokenError, ExpiredIdTokenError, RevokedIdTokenError) as e:
             if not is_dev:
-                return "Unauthorized", 401
+                return f"Unauthorized. Error: {e}", 401
 
         user_id = claims.get("user_id", None)
         if not is_dev and not user_id:
