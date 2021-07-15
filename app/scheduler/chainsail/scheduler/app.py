@@ -55,12 +55,12 @@ def check_user(func):
             # unregistered user
             return (
                 f"User with id {user_id} is not registered. Please contact our supporting team.",
-                401,
+                403,
             )
 
         if not is_dev and not user.is_allowed:
             # user not allowed
-            return "User with id {user_id} is not allowed to use services.", 401
+            return "User with id {user_id} is not allowed to use services.", 403
 
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
