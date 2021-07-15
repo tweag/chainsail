@@ -50,17 +50,22 @@ def check_user(func):
             # empty uid
             return "Unauthorized", 401
 
-        user = TblUsers.query.filter_by(id=user_id).first()
+        email = claims.get("email", None)
+        if not is_dev and not email:
+            # empty email
+            return "Unauthorized. There is no email in token claim.", 403
+
+        user = TblUsers.query.filter_by(email=email).first()
         if not is_dev and not user:
             # unregistered user
             return (
-                f"User with id {user_id} is not registered. Please contact our supporting team.",
+                f"User with id {user_id} and email {email} is not registered. Please contact our supporting team.",
                 403,
             )
 
         if not is_dev and not user.is_allowed:
             # user not allowed
-            return "User with id {user_id} is not allowed to use services.", 403
+            return "User with id {user_id} and email {email} is not allowed to use services.", 403
 
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
