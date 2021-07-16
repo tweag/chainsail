@@ -47,29 +47,35 @@ def check_user(func):
             claims = verify_id_token(id_token, app=firebase_app)
         except (InvalidIdTokenError, ExpiredIdTokenError, RevokedIdTokenError) as e:
             if not is_dev:
-                return f"Unauthorized. Error: {e}", 401
+                return {"msg": f"Unauthorized. Error: {e}"}, 401
+            else:
+                claims = None
 
         user_id = claims.get("user_id", None)
         if not is_dev and not user_id:
             # empty uid
-            return "Unauthorized", 401
+            return {"msg": "Unauthorized"}, 401
 
         email = claims.get("email", None)
         if not is_dev and not email:
             # empty email
-            return "Unauthorized. There is no email in token claim.", 403
+            return {"msg": "Unauthorized. No email found in token claim."}, 403
 
         user = TblUsers.query.filter_by(email=email).first()
         if not is_dev and not user:
             # unregistered user
             return (
-                f"User with id {user_id} and email {email} is not registered. Please contact our supporting team.",
+                {
+                    "msg": f"User with id {user_id} and email {email} is not registered. Please contact our supporting team."
+                },
                 403,
             )
 
         if not is_dev and not user.is_allowed:
             # user not allowed
-            return "User with id {user_id} and email {email} is not allowed to use services.", 403
+            return {
+                "msg": "User with id {user_id} and email {email} is not allowed to use services."
+            }, 403
 
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
