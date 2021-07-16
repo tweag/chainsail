@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "resaas-common"
+name = "chainsail-common"
 version = "0.1.0"
-description = "RESAAS code shared between components"
+description = "Chainsail code shared between components"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
-packages = [ { include = "resaas" } ]
+packages = [ { include = "chainsail" } ]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -15,8 +15,8 @@ marshmallow-enum = "^1.5.1"
 cryptography = "^3.4.1"
 # poetry is annoying. We actually need this, but it will then fail with
 # a lib/grpc directory does not exist error. It works without, too,
-# because luckily other components have resaas.grpc as dependency, too.
-resaas-grpc = { path="../grpc", develop=true }
+# because luckily other components have chainsail.grpc as dependency, too.
+chainsail-grpc = { path="../grpc", develop=true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

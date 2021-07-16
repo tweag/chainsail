@@ -21,17 +21,17 @@ services:
       - $HOME/Desktop/resaas:/resaas
       - local_storage_backend:/storage
     command:
-      - resaas-controller
+      - chainsail-controller
       - --job
       - testing
       - --storage
-      - /resaas/storage.yaml
+      - /chainsail/storage.yaml
       - --hostsfile
-      - /resaas/hostsfile
+      - /chainsail/hostsfile
       - --job-spec
-      - /resaas/job.json
+      - /chainsail/job.json
       - --config
-      - /resaas/controller.yaml
+      - /chainsail/controller.yaml
     depends_on: [mpi-node-1, mpi-node-2]
 
   mpi-node-1:

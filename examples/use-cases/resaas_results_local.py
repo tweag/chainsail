@@ -2,7 +2,7 @@ import os
 import sys
 
 import numpy as np
-from resaas.common.storage import SimulationStorage, LocalStorageBackend
+from chainsail.common.storage import SimulationStorage, LocalStorageBackend
 
 basename = sys.argv[1]
 sim_path = sys.argv[2]

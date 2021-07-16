@@ -1,17 +1,17 @@
 controller:
   image: TODO
-  cmd: resaas-controller
+  cmd: chainsail-controller
   args:
     - --job
     - "{job_id}"
     - --storage
-    - /resaas/storage.yaml
+    - /chainsail/storage.yaml
     - --hostsfile
-    - /resaas/hostfile
+    - /chainsail/hostfile
     - --job-spec
-    - /resaas/job.json
+    - /chainsail/job.json
     - --config
-    - /resaas/controller.yaml
+    - /chainsail/controller.yaml
   ports: [50051, 26]
   user_code_image: TODO
 

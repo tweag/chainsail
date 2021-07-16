@@ -1,5 +1,5 @@
 # Optimization of Replica Exchange schedules via the density of states
-The automatic optimization of temperature schedules for Replica Exchange is one of the main features of RESAAS.
+The automatic optimization of temperature schedules for Replica Exchange is one of the main features of Chainsail.
 A technical explanation is [available in the docs](../../docs/density_of_states_methods.pdf).
 The basic idea is that one can combine samples from all temperatures in a Replica Exchange simulation using a method called [Weighted Histogram Analysis Method (WHAM)](https://www.semanticscholar.org/paper/Evaluation-of-marginal-likelihoods-via-the-density-Habeck/bbfdb49fa8fc31088d7514a6b684dec8230e4d6a) to obtain good estimate of a quantity called the [density of states (DOS)](https://en.wikipedia.org/wiki/Density_of_states).
 Knowledge of this quantity allows relatively easy calculate a wide range of expectation values with respect to the probability distribution of interest.

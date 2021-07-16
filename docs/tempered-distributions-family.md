@@ -1,6 +1,6 @@
-# Families of tempered distributions supported by RESAAS
+# Families of tempered distributions supported by Chainsail
 There are, to the best of my knowledge, two families of tempered distributions we can easily support and which are universal to sampling / Bayesian data analysis problems.
-I'll describe both in the following, but for the very first PoC, we restrict RESAAS to support only the Boltzmann distribution.
+I'll describe both in the following, but for the very first PoC, we restrict Chainsail to support only the Boltzmann distribution.
 The two-Boltzmann-chains family can be relatively easily added later (TODO: think how easy schedule optimization actually is...)
 
 ## Family of Boltzmann distributions
@@ -13,7 +13,7 @@ The replica schedule to be optimized is then given by the sequence of `beta`s.
 
 ## Separate Boltzmann distributions for likelihood and prior
 In Bayesian inference, we have `p(x|D) ∝ p(D|x) * p(x)` with `~` denoting proportionality.
-`p(x|D)` is the posterior distribution and usually what a RESAAS user wants to sample.
+`p(x|D)` is the posterior distribution and usually what a Chainsail user wants to sample.
 It is proportional to the product of likelihood function `p(D|x) =: L(x)` and prior `p(x)`.
 Now, in case of really bad luck, not only the likelihood might give rise to multimodality, but the prior itself is already multimodal.
 For these cases, we can introduce a two-dimensional Replica Exchange schedule with two inverse temperatures `lambda` and `beta`.

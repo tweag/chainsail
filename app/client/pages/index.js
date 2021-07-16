@@ -6,23 +6,23 @@ import AnimationMainPage from '../components/AnimationMainPage';
 
 const Heading = () => (
   <FlexCol center className="h-full">
-    <div className="mb-10 text-5xl md:text-9xl">RESAAS</div>
+    <div className="mb-10 text-5xl md:text-9xl">Chainsail</div>
     <div className="mb-10 text-2xl lg:w-2/3 md:text-4xl md:mb-20">
       sampling multimodal distributions made easy
     </div>
     <div className="text-base md:text-xl lg:w-2/3 md:text-justify mb-7">
       <FlexCol className="space-y-5">
         <div>
-          RESAAS helps to sample multimodal distributions by implementing an automatically scaling
-          Replica Exchange MCMC algorithm. All you need to provide is a Python module defining your
-          probability density and its log-probability gradient.
+          Chainsail helps to sample multimodal distributions by implementing an automatically
+          scaling Replica Exchange MCMC algorithm. All you need to provide is a Python module
+          defining your probability density and its log-probability gradient.
         </div>
         <div>
-          This beta version of RESAAS is free (you have a compute time quota of 20 replicas x 2
+          This beta version of Chainsail is free (you have a compute time quota of 20 replicas x 2
           hours).
         </div>
         <FlexCol className="space-y-2">
-          <div>To learn more about the MCMC algorithms used in RESAAS, see our blog posts:</div>
+          <div>To learn more about the MCMC algorithms used in Chainsail, see our blog posts:</div>
           <FlexCol>
             <a
               href="https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/"

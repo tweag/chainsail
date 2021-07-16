@@ -1,5 +1,5 @@
 """
-Example probability density for consumption by RESAAS
+Example probability density for consumption by Chainsail
 """
 
 # you can use any pip-installable Python module you like,
@@ -45,7 +45,7 @@ sigmas = np.ones(n_components) / 3
 weights = np.ones(n_components) / n_components
 weights /= weights.sum()
 
-# This is what you have to provide and what RESAAS will import:
+# This is what you have to provide and what Chainsail will import:
 # - an object `pdf` with methods `log_prob` and `log_prob_gradient`,
 #   each taking a single, flat numpy array as its argument
 # - a flat numpy array `intial_states` with an initial state for the

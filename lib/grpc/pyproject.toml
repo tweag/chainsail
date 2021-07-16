@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "resaas-grpc"
+name = "chainsail-grpc"
 version = "0.1.0"
-description = "RESAAS gRPCs"
+description = "Chainsail gRPCs"
 authors = ["SaeedHK <saeed.hadikhanloo@tweag.io>"]
-packages = [ { include = "resaas" } ]
+packages = [ { include = "chainsail" } ]
 
 [tool.poetry.dependencies]
 python = "^3.8"

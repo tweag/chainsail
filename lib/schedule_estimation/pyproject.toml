@@ -1,14 +1,14 @@
 [tool.poetry]
-name = "resaas-schedule-optimization"
+name = "chainsail-schedule-optimization"
 version = "0.1.0"
-description = "Temperature schedule estimation for resaas"
+description = "Temperature schedule estimation for chainsail"
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
-packages = [ { include = "resaas" } ]
+packages = [ { include = "chainsail" } ]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "*"
-resaas-common = { path = "../common" , develop = true}
+chainsail-common = { path = "../common" , develop = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

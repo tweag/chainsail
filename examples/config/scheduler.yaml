@@ -1,6 +1,6 @@
 ssh_user: ubuntu
 ssh_public_key: "ssh-rsa XXXXXXXXXXXXXXXXXXXXXXXX yourComment"
-ssh_private_key_path: /home/user/.ssh/your-resaas-key.pem
+ssh_private_key_path: /home/user/.ssh/your-chainsail-key.pem
 node_entrypoint: bash -c 'echo gruezi'
 node_ports: [8080]
 node_image: ami-0502e817a62226e03 # "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20201026"
@@ -20,4 +20,4 @@ driver_specs:
       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     region: "eu-central-1"
     extra_creation_kwargs:
-      ex_security_groups: ["default", "resaas"]
+      ex_security_groups: ["default", "chainsail"]
