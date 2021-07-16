@@ -8,10 +8,15 @@ from celery import chain
 from cloudstorage.exceptions import NotFoundError
 import functools
 from flask import abort, jsonify, request
-from firebase_admin.auth import verify_id_token
+from firebase_admin.auth import (
+    verify_id_token,
+    InvalidIdTokenError,
+    ExpiredIdTokenError,
+    RevokedIdTokenError,
+)
 from chainsail.common.spec import JobSpecSchema
 from chainsail.scheduler.core import app, db, firebase_app
-from chainsail.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes
+from chainsail.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes, TblUsers
 from chainsail.scheduler.jobs import JobStatus
 from chainsail.scheduler.tasks import (
     scale_job_task,
@@ -36,17 +41,42 @@ def _is_dev_mode():
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        is_dev = _is_dev_mode()  # Verify user id token in non dev mode
         try:
             id_token = request.headers["Authorization"].split(" ").pop()
             claims = verify_id_token(id_token, app=firebase_app)
-            user_id = claims.get("user_id", None)
-        except:
-            user_id = None
-            claims = None
-        user_not_found = not claims or not user_id
-        # Verify user id token in non dev mode
-        if (not _is_dev_mode()) and user_not_found:
-            return "Unauthorized", 401
+        except (InvalidIdTokenError, ExpiredIdTokenError, RevokedIdTokenError) as e:
+            if not is_dev:
+                return {"msg": f"Unauthorized. Error: {e}"}, 401
+            else:
+                claims = None
+
+        user_id = claims.get("user_id", None)
+        if not is_dev and not user_id:
+            # empty uid
+            return {"msg": "Unauthorized"}, 401
+
+        email = claims.get("email", None)
+        if not is_dev and not email:
+            # empty email
+            return {"msg": "Unauthorized. No email found in token claim."}, 403
+
+        user = TblUsers.query.filter_by(email=email).first()
+        if not is_dev and not user:
+            # unregistered user
+            return (
+                {
+                    "msg": f"User with id {user_id} and email {email} is not registered. Please contact our supporting team."
+                },
+                403,
+            )
+
+        if not is_dev and not user.is_allowed:
+            # user not allowed
+            return {
+                "msg": "User with id {user_id} and email {email} is not allowed to use services."
+            }, 403
+
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
         return value
