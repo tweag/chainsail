@@ -219,7 +219,7 @@ const Job = ({ authed, isMobile }) => {
       } else {
         setErr(true);
         setErrMsg(
-          "Something went wrong. For more information, see your browser's console. To help us debug, please contact simeon.carstens@tweag.io."
+          'Something went wrong. To help us debug, please contact simeon.carstens@tweag.io.'
         );
         console.log(data);
         setIsModelActive(true);
@@ -227,9 +227,9 @@ const Job = ({ authed, isMobile }) => {
     } catch (e) {
       setErr(true);
       setErrMsg(
-        "Something went wrong. For more information, see your browser's console. To help us debug, please contact simeon.carstens@tweag.io."
+        'Something went wrong. To help us debug, please contact simeon.carstens@tweag.io.' +
+          (e.message ? ` Error: ${e.message}` : '') // Error object have a .message property containing the full message
       );
-      console.log(e);
       setIsModelActive(true);
     }
   };
