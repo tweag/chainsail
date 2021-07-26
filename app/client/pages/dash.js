@@ -189,22 +189,32 @@ const AcceptanceRateChart = ({ job, simulationRun, isMobile }) => {
 };
 
 const Logs = ({ job }) => {
-  useEffect(() => {
-    var element = document.getElementById('logs');
-    element.scrollTop = element.scrollHeight;
-  }, []);
-  const jobId = job.id;
-  const { data, error } = useSWR(`/api/graphite/logs/${jobId}`, fetcher, {
+  const { data, error } = useSWR(`/api/graphite/logs/${job.id}`, fetcher, {
     refreshInterval: 10000,
   });
   const logs =
     data && data.length > 0 ? data : [{ data: 'Please start the job to see the logs!' }];
   if (error) console.log(error);
+
+  const [sticked, setSticked] = useState(true); // whether logs element sticked to the bottom
+
+  useEffect(() => {
+    if (sticked) {
+      let element = document.getElementById('logs');
+      element.scrollTop = element.scrollHeight - element.clientHeight;
+    }
+  }, [sticked, data]);
+
   return (
     <FlexCenter className="py-5 h-1/2">
       <div
         className="w-full h-64 p-5 overflow-auto text-white bg-gray-900 lg:h-full lg:p-8 rounded-xl"
         id="logs"
+        onScroll={(e) => {
+          let element = e.target;
+          if (element.scrollTop == element.scrollHeight - element.clientHeight) setSticked(true);
+          else setSticked(false);
+        }}
       >
         {logs.map((log) => (
           <div key={uuidv4()} className="my-3 break-words">

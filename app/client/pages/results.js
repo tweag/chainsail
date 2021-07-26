@@ -189,10 +189,10 @@ const Results = ({ authed, isMobile }) => {
   if (authed)
     return (
       <Layout>
-        <FlexCol className="min-h-screen text-white lg:h-screen bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
+        <FlexCol className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
           <Navbar isMobile={isMobile} />
           <Container>
-            <FlexCenter className="py-5 md:py-32">
+            <FlexCenter className="py-5 md:py-20">
               {error && <div>Failed to load. Please refresh the page.</div>}
               {!error && data && data.errno && <div>Failed to load. Please refresh the page.</div>}
               {!error && data == undefined && <div>Loading ...</div>}
