@@ -7,12 +7,12 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 BUCKET_NAME=$1
-INTERNAL_IP=$(hostname -I | sed -r 's/([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+INTERNAL_IP=$(gcloud compute instances list --filter="name=('$(hostname)')" --format='[no-heading](INTERNAL_IP)')
 
 # Fetch secret config files
 rm -rf config_dpl
 cp -r config/ config_dpl
-cd config_dpl
+cd config_dpl || exit
 
 echo "Fetching docker/config_dpl/storage.yaml"
 gcloud secrets versions access latest --secret="storage-yaml" > storage.yaml
@@ -34,6 +34,6 @@ echo "Fetching docker/config_dpl/firebase_service_account.json"
 gcloud secrets versions access latest --secret="firebase-service-account-json" > firebase_service_account.json
 
 # Fetch .env.local
-cd ../../app/client
+cd ../../app/client || exit
 echo "Fetching app/client/.env.local"
 gcloud secrets versions access latest --secret="env-local" > .env.local
