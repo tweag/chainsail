@@ -30,6 +30,9 @@ echo "Fetching docker/config_dpl/remote_logging.yaml"
 gcloud secrets versions access latest --secret="remote-logging-yaml" > remote_logging.yaml
 sed -ri "s/(address:).*/\1 $INTERNAL_IP/" remote_logging.yaml
 
+echo "Fetching docker/config_dpl/firebase_service_account.json"
+gcloud secrets versions access latest --secret="firebase-service-account-json" > firebase_service_account.json
+
 # Fetch .env.local
 cd ../../app/client
 echo "Fetching app/client/.env.local"
