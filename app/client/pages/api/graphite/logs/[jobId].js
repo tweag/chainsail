@@ -6,5 +6,5 @@ export default async (req, res) => {
   const url = GRAPHITE_LOGS_URL(jobId);
   const method = 'GET';
   const checkAuth = false;
-  handleRequestResponse(req, res, url, method, checkAuth);
+  await handleRequestResponse(req, res, url, method, checkAuth);
 };
