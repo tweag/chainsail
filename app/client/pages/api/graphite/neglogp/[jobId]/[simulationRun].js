@@ -6,5 +6,5 @@ export default async (req, res) => {
   const url = GRAPHITE_NEGLOGP_URL(jobId, simulationRun);
   const method = 'GET';
   const checkAuth = false;
-  handleRequestResponse(req, res, url, method, checkAuth);
+  await handleRequestResponse(req, res, url, method, checkAuth);
 };
