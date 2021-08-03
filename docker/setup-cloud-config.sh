@@ -16,7 +16,7 @@ cd config_dpl || exit
 
 echo "Fetching docker/config_dpl/storage.yaml"
 gcloud secrets versions access latest --secret="storage-yaml" > storage.yaml
-sed -ri "s/(container_name:).*/\1 \"$BUCKET_NAME\"/" storage.yaml
+sed -ri "s/(container_name:).*/\1 $BUCKET_NAME/" storage.yaml
 
 echo "Fetching docker/config_dpl/controller.yaml"
 gcloud secrets versions access latest --secret="controller-yaml" > controller.yaml
