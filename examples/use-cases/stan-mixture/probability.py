@@ -7,15 +7,22 @@ class PDF:
 
     def __init__(self, model_code, data=None, port=8082):
         self._port = port
-        try:
-            r = requests.post(
-                f"{self.STAN_SERVER_ADDRESS}:{self._port}/v1/models",
-                json={"program_code": model_code},
+        r = requests.post(
+            f"{self.STAN_SERVER_ADDRESS}:{self._port}/v1/models",
+            json={"program_code": model_code},
             )
-            r.raise_for_status()
-            self._model_id = r.json()["name"]
-        except Exception as e:
-            raise Exception(f"Model compilation failed. Error: {e}")
+        # 201 is the HTTP status code for "created" and is what httpstan
+        # returns if a model has been compiled successfully
+        if r.status_code != 201:
+            # if the model did not compile successfully, httpstan returns
+            # a 400 status code (bad request)
+            if r.status_code == 400:
+                raise Exception((
+                    "Model compilation failed. httpstan message:\n"
+                    f"{r.json()['message']}"))
+            else:
+                r.raise_for_status()
+        self._model_id = r.json()["name"]
         self._data = data or {}
 
     def log_prob(self, x):
