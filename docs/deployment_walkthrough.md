@@ -47,7 +47,7 @@ On the newly created VM :
   ```
 
 ## Run the client locally
-See instructions [here](https://github.com/tweag/resaas/tree/etienne/use-secret-manager/app/client#develop).
+See instructions [here](../app/client#develop).
 
 ## Access the app
 The app can then be accessed through a browser, at [http://localhost:3000/]()
