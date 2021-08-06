@@ -46,7 +46,7 @@ You can also run the example `docker-compose` stack provided in the [./examples]
 ### Local apps, cloud resources
 
 For more demanding one-off sampling jobs, we recommend you deploy the Chainsail applications `docker-compose` stack found in [./docker](./docker) and configure it such that cloud computing resources (virtual machines, storage) are used.
-See the walkthrough in [./docs/deployment_walkthrough](./docs/deployment_walkthrough) for detailed instructions on how to to that.
+See the walkthrough in [./docs/deployment_walkthrough](./docs/deployment_walkthrough.md) for detailed instructions on how to do that.
 
 ### Full cloud deployment
 
