@@ -1,0 +1,124 @@
+# # Deployment
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata: 
+#   name: pgadmin-deployment
+#   labels:
+#     app: pgadmin
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pgadmin
+#   # Pod
+#   template:
+#     metadata:
+#       name: pgadmin-pod
+#       labels:
+#         app: pgadmin
+#     spec:
+#       containers:
+#         - name: pgadmin
+#           image: dpage/pgadmin4:5.4
+#           # image: ubuntu
+#           # command: ["tail", "-f", "/dev/null"]
+#           ports:
+#             - containerPort: 80
+#           env:
+#             - name: PGADMIN_DEFAULT_EMAIL
+#               value: user@domain.com
+#             - name: PGADMIN_DEFAULT_PASSWORD
+#               value: SuperSecret
+#           volumeMounts:
+#             - name: pg-servers-config
+#               mountPath: /pgadmin4/servers.json
+#               subPath: servers.json
+#       volumes:
+#         - name: pg-servers-config
+#           configMap:
+#             name: pg-server-config-cm
+
+# StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: 
+  name: pgadmin-statefulset
+spec:
+  serviceName: pgadmin-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgadmin
+  # Pod
+  template:
+    metadata:
+      name: pgadmin-pod
+      labels:
+        app: pgadmin
+    spec:
+      containers:
+        - name: pgadmin
+          image: dpage/pgadmin4:5.4
+          # image: ubuntu
+          # command: ["tail", "-f", "/dev/null"]
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              value: user@domain.com
+            - name: PGADMIN_DEFAULT_PASSWORD
+              value: SuperSecret
+          volumeMounts:
+            - name: pg-servers-config
+              mountPath: /pgadmin4/servers.json
+              subPath: servers.json
+      volumes:
+        - name: pg-servers-config
+          configMap:
+            name: pg-server-config-cm
+  volumeClaimTemplates:
+  - metadata:
+      name: pgadmin-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 3Gi
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgadmin-service
+spec:
+  selector:
+    app: pgadmin
+  type: NodePort
+  ports:
+    - targetPort: 80
+      port: 81
+      nodePort: 30000
+---
+# ConfigMap
+# It can also be created from the command line :
+# kubectl create configmap pg-server-config-cm --from-file=/path/to/resaas/docker/config_dpl/servers.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pg-server-config-cm
+data:
+  servers.json: |
+    {
+      "Servers": {
+        "1": {
+          "Name": "pg-scheduler",
+          "Group": "chainsail",
+          "Port": 5432,
+          "Username": "postgres",
+          "Host": "postgres",
+          "SSLMode": "prefer",
+          "MaintenanceDB": "postgres"
+        }
+      }
+    }

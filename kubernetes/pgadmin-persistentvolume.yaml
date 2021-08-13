@@ -1,0 +1,82 @@
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: pgadmin-deployment
+  labels:
+    app: pgadmin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgadmin
+  # Pod
+  template:
+    metadata:
+      name: pgadmin-pod
+      labels:
+        app: pgadmin
+    spec:
+      containers:
+        - name: pgadmin
+          image: dpage/pgadmin4:5.4
+          # image: ubuntu
+          # command: ["tail", "-f", "/dev/null"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              value: user@domain.com
+            - name: PGADMIN_DEFAULT_PASSWORD
+              value: SuperSecret
+          volumeMounts:
+            - name: pg-servers-config
+              mountPath: /pgadmin4/
+      volumes:
+        - name: pg-servers-config
+          persistentVolumeClaim: 
+            claimName: pg-server-config-pvc
+          
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgadmin-service
+spec:
+  selector:
+    app: pgadmin
+  ports:
+    - port: 81
+      targetPort: 80
+---
+# PersistentVolume
+# When using Minikube, one need to mount the directory inside Minikube's VM :
+# minikube mount /home/etienne/work/resaas/docker/config_dpl/:/home/etienne/work/resaas/docker/config_dpl/
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pg-server-config-pv
+spec:
+  accessModes: 
+    - ReadWriteMany
+  hostPath:
+    path: /home/etienne/work/resaas/docker/config_dpl/
+  capacity:
+    storage: 100Mi
+  storageClassName: ""
+---
+# PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pg-server-config-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi
+  volumeName: pg-server-config-pv
+  storageClassName: ""
+  
