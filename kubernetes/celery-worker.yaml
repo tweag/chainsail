@@ -1,0 +1,157 @@
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery
+  # Pod
+  template:
+    metadata:
+      labels:
+        app: celery
+    spec:
+      containers:
+        - name: celery
+          image: chainsail-celery-worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5001
+          env:
+            - name: CELERY_BROKER_URL
+              value: redis://redis:6379/0
+            - name: CELERY_RESULT_BACKEND
+              value: redis://redis:6379/1
+            - name: SQLALCHEMY_DATABASE_URI
+              value: postgresql://postgres:resaas-dev@postgres:5432/postgres
+            - name: CHAINSAIL_SCHEDULER_CONFIG
+              value: /config/scheduler.yaml
+            - name: CONCURRENCY
+              value: '15'
+          volumeMounts:
+            - name: config-scheduler
+              mountPath: /config/scheduler.yaml
+              subPath: scheduler.yaml
+            - name: config-firebase-service-account
+              mountPath: /config/firebase_service_account.json
+              subPath: firebase_service_account.json
+      volumes:
+        - name: config-scheduler
+          configMap:
+            name: config-scheduler-cm
+        - name: config-firebase-service-account
+          configMap:
+            name: config-firebase-cm
+      restartPolicy: Always # OnFailure should be possible, but not working now (because of Minikube ?)
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata: 
+  name: celery-service
+spec:
+  selector:
+    app: celery
+  ports:
+    - targetPort: 5001
+      port: 5000
+---
+# ConfigMap
+# It can also be created from the command line :
+# kubectl create configmap config-scheduler-yaml --from-file=/path/to/resaas/docker/config_dpl/scheduler.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-scheduler-cm
+data:
+  scheduler.yaml: |
+    controller:
+      image: eu.gcr.io/resaas-simeon-dev/chainsail-mpi-node:dev
+      cmd: chainsail-controller
+      args:
+        - --job
+        - "{job_id}"
+        - --storage
+        - /chainsail/storage.yaml
+        - --hostsfile
+        - /chainsail/hostfile
+        - --job-spec
+        - /chainsail/job.json
+        - --config
+        - /chainsail/controller.yaml
+      ports: [50051, 26]
+      user_code_image: eu.gcr.io/resaas-simeon-dev/chainsail-user-code:dev
+      httpstan_image:  eu.gcr.io/resaas-simeon-dev/httpstan-server:latest
+
+    worker:
+      image: eu.gcr.io/resaas-simeon-dev/chainsail-mpi-node:dev
+      cmd: /usr/sbin/sshd
+      args:
+        - -D
+      ports: [26]
+      user_code_image: eu.gcr.io/resaas-simeon-dev/chainsail-user-code:dev
+      httpstan_image:  eu.gcr.io/resaas-simeon-dev/httpstan-server:latest
+
+    node_type: LibcloudVM
+    results_url_expiry_time: 604800
+    remote_logging_config_path: /config/remote_logging.yaml
+
+    node_config:
+      # Custom resaas-dev-node image
+      vm_image_id: "3640211938793023814"
+      vm_size: "e2-standard-2"
+      # User is same as one defined in instance metadata below
+      ssh_user: ubuntu
+      ssh_public_key: "ssh-rsa ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxrjgZC7qz7Ern5I2S80u1kN+GY2y+WShfcJ/ZLjFH0MHRrK1pOtzz1BoCxje+sMTzOb/rXyxDUe2jGmBvVcifelO2MblXOBlCBRwwuACv3ChqOfu3Kjgpgn12am3hxyp1xAScbFlzG5/bF6ggx0T4QxBcJVwa1gwnVjaZnXikg36amMAMpUScN2Irl8XLPJgvM+jyV69YxsENuUszLKcuVKbgoWC6NBArbD2l3mUGOrmdGuF8vBts4VrwcpEmvAufwrtg+pz5Bsh5XqVYi+WVcXp83JhHMJHFN2QoNLUNf8qBU7gdFRG/ISa3AGICjOiOC+SE8CRgsiOwkXqvaCoeNAuIWNRP57rzezW9B09CfgsKUN9OafDz+pFdaDoM1a2Qa997YuXbxLvVnoSY81nd+thC+ugm3rHLvx+8VG65aP0Og2h0LcGkTCHGqYi6/3o2wcie5yGuxiRAU4jeQrz4JhgBLw6N/e2xvdtuq+bcp0QLPVxvMLvZN/MS09iY9fU= unsafeDevKey"
+      ssh_private_key_path: /config/unsafe_dev_key_rsa
+      storage_config_path: /config/storage.yaml
+      controller_config_path: /config/controller.yaml
+
+      libcloud_provider: GCE
+
+      libcloud_driver_inputs:
+        user_id: resaas-gce@resaas-simeon-dev.iam.gserviceaccount.com
+        key: /config/gce_key.json
+        project: resaas-simeon-dev
+        auth_type: SA
+        datacenter: europe-west1-b
+
+      libcloud_create_node_inputs:
+        # ex_network: resaas
+        ex_boot_disk:
+        # Required to enable ssh login
+        ex_metadata:
+          items:
+            - {
+                "key": "ssh-keys",
+                "value": "ubuntu: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxrjgZC7qz7Ern5I2S80u1kN+GY2y+WShfcJ/ZLjFH0MHRrK1pOtzz1BoCxje+sMTzOb/rXyxDUe2jGmBvVcifelO2MblXOBlCBRwwuACv3ChqOfu3Kjgpgn12am3hxyp1xAScbFlzG5/bF6ggx0T4QxBcJVwa1gwnVjaZnXikg36amMAMpUScN2Irl8XLPJgvM+jyV69YxsENuUszLKcuVKbgoWC6NBArbD2l3mUGOrmdGuF8vBts4VrwcpEmvAufwrtg+pz5Bsh5XqVYi+WVcXp83JhHMJHFN2QoNLUNf8qBU7gdFRG/ISa3AGICjOiOC+SE8CRgsiOwkXqvaCoeNAuIWNRP57rzezW9B09CfgsKUN9OafDz+pFdaDoM1a2Qa997YuXbxLvVnoSY81nd+thC+ugm3rHLvx+8VG65aP0Og2h0LcGkTCHGqYi6/3o2wcie5yGuxiRAU4jeQrz4JhgBLw6N/e2xvdtuq+bcp0QLPVxvMLvZN/MS09iY9fU= unsafeDevKey",
+              }
+        ex_service_accounts:
+          - { "email": "default", "scopes": ["cloud-platform"] }
+
+      init_script: |
+        # Initialize the docker credentials helper
+        docker-credential-gcr configure-docker
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-firebase-cm
+data:
+  firebase_service_account.json: |
+    {
+      "type": "service_account",
+      "project_id": "resaas-simeon-dev",
+      "private_key_id": "8809bd0a604cede0cbad8b5330989de27db9deb1",
+      "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCmw18TwXGS1w6i\nODqto9CxUyze1TSmek8UAJw69JPgfQVmdgSd5oxDLugIBn/PMnU26jkxatBFhbwb\n6/zGsS20+e7WI4AI4CASgWpIFdgezwXDLjR+BrdH2if24UhE2Y67uidsKshKA8p2\n7FWdkkMZWmSqDHM1KlhxorImPzBdRN6ItNHDMzQkp2aBomLhmmaFjfhkkWD3oF81\nSlT4EdtA93hOe1gfqH5yL530sYqz9az/5dqNARfKIr8PgdditE+dQoP6c/6vWXo/\nbwHyDXAYrPwqbKOD5oI73OyLrEARlwB+DrHmeMQoZ8plGt1TFcLpTlOaIFLiE4KS\nSHTQdD7JAgMBAAECggEALJVU6OIxq/FE30erIFsIYy/6cgSME+nlFFLpcbWLh1vF\nQtRQfapyW0/CBss+BjXWMn1CFx0YW03asZhQtwoNTzH2kVdiVn0c9fWVZXo5klsE\njl7e98Zx34rKXm1yNb34M+YbvgZeD7OdwFeEuCCvQarx+KhlcJRGmvLFMAZ6tqRR\nL7mclc+/GhFmQbMvk2kvFSSxRKUJMfLUYt8zAtv04/1jxf4PlLiBBdrZN9l9bQPY\nXGfAhSIqDkYxN7HrtX1m3M6Q5cYtqHgwE6HCAoOe9KWHV04epJ5Dzt05NKtA6R73\nUnljj7QUIn98a45jdC4wFXYs9XRifaWKCJQSDKUJhQKBgQDbhhogBdxxalXNdgxO\nGYHuSnKysqXz1WineZK+pmB0qXOPJqEVk/8HM4iKH+nCrwS6P79fUTEFB+TDglpv\neAIEnlXLSPAG1rttlolwCUGSVpVOpenw0amf7mCj7+2nMBteYlkcmIDMXUCvCQ+x\n/Z0eo26eSMPwMtADB94/9L+ZmwKBgQDCePxhEN2IvUNJ9Eov+olRbw1TyitlUSXf\na9R9UZsUKDvHjy8rwWosrermnUq8bOUQYMwKRwJrjujwbxySwBbMERC6NT9c7jM8\nGrvYl/V4u8m+If8GLEVDtmvnVGRhUvu4w3Z+A2Jw4aUKZUBacjdmSI755I/j47tB\nREfGER9RawKBgQC3iRoElgHljPrpyf2lumvIV9QnlXdsMovKIbnPzfis8ROdprVc\n/hxl3+8TVHUzgPKZ6TxOK+qpAx1/XFfSBGrjg6HFUVjkztlrWUXVNtfsypkQZWT/\nI7wG690+kxWGB5GKSv2oC9T7iCfRb+kAbkLT395XVg0DoOgK8KQforgiawKBgQCB\nTBlYm/L+t/8mC2LL1YI4/2HYBMGngjVw/2tuyrQVyc49FyjgqZ7jB9r26ztGXgxK\nQGFIr/+e7YxYVzejJk3B7dK2SzLOoZy06H1eO2I8nHY8kLPTMdn3dDD3w/ddcePk\n6yg8DhoEPTIS4FDSEcBdo/5TjTBR7xaQBUrHGJk+8wKBgCoI9GsKpOBEN0uq8xI0\nUirt7OG6OL6LxUwqaCGqeuZM4LuAgKsbaMCp+zsUjSvdtnnuHBycdjIxPxV1YMvv\niD640oJngErOYdYh+9Kx1pDWqBeicVjmV6oglG5weV37gPhfA/XCZo72vfLL05qD\nIP6Fv2Ful2jtpkNY2F76NVFJ\n-----END PRIVATE KEY-----\n",
+      "client_email": "firebase-adminsdk-l7wfy@resaas-simeon-dev.iam.gserviceaccount.com",
+      "client_id": "115293170081362625792",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-l7wfy%40resaas-simeon-dev.iam.gserviceaccount.com"
+    }
