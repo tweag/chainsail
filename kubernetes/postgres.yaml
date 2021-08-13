@@ -1,0 +1,45 @@
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  # Pod
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:11.5-alpine
+          args: ["postgres", "-c", "log_statement=all"]
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: resaas-dev
+          volumeMounts:
+            - name: postgres-volume
+              mountPath: /var/lib/postgresql/data
+      restartPolicy: Always
+      volumes:
+        - name: postgres-volume
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
