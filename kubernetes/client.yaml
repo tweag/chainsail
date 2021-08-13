@@ -1,0 +1,104 @@
+client:
+    image: "chainsail-client:latest"
+    volumes:
+      - ./client_sa_key_76530.json:/config/client_sa_key.json
+      - ../app/client/next.config.js:/opt/app/next.config.js
+    ports:
+      - "3000:3000"
+    environment:
+      - GRAPHITE_URL=http://graphite:8080
+      - SCHEDULER_URL=http://nginx:80
+      - GOOGLE_APPLICATION_CREDENTIALS=/config/client_sa_key.json
+    depends_on: [scheduler, graphite, nginx]
+
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+  # Pod
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      containers:
+        - name: client
+          image: chainsail-client:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GRAPHITE_URL
+              value: http://graphite:8080
+            - name: SCHEDULER_URL
+              value: http://nginx:80
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /config/client_sa_key.json
+          volumeMounts:
+            - name: client-key
+              mountPath: /config/client_sa_key.json
+              subPath: client_sa_key.json
+            - name: next-config
+              mountPath: /opt/app/next.config.js
+              subPath: next.config.js
+      volumes:
+        - name: client-key
+          configMap:
+            name: client-key-cm
+        - name: next-config
+          configMap:
+            name: next-config-cm
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata: 
+  name: client-service
+spec:
+  selector:
+    app: client
+  type: NodePort
+  ports:
+    - targetPort: 3000
+      port: 3000
+      nodePort: 3000
+      
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: client-key-cm
+data:
+  client_sa_key.json: |
+    {
+      "type": "service_account",
+      "project_id": "resaas-simeon-dev",
+      "private_key_id": "76530c40914e5db5cbb3d33c91d23fdc7a1836bf",
+      "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDZQB7h+le1wxFd\ninB2u5J/QmTP0zhvImLy0NQKZKB+B6VWTh8K/Q/qJHji0xhFv61bu/YteFdxDDKO\nWz1/+zeN1Xk9rC0D+4XP+2qi3LLAUP+n0R6RiVIVOIwuHIBVoXPz9TC79ZFSuxzj\nEOto9XekkrS41dFtB/KGp7UP/wtUvWHoNpmd7E+jpZFhCot9/2mv28Js00Yl+FnA\nZvGWkewCR8/ptcUm2iiUO1SYYtmjj6WLBF4YnH7tudDIFiXNQVzBmGOCE2Jcp7sN\nnfUxVDrX+odgLIZNGs8yekeNUv/MWLo++jVAUlKfk3nBuZCm5btJOgGfrcfHK5GW\nl8pngS6/AgMBAAECggEAAIvhkquYr+DYjisseD1QM4NnvIFpVBeP4dDLpREMDvUW\n9zNwGYzPDvAzi6KAnkr1Sn9GXGaVQGK0TS5b5mgBLkP6BOvbcHX1UrNtA7wus5Qg\nkyalVIlgtvlIRPoWX+DC6WYATuC3ElsHyhG/UylsORzornRUjVkmmixuz1D9Zs5S\nnS4KKEice3algsi3YPqCnEEaCLDkQ1qE8+KkySNMh8UJYzYV76XtjDywvcF0Xvqs\nCvTZSYnXU/Hn8ukug2dWYL4B9gpZix6+/97hTcywqnLcxw4rFSbu30xyEB8XnH6q\n2h+mylfSrKRHIwbcdKXM8m2/C8drVC0hMtd/Pk+g4QKBgQDt2xYchAEpmuPVAyU3\n3ifRsyNUMyxF9kJwwLxzkq1JAzqtAemi/FaHN7kNuSg3wEUM1k9pIQL/SX3/qaYN\nmSD5WEXMNeEXwgMWudpmyIUjIhN5LOJ+rkppZwTJzdRRsx7jKy4SAxyv4/g3lvEB\nCIPq+QQLGEKt2sXDJDyCkpAC4QKBgQDp0qXJ/pTMW2NL4ELGxIMSRSCOpO5BSzo5\nIWzhO+54cFKFqK4jGN1npBk38U2XHoAkzTT3eNLpUxwkwIhI/kJgswNTqe8epZUv\nJZ4C3tpG3TQZdWEcm2y0H94Fie5mQz56eccYHfjHi0azU/F8c0Y6mjMnq7X/4+uQ\n4qa7USEFnwKBgQCKjMbZf28p7AZwiy9/1pE9Tmry3ggZDLRw92QOsk7sK8xfALE2\ndmR0yVmrC8LIjt/p9WA2bbtQN2AEr66BV0Rk2i12IaBndWTVNRdqLb2X1H6hZCre\n/elsckzQvGvD12HTk9B3P4bTUijBQNRL9Mja84iOaehVWw09eXsh1/u5IQKBgQC/\n9yYPsUgegsUB7UtFft6RKFmzYqsMxiM19kA6poaBMM4/V54nyGk1hp8Bs8Vc1Til\nfigHKJYX4xjO/5akPsLmOvH3RSPBCHZzb7HLb4TK+x6j7B9faicTtroD2Br2sCxi\nRwpyvWCbCrhvz/IJl2ZIBIMNBcd1H30txTbXwKKYxwKBgQC7rnHsVKwPvkxHPbjh\nM9U/x3kk+N/k6YcSNp+IjtD9pl8BR8AQVEas07vm2YGT/0X1FgzQO3tQBj0isN2A\nH2JOUsbp1WBd4+tG38QRMShu3/CG763vDDpI+BrCslOj2qjfqdLoDRkUqrHooTtw\ncE59O3QqLY17A1Mt/o2bhTJlAg==\n-----END PRIVATE KEY-----\n",
+      "client_email": "resaas-client@resaas-simeon-dev.iam.gserviceaccount.com",
+      "client_id": "106658774537531435682",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/resaas-client%40resaas-simeon-dev.iam.gserviceaccount.com"
+    }
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: next-config-cm
+data:
+  next.config.js: |
+    module.exports = {
+      serverRuntimeConfig: {
+        secret_name: 'projects/164370646194/secrets/firebase-sa/versions/latest',
+      },
+      distDir: 'build',
+    };
