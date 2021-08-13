@@ -1,0 +1,62 @@
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphite-deployment
+spec:
+  selector:
+    matchLabels:
+      app: graphite
+  # Pod
+  template:
+    metadata:
+      name: graphite-pod
+      labels:
+        app: graphite
+    spec:
+      containers:
+        - name: graphite
+          image: graphiteapp/graphite-statsd
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+            - containerPort: 2003
+            - containerPort: 2004
+            - containerPort: 2023
+            - containerPort: 2024
+            - containerPort: 8125
+              protocol: UDP
+            - containerPort: 8126
+      restartPolicy: Always
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata: 
+  name: graphite-service
+spec:
+  selector:
+    app: graphite
+  ports:
+    - name: '80'
+      targetPort: 80
+      port: 8080
+    - name: '2003'
+      targetPort: 2003
+      port: 2003
+    - name: '2004'
+      targetPort: 2004
+      port: 2004
+    - name: '2023'
+      targetPort: 2023
+      port: 2023
+    - name: '2024'
+      targetPort: 2024
+      port: 2024
+    - name: '8125'
+      targetPort: 8125
+      port: 8125
+      protocol: UDP
+    - name: '8126'
+      targetPort: 8126
+      port: 8126
