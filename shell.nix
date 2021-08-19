@@ -45,6 +45,6 @@ in
       file
     ];
   shellHook = ''
-    export LD_LIBRARY_PATH=$(nix eval --raw nixpkgs.stdenv.cc.cc.lib)/lib:$LD_LIBRARY_PATH:${pkgs.file}/lib
+    export LD_LIBRARY_PATH=${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.file}/lib:$LD_LIBRARY_PATH
   '';
   }
