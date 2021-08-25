@@ -106,6 +106,25 @@ class VMNodeConfigSchema(Schema):
 
 
 @dataclass
+class K8sNodeConfig(HasDriver):
+    """Configurations for a `K8sNode`"""
+    name: str
+    
+    def create_node_driver(self):
+        print("CREATE NODE DRIVER")
+
+
+class K8sNodeConfigSchema(Schema):
+    # an arbitrary field for testing
+    name = fields.String(required=True)
+    
+    @post_load
+    def make_k8s_node_config(self, data, **kwargs):
+        print("LOAD K8S NODE CONFIG")
+        return K8sNodeConfig(**data)
+
+
+@dataclass
 class GeneralNodeConfig:
     image: str
     ports: List[int]
@@ -129,7 +148,10 @@ class GeneralNodeConfigSchema(Schema):
 
 
 # Global registry of node config schemas
-NODE_CONFIG_SCHEMAS: Dict[NodeType, Schema] = {NodeType.LIBCLOUD_VM: VMNodeConfigSchema()}
+NODE_CONFIG_SCHEMAS: Dict[NodeType, Schema] = {
+    NodeType.LIBCLOUD_VM: VMNodeConfigSchema(),
+    NodeType.KUBERNETES_POD: K8sNodeConfigSchema()
+}
 
 
 @dataclass

@@ -8,6 +8,7 @@ from chainsail.scheduler.db import TblJobs, TblNodes
 
 class NodeType(Enum):
     LIBCLOUD_VM = "LibcloudVM"
+    KUBERNETES_POD = "KubernetesPod"
 
 
 class NodeStatus(Enum):
