@@ -11,17 +11,14 @@ class PDF:
             f"{self.STAN_SERVER_ADDRESS}:{self._port}/v1/models",
             json={"program_code": model_code},
         )
-        # 201 is the HTTP status code for "created" and is what httpstan
-        # returns if a model has been compiled successfully
-        if r.status_code != 201:
-            # if the model did not compile successfully, httpstan returns
-            # a 400 status code (bad request)
-            if r.status_code == 400:
-                raise Exception(
-                    ("Model compilation failed. httpstan message:\n" f"{r.json()['message']}")
-                )
-            else:
-                r.raise_for_status()
+        # if the model did not compile successfully, httpstan returns
+        # a 400 status code (bad request)
+        if r.status_code == 400:
+            raise Exception(
+                ("Model compilation failed. httpstan message:\n" f"{r.json()['message']}")
+            )
+        else:
+            r.raise_for_status()
         self._model_id = r.json()["name"]
         self._data = data or {}
 
