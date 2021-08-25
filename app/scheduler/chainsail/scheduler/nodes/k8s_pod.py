@@ -12,6 +12,12 @@ from chainsail.scheduler.config import (
 )
 from chainsail.scheduler.db import TblJobs, TblNodes
 from chainsail.scheduler.nodes.base import Node, NodeType, NodeStatus
+from chainsail.scheduler.errors import (
+    ConfigurationError,
+    MissingNodeError,
+    NodeError,
+    ObjectConstructionError,
+)
 import kubernetes as kub
 
 
@@ -54,8 +60,9 @@ class K8sNode(Node):
     
     def create(self) -> Tuple[bool, str]:
         # TODO
-        # Load kubernetes config
-        kub.config.load_kub_config()
+        # Load the kubernetes config from ~/.kube/config. 
+        # This will use the current active context for pod deployment.
+        kub.config.load_kube_config()
         # Define pod's containers
         httpstan_container = kub.client.V1Container(
             name="httpstan",
@@ -108,15 +115,21 @@ class K8sNode(Node):
         return (True, "LOGS FROM CREATE...")
     
     def restart(self) -> bool:
-        # TODO
+        if not self._pod:
+            raise MissingNodeError
+        logger.info("Restarting pod...")
         core_v1 = kub.client.CoreV1Api()
         response = core_v1.patch_namespaced_pod(name=self._name, body=self._pod, namespace="default")
+        self.sync_representation()
         return True
     
     def delete(self) -> bool:
-        # TODO
-        core_v1 = kub.client.CoreV1pi()
+        if not self._pod:
+            return True
+        logger.info("Deleting pod...")
+        core_v1 = kub.client.CoreV1Api()
         response = core_v1.delete_namespaced_pod(name=self._name, namespace="default")
+        self.sync_representation()
         return True
     
     @property
@@ -178,16 +191,11 @@ class K8sNode(Node):
         is_controller=False,
     ) -> "Node":
         
-        node_config: K8sNodeConfig = scheduler_config.node_config
+        #node_config: K8sNodeConfig = scheduler_config.node_config
         if is_controller:
             config = scheduler_config.controller
         else:
             config = scheduler_config.worker
-        
-        
-        
-        
-        
         
         # Bind the new node to a database record if a job record was specified
         if job_rep:
@@ -199,6 +207,8 @@ class K8sNode(Node):
         node = cls(
             name=name,
             config=config,
+            spec=spec,
+            representation=node_rep,
         )
         
         # Sync over the various fields
