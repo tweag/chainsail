@@ -7,7 +7,7 @@ services:
     command: ["postgres", "-c", "log_statement=all"]
     environment:
       # Using default "postgres" database and "postgres" user
-nn      - POSTGRES_PASSWORD=resaas-dev
+      - POSTGRES_PASSWORD=resaas-dev
     volumes:
       - postgres:/var/lib/postgresql/data
     ports:
