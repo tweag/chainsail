@@ -111,7 +111,7 @@ class K8sNodeConfig(HasDriver):
     name: str
     
     def create_node_driver(self):
-        print("CREATE NODE DRIVER")
+        pass
 
 
 class K8sNodeConfigSchema(Schema):
