@@ -1,6 +1,5 @@
-
-
-
+import logging
+import os
 from typing import Callable, Optional, Tuple
 
 from chainsail.common.spec import JobSpec, JobSpecSchema
@@ -19,13 +18,31 @@ from chainsail.scheduler.errors import (
     ObjectConstructionError,
 )
 import kubernetes as kub
+from enum import Enum
 
 
 
+logger = logging.getLogger("chainsail.scheduler")
+# Load the kubernetes config
+# from the file specified by KUBECONFIG environment variable if it exists
+# or from the default location $HOME/.kube/config
+kub.config.load_kube_config()
+core_v1 = kub.client.CoreV1Api()
 
+DEP_INSTALL_TEMPLATE = """#!/usr/bin/env bash
+set -ex
+# Install dependencies (if any are provided)
+{dep_install_commands}
+"""
 
-
-
+class PodStatus(Enum):
+    # See https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase
+    INITIALIZED = "Initialized" # The pod has been specified (not a K8s pod phase)
+    PENDING = "Pending"         # The pod is being created
+    RUNNING = "Running"         # The pod is running
+    SUCCEEDED = "Succeeded"     # All containers in the pod have terminated in success
+    FAILED = "Failed"           # All containers have terminated, at least one of which in failure
+    UNKNOWN = "Unknown"         # The state of the pod could not be obtained
 
 
 
@@ -37,88 +54,133 @@ class K8sNode(Node):
     NODE_TYPE = "KubernetesPod"
     # NODE_TYPE = NodeType.KUBERNETES_POD
     
-    
     def __init__(
         self,
         name: str,
         config: GeneralNodeConfig,
         spec: JobSpec,
         representation: Optional[TblNodes] = None,
-        status: Optional[NodeStatus] = None,
+        status: Optional[PodStatus] = PodStatus.INITIALIZED,
     ):
         self._name = name
         self._representation = representation
         self._config = config
         self.spec = spec
-        if not status:
-            self._status = NodeStatus.INITIALIZED
-        else:
-            self._status = status
-        # TODO address field
+        self._status = status
         self._address = None
         self._pod = None
-    
+        
+    def _user_install_script(self) -> str:
+        install_commands = "\n".join([d.installation_script for d in self.spec.dependencies])
+        script = DEP_INSTALL_TEMPLATE.format(dep_install_commands=install_commands)
+        return script
+        
+        
     def create(self) -> Tuple[bool, str]:
-        # TODO
-        # Load the kubernetes config from ~/.kube/config. 
-        # This will use the current active context for pod deployment.
-        kub.config.load_kube_config()
-        # Define pod's containers
+        
+        ## CONTAINERS
+        # HTTPStan Container
         httpstan_container = kub.client.V1Container(
             name="httpstan",
             image=self._config.httpstan_image,
             env=[kub.client.V1EnvVar(name='HTTPSTAN_PORT', value='8082')],
-            host_network=True,
             #TODO: Add something to replace `--log-driver=gcplogs` -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
+        # User code container
+        install_script_name = "install_job_deps.sh"
+        install_script_target = os.path.join("/chainsail", install_script_name)
+        install_script_src = self._user_install_script()
         user_code_container = kub.client.V1Container(
-            name="user_code",
+            name="user-code",
             image=self._config.user_code_image,
             args=["python", "/app/app/user_code_server/chainsail/user_code_server/__init__.py"],
             ports=[kub.client.V1ContainerPort(container_port=50052)],
             env=[
                 kub.client.V1EnvVar(name='USER_PROB_URL', value=self.spec.probability_definition),
-                kub.client.V1EnvVar(name='USER_INSTALL_SCRIPT', value=None), #TODO: fill the value for install script
-                kub.client.V1EnvVar(name='USER_CODE_SERVER_PORT', value=50052),
+                kub.client.V1EnvVar(name='USER_INSTALL_SCRIPT', value=install_script_target),
+                kub.client.V1EnvVar(name='USER_CODE_SERVER_PORT', value='50052'),
                 kub.client.V1EnvVar(name='REMOTE_LOGGING_CONFIG_PATH', value='/chainsail/remote_logging.yaml'),
             ],
             volume_mounts=[
-                #TODO: volume for remote_logging.yaml
-                #TODO: volume for install_script
+                kub.client.V1VolumeMount(
+                    name="config-volume",
+                    mount_path="/chainsail/remote_logging.yaml",
+                    sub_path="remote_logging.yaml",
+                ),
+                kub.client.V1VolumeMount(
+                    name="user-dep",
+                    mount_path=install_script_target,
+                    sub_path=install_script_name,
+                )
             ],
-            host_network=True,
             #TODO: Add something to replace `--log-driver=gcplogs` -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
+        # Worker container
+        container_cmd = [self._config.cmd] + self._config.args
+        container_cmd = [arg.format(job_id=self.representation.job.id) for arg in container_cmd]
         container = kub.client.V1Container(
             name="rex",
             image=self._config.image,
-            args=[self._config.cmd] + self._config.args,
+            args=container_cmd,
             ports=[kub.client.V1ContainerPort(container_port=50051)],
             volume_mounts=[
-                #TODO: volume for config_dir
+                kub.client.V1VolumeMount(
+                    name="config-volume",
+                    mount_path="/chainsail",
+                ),
+                kub.client.V1VolumeMount(
+                    name="config-volume",
+                    mount_path="/root/.ssh/id.pem",
+                    sub_path="id.pem",
+                )
                 #TODO: volume for authorized_keys
-                #TODO: volume for pem_file
             ],
-            host_network=True,
             #TODO: Add something to replace `--log-driver=gcplogs` -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
-        # Define pod
+        
+        ## VOLUMES
+        # User code volume
+        user_code_configmap_name = self._name+"-user-dep-configmap"
+        user_code_configmap = kub.client.V1ConfigMap(
+            api_version="v1",
+            kind="ConfigMap",
+            metadata=kub.client.V1ObjectMeta(name=user_code_configmap_name, labels={"cm":"user-code"}),
+            data={install_script_name: install_script_src}
+        )
+        user_code_volume = kub.client.V1Volume(
+            name="user-dep",
+            config_map=kub.client.V1ConfigMapVolumeSource(name=user_code_configmap_name),
+        )
+        # Config volume
+        config_volume = kub.client.V1Volume(
+            name="config-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(name="config-dpl-configmap"),
+        )
+        
+        ## POD
         self._pod = kub.client.V1Pod(
             api_version="v1",
             kind="Pod",
             metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app":"rex-pod"}),
-            spec=kub.client.V1PodSpec(containers=[httpstan_container, user_code_container, container])
+            spec=kub.client.V1PodSpec(
+                containers=[httpstan_container, user_code_container, container],
+                volumes=[user_code_volume, config_volume],
+            )
         )
-        # Create pod
-        core_v1 = kub.client.CoreV1Api()
-        response = core_v1.create_namespaced_pod(body=self._pod, namespace="default")
+        
+        # Create resources
+        # Configmaps
+        _ = core_v1.create_namespaced_config_map(body=user_code_configmap, namespace="default")
+        # Pod
+        _ = core_v1.create_namespaced_pod(body=self._pod, namespace="default")
+        self.refresh_status()
+        self.sync_representation()
         return (True, "LOGS FROM CREATE...")
     
     def restart(self) -> bool:
         if not self._pod:
             raise MissingNodeError
         logger.info("Restarting pod...")
-        core_v1 = kub.client.CoreV1Api()
         response = core_v1.patch_namespaced_pod(name=self._name, body=self._pod, namespace="default")
         self.sync_representation()
         return True
@@ -127,7 +189,6 @@ class K8sNode(Node):
         if not self._pod:
             return True
         logger.info("Deleting pod...")
-        core_v1 = kub.client.CoreV1Api()
         response = core_v1.delete_namespaced_pod(name=self._name, namespace="default")
         self.sync_representation()
         return True
@@ -158,7 +219,11 @@ class K8sNode(Node):
     
     @property
     def address(self):
-        # TODO
+        try:
+            pod = core_v1.read_namespaced_pod(name=self._name, namespace="default")
+            self._address = pod.status.pod_ip # or host_ip ?
+        except:
+            pass
         return self._address
 
     @property
@@ -166,8 +231,23 @@ class K8sNode(Node):
         return self._status
     
     def refresh_status(self):
-        # TODO
-        pass
+        try:
+            pod = core_v1.read_namespaced_pod(name=self._name, namespace="default")
+            phase = pod.status.phase
+        except:
+            pass
+        if not phase:
+            self._status = PodStatus.INITIALIZED
+        elif phase == "Pending":
+            self._status = PodStatus.PENDING
+        elif phase == "Running":
+            self._status = PodStatus.RUNNING
+        elif phase == "Succeeded":
+            self._status = PodStatus.SUCCEEDED
+        elif phase == "Failed":
+            self._status = PodStatus.FAILED
+        elif phase == "Unknown":
+            self._status = PodStatus.UNKNOWN
     
     @classmethod
     def from_representation(
@@ -214,14 +294,3 @@ class K8sNode(Node):
         # Sync over the various fields
         node.sync_representation()
         return node
-    
-    
-
-    
-
-
-
-
-
-
-

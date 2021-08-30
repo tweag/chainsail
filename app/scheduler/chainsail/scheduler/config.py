@@ -108,19 +108,22 @@ class VMNodeConfigSchema(Schema):
 @dataclass
 class K8sNodeConfig(HasDriver):
     """Configurations for a `K8sNode`"""
-    name: str
+    
+    ssh_public_key: str
+    ssh_private_key_path: str
     
     def create_node_driver(self):
         pass
 
 
 class K8sNodeConfigSchema(Schema):
-    # an arbitrary field for testing
-    name = fields.String(required=True)
+    # The ssh public key (contents) to install on the VM
+    ssh_public_key = fields.String(required=True)
+    # The path to the ssh private key to use for connecting to the VM
+    ssh_private_key_path = fields.String(required=True)
     
     @post_load
     def make_k8s_node_config(self, data, **kwargs):
-        print("LOAD K8S NODE CONFIG")
         return K8sNodeConfig(**data)
 
 
