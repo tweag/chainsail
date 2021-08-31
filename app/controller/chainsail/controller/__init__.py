@@ -1,5 +1,6 @@
 import logging
 import time
+import os
 from dataclasses import asdict
 
 import requests
@@ -566,6 +567,9 @@ def update_nodes_mpi(
             logger.debug(f"Found peer with name: {n['name']}")
             hosts.append(n["address"])
     logger.debug(f"Found a total of {len(hosts)} peers")
+    # When first writing the hostfile, create directory if not exists
+    os.makedirs(os.path.dirname(hostfile_path), exist_ok=True)
+    # Write/Update hostfile
     with open(hostfile_path, "w") as f:
         logger.debug(f"Updating hostfile at {hostfile_path}")
         for h in hosts:
