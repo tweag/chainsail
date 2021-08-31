@@ -58,6 +58,7 @@ class K8sNode(Node):
         self,
         name: str,
         config: GeneralNodeConfig,
+        node_config: K8sNodeConfig,
         spec: JobSpec,
         representation: Optional[TblNodes] = None,
         status: Optional[PodStatus] = PodStatus.INITIALIZED,
@@ -65,6 +66,7 @@ class K8sNode(Node):
         self._name = name
         self._representation = representation
         self._config = config
+        self._node_config = node_config
         self.spec = spec
         self._status = status
         self._address = None
@@ -116,6 +118,8 @@ class K8sNode(Node):
             #TODO: Add something to replace `--log-driver=gcplogs` -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
         # Worker container
+        job_spec_filename = "job.json"
+        ssh_key_filename = "authorized_keys"
         container_cmd = [self._config.cmd] + self._config.args
         container_cmd = [arg.format(job_id=self.representation.job.id) for arg in container_cmd]
         container = kub.client.V1Container(
@@ -132,24 +136,57 @@ class K8sNode(Node):
                     name="config-volume",
                     mount_path="/root/.ssh/id.pem",
                     sub_path="id.pem",
-                )
-                #TODO: volume for authorized_keys
+                ),
+                kub.client.V1VolumeMount(
+                    name="ssh-key",
+                    mount_path="/app/config/ssh/"+ssh_key_filename,
+                    sub_path=ssh_key_filename,
+                ),
+                kub.client.V1VolumeMount(
+                    name="job-spec",
+                    mount_path="/chainsail-bis/"+job_spec_filename,
+                    sub_path=job_spec_filename,
+                ),
             ],
             #TODO: Add something to replace `--log-driver=gcplogs` -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
         
         ## VOLUMES
         # User code volume
-        user_code_configmap_name = self._name+"-user-dep-configmap"
+        user_code_configmap_name = "user-dep-configmap-"+self._name
         user_code_configmap = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
-            metadata=kub.client.V1ObjectMeta(name=user_code_configmap_name, labels={"cm":"user-code"}),
+            metadata=kub.client.V1ObjectMeta(name=user_code_configmap_name, labels={"cm":"pod"}),
             data={install_script_name: install_script_src}
         )
         user_code_volume = kub.client.V1Volume(
             name="user-dep",
             config_map=kub.client.V1ConfigMapVolumeSource(name=user_code_configmap_name),
+        )
+        # Job spec volume
+        job_spec_configmap_name = "job-spec-configmap-"+self._name
+        job_spec_configmap = kub.client.V1ConfigMap(
+            api_version="v1",
+            kind="ConfigMap",
+            metadata=kub.client.V1ObjectMeta(name=job_spec_configmap_name, labels={"cm":"pod"}),
+            data={job_spec_filename: JobSpecSchema().dumps(self.spec)}
+        )
+        job_spec_volume = kub.client.V1Volume(
+            name="job-spec",
+            config_map=kub.client.V1ConfigMapVolumeSource(name=job_spec_configmap_name),
+        )
+        # Public ssh key volume
+        ssh_key_configmap_name = "ssh-key-configmap-"+self._name
+        ssh_key_configmap = kub.client.V1ConfigMap(
+            api_version="v1",
+            kind="ConfigMap",
+            metadata=kub.client.V1ObjectMeta(name=ssh_key_configmap_name, labels={"cm":"pod"}),
+            data={ssh_key_filename: self._node_config.ssh_public_key}
+        )
+        ssh_key_volume = kub.client.V1Volume(
+            name="ssh-key",
+            config_map=kub.client.V1ConfigMapVolumeSource(name=ssh_key_configmap_name),
         )
         # Config volume
         config_volume = kub.client.V1Volume(
@@ -164,13 +201,15 @@ class K8sNode(Node):
             metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app":"rex-pod"}),
             spec=kub.client.V1PodSpec(
                 containers=[httpstan_container, user_code_container, container],
-                volumes=[user_code_volume, config_volume],
+                volumes=[user_code_volume, job_spec_volume, ssh_key_volume, config_volume],
             )
         )
         
-        # Create resources
+        ##  CREATE RESOURCES
         # Configmaps
         _ = core_v1.create_namespaced_config_map(body=user_code_configmap, namespace="default")
+        _ = core_v1.create_namespaced_config_map(body=job_spec_configmap, namespace="default")
+        _ = core_v1.create_namespaced_config_map(body=ssh_key_configmap, namespace="default")
         # Pod
         _ = core_v1.create_namespaced_pod(body=self._pod, namespace="default")
         self.refresh_status()
@@ -257,8 +296,35 @@ class K8sNode(Node):
         scheduler_config: SchedulerConfig,
         is_controller=False,
     ) -> "Node":
-        # TODO
-        pass
+    
+        node_config: K8sNodeConfig = scheduler_config.node_config
+        if is_controller:
+            config = scheduler_config.controller
+        else:
+            config = scheduler_config.worker
+        # If the node has only been initialized, no actual compute resource
+        # has been created yet
+        if node_rep.status == PodStatus.INITIALIZED:
+            node = None
+            name = node_rep.name
+        # Otherwise we can look up the compute resource using the driver
+        else:
+            node = core_v1.read_namespaced_pod(name=node_rep.name, namespace="default")
+            if not node:
+                raise ObjectConstructionError(
+                    f"Failed to find an existing pod with name "
+                    f"{node_rep.name} job: {node_rep.job_id}, node: {node_rep.id}"
+                )
+            name = node.metadata.name
+
+        return cls(
+            name=name,
+            config=config,
+            node_config=node_config,
+            spec=spec,
+            status=PodStatus(node_rep.status),
+            representation=node_rep,
+        )
     
     
     @classmethod
@@ -271,7 +337,7 @@ class K8sNode(Node):
         is_controller=False,
     ) -> "Node":
         
-        #node_config: K8sNodeConfig = scheduler_config.node_config
+        node_config: K8sNodeConfig = scheduler_config.node_config
         if is_controller:
             config = scheduler_config.controller
         else:
@@ -287,6 +353,7 @@ class K8sNode(Node):
         node = cls(
             name=name,
             config=config,
+            node_config=node_config,
             spec=spec,
             representation=node_rep,
         )
