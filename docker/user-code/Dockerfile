@@ -50,6 +50,9 @@ FROM system-deps as app
 
 COPY --from=builder /app /app
 
+RUN apt-get update -y
+RUN apt-get install -y libopenblas-dev
+
 # Directory for user data
 RUN mkdir -p /probability
 
