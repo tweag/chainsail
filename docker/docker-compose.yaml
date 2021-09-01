@@ -7,7 +7,7 @@ services:
     command: ["postgres", "-c", "log_statement=all"]
     environment:
       # Using default "postgres" database and "postgres" user
-nn      - POSTGRES_PASSWORD=resaas-dev
+      - POSTGRES_PASSWORD=resaas-dev
     volumes:
       - postgres:/var/lib/postgresql/data
     ports:
@@ -50,13 +50,15 @@ nn      - POSTGRES_PASSWORD=resaas-dev
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - SQLALCHEMY_DATABASE_URI=postgresql://postgres:resaas-dev@postgres:5432/postgres
       - CHAINSAIL_SCHEDULER_CONFIG=/config/scheduler.yaml
+      - KUBECONFIG=/config/kubeconfig.yaml
     volumes:
       - ./config:/config
+      - ./kubeconfig-gke.yaml:/config/kubeconfig.yaml
   scheduler:
     image: "chainsail-scheduler:latest"
     volumes:
       - ./config:/config
-      - ~/.kube:/root/.kube
+      - ./kubeconfig-gke.yaml:/config/kubeconfig.yaml
     ports:
       - "5000:5001"
     environment:
@@ -65,6 +67,7 @@ nn      - POSTGRES_PASSWORD=resaas-dev
       - SQLALCHEMY_DATABASE_URI=postgresql://postgres:resaas-dev@postgres:5432/postgres
       - CHAINSAIL_SCHEDULER_CONFIG=/config/scheduler.yaml
       - GOOGLE_APPLICATION_CREDENTIALS=/config/firebase_service_account.json
+      - KUBECONFIG=/config/kubeconfig.yaml
     depends_on: [postgres, celery-worker, redis, graphite]
   nginx:
     image: "chainsail-nginx:latest"
