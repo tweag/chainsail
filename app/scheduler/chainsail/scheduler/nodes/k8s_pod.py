@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 from typing import Callable, Optional, Tuple
 
 from chainsail.common.spec import JobSpec, JobSpecSchema
@@ -57,6 +58,7 @@ class K8sNode(Node):
     def __init__(
         self,
         name: str,
+        is_controller: bool,
         config: GeneralNodeConfig,
         node_config: K8sNodeConfig,
         spec: JobSpec,
@@ -64,6 +66,10 @@ class K8sNode(Node):
         status: Optional[PodStatus] = PodStatus.INITIALIZED,
     ):
         self._name = name
+        self._name_cm_usercode = "user-dep-configmap-"+self._name
+        self._name_cm_jobspec = "job-spec-configmap-"+self._name
+        self._name_cm_sshkey = "ssh-key-configmap-"+self._name
+        self._is_controller = is_controller
         self._representation = representation
         self._config = config
         self._node_config = node_config
@@ -135,7 +141,7 @@ class K8sNode(Node):
                 kub.client.V1VolumeMount(
                     name="config-volume",
                     mount_path="/root/.ssh/id.pem",
-                    sub_path="id.pem",
+                    sub_path="unsafe_dev_key_rsa",
                 ),
                 kub.client.V1VolumeMount(
                     name="ssh-key",
@@ -153,52 +159,49 @@ class K8sNode(Node):
         
         ## VOLUMES
         # User code volume
-        user_code_configmap_name = "user-dep-configmap-"+self._name
         user_code_configmap = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
-            metadata=kub.client.V1ObjectMeta(name=user_code_configmap_name, labels={"cm":"pod"}),
+            metadata=kub.client.V1ObjectMeta(name=self._name_cm_usercode, labels={"cm":"pod"}),
             data={install_script_name: install_script_src}
         )
         user_code_volume = kub.client.V1Volume(
             name="user-dep",
-            config_map=kub.client.V1ConfigMapVolumeSource(name=user_code_configmap_name),
+            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm_usercode),
         )
         # Job spec volume
-        job_spec_configmap_name = "job-spec-configmap-"+self._name
         job_spec_configmap = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
-            metadata=kub.client.V1ObjectMeta(name=job_spec_configmap_name, labels={"cm":"pod"}),
+            metadata=kub.client.V1ObjectMeta(name=self._name_cm_jobspec, labels={"cm":"pod"}),
             data={job_spec_filename: JobSpecSchema().dumps(self.spec)}
         )
         job_spec_volume = kub.client.V1Volume(
             name="job-spec",
-            config_map=kub.client.V1ConfigMapVolumeSource(name=job_spec_configmap_name),
+            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm_jobspec),
         )
         # Public ssh key volume
-        ssh_key_configmap_name = "ssh-key-configmap-"+self._name
         ssh_key_configmap = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
-            metadata=kub.client.V1ObjectMeta(name=ssh_key_configmap_name, labels={"cm":"pod"}),
+            metadata=kub.client.V1ObjectMeta(name=self._name_cm_sshkey, labels={"cm":"pod"}),
             data={ssh_key_filename: self._node_config.ssh_public_key}
         )
         ssh_key_volume = kub.client.V1Volume(
             name="ssh-key",
-            config_map=kub.client.V1ConfigMapVolumeSource(name=ssh_key_configmap_name),
+            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm_sshkey),
         )
         # Config volume
         config_volume = kub.client.V1Volume(
             name="config-volume",
-            config_map=kub.client.V1ConfigMapVolumeSource(name="config-dpl-configmap"),
+            config_map=kub.client.V1ConfigMapVolumeSource(name="config-dpl-configmap", default_mode=0o700),
         )
         
         ## POD
         self._pod = kub.client.V1Pod(
             api_version="v1",
             kind="Pod",
-            metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app":"rex-pod"}),
+            metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app":"rex-pod", "id":self._name}),
             spec=kub.client.V1PodSpec(
                 containers=[httpstan_container, user_code_container, container],
                 volumes=[user_code_volume, job_spec_volume, ssh_key_volume, config_volume],
@@ -214,21 +217,29 @@ class K8sNode(Node):
         _ = core_v1.create_namespaced_pod(body=self._pod, namespace="default")
         self.refresh_status()
         self.sync_representation()
+        # Wait for all resources to be created
+        while self._status==PodStatus.INITIALIZED or self._status==PodStatus.PENDING or not self._address:
+            time.sleep(3)
+            self.refresh_status()
+            self.sync_representation()
+        # Wait for controller to initialize properly
+        if self._is_controller:
+            time.sleep(30)
         return (True, "LOGS FROM CREATE...")
     
     def restart(self) -> bool:
-        if not self._pod:
-            raise MissingNodeError
         logger.info("Restarting pod...")
-        response = core_v1.patch_namespaced_pod(name=self._name, body=self._pod, namespace="default")
+        _ = core_v1.patch_namespaced_pod(name=self._name, body=self._pod, namespace="default")
+        self.refresh_status()
         self.sync_representation()
         return True
     
     def delete(self) -> bool:
-        if not self._pod:
-            return True
         logger.info("Deleting pod...")
-        response = core_v1.delete_namespaced_pod(name=self._name, namespace="default")
+        _ = core_v1.delete_namespaced_pod(name=self._name, namespace="default")
+        _ = core_v1.delete_namespaced_config_map(name=self._name_cm_usercode, namespace="default")
+        _ = core_v1.delete_namespaced_config_map(name=self._name_cm_jobspec, namespace="default")
+        _ = core_v1.delete_namespaced_config_map(name=self._name_cm_sshkey, namespace="default")
         self.sync_representation()
         return True
     
@@ -260,7 +271,7 @@ class K8sNode(Node):
     def address(self):
         try:
             pod = core_v1.read_namespaced_pod(name=self._name, namespace="default")
-            self._address = pod.status.pod_ip # or host_ip ?
+            self._address = pod.status.pod_ip
         except:
             pass
         return self._address
@@ -274,7 +285,7 @@ class K8sNode(Node):
             pod = core_v1.read_namespaced_pod(name=self._name, namespace="default")
             phase = pod.status.phase
         except:
-            pass
+            phase = None
         if not phase:
             self._status = PodStatus.INITIALIZED
         elif phase == "Pending":
@@ -319,6 +330,7 @@ class K8sNode(Node):
 
         return cls(
             name=name,
+            is_controller=is_controller,
             config=config,
             node_config=node_config,
             spec=spec,
@@ -352,6 +364,7 @@ class K8sNode(Node):
         
         node = cls(
             name=name,
+            is_controller=is_controller,
             config=config,
             node_config=node_config,
             spec=spec,
