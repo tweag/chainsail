@@ -201,7 +201,7 @@ class K8sNode(Node):
         self._pod = kub.client.V1Pod(
             api_version="v1",
             kind="Pod",
-            metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app":"rex-pod", "id":self._name}),
+            metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app":"rex-pod"}),
             spec=kub.client.V1PodSpec(
                 containers=[httpstan_container, user_code_container, container],
                 volumes=[user_code_volume, job_spec_volume, ssh_key_volume, config_volume],
@@ -222,9 +222,12 @@ class K8sNode(Node):
             time.sleep(3)
             self.refresh_status()
             self.sync_representation()
-        # Wait for controller to initialize properly
+        # Wait for the pods to initialize properly
+        # TODO: This should be handled using k8s liveness/startup/readiness probes 
         if self._is_controller:
-            time.sleep(30)
+            time.sleep(20)
+        else:
+            time.sleep(10)
         return (True, "LOGS FROM CREATE...")
     
     def restart(self) -> bool:
