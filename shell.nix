@@ -44,7 +44,8 @@ in
       ncurses
       file
     ];
-  shellHook = ''
-    export LD_LIBRARY_PATH=$(nix eval --raw nixpkgs.stdenv.cc.cc.lib)/lib:$LD_LIBRARY_PATH:${pkgs.file}/lib
-  '';
+    # Setting the LD_LIBRARY_PATH environment variable.
+    # Can also make use of the `.overrideAttrs` medthod to prevent from overwriting it (See PR #310 for details)
+    LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.file}/lib";
   }
+  
