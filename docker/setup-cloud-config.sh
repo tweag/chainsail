@@ -31,7 +31,7 @@ gcloud secrets versions access 2 --secret="remote-logging-yaml" > remote_logging
 sed -ri "s/(address:).*/\1 $INTERNAL_IP/" remote_logging.yaml
 
 echo "Fetching docker/config_dpl/firebase_service_account.json"
-gcloud secrets versions access 1 --secret="firebase-service-account-json" > firebase_service_account.json
+gcloud secrets versions access 1 --secret="firebase-sa" > firebase_service_account.json
 
 # Fetch .env.local
 cd ../../app/client || exit
