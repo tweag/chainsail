@@ -24,7 +24,7 @@ sed -ri "s/(scheduler_address:).*/\1 $INTERNAL_IP/" controller.yaml
 sed -ri "s/(metrics_address:).*/\1 $INTERNAL_IP/" controller.yaml
 
 echo "Fetching docker/config_dpl/scheduler.yaml"
-gcloud secrets versions access 1 --secret="scheduler-yaml" > scheduler.yaml
+gcloud secrets versions access 2 --secret="scheduler-yaml" > scheduler.yaml
 
 echo "Fetching docker/config_dpl/remote_logging.yaml"
 gcloud secrets versions access 2 --secret="remote-logging-yaml" > remote_logging.yaml
