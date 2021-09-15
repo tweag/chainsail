@@ -108,16 +108,20 @@ class VMNodeConfigSchema(Schema):
 @dataclass
 class K8sNodeConfig(HasDriver):
     """Configurations for a `K8sNode`"""
+
+    config_configmap_name: str
     ssh_public_key: str
     ssh_private_key_path: str
     storage_config_path: str
     controller_config_path: str
-    
+
     def create_node_driver(self):
         pass
 
 
 class K8sNodeConfigSchema(Schema):
+    # The name of the deployed configmap which contains every config files
+    config_configmap_name = fields.String(required=True)
     # The ssh public key (contents) to install on the VM
     ssh_public_key = fields.String(required=True)
     # The path to the ssh private key to use for connecting to the VM
@@ -126,6 +130,7 @@ class K8sNodeConfigSchema(Schema):
     storage_config_path = fields.String(required=True)
     # The path to the controller.yaml controller config file
     controller_config_path = fields.String(required=True)
+
     @post_load
     def make_k8s_node_config(self, data, **kwargs):
         return K8sNodeConfig(**data)
@@ -157,7 +162,7 @@ class GeneralNodeConfigSchema(Schema):
 # Global registry of node config schemas
 NODE_CONFIG_SCHEMAS: Dict[NodeType, Schema] = {
     NodeType.LIBCLOUD_VM: VMNodeConfigSchema(),
-    NodeType.KUBERNETES_POD: K8sNodeConfigSchema()
+    NodeType.KUBERNETES_POD: K8sNodeConfigSchema(),
 }
 
 
