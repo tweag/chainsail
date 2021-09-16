@@ -2,7 +2,6 @@ import logging
 import os
 import time
 from typing import Callable, Optional, Tuple
-
 from chainsail.common.spec import JobSpec, JobSpecSchema
 from chainsail.scheduler.config import (
     GeneralNodeConfig,
@@ -23,10 +22,6 @@ from enum import Enum
 
 
 logger = logging.getLogger("chainsail.scheduler")
-# Load the kubernetes config
-# from the file specified by KUBECONFIG environment variable if it exists
-# or from the default location $HOME/.kube/config
-kub.config.load_kube_config()
 core_v1 = kub.client.CoreV1Api()
 
 DEP_INSTALL_TEMPLATE = """#!/usr/bin/env bash
@@ -35,6 +30,20 @@ set -ex
 {dep_install_commands}
 """
 K8S_NAMESPACE = "default"
+
+
+def load_k8s_config():
+    """Load the kubernetes config:
+    - Either from the file specified by KUBECONFIG environment variable if it exists
+    - Or from the default location $HOME/.kube/config
+    """
+    try:
+        kub.config.load_kube_config()
+    except Exception as e:
+        # Raising ConfigurationError, but it may be unnecessary
+        raise ConfigurationError(
+            "Cannot load a valid Kubeconfig file. No K8s context to use."
+        ) from e
 
 
 def create_resources(k8s_node: "K8sNode") -> None:
@@ -82,6 +91,7 @@ class K8sNode(Node):
         representation: Optional[TblNodes] = None,
         status: Optional[NodeStatus] = NodeStatus.INITIALIZED,
     ):
+        load_k8s_config()
         self._name = name
         self._name_cm_usercode = f"user-dep-configmap-{self._name}"
         self._name_cm_jobspec = f"job-spec-configmap-{self._name}"
