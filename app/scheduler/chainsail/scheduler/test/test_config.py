@@ -73,6 +73,36 @@ VALID_CONFIG_VM_CHAINSAIL_DRIVER = {
     "remote_logging_config_path": "/I/am/some/path",
 }
 
+K8S_POD_CONFIG = {
+    "config_configmap_name": "fake-name",
+    "ssh_public_key": "notARealKey",
+    "ssh_private_key_path": "/home/someone/.ssh/key.pem",
+    "controller_config_path": "/foo/bar/controller.yaml",
+    "storage_config_path": "/foo/bar/storage.yaml",
+}
+
+VALID_CONFIG_K8S = {
+    "controller": {
+        "image": "some-docker-image:latest",
+        "ports": [8080, 22],
+        "cmd": "bash",
+        "args": ["-c", "'echo foo'"],
+        "user_code_image": "some-docker-image",
+        "httpstan_image": "another-docker-image",
+    },
+    "worker": {
+        "image": "some-docker-image:latest",
+        "ports": [22],
+        "cmd": "ls",
+        "user_code_image": "some-docker-image",
+        "httpstan_image": "another-docker-image",
+    },
+    "node_type": "KubernetesPod",
+    "node_config": K8S_POD_CONFIG,
+    "results_url_expiry_time": 42,
+    "remote_logging_config_path": "/I/am/some/path",
+}
+
 # The below config fails to specify inputs for the driver
 CONFIG_INVALID_TYPE = {
     "controller": {
@@ -101,6 +131,7 @@ def test_parse_valid_scheduler_config():
     from chainsail.scheduler.config import SchedulerConfigSchema
 
     SchedulerConfigSchema().load(VALID_CONFIG_VM)
+    SchedulerConfigSchema().load(VALID_CONFIG_K8S)
 
 
 def test_parse_scheduler_config_finds_chainsail_dummy():
