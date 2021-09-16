@@ -37,14 +37,33 @@ set -ex
 K8S_NAMESPACE = "default"
 
 
-class PodStatus(Enum):
-    # See https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase
-    INITIALIZED = "Initialized"  # The pod has been specified (not a K8s pod phase)
-    PENDING = "Pending"  # The pod is being created
-    RUNNING = "Running"  # The pod is running
-    SUCCEEDED = "Succeeded"  # All containers in the pod have terminated in success
-    FAILED = "Failed"  # All containers have terminated, at least one of which in failure
-    UNKNOWN = "Unknown"  # The state of the pod could not be obtained
+def create_resources(k8s_node: "K8sNode") -> None:
+    """Create Kubernetes resources onto the configured cluster."""
+    # Configmaps
+    _ = core_v1.create_namespaced_config_map(body=k8s_node._cm_usercode, namespace=K8S_NAMESPACE)
+    _ = core_v1.create_namespaced_config_map(body=k8s_node._cm_jobspec, namespace=K8S_NAMESPACE)
+    _ = core_v1.create_namespaced_config_map(body=k8s_node._cm_sshkey, namespace=K8S_NAMESPACE)
+    # Pod
+    _ = core_v1.create_namespaced_pod(body=k8s_node._pod, namespace=K8S_NAMESPACE)
+    k8s_node.refresh_status()
+    k8s_node.refresh_address()
+    k8s_node.sync_representation()
+    # Wait for all resources to be created
+    while (
+        k8s_node._status == NodeStatus.INITIALIZED
+        or k8s_node._status == NodeStatus.CREATING
+        or not k8s_node._address
+    ):
+        time.sleep(3)
+        k8s_node.refresh_status()
+        k8s_node.refresh_address()
+        k8s_node.sync_representation()
+    # Wait for the pods to initialize properly
+    # TODO: This should be handled using k8s liveness/startup/readiness probes
+    if k8s_node._is_controller:
+        time.sleep(20)
+    else:
+        time.sleep(10)
 
 
 class K8sNode(Node):
@@ -61,7 +80,7 @@ class K8sNode(Node):
         node_config: K8sNodeConfig,
         spec: JobSpec,
         representation: Optional[TblNodes] = None,
-        status: Optional[PodStatus] = PodStatus.INITIALIZED,
+        status: Optional[NodeStatus] = NodeStatus.INITIALIZED,
     ):
         self._name = name
         self._name_cm_usercode = f"user-dep-configmap-{self._name}"
@@ -85,7 +104,7 @@ class K8sNode(Node):
         return script
 
     def create(self) -> Tuple[bool, str]:
-        if self._status != PodStatus.INITIALIZED:
+        if self._status != NodeStatus.INITIALIZED:
             raise NodeError("Attempted to created a pod which has already been created")
         logger.info("Creating pod...")
         ## CONFIGMAPS
@@ -217,31 +236,7 @@ class K8sNode(Node):
             ),
         )
         ##  CREATE RESOURCES
-        # Configmaps
-        _ = core_v1.create_namespaced_config_map(body=self._cm_usercode, namespace=K8S_NAMESPACE)
-        _ = core_v1.create_namespaced_config_map(body=self._cm_jobspec, namespace=K8S_NAMESPACE)
-        _ = core_v1.create_namespaced_config_map(body=self._cm_sshkey, namespace=K8S_NAMESPACE)
-        # Pod
-        _ = core_v1.create_namespaced_pod(body=self._pod, namespace=K8S_NAMESPACE)
-        self.refresh_status()
-        self.refresh_address()
-        self.sync_representation()
-        # Wait for all resources to be created
-        while (
-            self._status == PodStatus.INITIALIZED
-            or self._status == PodStatus.PENDING
-            or not self._address
-        ):
-            time.sleep(3)
-            self.refresh_status()
-            self.refresh_address()
-            self.sync_representation()
-        # Wait for the pods to initialize properly
-        # TODO: This should be handled using k8s liveness/startup/readiness probes
-        if self._is_controller:
-            time.sleep(20)
-        else:
-            time.sleep(10)
+        create_resources(self)
         return (True, "LOGS FROM CREATE...")
 
     def restart(self) -> bool:
@@ -321,10 +316,11 @@ class K8sNode(Node):
         return self._status
 
     def refresh_status(self):
+        # See https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase
         if not self._pod:
-            self._status = PodStatus.INITIALIZED
+            self._status = NodeStatus.INITIALIZED
             return
-        if self.status == PodStatus.FAILED:
+        if self.status == NodeStatus.FAILED:
             return
         try:
             pod = core_v1.read_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
@@ -333,15 +329,15 @@ class K8sNode(Node):
             logger.error(f"Unable to read pod status. Status not updated. Exception: {e}")
             return
         if phase == "Pending":
-            self._status = PodStatus.PENDING
+            self._status = NodeStatus.CREATING
         elif phase == "Running":
-            self._status = PodStatus.RUNNING
+            self._status = NodeStatus.RUNNING
         elif phase == "Succeeded":
-            self._status = PodStatus.SUCCEEDED
+            self._status = NodeStatus.EXITED
         elif phase == "Failed":
-            self._status = PodStatus.FAILED
+            self._status = NodeStatus.FAILED
         elif phase == "Unknown":
-            self._status = PodStatus.UNKNOWN
+            self._status = NodeStatus.UNKNOWN
 
     @classmethod
     def from_representation(
@@ -356,27 +352,14 @@ class K8sNode(Node):
             config = scheduler_config.controller
         else:
             config = scheduler_config.worker
-        # If the pod has only been initialized, no actual compute resource
-        # has been created yet
-        if node_rep.status == PodStatus.INITIALIZED:
-            name = node_rep.name
-        # Otherwise we can look up the compute resource
-        else:
-            try:
-                node = core_v1.read_namespaced_pod(name=node_rep.name, namespace=K8S_NAMESPACE)
-                name = node.metadata.name
-            except Exception:
-                raise ObjectConstructionError(
-                    f"Failed to find an existing pod with name "
-                    f"{node_rep.name} job: {node_rep.job_id}, node: {node_rep.id}"
-                )
+        name = node_rep.name
         return cls(
             name=name,
             is_controller=is_controller,
             config=config,
             node_config=node_config,
             spec=spec,
-            status=PodStatus(node_rep.status),
+            status=NodeStatus(node_rep.status),
             representation=node_rep,
         )
 
