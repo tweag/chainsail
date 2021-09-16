@@ -34,7 +34,8 @@ node_type: KubernetesPod
 remote_logging_config_path: TODO
 
 node_config:
-  ssh_private_key_path: /config/unsafe_dev_key_rsa
+  config_configmap_name: config-dpl-configmap
   ssh_public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxrjgZC7qz7Ern5I2S80u1kN+GY2y+WShfcJ/ZLjFH0MHRrK1pOtzz1BoCxje+sMTzOb/rXyxDUe2jGmBvVcifelO2MblXOBlCBRwwuACv3ChqOfu3Kjgpgn12am3hxyp1xAScbFlzG5/bF6ggx0T4QxBcJVwa1gwnVjaZnXikg36amMAMpUScN2Irl8XLPJgvM+jyV69YxsENuUszLKcuVKbgoWC6NBArbD2l3mUGOrmdGuF8vBts4VrwcpEmvAufwrtg+pz5Bsh5XqVYi+WVcXp83JhHMJHFN2QoNLUNf8qBU7gdFRG/ISa3AGICjOiOC+SE8CRgsiOwkXqvaCoeNAuIWNRP57rzezW9B09CfgsKUN9OafDz+pFdaDoM1a2Qa997YuXbxLvVnoSY81nd+thC+ugm3rHLvx+8VG65aP0Og2h0LcGkTCHGqYi6/3o2wcie5yGuxiRAU4jeQrz4JhgBLw6N/e2xvdtuq+bcp0QLPVxvMLvZN/MS09iY9fU= unsafeDevKey"
+  ssh_private_key_path: /config/unsafe_dev_key_rsa
   storage_config_path: /config/storage.yaml
   controller_config_path: /config/controller.yaml
