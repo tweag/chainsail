@@ -18,6 +18,7 @@ from chainsail.scheduler.errors import (
     ObjectConstructionError,
 )
 import kubernetes as kub
+from kubernetes.client import V1Pod, V1ConfigMap
 from enum import Enum
 
 
@@ -40,11 +41,15 @@ K8S_NAMESPACE = "default"
 def create_resources(k8s_node: "K8sNode") -> None:
     """Create Kubernetes resources onto the configured cluster."""
     # Configmaps
-    _ = core_v1.create_namespaced_config_map(body=k8s_node._cm_usercode, namespace=K8S_NAMESPACE)
-    _ = core_v1.create_namespaced_config_map(body=k8s_node._cm_jobspec, namespace=K8S_NAMESPACE)
-    _ = core_v1.create_namespaced_config_map(body=k8s_node._cm_sshkey, namespace=K8S_NAMESPACE)
+    _ = core_v1.create_namespaced_config_map(
+        body=k8s_node._pod.cm_usercode, namespace=K8S_NAMESPACE
+    )
+    _ = core_v1.create_namespaced_config_map(
+        body=k8s_node._pod.cm_jobspec, namespace=K8S_NAMESPACE
+    )
+    _ = core_v1.create_namespaced_config_map(body=k8s_node._pod.cm_sshkey, namespace=K8S_NAMESPACE)
     # Pod
-    _ = core_v1.create_namespaced_pod(body=k8s_node._pod, namespace=K8S_NAMESPACE)
+    _ = core_v1.create_namespaced_pod(body=k8s_node._pod.pod, namespace=K8S_NAMESPACE)
     k8s_node.refresh_status()
     k8s_node.refresh_address()
     k8s_node.sync_representation()
@@ -66,6 +71,50 @@ def create_resources(k8s_node: "K8sNode") -> None:
         time.sleep(10)
 
 
+class PodResources:
+    """Record holding pod and configmaps resources."""
+
+    def __init__(
+        self,
+        pod: V1Pod,
+        cm_usercode: V1ConfigMap,
+        cm_jobspec: V1ConfigMap,
+        cm_sshkey: V1ConfigMap,
+    ):
+        self.pod = pod
+        self.cm_usercode = cm_usercode
+        self.cm_jobspec = cm_jobspec
+        self.cm_sshkey = cm_sshkey
+
+    @classmethod
+    def from_read(cls, pod_name: str) -> "PodResources":
+        name_cm_usercode = f"user-dep-configmap-{pod_name}"
+        name_cm_jobspec = f"job-spec-configmap-{pod_name}"
+        name_cm_sshkey = f"ssh-key-configmap-{pod_name}"
+        try:
+            pod = core_v1.read_namespaced_pod(name=pod_name, namespace=K8S_NAMESPACE)
+            cm_usercode = core_v1.read_namespaced_config_map(
+                name=name_cm_usercode, namespace=K8S_NAMESPACE
+            )
+            cm_jobspec = core_v1.read_namespaced_config_map(
+                name=name_cm_jobspec, namespace=K8S_NAMESPACE
+            )
+            cm_sshkey = core_v1.read_namespaced_config_map(
+                name=name_cm_sshkey, namespace=K8S_NAMESPACE
+            )
+        except Exception as e:
+            raise ObjectConstructionError(
+                f"Failed to find an existing pod (or one of its dependency configmap) with name "
+                f"{node_rep.name} job: {node_rep.job_id}, node: {node_rep.id}"
+            ) from e
+        return cls(
+            pod=pod,
+            cm_usercode=cm_usercode,
+            cm_jobspec=cm_jobspec,
+            cm_sshkey=cm_sshkey,
+        )
+
+
 class K8sNode(Node):
     """A resaas node implementation which creates a Kubernetes Pod for each node."""
 
@@ -78,6 +127,7 @@ class K8sNode(Node):
         config: GeneralNodeConfig,
         node_config: K8sNodeConfig,
         spec: JobSpec,
+        pod: Optional[PodResources] = None,
         representation: Optional[TblNodes] = None,
         status: Optional[NodeStatus] = NodeStatus.INITIALIZED,
     ):
@@ -90,12 +140,9 @@ class K8sNode(Node):
         self._config = config
         self._node_config = node_config
         self.spec = spec
+        self._pod = pod
         self._status = status
         self._address = None
-        self._pod = None
-        self._cm_usercode = None
-        self._cm_jobspec = None
-        self._cm_sshkey = None
 
     def _user_install_script(self) -> str:
         install_commands = "\n".join([d.installation_script for d in self.spec.dependencies])
@@ -110,7 +157,7 @@ class K8sNode(Node):
         # User code configmap
         install_script_name = "install_job_deps.sh"
         install_script_src = self._user_install_script()
-        self._cm_usercode = kub.client.V1ConfigMap(
+        cm_usercode = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
             metadata=kub.client.V1ObjectMeta(name=self._name_cm_usercode, labels={"app": "rex"}),
@@ -118,7 +165,7 @@ class K8sNode(Node):
         )
         # Job spec configmap
         job_spec_filename = "job.json"
-        self._cm_jobspec = kub.client.V1ConfigMap(
+        cm_jobspec = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
             metadata=kub.client.V1ObjectMeta(name=self._name_cm_jobspec, labels={"app": "rex"}),
@@ -126,7 +173,7 @@ class K8sNode(Node):
         )
         # Public ssh key configmap
         ssh_key_filename = "authorized_keys"
-        self._cm_sshkey = kub.client.V1ConfigMap(
+        cm_sshkey = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
             metadata=kub.client.V1ObjectMeta(name=self._name_cm_sshkey, labels={"app": "rex"}),
@@ -225,7 +272,7 @@ class K8sNode(Node):
             ),
         )
         ## POD
-        self._pod = kub.client.V1Pod(
+        pod = kub.client.V1Pod(
             api_version="v1",
             kind="Pod",
             metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app": "rex"}),
@@ -235,6 +282,12 @@ class K8sNode(Node):
             ),
         )
         ##  CREATE RESOURCES
+        self._pod = PodResources(
+            pod=pod,
+            cm_usercode=cm_usercode,
+            cm_jobspec=cm_jobspec,
+            cm_sshkey=cm_sshkey,
+        )
         create_resources(self)
         return (True, "LOGS FROM CREATE...")
 
@@ -243,15 +296,17 @@ class K8sNode(Node):
             raise MissingNodeError
         logger.info("Restarting pod...")
         _ = core_v1.patch_namespaced_config_map(
-            name=self._name_cm_usercode, body=self._cm_usercode, namespace=K8S_NAMESPACE
+            name=self._name_cm_usercode, body=self._pod.cm_usercode, namespace=K8S_NAMESPACE
         )
         _ = core_v1.patch_namespaced_config_map(
-            name=self._name_cm_jobspec, body=self._cm_jobspec, namespace=K8S_NAMESPACE
+            name=self._name_cm_jobspec, body=self._pod.cm_jobspec, namespace=K8S_NAMESPACE
         )
         _ = core_v1.patch_namespaced_config_map(
-            name=self._name_cm_sshkey, body=self._cm_sshkey, namespace=K8S_NAMESPACE
+            name=self._name_cm_sshkey, body=self._pod.cm_sshkey, namespace=K8S_NAMESPACE
         )
-        _ = core_v1.patch_namespaced_pod(name=self._name, body=self._pod, namespace=K8S_NAMESPACE)
+        _ = core_v1.patch_namespaced_pod(
+            name=self._name, body=self._pod.pod, namespace=K8S_NAMESPACE
+        )
         self.refresh_status()
         self.refresh_address()
         self.sync_representation()
@@ -301,6 +356,7 @@ class K8sNode(Node):
 
     @property
     def address(self):
+        self.refresh_address()
         return self._address
 
     def refresh_address(self):
@@ -351,13 +407,22 @@ class K8sNode(Node):
             config = scheduler_config.controller
         else:
             config = scheduler_config.worker
-        name = node_rep.name
+        # If the node has only been initialized, no actual compute resource
+        # has been created yet
+        if node_rep.status == NodeStatus.INITIALIZED:
+            pod = None
+            name = node_rep.name
+        # Otherwise we can look up the compute resource using the driver
+        else:
+            pod_res = PodResources.from_read(pod_name=node_rep.name)
+            name = pod_res.pod.metadata.name
         return cls(
             name=name,
             is_controller=is_controller,
             config=config,
             node_config=node_config,
             spec=spec,
+            pod=pod_res,
             status=NodeStatus(node_rep.status),
             representation=node_rep,
         )

@@ -33,6 +33,7 @@ def mock_scheduler_config():
     return scheduler_config
 
 
+@patch("chainsail.scheduler.nodes.k8s_pod.PodResources")
 def test_k8s_node_from_representation(mock_scheduler_config):
     from chainsail.common.spec import JobSpec
     from chainsail.scheduler.db import TblNodes
@@ -43,7 +44,6 @@ def test_k8s_node_from_representation(mock_scheduler_config):
     node_rep = TblNodes(
         id=1,
         job_id=1,
-        # dummy-1 already exists on the driver
         name="dummy-1",
         node_type=NodeType.KUBERNETES_POD,
         entrypoint="echo 'hello world'",
@@ -71,37 +71,37 @@ def test_k8s_node_from_config_with_job(mock_scheduler_config):
     assert node.representation.job.id == 1
 
 
-@patch("kubernetes.config.load_kube_config")
-def test_k8s_node_from_representation_then_create(mock_scheduler_config):
-    from chainsail.common.spec import JobSpec, PipDependencies
-    from chainsail.scheduler.db import TblJobs, TblNodes
-    from chainsail.scheduler.nodes.base import NodeType, NodeStatus
-    from chainsail.scheduler.nodes.k8s_pod import K8sNode
+# @patch("kubernetes.config.load_kube_config")
+# def test_k8s_node_from_representation_then_create(mock_scheduler_config):
+#     from chainsail.common.spec import JobSpec, PipDependencies
+#     from chainsail.scheduler.db import TblJobs, TblNodes
+#     from chainsail.scheduler.nodes.base import NodeType, NodeStatus
+#     from chainsail.scheduler.nodes.k8s_pod import K8sNode
 
-    job_spec = JobSpec("gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])])
-    node_rep = TblNodes(
-        id=1,
-        job_id=1,
-        name="new-node",
-        node_type=NodeType.KUBERNETES_POD,
-        entrypoint="echo 'hello world'",
-        # This node has not been actually created yet
-        status=NodeStatus.INITIALIZED,
-        job=TblJobs(),
-    )
+#     job_spec = JobSpec("gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])])
+#     node_rep = TblNodes(
+#         id=1,
+#         job_id=1,
+#         name="new-node",
+#         node_type=NodeType.KUBERNETES_POD,
+#         entrypoint="echo 'hello world'",
+#         # This node has not been actually created yet
+#         status=NodeStatus.INITIALIZED,
+#         job=TblJobs(),
+#     )
 
-    with patch("chainsail.scheduler.nodes.k8s_pod.create_resources") as mock_create_resources:
-        # Create the node object
-        node = K8sNode.from_representation(
-            job_spec,
-            node_rep,
-            mock_scheduler_config,
-        )
-        node.refresh_status()
-        (is_created, _) = node.create()
+#     with patch("chainsail.scheduler.nodes.k8s_pod.create_resources") as mock_create_resources:
+#         # Create the node object
+#         node = K8sNode.from_representation(
+#             job_spec,
+#             node_rep,
+#             mock_scheduler_config,
+#         )
+#         node.refresh_status()
+#         (is_created, _) = node.create()
 
-    mock_create_resources.assert_called_once()
-    assert is_created
+#     mock_create_resources.assert_called_once()
+#     assert is_created
     # assert node.status == NodeStatus.RUNNING
 
 
