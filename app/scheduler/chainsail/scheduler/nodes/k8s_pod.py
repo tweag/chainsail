@@ -2,6 +2,7 @@ import logging
 import os
 import time
 from typing import Callable, Optional, Tuple
+from enum import Enum
 from chainsail.common.spec import JobSpec, JobSpecSchema
 from chainsail.scheduler.config import (
     GeneralNodeConfig,
@@ -19,7 +20,6 @@ from chainsail.scheduler.errors import (
 )
 import kubernetes as kub
 from kubernetes.client import V1Pod, V1ConfigMap
-from enum import Enum
 
 
 logger = logging.getLogger("chainsail.scheduler")
@@ -38,87 +38,13 @@ set -ex
 K8S_NAMESPACE = "default"
 
 
-def create_resources(k8s_node: "K8sNode") -> None:
-    """Create Kubernetes resources onto the configured cluster."""
-    # Configmaps
-    _ = core_v1.create_namespaced_config_map(
-        body=k8s_node._pod.cm_usercode, namespace=K8S_NAMESPACE
-    )
-    _ = core_v1.create_namespaced_config_map(
-        body=k8s_node._pod.cm_jobspec, namespace=K8S_NAMESPACE
-    )
-    _ = core_v1.create_namespaced_config_map(body=k8s_node._pod.cm_sshkey, namespace=K8S_NAMESPACE)
-    # Pod
-    _ = core_v1.create_namespaced_pod(body=k8s_node._pod.pod, namespace=K8S_NAMESPACE)
-    k8s_node.refresh_status()
-    k8s_node.refresh_address()
-    k8s_node.sync_representation()
-    # Wait for all resources to be created
-    while (
-        k8s_node._status == NodeStatus.INITIALIZED
-        or k8s_node._status == NodeStatus.CREATING
-        or not k8s_node._address
-    ):
-        time.sleep(3)
-        k8s_node.refresh_status()
-        k8s_node.refresh_address()
-        k8s_node.sync_representation()
-    # Wait for the pods to initialize properly
-    # TODO: This should be handled using k8s liveness/startup/readiness probes
-    if k8s_node._is_controller:
-        time.sleep(20)
-    else:
-        time.sleep(10)
-
-
-class PodResources:
-    """Record holding pod and configmaps resources."""
-
-    def __init__(
-        self,
-        pod: V1Pod,
-        cm_usercode: V1ConfigMap,
-        cm_jobspec: V1ConfigMap,
-        cm_sshkey: V1ConfigMap,
-    ):
-        self.pod = pod
-        self.cm_usercode = cm_usercode
-        self.cm_jobspec = cm_jobspec
-        self.cm_sshkey = cm_sshkey
-
-    @classmethod
-    def from_read(cls, pod_name: str) -> "PodResources":
-        name_cm_usercode = f"user-dep-configmap-{pod_name}"
-        name_cm_jobspec = f"job-spec-configmap-{pod_name}"
-        name_cm_sshkey = f"ssh-key-configmap-{pod_name}"
-        try:
-            pod = core_v1.read_namespaced_pod(name=pod_name, namespace=K8S_NAMESPACE)
-            cm_usercode = core_v1.read_namespaced_config_map(
-                name=name_cm_usercode, namespace=K8S_NAMESPACE
-            )
-            cm_jobspec = core_v1.read_namespaced_config_map(
-                name=name_cm_jobspec, namespace=K8S_NAMESPACE
-            )
-            cm_sshkey = core_v1.read_namespaced_config_map(
-                name=name_cm_sshkey, namespace=K8S_NAMESPACE
-            )
-        except Exception as e:
-            raise ObjectConstructionError(
-                f"Failed to find an existing pod (or one of its dependency configmap) with name "
-                f"{node_rep.name} job: {node_rep.job_id}, node: {node_rep.id}"
-            ) from e
-        return cls(
-            pod=pod,
-            cm_usercode=cm_usercode,
-            cm_jobspec=cm_jobspec,
-            cm_sshkey=cm_sshkey,
-        )
-
-
 class K8sNode(Node):
     """A resaas node implementation which creates a Kubernetes Pod for each node."""
 
     NODE_TYPE = "KubernetesPod"
+    _NAME_CM_USERCODE = "user-dep-configmap-{}"
+    _NAME_CM_JOBSPEC = "job-spec-configmap-{}"
+    _NAME_CM_SSHKEY = "ssh-key-configmap-{}"
 
     def __init__(
         self,
@@ -127,20 +53,30 @@ class K8sNode(Node):
         config: GeneralNodeConfig,
         node_config: K8sNodeConfig,
         spec: JobSpec,
-        pod: Optional[PodResources] = None,
         representation: Optional[TblNodes] = None,
         status: Optional[NodeStatus] = NodeStatus.INITIALIZED,
+        # If creating from existing resources, can specify the k8s objects
+        pod: Optional[V1Pod] = None,
+        cm_usercode: Optional[V1ConfigMap] = None,
+        cm_jobspec: Optional[V1ConfigMap] = None,
+        cm_sshkey: Optional[V1ConfigMap] = None,
     ):
+        # Names
         self._name = name
-        self._name_cm_usercode = f"user-dep-configmap-{self._name}"
-        self._name_cm_jobspec = f"job-spec-configmap-{self._name}"
-        self._name_cm_sshkey = f"ssh-key-configmap-{self._name}"
+        self._name_cm_usercode = self._NAME_CM_USERCODE.format(name)
+        self._name_cm_jobspec = self._NAME_CM_JOBSPEC.format(name)
+        self._name_cm_sshkey = self._NAME_CM_SSHKEY.format(name)
+        # Manifests
+        self._pod = pod
+        self._cm_usercode = cm_usercode
+        self._cm_jobspec = cm_jobspec
+        self._cm_sshkey = cm_sshkey
+        # Others
         self._is_controller = is_controller
         self._representation = representation
         self._config = config
         self._node_config = node_config
         self.spec = spec
-        self._pod = pod
         self._status = status
         self._address = None
 
@@ -157,7 +93,7 @@ class K8sNode(Node):
         # User code configmap
         install_script_name = "install_job_deps.sh"
         install_script_src = self._user_install_script()
-        cm_usercode = kub.client.V1ConfigMap(
+        self._cm_usercode = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
             metadata=kub.client.V1ObjectMeta(name=self._name_cm_usercode, labels={"app": "rex"}),
@@ -165,7 +101,7 @@ class K8sNode(Node):
         )
         # Job spec configmap
         job_spec_filename = "job.json"
-        cm_jobspec = kub.client.V1ConfigMap(
+        self._cm_jobspec = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
             metadata=kub.client.V1ObjectMeta(name=self._name_cm_jobspec, labels={"app": "rex"}),
@@ -173,7 +109,7 @@ class K8sNode(Node):
         )
         # Public ssh key configmap
         ssh_key_filename = "authorized_keys"
-        cm_sshkey = kub.client.V1ConfigMap(
+        self._cm_sshkey = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
             metadata=kub.client.V1ObjectMeta(name=self._name_cm_sshkey, labels={"app": "rex"}),
@@ -272,7 +208,7 @@ class K8sNode(Node):
             ),
         )
         ## POD
-        pod = kub.client.V1Pod(
+        self._pod = kub.client.V1Pod(
             api_version="v1",
             kind="Pod",
             metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app": "rex"}),
@@ -282,30 +218,69 @@ class K8sNode(Node):
             ),
         )
         ##  CREATE RESOURCES
-        self._pod = PodResources(
-            pod=pod,
-            cm_usercode=cm_usercode,
-            cm_jobspec=cm_jobspec,
-            cm_sshkey=cm_sshkey,
+        self._status = NodeStatus.CREATING
+        # Configmaps
+        _ = core_v1.create_namespaced_config_map(
+            body=self._cm_usercode,
+            namespace=K8S_NAMESPACE,
         )
-        create_resources(self)
+        _ = core_v1.create_namespaced_config_map(
+            body=self._cm_jobspec,
+            namespace=K8S_NAMESPACE,
+        )
+        _ = core_v1.create_namespaced_config_map(
+            body=self._cm_sshkey,
+            namespace=K8S_NAMESPACE,
+        )
+        # Pod
+        _ = core_v1.create_namespaced_pod(
+            body=self._pod,
+            namespace=K8S_NAMESPACE,
+        )
+        self.refresh_status()
+        self.refresh_address()
+        self.sync_representation()
+        # Wait for all resources to be created
+        while (
+            self._status == NodeStatus.INITIALIZED
+            or self._status == NodeStatus.CREATING
+            or not self._address
+        ):
+            time.sleep(3)
+            self.refresh_status()
+            self.refresh_address()
+            self.sync_representation()
+        # Wait for the pods to initialize properly
+        # TODO: This should be handled using k8s liveness/startup/readiness probes
+        if self._is_controller:
+            time.sleep(20)
+        else:
+            time.sleep(10)
         return (True, "LOGS FROM CREATE...")
 
     def restart(self) -> bool:
-        if not self._pod:
+        if not self._pod or not self._cm_usercode or not self._cm_jobspec or not self._cm_sshkey:
             raise MissingNodeError
         logger.info("Restarting pod...")
         _ = core_v1.patch_namespaced_config_map(
-            name=self._name_cm_usercode, body=self._pod.cm_usercode, namespace=K8S_NAMESPACE
+            name=self._name_cm_usercode,
+            body=self._pod.cm_usercode,
+            namespace=K8S_NAMESPACE,
         )
         _ = core_v1.patch_namespaced_config_map(
-            name=self._name_cm_jobspec, body=self._pod.cm_jobspec, namespace=K8S_NAMESPACE
+            name=self._name_cm_jobspec,
+            body=self._pod.cm_jobspec,
+            namespace=K8S_NAMESPACE,
         )
         _ = core_v1.patch_namespaced_config_map(
-            name=self._name_cm_sshkey, body=self._pod.cm_sshkey, namespace=K8S_NAMESPACE
+            name=self._name_cm_sshkey,
+            body=self._pod.cm_sshkey,
+            namespace=K8S_NAMESPACE,
         )
         _ = core_v1.patch_namespaced_pod(
-            name=self._name, body=self._pod.pod, namespace=K8S_NAMESPACE
+            name=self._name,
+            body=self._pod.pod,
+            namespace=K8S_NAMESPACE,
         )
         self.refresh_status()
         self.refresh_address()
@@ -313,18 +288,29 @@ class K8sNode(Node):
         return True
 
     def delete(self) -> bool:
-        if not self._pod:
+        if (
+            not self._pod
+            and not self._cm_usercode
+            and not self._cm_jobspec
+            and not self._cm_sshkey
+        ):
             return True
         logger.info("Deleting pod...")
-        _ = core_v1.delete_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
-        _ = core_v1.delete_namespaced_config_map(
-            name=self._name_cm_usercode, namespace=K8S_NAMESPACE
+        _ = core_v1.delete_namespaced_pod(
+            name=self._name,
+            namespace=K8S_NAMESPACE,
         )
         _ = core_v1.delete_namespaced_config_map(
-            name=self._name_cm_jobspec, namespace=K8S_NAMESPACE
+            name=self._name_cm_usercode,
+            namespace=K8S_NAMESPACE,
         )
         _ = core_v1.delete_namespaced_config_map(
-            name=self._name_cm_sshkey, namespace=K8S_NAMESPACE
+            name=self._name_cm_jobspec,
+            namespace=K8S_NAMESPACE,
+        )
+        _ = core_v1.delete_namespaced_config_map(
+            name=self._name_cm_sshkey,
+            namespace=K8S_NAMESPACE,
         )
         self.refresh_status()
         self.sync_representation()
@@ -361,7 +347,10 @@ class K8sNode(Node):
 
     def refresh_address(self):
         try:
-            pod = core_v1.read_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
+            pod = core_v1.read_namespaced_pod(
+                name=self._name,
+                namespace=K8S_NAMESPACE,
+            )
             self._address = pod.status.pod_ip
         except Exception as e:
             logger.error(f"Unable to get pod's IP address. Exception: {e}")
@@ -378,7 +367,10 @@ class K8sNode(Node):
         if self.status == NodeStatus.FAILED:
             return
         try:
-            pod = core_v1.read_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
+            pod = core_v1.read_namespaced_pod(
+                name=self._name,
+                namespace=K8S_NAMESPACE,
+            )
             phase = pod.status.phase
         except Exception as e:
             logger.error(f"Unable to read pod status. Status not updated. Exception: {e}")
@@ -410,22 +402,53 @@ class K8sNode(Node):
         # If the node has only been initialized, no actual compute resource
         # has been created yet
         if node_rep.status == NodeStatus.INITIALIZED:
-            pod = None
             name = node_rep.name
-        # Otherwise we can look up the compute resource using the driver
+            return cls(
+                name=name,
+                is_controller=is_controller,
+                config=config,
+                node_config=node_config,
+                spec=spec,
+                representation=node_rep,
+            )
+        # Otherwise we can look up the compute resources
         else:
-            pod_res = PodResources.from_read(pod_name=node_rep.name)
-            name = pod_res.pod.metadata.name
-        return cls(
-            name=name,
-            is_controller=is_controller,
-            config=config,
-            node_config=node_config,
-            spec=spec,
-            pod=pod_res,
-            status=NodeStatus(node_rep.status),
-            representation=node_rep,
-        )
+            try:
+                name = node_rep.name
+                pod = core_v1.read_namespaced_pod(
+                    name=name,
+                    namespace=K8S_NAMESPACE,
+                )
+                cm_usercode = core_v1.read_namespaced_config_map(
+                    name=cls._NAME_CM_USERCODE.format(name),
+                    namespace=K8S_NAMESPACE,
+                )
+                cm_jobspec = core_v1.read_namespaced_config_map(
+                    name=cls._NAME_CM_JOBSPEC.format(name),
+                    namespace=K8S_NAMESPACE,
+                )
+                cm_sshkey = core_v1.read_namespaced_config_map(
+                    name=cls._NAME_CM_SSHKEY.format(name),
+                    namespace=K8S_NAMESPACE,
+                )
+            except Exception as e:
+                raise ObjectConstructionError(
+                    f"Failed to find an existing pod (or one of its dependency configmap) with name "
+                    f"{node_rep.name} job: {node_rep.job_id}, node: {node_rep.id}"
+                ) from e
+            return cls(
+                name=name,
+                is_controller=is_controller,
+                config=config,
+                node_config=node_config,
+                spec=spec,
+                representation=node_rep,
+                status=NodeStatus(node_rep.status),
+                pod=pod,
+                cm_usercode=cm_usercode,
+                cm_jobspec=cm_jobspec,
+                cm_sshkey=cm_sshkey,
+            )
 
     @classmethod
     def from_config(
