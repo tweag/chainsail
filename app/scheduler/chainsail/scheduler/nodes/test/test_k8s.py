@@ -33,45 +33,46 @@ def mock_scheduler_config():
     return scheduler_config
 
 
-# @patch("kubernetes.config.load_kube_config")
-# @patch("kubernetes.client.CoreV1Api")
-# def test_k8s_node_from_representation(mock_scheduler_config):
-#     from chainsail.common.spec import JobSpec
-#     from chainsail.scheduler.db import TblNodes
-#     from chainsail.scheduler.nodes.base import NodeType, NodeStatus
-#     from chainsail.scheduler.nodes.k8s_pod import K8sNode
+@patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
+@patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
+def test_k8s_node_from_representation(mock_api, mock_kubeconfig, mock_scheduler_config):
+    from chainsail.common.spec import JobSpec
+    from chainsail.scheduler.db import TblNodes
+    from chainsail.scheduler.nodes.base import NodeType, NodeStatus
+    from chainsail.scheduler.nodes.k8s_pod import K8sNode
 
-#     job_spec = JobSpec("gs://my-bucket/scripts")
-#     node_rep = TblNodes(
-#         id=1,
-#         job_id=1,
-#         name="dummy-1",
-#         node_type=NodeType.KUBERNETES_POD,
-#         entrypoint="echo 'hello world'",
-#         status=NodeStatus.RUNNING,
-#         address="127.0.0.1",
-#         ports="[8080]",
-#     )
+    job_spec = JobSpec("gs://my-bucket/scripts")
+    node_rep = TblNodes(
+        id=1,
+        job_id=1,
+        name="dummy-1",
+        node_type=NodeType.KUBERNETES_POD,
+        entrypoint="echo 'hello world'",
+        status=NodeStatus.RUNNING,
+        address="127.0.0.1",
+        ports="[8080]",
+    )
 
-#     node = K8sNode.from_representation(job_spec, node_rep, mock_scheduler_config)
-#     # This method should bind node_rep to the new node
-#     assert node.representation
-
-
-# @patch("kubernetes.config.load_kube_config")
-# def test_k8s_node_from_config_with_job(mock_scheduler_config):
-#     from chainsail.common.spec import JobSpec
-#     from chainsail.scheduler.db import TblJobs
-#     from chainsail.scheduler.nodes.k8s_pod import K8sNode
-
-#     job_spec = JobSpec("gs://my-bucket/scripts")
-#     node = K8sNode.from_config("dummy-1", mock_scheduler_config, job_spec, job_rep=TblJobs(id=1))
-#     assert node.representation
-#     assert node.representation.job.id == 1
+    node = K8sNode.from_representation(job_spec, node_rep, mock_scheduler_config)
+    # This method should bind node_rep to the new node
+    assert node.representation
 
 
-# @patch("kubernetes.client.CoreV1Api")
-# def test_k8s_node_from_representation_then_create(mock_scheduler_config):
+@patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
+def test_k8s_node_from_config_with_job(mock_kubeconfig, mock_scheduler_config):
+    from chainsail.common.spec import JobSpec
+    from chainsail.scheduler.db import TblJobs
+    from chainsail.scheduler.nodes.k8s_pod import K8sNode
+
+    job_spec = JobSpec("gs://my-bucket/scripts")
+    node = K8sNode.from_config("dummy-1", mock_scheduler_config, job_spec, job_rep=TblJobs(id=1))
+    assert node.representation
+    assert node.representation.job.id == 1
+
+
+# @patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
+# @patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
+# def test_k8s_node_from_representation_then_create(mock_api, mock_kubeconfig, mock_scheduler_config):
 #     from chainsail.common.spec import JobSpec, PipDependencies
 #     from chainsail.scheduler.db import TblJobs, TblNodes
 #     from chainsail.scheduler.nodes.base import NodeType, NodeStatus
@@ -102,7 +103,9 @@ def mock_scheduler_config():
 #     assert node.status == NodeStatus.RUNNING
 
 
-# def test_k8s_node_lifecycle(mock_scheduler_config):
+# @patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
+# @patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
+# def test_k8s_node_lifecycle(mock_api, mock_kubeconfig, mock_scheduler_config):
 #     from chainsail.common.spec import JobSpec
 #     from chainsail.scheduler.nodes.base import NodeStatus
 #     from chainsail.scheduler.nodes.k8s_pod import K8sNode

@@ -19,16 +19,11 @@ from chainsail.scheduler.errors import (
     ObjectConstructionError,
 )
 import kubernetes as kub
-from kubernetes.client import V1Pod, V1ConfigMap
+from kubernetes.config import load_kube_config
+from kubernetes.client import CoreV1Api, V1Pod, V1ConfigMap
 
 
 logger = logging.getLogger("chainsail.scheduler")
-
-# Load the kubernetes config:
-# - Either from the file specified by KUBECONFIG environment variable if it exists
-# - Or from the default location $HOME/.kube/config
-kub.config.load_kube_config()
-core_v1 = kub.client.CoreV1Api()
 
 DEP_INSTALL_TEMPLATE = """#!/usr/bin/env bash
 set -ex
@@ -79,6 +74,11 @@ class K8sNode(Node):
         self.spec = spec
         self._status = status
         self._address = None
+        # Load the kubernetes config:
+        # - Either from the file specified by KUBECONFIG environment variable if it exists
+        # - Or from the default location $HOME/.kube/config
+        load_kube_config()
+        self.core_v1 = CoreV1Api()
 
     def _user_install_script(self) -> str:
         install_commands = "\n".join([d.installation_script for d in self.spec.dependencies])
@@ -220,20 +220,20 @@ class K8sNode(Node):
         ##  CREATE RESOURCES
         self._status = NodeStatus.CREATING
         # Configmaps
-        _ = core_v1.create_namespaced_config_map(
+        _ = self.core_v1.create_namespaced_config_map(
             body=self._cm_usercode,
             namespace=K8S_NAMESPACE,
         )
-        _ = core_v1.create_namespaced_config_map(
+        _ = self.core_v1.create_namespaced_config_map(
             body=self._cm_jobspec,
             namespace=K8S_NAMESPACE,
         )
-        _ = core_v1.create_namespaced_config_map(
+        _ = self.core_v1.create_namespaced_config_map(
             body=self._cm_sshkey,
             namespace=K8S_NAMESPACE,
         )
         # Pod
-        _ = core_v1.create_namespaced_pod(
+        _ = self.core_v1.create_namespaced_pod(
             body=self._pod,
             namespace=K8S_NAMESPACE,
         )
@@ -262,22 +262,22 @@ class K8sNode(Node):
         if not self._pod or not self._cm_usercode or not self._cm_jobspec or not self._cm_sshkey:
             raise MissingNodeError
         logger.info("Restarting pod...")
-        _ = core_v1.patch_namespaced_config_map(
+        _ = self.core_v1.patch_namespaced_config_map(
             name=self._name_cm_usercode,
             body=self._pod.cm_usercode,
             namespace=K8S_NAMESPACE,
         )
-        _ = core_v1.patch_namespaced_config_map(
+        _ = self.core_v1.patch_namespaced_config_map(
             name=self._name_cm_jobspec,
             body=self._pod.cm_jobspec,
             namespace=K8S_NAMESPACE,
         )
-        _ = core_v1.patch_namespaced_config_map(
+        _ = self.core_v1.patch_namespaced_config_map(
             name=self._name_cm_sshkey,
             body=self._pod.cm_sshkey,
             namespace=K8S_NAMESPACE,
         )
-        _ = core_v1.patch_namespaced_pod(
+        _ = self.core_v1.patch_namespaced_pod(
             name=self._name,
             body=self._pod.pod,
             namespace=K8S_NAMESPACE,
@@ -296,19 +296,19 @@ class K8sNode(Node):
         ):
             return True
         logger.info("Deleting pod...")
-        _ = core_v1.delete_namespaced_pod(
+        _ = self.core_v1.delete_namespaced_pod(
             name=self._name,
             namespace=K8S_NAMESPACE,
         )
-        _ = core_v1.delete_namespaced_config_map(
+        _ = self.core_v1.delete_namespaced_config_map(
             name=self._name_cm_usercode,
             namespace=K8S_NAMESPACE,
         )
-        _ = core_v1.delete_namespaced_config_map(
+        _ = self.core_v1.delete_namespaced_config_map(
             name=self._name_cm_jobspec,
             namespace=K8S_NAMESPACE,
         )
-        _ = core_v1.delete_namespaced_config_map(
+        _ = self.core_v1.delete_namespaced_config_map(
             name=self._name_cm_sshkey,
             namespace=K8S_NAMESPACE,
         )
@@ -347,7 +347,7 @@ class K8sNode(Node):
 
     def refresh_address(self):
         try:
-            pod = core_v1.read_namespaced_pod(
+            pod = self.core_v1.read_namespaced_pod(
                 name=self._name,
                 namespace=K8S_NAMESPACE,
             )
@@ -367,7 +367,7 @@ class K8sNode(Node):
         if self.status == NodeStatus.FAILED:
             return
         try:
-            pod = core_v1.read_namespaced_pod(
+            pod = self.core_v1.read_namespaced_pod(
                 name=self._name,
                 namespace=K8S_NAMESPACE,
             )
@@ -414,6 +414,8 @@ class K8sNode(Node):
         # Otherwise we can look up the compute resources
         else:
             try:
+                load_kube_config()
+                core_v1 = CoreV1Api()
                 name = node_rep.name
                 pod = core_v1.read_namespaced_pod(
                     name=name,
