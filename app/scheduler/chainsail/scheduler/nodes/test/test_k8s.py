@@ -59,7 +59,8 @@ def test_k8s_node_from_representation(mock_api, mock_kubeconfig, mock_scheduler_
 
 
 @patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
-def test_k8s_node_from_config_with_job(mock_kubeconfig, mock_scheduler_config):
+@patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
+def test_k8s_node_from_config_with_job(mock_api, mock_kubeconfig, mock_scheduler_config):
     from chainsail.common.spec import JobSpec
     from chainsail.scheduler.db import TblJobs
     from chainsail.scheduler.nodes.k8s_pod import K8sNode
@@ -70,71 +71,84 @@ def test_k8s_node_from_config_with_job(mock_kubeconfig, mock_scheduler_config):
     assert node.representation.job.id == 1
 
 
-# @patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
-# @patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
-# def test_k8s_node_from_representation_then_create(mock_api, mock_kubeconfig, mock_scheduler_config):
-#     from chainsail.common.spec import JobSpec, PipDependencies
-#     from chainsail.scheduler.db import TblJobs, TblNodes
-#     from chainsail.scheduler.nodes.base import NodeType, NodeStatus
-#     from chainsail.scheduler.nodes.k8s_pod import K8sNode
+@patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
+@patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
+def test_k8s_node_from_representation_then_create(
+    mock_api, mock_kubeconfig, mock_scheduler_config
+):
+    from chainsail.common.spec import JobSpec, PipDependencies
+    from chainsail.scheduler.db import TblJobs, TblNodes
+    from chainsail.scheduler.nodes.base import NodeType, NodeStatus
+    from chainsail.scheduler.nodes.k8s_pod import K8sNode
 
-#     job_spec = JobSpec("gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])])
-#     node_rep = TblNodes(
-#         id=1,
-#         job_id=1,
-#         name="new-node",
-#         node_type=NodeType.KUBERNETES_POD,
-#         entrypoint="echo 'hello world'",
-#         # This node has not been actually created yet
-#         status=NodeStatus.INITIALIZED,
-#         job=TblJobs(),
-#     )
+    job_spec = JobSpec("gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])])
+    node_rep = TblNodes(
+        id=1,
+        job_id=1,
+        name="new-node",
+        node_type=NodeType.KUBERNETES_POD,
+        entrypoint="echo 'hello world'",
+        # This node has not been actually created yet
+        status=NodeStatus.INITIALIZED,
+        job=TblJobs(),
+    )
 
-#     # Create the node object
-#     node = K8sNode.from_representation(
-#         job_spec,
-#         node_rep,
-#         mock_scheduler_config,
-#     )
-#     node.refresh_status()
-#     (is_created, _) = node.create()
+    # Create the node object
+    with patch("chainsail.scheduler.nodes.k8s_pod.monitor_deployment") as mock_monitor_deployment:
+        node = K8sNode.from_representation(
+            job_spec,
+            node_rep,
+            mock_scheduler_config,
+        )
+        node.refresh_status()
+        (is_created, _) = node.create()
 
-#     assert is_created
-#     assert node.status == NodeStatus.RUNNING
+    mock_monitor_deployment.assert_called_once()
+    assert is_created
+    assert node.status == NodeStatus.RUNNING
 
 
-# @patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
-# @patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
-# def test_k8s_node_lifecycle(mock_api, mock_kubeconfig, mock_scheduler_config):
-#     from chainsail.common.spec import JobSpec
-#     from chainsail.scheduler.nodes.base import NodeStatus
-#     from chainsail.scheduler.nodes.k8s_pod import K8sNode
+@patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
+@patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
+def test_k8s_node_lifecycle(mock_api, mock_kubeconfig, mock_scheduler_config):
+    from chainsail.common.spec import JobSpec
+    from chainsail.scheduler.db import TblJobs, TblNodes
+    from chainsail.scheduler.nodes.base import NodeStatus
+    from chainsail.scheduler.nodes.k8s_pod import K8sNode
 
-#     job_spec = JobSpec("gs://my-bucket/scripts")
+    job_spec = JobSpec("gs://my-bucket/scripts")
 
-#     with patch("chainsail.scheduler.nodes.k8s_pod.create_resources"):
-#         node = K8sNode(
-#             name="test",
-#             is_controller=True,
-#             config=mock_scheduler_config.controller,
-#             node_config=mock_scheduler_config.node_config,
-#             spec=job_spec,
-#         )
+    with patch("chainsail.scheduler.nodes.k8s_pod.monitor_deployment"):
+        node_rep = TblNodes(
+            id=1,
+            job_id=1,
+            name="new-node",
+            node_type=NodeType.KUBERNETES_POD,
+            job=TblJobs(id=3),
+        )
+        node = K8sNode(
+            name="test",
+            is_controller=True,
+            config=mock_scheduler_config.controller,
+            node_config=mock_scheduler_config.node_config,
+            spec=job_spec,
+            representation=node_rep,
+        )
 
-#         statuses = [node.status]
-#         is_created, _ = node.create()
-#         statuses.append(node.status)
-#         is_restarted = node.restart()
-#         statuses.append(node.status)
-#         is_deleted = node.delete()
-#         statuses.append(node.status)
+        statuses = [node.status]
+        is_created, _ = node.create()
+        statuses.append(node.status)
+        is_restarted = node.restart()
+        statuses.append(node.status)
+        is_deleted = node.delete()
+        statuses.append(node.status)
 
-#     # Check that all operations succeeded
-#     assert all([is_created, is_restarted, is_deleted])
-#     # If so, the following statuses should have been observed:
-#     assert statuses == [
-#         NodeStatus.INITIALIZED,
-#         NodeStatus.RUNNING,
-#         NodeStatus.RESTARTING,
-#         NodeStatus.EXITED,
-#     ]
+    # Check that all operations succeeded
+    assert all([is_created, is_restarted, is_deleted])
+    # If so, the following statuses should have been observed:
+    assert statuses == [
+        NodeStatus.INITIALIZED,
+        NodeStatus.RUNNING,
+        NodeStatus.RESTARTING,
+        NodeStatus.EXITED,
+    ]

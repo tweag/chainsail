@@ -87,6 +87,7 @@ class Job:
                 self.sync_representation()
                 # Then create control node
                 logger.debug("Creating control node...", extra={"job_id": self.id})
+                logger.debug("Control node name: " + self.control_node.name)
                 created, logs = self.control_node.create()
                 self.sync_representation()
                 if not created:

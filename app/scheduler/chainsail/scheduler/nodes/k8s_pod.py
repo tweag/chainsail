@@ -21,6 +21,7 @@ from chainsail.scheduler.errors import (
 import kubernetes as kub
 from kubernetes.config import load_kube_config
 from kubernetes.client import CoreV1Api, V1Pod, V1ConfigMap
+from kubernetes.client.rest import ApiException
 
 
 logger = logging.getLogger("chainsail.scheduler")
@@ -31,6 +32,43 @@ set -ex
 {dep_install_commands}
 """
 K8S_NAMESPACE = "default"
+
+
+def monitor_deployment(pod: "K8sNode") -> bool:
+    """Monitor the proper creation and startup of a pod.
+
+    Args:
+        pod: The pod instance to monitor
+
+    Returns:
+        A boolean indicating the success or failure of the pod creation
+    """
+    # TODO: Currently cannot use `refresh_status` because it is flawed (see
+    # the method comments for details) => using the Pod's phase instead. When
+    # it will be fixed, change to using `refresh_status` because it makes more
+    # sense
+    phase = pod._read_pod().status.phase
+    while True:
+        # Wait for the pod to be running (meaning all containers are running)
+        if phase == "Pending":
+            time.sleep(2)
+            phase = pod._read_pod().status.phase
+            continue
+        # Wait for all the containers to be fully ready
+        elif phase == "Running":
+            # TODO: Use K8s *readiness probes* to monitor readiness
+            if pod._is_controller:
+                time.sleep(30)
+            else:
+                time.sleep(0)
+            return True
+        # Unusual cases
+        elif phase == "":
+            logger.error("Pod failed during its creation process.")
+            return False
+        else:
+            logger.error("Unexpected pod status during its creation process")
+            return False
 
 
 class K8sNode(Node):
@@ -84,6 +122,39 @@ class K8sNode(Node):
         install_commands = "\n".join([d.installation_script for d in self.spec.dependencies])
         script = DEP_INSTALL_TEMPLATE.format(dep_install_commands=install_commands)
         return script
+
+    def _get_logs(self) -> str:
+        try:
+            events = self.core_v1.list_namespaced_event(
+                namespace=K8S_NAMESPACE,
+                field_selector=f"involvedObject.name={self._name}",
+            )
+        except ApiException as e:
+            logger.warning("Unable to fetch pod events. Exception: {e}")
+            return ""
+        logs = ""
+        for x in events.items:
+            if x.event_time:
+                event_time = x.event_time.strftime("%Y-%m-%d %H:%M:%S %Z")
+            elif x.first_timestamp:
+                event_time = x.first_timestamp.strftime("%Y-%m-%d %H:%M:%S %Z")
+            else:
+                event_time = "unknown event time"
+            logs += "{:23}   {}   {}   {:10}   {}\n".format(
+                event_time,
+                x.involved_object.kind,
+                x.involved_object.name,
+                x.reason,
+                x.message,
+            )
+        return logs
+
+    def _read_pod(self) -> V1Pod:
+        pod = self.core_v1.read_namespaced_pod(
+            name=self._name,
+            namespace=K8S_NAMESPACE,
+        )
+        return pod
 
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
@@ -217,75 +288,76 @@ class K8sNode(Node):
                 volumes=[user_code_volume, job_spec_volume, ssh_key_volume, config_volume],
             ),
         )
-        ##  CREATE RESOURCES
+        ## CREATE RESOURCES
         self._status = NodeStatus.CREATING
-        # Configmaps
-        _ = self.core_v1.create_namespaced_config_map(
-            body=self._cm_usercode,
-            namespace=K8S_NAMESPACE,
-        )
-        _ = self.core_v1.create_namespaced_config_map(
-            body=self._cm_jobspec,
-            namespace=K8S_NAMESPACE,
-        )
-        _ = self.core_v1.create_namespaced_config_map(
-            body=self._cm_sshkey,
-            namespace=K8S_NAMESPACE,
-        )
-        # Pod
-        _ = self.core_v1.create_namespaced_pod(
-            body=self._pod,
-            namespace=K8S_NAMESPACE,
-        )
-        self.refresh_status()
+        try:
+            # Configmaps
+            _ = self.core_v1.create_namespaced_config_map(
+                body=self._cm_usercode,
+                namespace=K8S_NAMESPACE,
+            )
+            _ = self.core_v1.create_namespaced_config_map(
+                body=self._cm_jobspec,
+                namespace=K8S_NAMESPACE,
+            )
+            _ = self.core_v1.create_namespaced_config_map(
+                body=self._cm_sshkey,
+                namespace=K8S_NAMESPACE,
+            )
+            # Pod
+            _ = self.core_v1.create_namespaced_pod(
+                body=self._pod,
+                namespace=K8S_NAMESPACE,
+            )
+        except ApiException as e:
+            self._status = NodeStatus.FAILED
+            logs = self._get_logs()
+            self.sync_representation()
+            return (False, logs)
+        ## MONITOR CREATION
+        ready = monitor_deployment(self)
+        if ready:
+            self._status = NodeStatus.RUNNING
+        else:
+            self._status = NodeStatus.FAILED
+        logs = self._get_logs()
         self.refresh_address()
         self.sync_representation()
-        # Wait for all resources to be created
-        while (
-            self._status == NodeStatus.INITIALIZED
-            or self._status == NodeStatus.CREATING
-            or not self._address
-        ):
-            time.sleep(3)
-            self.refresh_status()
-            self.refresh_address()
-            self.sync_representation()
-        # Wait for the pods to initialize properly
-        # TODO: This should be handled using k8s liveness/startup/readiness probes
-        if self._is_controller:
-            time.sleep(20)
-        else:
-            time.sleep(10)
-        return (True, "LOGS FROM CREATE...")
+        return (ready, logs)
 
     def restart(self) -> bool:
         if not self._pod or not self._cm_usercode or not self._cm_jobspec or not self._cm_sshkey:
             raise MissingNodeError
         logger.info("Restarting pod...")
-        _ = self.core_v1.patch_namespaced_config_map(
-            name=self._name_cm_usercode,
-            body=self._pod.cm_usercode,
-            namespace=K8S_NAMESPACE,
-        )
-        _ = self.core_v1.patch_namespaced_config_map(
-            name=self._name_cm_jobspec,
-            body=self._pod.cm_jobspec,
-            namespace=K8S_NAMESPACE,
-        )
-        _ = self.core_v1.patch_namespaced_config_map(
-            name=self._name_cm_sshkey,
-            body=self._pod.cm_sshkey,
-            namespace=K8S_NAMESPACE,
-        )
-        _ = self.core_v1.patch_namespaced_pod(
-            name=self._name,
-            body=self._pod.pod,
-            namespace=K8S_NAMESPACE,
-        )
-        self.refresh_status()
+        try:
+            _ = self.core_v1.replace_namespaced_config_map(
+                name=self._name_cm_usercode,
+                body=self._cm_usercode,
+                namespace=K8S_NAMESPACE,
+            )
+            _ = self.core_v1.replace_namespaced_config_map(
+                name=self._name_cm_jobspec,
+                body=self._cm_jobspec,
+                namespace=K8S_NAMESPACE,
+            )
+            _ = self.core_v1.replace_namespaced_config_map(
+                name=self._name_cm_sshkey,
+                body=self._cm_sshkey,
+                namespace=K8S_NAMESPACE,
+            )
+            _ = self.core_v1.replace_namespaced_pod(
+                name=self._name,
+                body=self._pod,
+                namespace=K8S_NAMESPACE,
+            )
+            self._status = NodeStatus.RESTARTING
+            restarted = True
+        except ApiException as e:
+            logger.error(f"Failed to restart pod. Exception: {e}")
+            restarted = False
         self.refresh_address()
         self.sync_representation()
-        return True
+        return restarted
 
     def delete(self) -> bool:
         if (
@@ -295,26 +367,32 @@ class K8sNode(Node):
             and not self._cm_sshkey
         ):
             return True
-        logger.info("Deleting pod...")
-        _ = self.core_v1.delete_namespaced_pod(
-            name=self._name,
-            namespace=K8S_NAMESPACE,
-        )
-        _ = self.core_v1.delete_namespaced_config_map(
-            name=self._name_cm_usercode,
-            namespace=K8S_NAMESPACE,
-        )
-        _ = self.core_v1.delete_namespaced_config_map(
-            name=self._name_cm_jobspec,
-            namespace=K8S_NAMESPACE,
-        )
-        _ = self.core_v1.delete_namespaced_config_map(
-            name=self._name_cm_sshkey,
-            namespace=K8S_NAMESPACE,
-        )
-        self.refresh_status()
+        try:
+            logger.info("Deleting pod...")
+            _ = self.core_v1.delete_namespaced_pod(
+                name=self._name,
+                namespace=K8S_NAMESPACE,
+            )
+            _ = self.core_v1.delete_namespaced_config_map(
+                name=self._name_cm_usercode,
+                namespace=K8S_NAMESPACE,
+            )
+            _ = self.core_v1.delete_namespaced_config_map(
+                name=self._name_cm_jobspec,
+                namespace=K8S_NAMESPACE,
+            )
+            _ = self.core_v1.delete_namespaced_config_map(
+                name=self._name_cm_sshkey,
+                namespace=K8S_NAMESPACE,
+            )
+            self._status = NodeStatus.EXITED
+            deleted = True
+        except ApiException as e:
+            logger.error(f"Failed to delete pod. Exception: {e}")
+            self.refresh_status()
+            deleted = False
         self.sync_representation()
-        return True
+        return deleted
 
     @property
     def name(self):
@@ -347,13 +425,10 @@ class K8sNode(Node):
 
     def refresh_address(self):
         try:
-            pod = self.core_v1.read_namespaced_pod(
-                name=self._name,
-                namespace=K8S_NAMESPACE,
-            )
+            pod = self._read_pod()
             self._address = pod.status.pod_ip
-        except Exception as e:
-            logger.error(f"Unable to get pod's IP address. Exception: {e}")
+        except ApiException as e:
+            logger.warning(f"Unable to get pod's IP address. Exception: {e}")
 
     @property
     def status(self):
@@ -361,16 +436,17 @@ class K8sNode(Node):
 
     def refresh_status(self):
         # See https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase
+        # TODO: The NodeStatus.Running status is currently not accurate. Should be:
+        # - if (phase=="Pending") or (phase=="Running" and not READY) -> NodeStatus.CREATING
+        # - if (phase=="Running" and READY) -> NodeStatus.RUNNING
+        # where READY is some kind of test of the readiness of the containers (use *readiness probes*)
         if not self._pod:
             self._status = NodeStatus.INITIALIZED
             return
         if self.status == NodeStatus.FAILED:
             return
         try:
-            pod = self.core_v1.read_namespaced_pod(
-                name=self._name,
-                namespace=K8S_NAMESPACE,
-            )
+            pod = self._read_pod()
             phase = pod.status.phase
         except Exception as e:
             logger.error(f"Unable to read pod status. Status not updated. Exception: {e}")
@@ -433,7 +509,7 @@ class K8sNode(Node):
                     name=cls._NAME_CM_SSHKEY.format(name),
                     namespace=K8S_NAMESPACE,
                 )
-            except Exception as e:
+            except ApiException as e:
                 raise ObjectConstructionError(
                     f"Failed to find an existing pod (or one of its dependency configmap) with name "
                     f"{node_rep.name} job: {node_rep.job_id}, node: {node_rep.id}"
