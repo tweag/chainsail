@@ -3,6 +3,10 @@ import os
 import time
 from typing import Callable, Optional, Tuple
 from enum import Enum
+import kubernetes as kub
+from kubernetes.config import load_kube_config
+from kubernetes.client import CoreV1Api, V1Pod, V1ConfigMap
+from kubernetes.client.rest import ApiException
 from chainsail.common.spec import JobSpec, JobSpecSchema
 from chainsail.scheduler.config import (
     GeneralNodeConfig,
@@ -18,10 +22,6 @@ from chainsail.scheduler.errors import (
     NodeError,
     ObjectConstructionError,
 )
-import kubernetes as kub
-from kubernetes.config import load_kube_config
-from kubernetes.client import CoreV1Api, V1Pod, V1ConfigMap
-from kubernetes.client.rest import ApiException
 
 
 logger = logging.getLogger("chainsail.scheduler")
@@ -60,7 +60,7 @@ def monitor_deployment(pod: "K8sNode") -> bool:
             if pod._is_controller:
                 time.sleep(30)
             else:
-                time.sleep(0)
+                time.sleep(10)
             return True
         # Unusual cases
         elif phase == "":
@@ -192,7 +192,8 @@ class K8sNode(Node):
             name="httpstan",
             image=self._config.httpstan_image,
             env=[kub.client.V1EnvVar(name="HTTPSTAN_PORT", value="8082")],
-            # TODO: Add something to replace `--log-driver=gcplogs` -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
+            # TODO: Add something to replace `--log-driver=gcplogs`
+            # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
         # User code container
         install_script_target = os.path.join("/chainsail", install_script_name)
@@ -221,7 +222,8 @@ class K8sNode(Node):
                     sub_path=install_script_name,
                 ),
             ],
-            # TODO: Add something to replace `--log-driver=gcplogs` -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
+            # TODO: Add something to replace `--log-driver=gcplogs`
+            # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
         # Worker container
         container_cmd = [self._config.cmd] + self._config.args
@@ -253,7 +255,8 @@ class K8sNode(Node):
                     sub_path=job_spec_filename,
                 ),
             ],
-            # TODO: Add something to replace `--log-driver=gcplogs` -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
+            # TODO: Add something to replace `--log-driver=gcplogs`
+            # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
         ## VOLUMES
         # User code volume
@@ -292,20 +295,20 @@ class K8sNode(Node):
         self._status = NodeStatus.CREATING
         try:
             # Configmaps
-            _ = self.core_v1.create_namespaced_config_map(
+            self.core_v1.create_namespaced_config_map(
                 body=self._cm_usercode,
                 namespace=K8S_NAMESPACE,
             )
-            _ = self.core_v1.create_namespaced_config_map(
+            self.core_v1.create_namespaced_config_map(
                 body=self._cm_jobspec,
                 namespace=K8S_NAMESPACE,
             )
-            _ = self.core_v1.create_namespaced_config_map(
+            self.core_v1.create_namespaced_config_map(
                 body=self._cm_sshkey,
                 namespace=K8S_NAMESPACE,
             )
             # Pod
-            _ = self.core_v1.create_namespaced_pod(
+            self.core_v1.create_namespaced_pod(
                 body=self._pod,
                 namespace=K8S_NAMESPACE,
             )
@@ -330,22 +333,22 @@ class K8sNode(Node):
             raise MissingNodeError
         logger.info("Restarting pod...")
         try:
-            _ = self.core_v1.replace_namespaced_config_map(
+            self.core_v1.replace_namespaced_config_map(
                 name=self._name_cm_usercode,
                 body=self._cm_usercode,
                 namespace=K8S_NAMESPACE,
             )
-            _ = self.core_v1.replace_namespaced_config_map(
+            self.core_v1.replace_namespaced_config_map(
                 name=self._name_cm_jobspec,
                 body=self._cm_jobspec,
                 namespace=K8S_NAMESPACE,
             )
-            _ = self.core_v1.replace_namespaced_config_map(
+            self.core_v1.replace_namespaced_config_map(
                 name=self._name_cm_sshkey,
                 body=self._cm_sshkey,
                 namespace=K8S_NAMESPACE,
             )
-            _ = self.core_v1.replace_namespaced_pod(
+            self.core_v1.replace_namespaced_pod(
                 name=self._name,
                 body=self._pod,
                 namespace=K8S_NAMESPACE,
@@ -369,19 +372,19 @@ class K8sNode(Node):
             return True
         try:
             logger.info("Deleting pod...")
-            _ = self.core_v1.delete_namespaced_pod(
+            self.core_v1.delete_namespaced_pod(
                 name=self._name,
                 namespace=K8S_NAMESPACE,
             )
-            _ = self.core_v1.delete_namespaced_config_map(
+            self.core_v1.delete_namespaced_config_map(
                 name=self._name_cm_usercode,
                 namespace=K8S_NAMESPACE,
             )
-            _ = self.core_v1.delete_namespaced_config_map(
+            self.core_v1.delete_namespaced_config_map(
                 name=self._name_cm_jobspec,
                 namespace=K8S_NAMESPACE,
             )
-            _ = self.core_v1.delete_namespaced_config_map(
+            self.core_v1.delete_namespaced_config_map(
                 name=self._name_cm_sshkey,
                 namespace=K8S_NAMESPACE,
             )
