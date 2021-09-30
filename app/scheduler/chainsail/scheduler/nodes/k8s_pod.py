@@ -72,7 +72,7 @@ def monitor_deployment(pod: "K8sNode") -> bool:
 
 
 class K8sNode(Node):
-    """A resaas node implementation which creates a Kubernetes Pod for each node."""
+    """A Chainsail node implementation which creates a Kubernetes Pod for each node."""
 
     NODE_TYPE = "KubernetesPod"
     _NAME_CM_USERCODE = "user-dep-configmap-{}"

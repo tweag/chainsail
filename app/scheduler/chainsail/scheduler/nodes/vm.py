@@ -285,7 +285,7 @@ def default_select_address(node: LibcloudNode) -> Optional[str]:
 
 
 class VMNode(Node):
-    """A resaas node implementation which creates a VM for each node using libcloud.
+    """A Chainsail node implementation which creates a VM for each node using libcloud.
 
     Requires that docker is installed in the provided `image`
 
