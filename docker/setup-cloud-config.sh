@@ -8,6 +8,10 @@ if [ "$#" -ne 1 ]; then
 fi
 BUCKET_NAME=$1
 INTERNAL_IP=$(gcloud compute instances list --filter="name=('$(hostname)')" --format='[no-heading](INTERNAL_IP)')
+# There are 2 possible versions of the scheduler.yaml file
+# version number = 1 => Worker nodes are GCE VMs (node_type: LibcloudVM)
+# version number = 4 => Worker nodes are K8s Pods (node_type: KubernetesPod)
+VERSION_SCHEDULER=4
 
 # Fetch secret config files
 rm -rf config_dpl
@@ -24,7 +28,7 @@ sed -ri "s/(scheduler_address:).*/\1 $INTERNAL_IP/" controller.yaml
 sed -ri "s/(metrics_address:).*/\1 $INTERNAL_IP/" controller.yaml
 
 echo "Fetching docker/config_dpl/scheduler.yaml"
-gcloud secrets versions access 3 --secret="scheduler-yaml" > scheduler.yaml
+gcloud secrets versions access $VERSION_SCHEDULER --secret="scheduler-yaml" > scheduler.yaml
 
 echo "Fetching docker/config_dpl/remote_logging.yaml"
 gcloud secrets versions access 2 --secret="remote-logging-yaml" > remote_logging.yaml
