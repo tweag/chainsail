@@ -156,6 +156,14 @@ class K8sNode(Node):
         )
         return pod
 
+    def _all_exist(self) -> bool:
+        exist = self._pod and self._cm_usercode and self._cm_jobspec and self._cm_sshkey
+        return exist
+
+    def _any_exists(self) -> bool:
+        exist = self._pod or self._cm_usercode or self._cm_jobspec or self._cm_sshkey
+        return exist
+
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
             raise NodeError("Attempted to created a pod which has already been created")
@@ -329,9 +337,10 @@ class K8sNode(Node):
         return (ready, logs)
 
     def restart(self) -> bool:
-        if not self._pod or not self._cm_usercode or not self._cm_jobspec or not self._cm_sshkey:
+        if not self._all_exist():
             raise MissingNodeError
         logger.info("Restarting pod...")
+        self._status = NodeStatus.RESTARTING
         try:
             self.core_v1.replace_namespaced_config_map(
                 name=self._name_cm_usercode,
@@ -353,45 +362,46 @@ class K8sNode(Node):
                 body=self._pod,
                 namespace=K8S_NAMESPACE,
             )
-            self._status = NodeStatus.RESTARTING
             restarted = True
         except ApiException as e:
             logger.error(f"Failed to restart pod. Exception: {e}")
+            self.refresh_status()
             restarted = False
         self.refresh_address()
         self.sync_representation()
         return restarted
 
     def delete(self) -> bool:
-        if (
-            not self._pod
-            and not self._cm_usercode
-            and not self._cm_jobspec
-            and not self._cm_sshkey
-        ):
-            return True
+        logger.info("Deleting pod...")
         try:
-            logger.info("Deleting pod...")
-            self.core_v1.delete_namespaced_pod(
-                name=self._name,
-                namespace=K8S_NAMESPACE,
-            )
-            self.core_v1.delete_namespaced_config_map(
-                name=self._name_cm_usercode,
-                namespace=K8S_NAMESPACE,
-            )
-            self.core_v1.delete_namespaced_config_map(
-                name=self._name_cm_jobspec,
-                namespace=K8S_NAMESPACE,
-            )
-            self.core_v1.delete_namespaced_config_map(
-                name=self._name_cm_sshkey,
-                namespace=K8S_NAMESPACE,
-            )
+            if self._pod:
+                self.core_v1.delete_namespaced_pod(
+                    name=self._name,
+                    namespace=K8S_NAMESPACE,
+                )
+                self._pod = None
+            if self._cm_usercode:
+                self.core_v1.delete_namespaced_config_map(
+                    name=self._name_cm_usercode,
+                    namespace=K8S_NAMESPACE,
+                )
+                self._cm_usercode = None
+            if self._cm_jobspec:
+                self.core_v1.delete_namespaced_config_map(
+                    name=self._name_cm_jobspec,
+                    namespace=K8S_NAMESPACE,
+                )
+                self._cm_jobspec = None
+            if self._cm_sshkey:
+                self.core_v1.delete_namespaced_config_map(
+                    name=self._name_cm_sshkey,
+                    namespace=K8S_NAMESPACE,
+                )
+                self._cm_sshkey = None
             self._status = NodeStatus.EXITED
             deleted = True
         except ApiException as e:
-            logger.error(f"Failed to delete pod. Exception: {e}")
+            logger.error(f"Failed to delete pod with name {self._name}. Exception: {e}")
             self.refresh_status()
             deleted = False
         self.sync_representation()
@@ -431,7 +441,9 @@ class K8sNode(Node):
             pod = self._read_pod()
             self._address = pod.status.pod_ip
         except ApiException as e:
-            logger.warning(f"Unable to get pod's IP address. Exception: {e}")
+            logger.warning(
+                f"Unable to get pod's IP address. " f"Pod name: {self._name} " f"Exception: {e}"
+            )
 
     @property
     def status(self):
@@ -452,7 +464,11 @@ class K8sNode(Node):
             pod = self._read_pod()
             phase = pod.status.phase
         except Exception as e:
-            logger.error(f"Unable to read pod status. Status not updated. Exception: {e}")
+            logger.error(
+                f"Unable to read pod status. Status not updated. "
+                f"Pod name: {self._name} "
+                f"Exception: {e}"
+            )
             return
         if phase == "Pending":
             self._status = NodeStatus.CREATING
