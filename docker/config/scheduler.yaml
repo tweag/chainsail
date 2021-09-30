@@ -7,9 +7,9 @@ controller:
     - --storage
     - /chainsail/storage.yaml
     - --hostsfile
-    - /chainsail-bis/hostfile
+    - /chainsail-hostfile/hostfile
     - --job-spec
-    - /chainsail-bis/job.json
+    - /chainsail-jobspec/job.json
     - --config
     - /chainsail/controller.yaml
   ports: [50051, 26]

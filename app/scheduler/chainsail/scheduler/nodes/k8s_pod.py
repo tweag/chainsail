@@ -259,7 +259,7 @@ class K8sNode(Node):
                 ),
                 kub.client.V1VolumeMount(
                     name="job-spec",
-                    mount_path=f"/chainsail-bis/{job_spec_filename}",
+                    mount_path=f"/chainsail-jobspec/{job_spec_filename}",
                     sub_path=job_spec_filename,
                 ),
             ],
