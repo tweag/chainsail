@@ -76,6 +76,9 @@ class K8sNode(Node):
 
     NODE_TYPE = "KubernetesPod"
     _NAME_CM = "configmap-{}"
+    _CM_FILE_USERCODE = "install_job_deps.sh"
+    _CM_FILE_JOBSPEC = "job.json"
+    _CM_FILE_SSHKEY = "authorized_keys"
 
     def __init__(
         self,
@@ -156,37 +159,32 @@ class K8sNode(Node):
         exist = self._pod or self._configmap
         return exist
 
-    def _create_configmap(self):
-        install_script_name = "install_job_deps.sh"
+    def _create_configmap(self) -> V1ConfigMap:
         install_script_src = self._user_install_script()
-        job_spec_filename = "job.json"
-        ssh_key_filename = "authorized_keys"
         configmap = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
             metadata=kub.client.V1ObjectMeta(name=self._name_cm, labels={"app": "rex"}),
             data={
-                install_script_name: install_script_src,
-                job_spec_filename: JobSpecSchema().dumps(self.spec),
-                ssh_key_filename: self._node_config.ssh_public_key,
+                self._CM_FILE_USERCODE: install_script_src,
+                self._CM_FILE_JOBSPEC: JobSpecSchema().dumps(self.spec),
+                self._CM_FILE_SSHKEY: self._node_config.ssh_public_key,
             },
         )
-        return (configmap, (install_script_name, job_spec_filename, ssh_key_filename))
+        return configmap
 
-    def _create_pod(
-        self, install_script_name: str, job_spec_filename: str, ssh_key_filename: str
-    ) -> V1Pod:
+    def _create_pod(self) -> V1Pod:
         ## CONTAINERS
+        # TODO: Add something to replace `--log-driver=gcplogs` for every container
+        # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         # HTTPStan Container
         httpstan_container = kub.client.V1Container(
             name="httpstan",
             image=self._config.httpstan_image,
             env=[kub.client.V1EnvVar(name="HTTPSTAN_PORT", value="8082")],
-            # TODO: Add something to replace `--log-driver=gcplogs`
-            # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
         # User code container
-        install_script_target = os.path.join("/chainsail", install_script_name)
+        install_script_target = os.path.join("/chainsail", self._CM_FILE_USERCODE)
         user_code_container = kub.client.V1Container(
             name="user-code",
             image=self._config.user_code_image,
@@ -209,11 +207,9 @@ class K8sNode(Node):
                 kub.client.V1VolumeMount(
                     name="job-volume",
                     mount_path=install_script_target,
-                    sub_path=install_script_name,
+                    sub_path=self._CM_FILE_USERCODE,
                 ),
             ],
-            # TODO: Add something to replace `--log-driver=gcplogs`
-            # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
         # Worker container
         container_cmd = [self._config.cmd] + self._config.args
@@ -236,17 +232,15 @@ class K8sNode(Node):
                 ),
                 kub.client.V1VolumeMount(
                     name="job-volume",
-                    mount_path=f"/app/config/ssh/{ssh_key_filename}",
-                    sub_path=ssh_key_filename,
+                    mount_path=f"/app/config/ssh/{self._CM_FILE_SSHKEY}",
+                    sub_path=self._CM_FILE_SSHKEY,
                 ),
                 kub.client.V1VolumeMount(
                     name="job-volume",
-                    mount_path=f"/chainsail-jobspec/{job_spec_filename}",
-                    sub_path=job_spec_filename,
+                    mount_path=f"/chainsail-jobspec/{self._CM_FILE_JOBSPEC}",
+                    sub_path=self._CM_FILE_JOBSPEC,
                 ),
             ],
-            # TODO: Add something to replace `--log-driver=gcplogs`
-            # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
         ## VOLUMES
         # User code + Job spec + SSH key volume
@@ -277,15 +271,10 @@ class K8sNode(Node):
         if self._status != NodeStatus.INITIALIZED:
             raise NodeError("Attempted to created a pod which has already been created")
         logger.info("Creating pod...")
-        # Create configmaps
-        (
-            self._configmap,
-            (install_script_name, job_spec_filename, ssh_key_filename),
-        ) = self._create_configmap()
-        # Create pod
-        self._pod = self._create_pod(install_script_name, job_spec_filename, ssh_key_filename)
         ## CREATE RESOURCES
         self._status = NodeStatus.CREATING
+        self._configmap = self._create_configmap()
+        self._pod = self._create_pod()
         try:
             # Configmap
             self.core_v1.create_namespaced_config_map(
