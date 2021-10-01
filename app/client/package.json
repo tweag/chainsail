@@ -17,6 +17,8 @@
     "chart.js": "^2.9.4",
     "firebase": "^8.2.9",
     "firebase-admin": "^9.5.0",
+    "logrocket": "2.0.0",
+    "logrocket-react": "4.0.1",
     "moment": "^2.29.1",
     "next": "10.0.5",
     "nookies": "^2.5.2",
