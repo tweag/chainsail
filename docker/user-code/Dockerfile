@@ -13,10 +13,12 @@ WORKDIR /app
 FROM base as system-deps
 
 # up-to-date GCC
-RUN echo 'deb http://deb.debian.org/debian testing main' >> /etc/apt/sources.list
+RUN echo 'deb http://deb.debian.org/debian stable main' >> /etc/apt/sources.list
 RUN apt update -y
-RUN apt-get install -y gcc build-essential curl wget unzip && \
+RUN apt-get install -y gcc build-essential curl wget unzip libopenblas-dev && \
     rm -rf /var/lib/apt/lists/*
+
+RUN apt-get install -y 
 
 
 ##############################################################################
@@ -49,9 +51,6 @@ RUN cd /app/app/user_code_server && \
 FROM system-deps as app
 
 COPY --from=builder /app /app
-
-RUN apt-get update -y
-RUN apt-get install -y libopenblas-dev
 
 # Directory for user data
 RUN mkdir -p /probability
