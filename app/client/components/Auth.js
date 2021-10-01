@@ -3,6 +3,8 @@ import nookies from 'nookies';
 import firebaseClient from '../utils/firebaseClient';
 import firebase from 'firebase/app';
 import 'firebase/auth';
+import LogRocket from 'logrocket';
+
 const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
@@ -11,12 +13,21 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     return firebase.auth().onIdTokenChanged(async (user) => {
-      console.log('auth changed');
-      console.log(user ? user.id : 'Nothing');
       if (!user) {
         setUser(null);
         nookies.set(undefined, 'token', '', {});
         return;
+      } else {
+        try {
+          LogRocket.identify(user.uid, {
+            email: user.email,
+            name: user.displayName,
+          });
+          console.log("Identified to LogRocket")
+        } catch (e) {
+          console.log("Identify failed on " + JSON.stringify(user) + ", session is anonyme");
+          console.log(e);
+        }
       }
 
       const token = await user.getIdToken();

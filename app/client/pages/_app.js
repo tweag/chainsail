@@ -16,20 +16,6 @@ function MyApp({ Component, pageProps }) {
       // only initialize when in the browser
       if (window !== undefined) {
         LogRocket.init('9snsmi/chainsail');
-        
-        try {
-          console.log("pageProps=" + JSON.stringify(pageProps));
-          const {uid, email} = pageProps;
-          if(uid !== undefined && email !== undefined) {
-            LogRocket.identify(uid, {
-              email: email,
-            });
-            console.log("Identified to LogRocket")
-          }
-        } catch (e) {
-          console.log("Identify failed on " + JSON.stringify({uid, email}) + ", session is anonym");
-        }
-
         setupLogRocketReact(LogRocket);
       }
     } catch(e) {
