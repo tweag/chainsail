@@ -75,9 +75,7 @@ class K8sNode(Node):
     """A Chainsail node implementation which creates a Kubernetes Pod for each node."""
 
     NODE_TYPE = "KubernetesPod"
-    _NAME_CM_USERCODE = "user-dep-configmap-{}"
-    _NAME_CM_JOBSPEC = "job-spec-configmap-{}"
-    _NAME_CM_SSHKEY = "ssh-key-configmap-{}"
+    _NAME_CM = "configmap-{}"
 
     def __init__(
         self,
@@ -90,20 +88,14 @@ class K8sNode(Node):
         status: Optional[NodeStatus] = NodeStatus.INITIALIZED,
         # If creating from existing resources, can specify the k8s objects
         pod: Optional[V1Pod] = None,
-        cm_usercode: Optional[V1ConfigMap] = None,
-        cm_jobspec: Optional[V1ConfigMap] = None,
-        cm_sshkey: Optional[V1ConfigMap] = None,
+        configmap: Optional[V1ConfigMap] = None,
     ):
         # Names
         self._name = name
-        self._name_cm_usercode = self._NAME_CM_USERCODE.format(name)
-        self._name_cm_jobspec = self._NAME_CM_JOBSPEC.format(name)
-        self._name_cm_sshkey = self._NAME_CM_SSHKEY.format(name)
+        self._name_cm = self._NAME_CM.format(name)
         # Manifests
         self._pod = pod
-        self._cm_usercode = cm_usercode
-        self._cm_jobspec = cm_jobspec
-        self._cm_sshkey = cm_sshkey
+        self._configmap = configmap
         # Others
         self._is_controller = is_controller
         self._representation = representation
@@ -157,45 +149,29 @@ class K8sNode(Node):
         return pod
 
     def _all_exist(self) -> bool:
-        exist = self._pod and self._cm_usercode and self._cm_jobspec and self._cm_sshkey
+        exist = self._pod and self._configmap
         return exist
 
     def _any_exists(self) -> bool:
-        exist = self._pod or self._cm_usercode or self._cm_jobspec or self._cm_sshkey
+        exist = self._pod or self._configmap
         return exist
 
-    def _create_configmaps(self):
-        ## CONFIGMAPS
-        # User code configmap
+    def _create_configmap(self):
         install_script_name = "install_job_deps.sh"
         install_script_src = self._user_install_script()
-        cm_usercode = kub.client.V1ConfigMap(
-            api_version="v1",
-            kind="ConfigMap",
-            metadata=kub.client.V1ObjectMeta(name=self._name_cm_usercode, labels={"app": "rex"}),
-            data={install_script_name: install_script_src},
-        )
-        # Job spec configmap
         job_spec_filename = "job.json"
-        cm_jobspec = kub.client.V1ConfigMap(
-            api_version="v1",
-            kind="ConfigMap",
-            metadata=kub.client.V1ObjectMeta(name=self._name_cm_jobspec, labels={"app": "rex"}),
-            data={job_spec_filename: JobSpecSchema().dumps(self.spec)},
-        )
-        # Public ssh key configmap
         ssh_key_filename = "authorized_keys"
-        cm_sshkey = kub.client.V1ConfigMap(
+        configmap = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
-            metadata=kub.client.V1ObjectMeta(name=self._name_cm_sshkey, labels={"app": "rex"}),
-            data={ssh_key_filename: self._node_config.ssh_public_key},
+            metadata=kub.client.V1ObjectMeta(name=self._name_cm, labels={"app": "rex"}),
+            data={
+                install_script_name: install_script_src,
+                job_spec_filename: JobSpecSchema().dumps(self.spec),
+                ssh_key_filename: self._node_config.ssh_public_key,
+            },
         )
-        return (
-            (cm_usercode, install_script_name),
-            (cm_jobspec, job_spec_filename),
-            (cm_sshkey, ssh_key_filename),
-        )
+        return (configmap, (install_script_name, job_spec_filename, ssh_key_filename))
 
     def _create_pod(
         self, install_script_name: str, job_spec_filename: str, ssh_key_filename: str
@@ -231,7 +207,7 @@ class K8sNode(Node):
                     sub_path="remote_logging.yaml",
                 ),
                 kub.client.V1VolumeMount(
-                    name="user-dep",
+                    name="job-volume",
                     mount_path=install_script_target,
                     sub_path=install_script_name,
                 ),
@@ -259,12 +235,12 @@ class K8sNode(Node):
                     sub_path=ssh_private_key_filename,
                 ),
                 kub.client.V1VolumeMount(
-                    name="ssh-key",
+                    name="job-volume",
                     mount_path=f"/app/config/ssh/{ssh_key_filename}",
                     sub_path=ssh_key_filename,
                 ),
                 kub.client.V1VolumeMount(
-                    name="job-spec",
+                    name="job-volume",
                     mount_path=f"/chainsail-jobspec/{job_spec_filename}",
                     sub_path=job_spec_filename,
                 ),
@@ -273,20 +249,10 @@ class K8sNode(Node):
             # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
         )
         ## VOLUMES
-        # User code volume
-        user_code_volume = kub.client.V1Volume(
-            name="user-dep",
-            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm_usercode),
-        )
-        # Job spec volume
-        job_spec_volume = kub.client.V1Volume(
-            name="job-spec",
-            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm_jobspec),
-        )
-        # Public ssh key volume
-        ssh_key_volume = kub.client.V1Volume(
-            name="ssh-key",
-            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm_sshkey),
+        # User code + Job spec + SSH key volume
+        job_volume = kub.client.V1Volume(
+            name="job-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm),
         )
         # Config volume
         config_volume = kub.client.V1Volume(
@@ -302,7 +268,7 @@ class K8sNode(Node):
             metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app": "rex"}),
             spec=kub.client.V1PodSpec(
                 containers=[httpstan_container, user_code_container, container],
-                volumes=[user_code_volume, job_spec_volume, ssh_key_volume, config_volume],
+                volumes=[job_volume, config_volume],
             ),
         )
         return pod
@@ -313,26 +279,17 @@ class K8sNode(Node):
         logger.info("Creating pod...")
         # Create configmaps
         (
-            (self._cm_usercode, install_script_name),
-            (self._cm_jobspec, job_spec_filename),
-            (self._cm_sshkey, ssh_key_filename),
-        ) = self._create_configmaps()
+            self._configmap,
+            (install_script_name, job_spec_filename, ssh_key_filename),
+        ) = self._create_configmap()
         # Create pod
         self._pod = self._create_pod(install_script_name, job_spec_filename, ssh_key_filename)
         ## CREATE RESOURCES
         self._status = NodeStatus.CREATING
         try:
-            # Configmaps
+            # Configmap
             self.core_v1.create_namespaced_config_map(
-                body=self._cm_usercode,
-                namespace=K8S_NAMESPACE,
-            )
-            self.core_v1.create_namespaced_config_map(
-                body=self._cm_jobspec,
-                namespace=K8S_NAMESPACE,
-            )
-            self.core_v1.create_namespaced_config_map(
-                body=self._cm_sshkey,
+                body=self._configmap,
                 namespace=K8S_NAMESPACE,
             )
             # Pod
@@ -363,18 +320,8 @@ class K8sNode(Node):
         self._status = NodeStatus.RESTARTING
         try:
             self.core_v1.replace_namespaced_config_map(
-                name=self._name_cm_usercode,
-                body=self._cm_usercode,
-                namespace=K8S_NAMESPACE,
-            )
-            self.core_v1.replace_namespaced_config_map(
-                name=self._name_cm_jobspec,
-                body=self._cm_jobspec,
-                namespace=K8S_NAMESPACE,
-            )
-            self.core_v1.replace_namespaced_config_map(
-                name=self._name_cm_sshkey,
-                body=self._cm_sshkey,
+                name=self._name_cm,
+                body=self._configmap,
                 namespace=K8S_NAMESPACE,
             )
             self.core_v1.replace_namespaced_pod(
@@ -400,24 +347,12 @@ class K8sNode(Node):
                     namespace=K8S_NAMESPACE,
                 )
                 self._pod = None
-            if self._cm_usercode:
+            if self._configmap:
                 self.core_v1.delete_namespaced_config_map(
-                    name=self._name_cm_usercode,
+                    name=self._name_cm,
                     namespace=K8S_NAMESPACE,
                 )
-                self._cm_usercode = None
-            if self._cm_jobspec:
-                self.core_v1.delete_namespaced_config_map(
-                    name=self._name_cm_jobspec,
-                    namespace=K8S_NAMESPACE,
-                )
-                self._cm_jobspec = None
-            if self._cm_sshkey:
-                self.core_v1.delete_namespaced_config_map(
-                    name=self._name_cm_sshkey,
-                    namespace=K8S_NAMESPACE,
-                )
-                self._cm_sshkey = None
+                self._configmap = None
             self._status = NodeStatus.EXITED
             deleted = True
         except ApiException as e:
@@ -536,16 +471,8 @@ class K8sNode(Node):
                     name=name,
                     namespace=K8S_NAMESPACE,
                 )
-                cm_usercode = core_v1.read_namespaced_config_map(
-                    name=cls._NAME_CM_USERCODE.format(name),
-                    namespace=K8S_NAMESPACE,
-                )
-                cm_jobspec = core_v1.read_namespaced_config_map(
-                    name=cls._NAME_CM_JOBSPEC.format(name),
-                    namespace=K8S_NAMESPACE,
-                )
-                cm_sshkey = core_v1.read_namespaced_config_map(
-                    name=cls._NAME_CM_SSHKEY.format(name),
+                configmap = core_v1.read_namespaced_config_map(
+                    name=cls._NAME_CM.format(name),
                     namespace=K8S_NAMESPACE,
                 )
             except ApiException as e:
@@ -562,9 +489,7 @@ class K8sNode(Node):
                 representation=node_rep,
                 status=NodeStatus(node_rep.status),
                 pod=pod,
-                cm_usercode=cm_usercode,
-                cm_jobspec=cm_jobspec,
-                cm_sshkey=cm_sshkey,
+                configmap=configmap,
             )
 
     @classmethod
