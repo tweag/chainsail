@@ -18,8 +18,6 @@ RUN apt update -y
 RUN apt-get install -y gcc build-essential curl wget unzip libopenblas-dev && \
     rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install -y 
-
 
 ##############################################################################
 # BUILD
