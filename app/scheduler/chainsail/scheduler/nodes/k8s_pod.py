@@ -164,15 +164,12 @@ class K8sNode(Node):
         exist = self._pod or self._cm_usercode or self._cm_jobspec or self._cm_sshkey
         return exist
 
-    def create(self) -> Tuple[bool, str]:
-        if self._status != NodeStatus.INITIALIZED:
-            raise NodeError("Attempted to created a pod which has already been created")
-        logger.info("Creating pod...")
+    def _create_configmaps(self):
         ## CONFIGMAPS
         # User code configmap
         install_script_name = "install_job_deps.sh"
         install_script_src = self._user_install_script()
-        self._cm_usercode = kub.client.V1ConfigMap(
+        cm_usercode = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
             metadata=kub.client.V1ObjectMeta(name=self._name_cm_usercode, labels={"app": "rex"}),
@@ -180,7 +177,7 @@ class K8sNode(Node):
         )
         # Job spec configmap
         job_spec_filename = "job.json"
-        self._cm_jobspec = kub.client.V1ConfigMap(
+        cm_jobspec = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
             metadata=kub.client.V1ObjectMeta(name=self._name_cm_jobspec, labels={"app": "rex"}),
@@ -188,12 +185,21 @@ class K8sNode(Node):
         )
         # Public ssh key configmap
         ssh_key_filename = "authorized_keys"
-        self._cm_sshkey = kub.client.V1ConfigMap(
+        cm_sshkey = kub.client.V1ConfigMap(
             api_version="v1",
             kind="ConfigMap",
             metadata=kub.client.V1ObjectMeta(name=self._name_cm_sshkey, labels={"app": "rex"}),
             data={ssh_key_filename: self._node_config.ssh_public_key},
         )
+        return (
+            (cm_usercode, install_script_name),
+            (cm_jobspec, job_spec_filename),
+            (cm_sshkey, ssh_key_filename),
+        )
+
+    def _create_pod(
+        self, install_script_name: str, job_spec_filename: str, ssh_key_filename: str
+    ) -> V1Pod:
         ## CONTAINERS
         # HTTPStan Container
         httpstan_container = kub.client.V1Container(
@@ -290,7 +296,7 @@ class K8sNode(Node):
             ),
         )
         ## POD
-        self._pod = kub.client.V1Pod(
+        pod = kub.client.V1Pod(
             api_version="v1",
             kind="Pod",
             metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app": "rex"}),
@@ -299,6 +305,20 @@ class K8sNode(Node):
                 volumes=[user_code_volume, job_spec_volume, ssh_key_volume, config_volume],
             ),
         )
+        return pod
+
+    def create(self) -> Tuple[bool, str]:
+        if self._status != NodeStatus.INITIALIZED:
+            raise NodeError("Attempted to created a pod which has already been created")
+        logger.info("Creating pod...")
+        # Create configmaps
+        (
+            (self._cm_usercode, install_script_name),
+            (self._cm_jobspec, job_spec_filename),
+            (self._cm_sshkey, ssh_key_filename),
+        ) = self._create_configmaps()
+        # Create pod
+        self._pod = self._create_pod(install_script_name, job_spec_filename, ssh_key_filename)
         ## CREATE RESOURCES
         self._status = NodeStatus.CREATING
         try:
