@@ -47,10 +47,9 @@ jobs:
           cd ./app/scheduler
           poetry install
           PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-      # - name: Install and test resaas.controller
-      #   run: |
-      #     cd ./app/controller
-      #     poetry install
-      #     PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
+      - name: Install and test resaas.controller
+        run: |
+          cd ./app/controller
+          rm ./poetry.lock
+          poetry install
+          PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
