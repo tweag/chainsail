@@ -26,29 +26,31 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry==1.1.10
           sudo apt-get install -y protobuf-compiler
-      # Python Libs
-      - name: Install and test resaas.common
-        run: |
-          cd ./lib/common
-          poetry install
-          PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
-          # Remove automatically generated lockfile for library
-          rm ./poetry.lock
-      - name: Install and test resaas.schedule_estimation
-        run: |
-          cd ./lib/schedule_estimation
-          poetry install
-          PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
-          rm ./poetry.lock
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+      # # Python Libs
+      # - name: Install and test resaas.common
+      #   run: |
+      #     cd ./lib/common
+      #     poetry install
+      #     PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
+      #     # Remove automatically generated lockfile for library
+      #     rm ./poetry.lock
+      # - name: Install and test resaas.schedule_estimation
+      #   run: |
+      #     cd ./lib/schedule_estimation
+      #     poetry install
+      #     PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
+      #     rm ./poetry.lock
 
-      # Python Applications
-      - name: Install and test resaas.scheduler
-        run: |
-          cd ./app/scheduler
-          poetry install
-          PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
-      - name: Install and test resaas.controller
-        run: |
-          cd ./app/controller
-          poetry install
-          PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
+      # # Python Applications
+      # - name: Install and test resaas.scheduler
+      #   run: |
+      #     cd ./app/scheduler
+      #     poetry install
+      #     PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
+      # - name: Install and test resaas.controller
+      #   run: |
+      #     cd ./app/controller
+      #     poetry install
+      #     PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
