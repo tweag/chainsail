@@ -38,6 +38,9 @@ const FirebaseAuth = ({ latestPage }) => {
                 * No personal data is gathered. This is only to link your jobs to your identity and
                 to calculate your compute time quota.
               </div>
+              <div className="text-xs">
+                We might record information about your session to improve user experience.
+              </div>
               <StyledFirebaseAuth uiConfig={firebaseAuthConfig} firebaseAuth={firebase.auth()} />
             </FlexCol>
           </FlexCenter>
