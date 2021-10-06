@@ -11,14 +11,14 @@ import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 
 function MyApp({ Component, pageProps }) {
-  useEffect(()=> {
+  useEffect(() => {
     try {
       // only initialize when in the browser
       if (window !== undefined) {
         LogRocket.init('9snsmi/chainsail');
         setupLogRocketReact(LogRocket);
       }
-    } catch(e) {
+    } catch (e) {
       console.log(e);
     }
   }, []);
