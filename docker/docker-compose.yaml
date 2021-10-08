@@ -18,14 +18,13 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-  # postgres admin
   pgadmin:
     image: dpage/pgadmin4:5.4
     environment:
       - PGADMIN_DEFAULT_EMAIL=user@domain.com
       - PGADMIN_DEFAULT_PASSWORD=SuperSecret
     volumes:
-      - ./config/pg-servers.json:/pgadmin4/servers.json
+      - ./config_dpl/pg-servers.json:/pgadmin4/servers.json
     ports:
       - "81:80"
     depends_on:
@@ -50,12 +49,13 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - SQLALCHEMY_DATABASE_URI=postgresql://postgres:resaas-dev@postgres:5432/postgres
       - CHAINSAIL_SCHEDULER_CONFIG=/config/scheduler.yaml
+      - CONCURRENCY=15
     volumes:
-      - ./config:/config
+      - ./config_dpl:/config
   scheduler:
     image: "chainsail-scheduler:latest"
     volumes:
-      - ./config:/config
+      - ./config_dpl:/config
     ports:
       - "5000:5001"
     environment:
@@ -83,7 +83,8 @@ services:
   client:
     image: "chainsail-client:latest"
     volumes:
-      - /home/simeon/projects/resaas/app/client/next.config.js:/opt/app/next.config.js
+      - /home/arsleust/resaas/docker/config_dpl/client_sa_key.json:/config/client_sa_key.json
+      - /home/arsleust/resaas/app/client/next.config.js:/opt/app/next.config.js
     ports:
       - "3000:3000"
     environment:
