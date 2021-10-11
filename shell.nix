@@ -33,7 +33,7 @@ in
   pkgs.mkShell {
     buildInputs = with pkgs; [
       python38
-      python38Packages.poetry
+      poetry # version 1.1.10 (required) while pythonPackages38.poetry is lower
       black
       niv.niv
       yarn
