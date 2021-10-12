@@ -63,7 +63,6 @@ const CopyrightFooter = () => (
 );
 
 const fireAnimation = () => {
-  console.log('Animation fired');
   const parent = document.getElementById('animation-main-page');
   const id = Math.random(); //or some such identifier
   const div = document.createElement('div');

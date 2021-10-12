@@ -19,6 +19,7 @@ function MyApp({ Component, pageProps }) {
         setupLogRocketReact(LogRocket);
       }
     } catch (e) {
+      console.log("Could not setup LogRocket")
       console.log(e);
     }
   }, []);

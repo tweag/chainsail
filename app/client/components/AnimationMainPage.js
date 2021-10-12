@@ -48,7 +48,7 @@ function ReactSpring({ duration }) {
       d={props.t.interpolate(interpolate)}
       stroke="black"
       fill="none"
-      stroke-width="5"
+      strokeWidth="5"
     ></animated.path>
   );
 }
