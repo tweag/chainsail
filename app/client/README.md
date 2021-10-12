@@ -73,7 +73,9 @@ $ docker run -v $PWD/next.config.js:/opt/app/next.config.js\
 
 ## ... to AppEngine
 
-Run
+Fill the `app.yaml` file.
+
+Then run:
 
 ```shell
 $ npm run deploy

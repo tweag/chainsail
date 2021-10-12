@@ -42,3 +42,6 @@ firebase-admin-secrets.local.json
 
 # google credentials
 resaas-simeon-dev-*.json
+
+# google service access key (see README)
+client_sa_key.json
