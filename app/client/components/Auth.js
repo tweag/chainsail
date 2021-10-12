@@ -25,7 +25,9 @@ export const AuthProvider = ({ children }) => {
           });
           console.log('Identified to LogRocket as ' + user.email);
         } catch (e) {
-          console.log('Identify failed on ' + JSON.stringify(user) + ', session will be anonymous');
+          console.log(
+            'Identify failed on ' + JSON.stringify(user) + ', session will be anonymous'
+          );
           console.log(e);
         }
       }
