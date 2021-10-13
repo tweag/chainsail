@@ -79,6 +79,7 @@ class K8sNode(Node):
         # If creating from existing resources, can specify the k8s objects
         pod: Optional[V1Pod] = None,
         configmap: Optional[V1ConfigMap] = None,
+        address: Optional[str] = None,
     ):
         # Names
         self._name = name
@@ -93,7 +94,7 @@ class K8sNode(Node):
         self._node_config = node_config
         self.spec = spec
         self._status = status
-        self._address = None
+        self._address = address
         # Load the kubernetes config:
         # - Either from the file specified by KUBECONFIG environment variable if it exists
         # - Or from the default location $HOME/.kube/config
@@ -349,7 +350,6 @@ class K8sNode(Node):
 
     @property
     def address(self):
-        self.refresh_address()
         return self._address
 
     def refresh_address(self):
@@ -448,6 +448,7 @@ class K8sNode(Node):
                 status=NodeStatus(node_rep.status),
                 pod=pod,
                 configmap=configmap,
+                address=pod.status.pod_ip,
             )
 
     @classmethod
