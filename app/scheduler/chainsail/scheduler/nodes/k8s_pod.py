@@ -43,27 +43,14 @@ def monitor_deployment(pod: "K8sNode") -> bool:
     Returns:
         A boolean indicating the success or failure of the pod creation
     """
-    # TODO: Currently cannot use `refresh_status` because it is flawed (see
-    # the method comments for details) => using the Pod's phase instead. When
-    # it will be fixed, change to using `refresh_status` because it makes more
-    # sense
-    phase = pod._read_pod().status.phase
     while True:
-        # Wait for the pod to be running (meaning all containers are running)
-        if phase == "Pending":
+        pod.refresh_status()
+        if pod.status == NodeStatus.CREATING:
             time.sleep(2)
-            phase = pod._read_pod().status.phase
             continue
-        # Wait for all the containers to be fully ready
-        elif phase == "Running":
-            # TODO: Use K8s *readiness probes* to monitor readiness
-            if pod._is_controller:
-                time.sleep(30)
-            else:
-                time.sleep(10)
+        elif pod.status == NodeStatus.RUNNING:
             return True
-        # Unusual cases
-        elif phase == "":
+        elif pod.status == NodeStatus.FAILED:
             logger.error("Pod failed during its creation process.")
             return False
         else:
@@ -121,8 +108,7 @@ class K8sNode(Node):
     def _get_logs(self) -> str:
         try:
             events = self.core_v1.list_namespaced_event(
-                namespace=K8S_NAMESPACE,
-                field_selector=f"involvedObject.name={self._name}",
+                namespace=K8S_NAMESPACE, field_selector=f"involvedObject.name={self._name}"
             )
         except ApiException as e:
             logger.warning("Unable to fetch pod events. Exception: {e}")
@@ -136,19 +122,12 @@ class K8sNode(Node):
             else:
                 event_time = "unknown event time"
             logs += "{:23}   {}   {}   {:10}   {}\n".format(
-                event_time,
-                x.involved_object.kind,
-                x.involved_object.name,
-                x.reason,
-                x.message,
+                event_time, x.involved_object.kind, x.involved_object.name, x.reason, x.message
             )
         return logs
 
     def _read_pod(self) -> V1Pod:
-        pod = self.core_v1.read_namespaced_pod(
-            name=self._name,
-            namespace=K8S_NAMESPACE,
-        )
+        pod = self.core_v1.read_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
         return pod
 
     def _all_exist(self) -> bool:
@@ -215,16 +194,22 @@ class K8sNode(Node):
         container_cmd = [self._config.cmd] + self._config.args
         container_cmd = [arg.format(job_id=self.representation.job.id) for arg in container_cmd]
         ssh_private_key_filename = os.path.basename(self._node_config.ssh_private_key_path)
+        # this startup probe checks the state of the gRPC server
+        startup_probe = None
+        if self._is_controller:
+            startup_probe = kub.client.V1Probe(
+                tcp_socket=kub.client.V1TCPSocketAction(port=50051),
+                period_seconds=2,
+                failure_threshold=60,
+            )
         container = kub.client.V1Container(
             name="rex",
             image=self._config.image,
             args=container_cmd,
             ports=[kub.client.V1ContainerPort(container_port=50051)],
+            startup_probe=startup_probe,
             volume_mounts=[
-                kub.client.V1VolumeMount(
-                    name="config-volume",
-                    mount_path="/chainsail",
-                ),
+                kub.client.V1VolumeMount(name="config-volume", mount_path="/chainsail"),
                 kub.client.V1VolumeMount(
                     name="config-volume",
                     mount_path="/root/.ssh/id.pem",
@@ -245,8 +230,7 @@ class K8sNode(Node):
         ## VOLUMES
         # User code + Job spec + SSH key volume
         job_volume = kub.client.V1Volume(
-            name="job-volume",
-            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm),
+            name="job-volume", config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm)
         )
         # Config volume
         config_volume = kub.client.V1Volume(
@@ -278,14 +262,10 @@ class K8sNode(Node):
         try:
             # Configmap
             self.core_v1.create_namespaced_config_map(
-                body=self._configmap,
-                namespace=K8S_NAMESPACE,
+                body=self._configmap, namespace=K8S_NAMESPACE
             )
             # Pod
-            self.core_v1.create_namespaced_pod(
-                body=self._pod,
-                namespace=K8S_NAMESPACE,
-            )
+            self.core_v1.create_namespaced_pod(body=self._pod, namespace=K8S_NAMESPACE)
         except ApiException as e:
             self._status = NodeStatus.FAILED
             logs = self._get_logs()
@@ -309,14 +289,10 @@ class K8sNode(Node):
         self._status = NodeStatus.RESTARTING
         try:
             self.core_v1.replace_namespaced_config_map(
-                name=self._name_cm,
-                body=self._configmap,
-                namespace=K8S_NAMESPACE,
+                name=self._name_cm, body=self._configmap, namespace=K8S_NAMESPACE
             )
             self.core_v1.replace_namespaced_pod(
-                name=self._name,
-                body=self._pod,
-                namespace=K8S_NAMESPACE,
+                name=self._name, body=self._pod, namespace=K8S_NAMESPACE
             )
             restarted = True
         except ApiException as e:
@@ -331,15 +307,11 @@ class K8sNode(Node):
         logger.info("Deleting pod...")
         try:
             if self._pod:
-                self.core_v1.delete_namespaced_pod(
-                    name=self._name,
-                    namespace=K8S_NAMESPACE,
-                )
+                self.core_v1.delete_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
                 self._pod = None
             if self._configmap:
                 self.core_v1.delete_namespaced_config_map(
-                    name=self._name_cm,
-                    namespace=K8S_NAMESPACE,
+                    name=self._name_cm, namespace=K8S_NAMESPACE
                 )
                 self._configmap = None
             self._status = NodeStatus.EXITED
@@ -406,7 +378,6 @@ class K8sNode(Node):
             return
         try:
             pod = self._read_pod()
-            phase = pod.status.phase
         except Exception as e:
             logger.error(
                 f"Unable to read pod status. Status not updated. "
@@ -414,9 +385,15 @@ class K8sNode(Node):
                 f"Exception: {e}"
             )
             return
-        if phase == "Pending":
+        phase = pod.status.phase
+        ctrs_statuses = pod.status.container_statuses
+        if ctrs_statuses:
+            ctrs_started = all([ctr.started for ctr in ctrs_statuses])
+        else:
+            ctrs_started = False
+        if phase == "Pending" or (phase == "Running" and not ctrs_started):
             self._status = NodeStatus.CREATING
-        elif phase == "Running":
+        elif phase == "Running" and ctrs_started:
             self._status = NodeStatus.RUNNING
         elif phase == "Succeeded":
             self._status = NodeStatus.EXITED
@@ -456,13 +433,9 @@ class K8sNode(Node):
                 load_kube_config()
                 core_v1 = CoreV1Api()
                 name = node_rep.name
-                pod = core_v1.read_namespaced_pod(
-                    name=name,
-                    namespace=K8S_NAMESPACE,
-                )
+                pod = core_v1.read_namespaced_pod(name=name, namespace=K8S_NAMESPACE)
                 configmap = core_v1.read_namespaced_config_map(
-                    name=cls._NAME_CM.format(name),
-                    namespace=K8S_NAMESPACE,
+                    name=cls._NAME_CM.format(name), namespace=K8S_NAMESPACE
                 )
             except ApiException as e:
                 raise ObjectConstructionError(
