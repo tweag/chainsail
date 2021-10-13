@@ -366,11 +366,7 @@ class K8sNode(Node):
         return self._status
 
     def refresh_status(self):
-        # See https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase
-        # TODO: The NodeStatus.Running status is currently not accurate. Should be:
-        # - if (phase=="Pending") or (phase=="Running" and not READY) -> NodeStatus.CREATING
-        # - if (phase=="Running" and READY) -> NodeStatus.RUNNING
-        # where READY is some kind of test of the readiness of the containers (use *readiness probes*)
+        # See https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
         if not self._pod:
             self._status = NodeStatus.INITIALIZED
             return
