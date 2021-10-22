@@ -83,8 +83,8 @@ services:
   client:
     image: "chainsail-client:latest"
     volumes:
-      - /home/arsleust/resaas/docker/config_dpl/client_sa_key.json:/config/client_sa_key.json
-      - /home/arsleust/resaas/app/client/next.config.js:/opt/app/next.config.js
+      - ./config_dpl/client_sa_key.json:/config/client_sa_key.json
+      - ../app/client/next.config.js:/opt/app/next.config.js
     ports:
       - "3000:3000"
     environment:
