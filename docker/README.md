@@ -2,6 +2,16 @@
 
 `docker-compose` can be used to spin up a full Chainsail deployment.
 
+Before running it, you need to build the images:
+```
+docker build -t "chainsail-celery-worker:latest" -f ./celery/Dockerfile ../
+docker build -t "chainsail-scheduler:latest" -f ./scheduler/Dockerfile ../
+docker build -t "chainsail-nginx:latest" -f ./nginx/Dockerfile ../
+docker build -t "chainsail-client:latest" -f ../app/client/Dockerfile ../app/client/
+```
+
+If you get errors about missing permissions to pull those images, you need to build them with tags locally.
+
 ## client
 
 TODO
