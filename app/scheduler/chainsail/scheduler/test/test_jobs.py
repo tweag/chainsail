@@ -154,7 +154,7 @@ def test_job_init(mock_config, mock_spec):
         config=mock_config,
         node_registry={"mock": mk_mock_node_cls()},
     )
-    assert job.status == JobStatus.INITIALIZED
+    assert job.status == JobStatus.CHECKING
     assert not job.nodes
 
 

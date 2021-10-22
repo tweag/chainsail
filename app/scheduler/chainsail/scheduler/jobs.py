@@ -16,6 +16,7 @@ from chainsail.scheduler.nodes.registry import NODE_CLS_REGISTRY
 
 
 class JobStatus(Enum):
+    CHECKING = "checking"
     INITIALIZED = "initialized"
     STARTING = "starting"
     RUNNING = "running"
@@ -41,7 +42,7 @@ class Job:
         control_node=None,
         node_registry: Dict[NodeType, Node] = NODE_CLS_REGISTRY,
         representation: Optional[TblJobs] = None,
-        status: JobStatus = JobStatus.INITIALIZED,
+        status: JobStatus = JobStatus.CHECKING,
     ):
         self.id = id
         self.spec = spec
@@ -64,10 +65,18 @@ class Job:
         for _ in range(self.spec.initial_number_of_replicas):
             self._add_node()
         self.control_node = self._add_node(is_controller=True)
+        # TODO what state should this be in?
         self.status = JobStatus.INITIALIZED
         self.sync_representation()
 
+    def check(self) -> None:
+        if self.status != JobStatus.CHECKING:
+            raise JobError("Attempted to check a job which is not to be checked")
+        # TODO run actual check
+
     def start(self) -> None:
+        if self.status == JobStatus.CHECKING:
+            raise JobError("Attempted to start a job which is not already checked")
         if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING, JobStatus.RESTART):
             raise JobError("Attempted to start a job which has already been started")
         self._initialize_nodes()

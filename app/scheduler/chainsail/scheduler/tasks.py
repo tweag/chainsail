@@ -57,6 +57,38 @@ def get_job_blob_root(scheduler_config, job_id):
 
 
 @celery.task()
+def check_job_task(job_id):
+    """Check a job
+    This is meant to be called on job creation.
+
+    Args:
+        job_id: The id of the job to check
+
+    Raises:
+        JobError: If the job failed to be checked
+    """
+    # Load Job object from database entry and lock its row using FOR UPDATE
+    # to avoid the job being checked multiple times. If the row is locked then
+    # we can just ditch this check request.
+    try:
+        job_rep = TblJobs.query.with_for_update(of=TblJobs, nowait=True).filter_by(id=job_id).one()
+    except OperationalError:
+        # TODO: Log that the row could not be queried
+        return
+    job = Job.from_representation(job_rep, scheduler_config)
+    try:
+        job.check()
+        job.representation.checked_at = datetime.utcnow()
+        logger.info(f"Checked job #{job_id}.", extra={"job_id": job_id})
+    except JobError as e:
+        db.session.commit()
+        logger.error(f"Failed to check job #{job_id}.", extra={"job_id": job_id})
+        raise e
+    else:
+        db.session.commit()
+
+
+@celery.task()
 def start_job_task(job_id):
     """Starts a job
 
