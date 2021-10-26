@@ -154,11 +154,11 @@ const Job = ({ authed, isMobile }) => {
 
   // Form fields state variables
   const [job_name, setJobName] = useState('my_sampling_job');
-  const [max_replicas, setMaxReplicas] = useState(10);
-  const [initial_number_of_replicas, setInitNReplicas] = useState(3);
+  const [max_replicas, setMaxReplicas] = useState(20);
+  const [initial_number_of_replicas, setInitNReplicas] = useState(5);
   const [tempered_distribution_family, setTemperedDist] = useState('boltzmann');
   const [num_production_samples, setNumProductionSamples] = useState(10000);
-  const [num_optimization_samples, setNumOptimizationSamples] = useState(3000);
+  const [num_optimization_samples, setNumOptimizationSamples] = useState(5000);
   const [minimum_beta, setMinBeta] = useState(0.01);
   const [target_acceptance_rate, setTargetAcceptanceRate] = useState(0.2);
   const [probability_definition, setProbDef] = useState(
@@ -184,7 +184,7 @@ const Job = ({ authed, isMobile }) => {
       initial_number_of_replicas:
         seeMoreFields && initial_number_of_replicas
           ? initial_number_of_replicas
-          : Math.max(2, Math.floor(max_replicas * 0.5)),
+          : Math.max(2, Math.floor(max_replicas * 0.25)),
       max_replicas,
       tempered_dist_family: tempered_distribution_family,
       initial_schedule_parameters: {
@@ -195,7 +195,7 @@ const Job = ({ authed, isMobile }) => {
         num_optimization_samples:
           seeMoreFields && num_optimization_samples
             ? num_optimization_samples
-            : Math.ceil(Math.floor(num_production_samples * 0.25) / 1000) * 1000,
+            : Math.ceil(Math.floor(num_production_samples * 0.5) / 1000) * 1000,
       },
       optimization_parameters: {
         optimization_quantity_target: target_acceptance_rate,
@@ -359,6 +359,7 @@ const Job = ({ authed, isMobile }) => {
                             inputType="number"
                             setActiveField={setActiveField}
                             minNumber={2}
+                            maxNumber={max_replicas}
                             value={initial_number_of_replicas}
                             onChange={(e) => setInitNReplicas(e.target.value)}
                           />
@@ -398,9 +399,9 @@ const Job = ({ authed, isMobile }) => {
                             inputName="minimum_beta"
                             inputType="number"
                             setActiveField={setActiveField}
-                            minNumber={0}
+                            minNumber={0.001}
                             maxNumber={1}
-                            stepNumber={0.01}
+                            stepNumber={0.001}
                             value={minimum_beta}
                             onChange={(e) => setMinBeta(e.target.value)}
                           />

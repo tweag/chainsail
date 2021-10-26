@@ -118,7 +118,7 @@ class OptimizationQuantity(Enum):
 class OptimizationParameters:
     optimization_quantity_target: float = 0.2
     optimization_quantity: OptimizationQuantity = OptimizationQuantity.ACCEPTANCE_RATE
-    decrement: float = 0.01
+    decrement: float = 0.001
     max_param: float = 1.0
     min_param: float = 0.01
     max_optimization_runs: int = 5
@@ -128,9 +128,9 @@ class OptimizationParameters:
 
 @dataclass
 class ReplicaExchangeParameters:
-    num_production_samples: int = 2000
+    num_production_samples: int = 10000
     num_optimization_samples: int = 5000
-    dump_interval: int = 1000
+    dump_interval: int = 500
     dump_step: int = 5
     swap_interval: int = 5
     statistics_update_interval: int = 50
@@ -296,7 +296,7 @@ class JobSpec:
         self,
         probability_definition: str,
         name: Optional[str] = None,
-        initial_number_of_replicas: int = 10,
+        initial_number_of_replicas: int = 5,
         initial_schedule_parameters: Optional[
             Union[
                 BoltzmannInitialScheduleParameters,
