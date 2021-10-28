@@ -4,8 +4,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from chainsail.common.spec import JobSpec, JobSpecSchema
-from chainsail.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
-                                        VMNodeConfig)
+from chainsail.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from chainsail.scheduler.errors import JobError
 from chainsail.scheduler.nodes.base import NodeStatus, NodeType
 from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
@@ -171,8 +170,9 @@ def test_job_start_unchecked(mock_config, mock_spec):
     )
     with pytest.raises(JobError):
         job.start()
-    
+
     assert job.status == JobStatus.CHECKING
+
 
 def test_job_start_checked(mock_config, mock_spec):
     from chainsail.scheduler.jobs import Job, JobStatus
@@ -362,6 +362,8 @@ def test_job_from_representation_preserves_status(mock_config):
         status=JobStatus.STOPPED,
     )
 
-    job = Job.from_representation(rep, mock_config, node_registry={"mock": mk_mock_node_cls()})
+    job = Job.from_representation(
+        rep, mock_config, node_registry={"mock": mk_mock_node_cls()}
+    )
 
     assert job.status == JobStatus.STOPPED

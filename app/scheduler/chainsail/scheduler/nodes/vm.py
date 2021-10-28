@@ -119,7 +119,9 @@ def prepare_deployment(
         The combined deployment steps
     """
     # Prepare installer script
-    install_commands = "\n".join([d.installation_script for d in vm_node.spec.dependencies])
+    install_commands = "\n".join(
+        [d.installation_script for d in vm_node.spec.dependencies]
+    )
     install_script_name = "install_job_deps.sh"
     install_script_src = os.path.join(staging_dir, install_script_name)
     install_script_target = os.path.join(install_dir, install_script_name)
@@ -156,7 +158,9 @@ def prepare_deployment(
 
     # Private key path
     ssh_private_key_src = vm_node._vm_config.ssh_private_key_path
-    ssh_private_key_target = os.path.join(install_dir, os.path.basename(ssh_private_key_src))
+    ssh_private_key_target = os.path.join(
+        install_dir, os.path.basename(ssh_private_key_src)
+    )
 
     # Final command to start up the main process
     # Format the command + args into a single string
@@ -167,7 +171,9 @@ def prepare_deployment(
         container_cmd += " ".join([a for a in vm_node._config.args])
 
     container_cmd = container_cmd.format(job_id=vm_node.representation.job.id)
-    user_code_cmd = "python /app/app/user_code_server/chainsail/user_code_server/__init__.py"
+    user_code_cmd = (
+        "python /app/app/user_code_server/chainsail/user_code_server/__init__.py"
+    )
     command = COMMAND_TEMPLATE.format(
         prob_def=vm_node.spec.probability_definition,
         install_script=os.path.basename(install_script_target),
@@ -310,7 +316,10 @@ class VMNode(Node):
         address_selector: Optional[IPSelector] = None,
         deployment: Optional[DeploymentPreparer] = None,
     ):
-        if "create_node" not in driver.features or "ssh_key" not in driver.features["create_node"]:
+        if (
+            "create_node" not in driver.features
+            or "ssh_key" not in driver.features["create_node"]
+        ):
             raise ValueError(
                 "The supplied driver does not support node creation with ssh authentication. "
                 "Please consult the libcloud documentation for a list of cloud providers which "
@@ -346,7 +355,9 @@ class VMNode(Node):
 
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
-            raise NodeError("Attempted to created a node which has already been created")
+            raise NodeError(
+                "Attempted to created a node which has already been created"
+            )
         logger.info("Creating node...")
         self._status = NodeStatus.CREATING
         with TemporaryDirectory() as tmpdir:

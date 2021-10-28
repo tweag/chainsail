@@ -16,7 +16,13 @@ from firebase_admin.auth import (
 )
 from chainsail.common.spec import JobSpecSchema
 from chainsail.scheduler.core import app, db, firebase_app
-from chainsail.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes, TblUsers
+from chainsail.scheduler.db import (
+    JobViewSchema,
+    NodeViewSchema,
+    TblJobs,
+    TblNodes,
+    TblUsers,
+)
 from chainsail.scheduler.jobs import JobStatus
 from chainsail.scheduler.tasks import (
     scale_job_task,
@@ -32,7 +38,10 @@ from chainsail.scheduler.tasks import (
 
 def _is_dev_mode():
     try:
-        is_dev = os.environ["PYTHON_ENV"] == "development" or os.environ["PYTHON_ENV"] == "dev"
+        is_dev = (
+            os.environ["PYTHON_ENV"] == "development"
+            or os.environ["PYTHON_ENV"] == "dev"
+        )
         return is_dev
     except:
         return False
@@ -199,7 +208,10 @@ def scale_job(job_id, n_replicas):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
     find_job(job_id)
-    logger.info(f"Scaling up job #{job_id} to {n_replicas} replicas...", extra={"job_id": job_id})
+    logger.info(
+        f"Scaling up job #{job_id} to {n_replicas} replicas...",
+        extra={"job_id": job_id},
+    )
     scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
     # Await the result, raising any exceptions that get thrown
     scaled = scaling_task.get()
