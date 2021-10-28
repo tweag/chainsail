@@ -3,9 +3,10 @@ from datetime import datetime
 from unittest.mock import MagicMock, Mock
 
 import pytest
-
 from chainsail.common.spec import JobSpec, JobSpecSchema
-from chainsail.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
+from chainsail.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
+                                        VMNodeConfig)
+from chainsail.scheduler.errors import JobError
 from chainsail.scheduler.nodes.base import NodeStatus, NodeType
 from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
 
@@ -158,7 +159,7 @@ def test_job_init(mock_config, mock_spec):
     assert not job.nodes
 
 
-def test_job_start(mock_config, mock_spec):
+def test_job_start_unchecked(mock_config, mock_spec):
     from chainsail.scheduler.jobs import Job, JobStatus
 
     job = Job(
@@ -166,6 +167,22 @@ def test_job_start(mock_config, mock_spec):
         spec=mock_spec,
         config=mock_config,
         node_registry={"mock": mk_mock_node_cls()},
+        status=JobStatus.CHECKING,
+    )
+    with pytest.raises(JobError):
+        job.start()
+    
+    assert job.status == JobStatus.CHECKING
+
+def test_job_start_checked(mock_config, mock_spec):
+    from chainsail.scheduler.jobs import Job, JobStatus
+
+    job = Job(
+        id=1,
+        spec=mock_spec,
+        config=mock_config,
+        node_registry={"mock": mk_mock_node_cls()},
+        status=JobStatus.INITIALIZED,
     )
     job.start()
     assert job.status == JobStatus.RUNNING
@@ -180,6 +197,7 @@ def test_job_stop_running(mock_config, mock_spec):
         spec=mock_spec,
         config=mock_config,
         node_registry={"mock": mk_mock_node_cls()},
+        status=JobStatus.INITIALIZED,
     )
     job.start()
 
@@ -197,6 +215,7 @@ def test_job_restart_running(mock_config, mock_spec):
         spec=mock_spec,
         config=mock_config,
         node_registry={"mock": mk_mock_node_cls()},
+        status=JobStatus.INITIALIZED,
     )
     job.start()
 
@@ -214,6 +233,7 @@ def test_job_restart_stopped(mock_config, mock_spec):
         spec=mock_spec,
         config=mock_config,
         node_registry={"mock": mk_mock_node_cls()},
+        status=JobStatus.INITIALIZED,
     )
     job.start()
     job.stop()
@@ -232,6 +252,7 @@ def test_job_scale_up(mock_config, mock_spec):
         spec=mock_spec,
         config=mock_config,
         node_registry={"mock": mk_mock_node_cls()},
+        status=JobStatus.INITIALIZED,
     )
     job.start()
     job.scale_to(8)
@@ -249,6 +270,7 @@ def test_job_scale_down(mock_config, mock_spec):
         spec=mock_spec,
         config=mock_config,
         node_registry={"mock": mk_mock_node_cls()},
+        status=JobStatus.INITIALIZED,
     )
     job.start()
 
