@@ -1,6 +1,8 @@
 """
 Scheduler REST API and endpoint specifications
 """
+import functools
+import os
 from datetime import datetime
 import os
 
@@ -25,6 +27,7 @@ from chainsail.scheduler.db import (
 )
 from chainsail.scheduler.jobs import JobStatus
 from chainsail.scheduler.tasks import (
+    check_job_task,
     scale_job_task,
     start_job_task,
     stop_job_task,
@@ -133,6 +136,21 @@ def create_job(user_id):
     db.session.add(job)
     db.session.commit()
     logger.info(f"Created job #{job.id}.", extra={"job_id": job.id})
+    # Starts the watch process once the job checks are successfully started
+    # The watch process will stop the job once it either succeeds or fails.
+    job_id = str(job.id)
+    try:
+        check_job_task.apply_async(
+            (job_id,),
+            {},
+        )
+    except:
+        logger.error(
+            f"Failed to launch checks for job #{job.id}.", extra={"job_id": job.id}
+        )
+        job.status = JobStatus.FAILED
+        db.session.commit()
+
     return jsonify({"job_id": job.id})
 
 

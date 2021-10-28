@@ -57,7 +57,14 @@ class Job:
         self.status = status
         self._node_cls = node_registry[self.config.node_type]
 
+    def check(self) -> None:
+        if self.status != JobStatus.CHECKING:
+            raise JobError("Attempted to check a job which is not to be checked")
+        # TODO run actual check
+
     def _initialize_nodes(self):
+        if self.status == JobStatus.CHECKING:
+            raise JobError("Cannot initialize nodes for a job which is not checked yet")
         if self.nodes or self.control_node:
             raise JobError(
                 "Cannot initialize nodes for a job which already has nodes assigned to it."
@@ -65,14 +72,8 @@ class Job:
         for _ in range(self.spec.initial_number_of_replicas):
             self._add_node()
         self.control_node = self._add_node(is_controller=True)
-        # TODO what state should this be in?
         self.status = JobStatus.INITIALIZED
         self.sync_representation()
-
-    def check(self) -> None:
-        if self.status != JobStatus.CHECKING:
-            raise JobError("Attempted to check a job which is not to be checked")
-        # TODO run actual check
 
     def start(self) -> None:
         if self.status == JobStatus.CHECKING:

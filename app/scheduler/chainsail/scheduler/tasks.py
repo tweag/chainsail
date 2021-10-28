@@ -88,13 +88,15 @@ def check_job_task(job_id):
     job = Job.from_representation(job_rep, scheduler_config)
     try:
         job.check()
-        job.representation.checked_at = datetime.utcnow()
         logger.info(f"Checked job #{job_id}.", extra={"job_id": job_id})
     except JobError as e:
-        db.session.commit()
+        job.status = JobStatus.FAILED
         logger.error(f"Failed to check job #{job_id}.", extra={"job_id": job_id})
         raise e
     else:
+        job.status = JobStatus.INITIALIZED
+        job.representation.checked_at = datetime.utcnow()
+    finally:
         db.session.commit()
 
 
