@@ -76,7 +76,7 @@ class Job:
 
     def start(self) -> None:
         if self.status == JobStatus.CHECKING:
-            raise JobError("Attempted to start a job which is not already checked")
+            raise JobError("Attempted to start a job which is not checked yet")
         if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING, JobStatus.RESTART):
             raise JobError("Attempted to start a job which has already been started")
         self._initialize_nodes()
