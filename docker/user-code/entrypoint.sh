@@ -27,7 +27,23 @@ else
       bash "$USER_INSTALL_SCRIPT"
 fi
 
-# TODO: bash interprets the Python + args command as a single command "python arg1 arg2", I think :-(
-# So hardcoding this for now
-# exec "$@"
-python /app/app/user_code_server/chainsail/user_code_server/__init__.py --port $USER_CODE_SERVER_PORT --remote_logging_config $REMOTE_LOGGING_CONFIG_PATH
+# Allow to run some command for checks
+if [ "$DO_USER_CODE_CHECK" -eq "1" ]
+then
+      echo "Running checks on user code"
+      python /app/app/user_code_server/chainsail/user_code_server/check_user_code.py
+else
+      echo "Skipping checks on user code"
+fi
+
+# Allow to run only user code check
+if [ "$NO_SERVER" -eq "1" ]
+then
+      echo 'Skipping user code server startup'
+else
+      echo 'Starting user code server'
+      # TODO: bash interprets the Python + args command as a single command "python arg1 arg2", I think :-(
+      # So hardcoding this for now
+      # exec "$@"
+      python /app/app/user_code_server/chainsail/user_code_server/__init__.py --port $USER_CODE_SERVER_PORT --remote_logging_config $REMOTE_LOGGING_CONFIG_PATH
+fi

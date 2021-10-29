@@ -3,7 +3,7 @@ from datetime import datetime
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from chainsail.common.spec import JobSpec, JobSpecSchema
+from chainsail.common.spec import JobSpec, JobSpecSchema, PipDependencies
 from chainsail.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from chainsail.scheduler.errors import JobError
 from chainsail.scheduler.nodes.base import NodeStatus, NodeType
@@ -11,6 +11,11 @@ from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
 
 FAILURE_LOG = "deployment failed for some reason..."
 SUCCESS_LOG = "deployment succeeded"
+
+USER_CODE_DOCKER_IMAGE = "chainsail-user-code:dev"
+ONLINE_PROBABILITY_DISTRIBUTION = (
+    "https://storage.googleapis.com/resaas-dev-public/mixture.zip"
+)
 
 
 def mock_create(node: Mock, fails: bool):
@@ -142,10 +147,11 @@ def mock_config():
 def mock_spec():
     spec = Mock()
     spec.initial_number_of_replicas = 5
+    spec.dependencies = [PipDependencies(requirements=set(["numpy", "scipy"]))]
     return spec
 
 
-def test_job_init(mock_config, mock_spec):
+def test_job_create(mock_config, mock_spec):
     from chainsail.scheduler.jobs import Job, JobStatus
 
     job = Job(
@@ -156,6 +162,53 @@ def test_job_init(mock_config, mock_spec):
     )
     assert job.status == JobStatus.CHECKING
     assert not job.nodes
+
+
+def test_job_check(mock_config: SchedulerConfig, mock_spec: JobSpec):
+    from chainsail.scheduler.jobs import Job, JobStatus
+
+    # doing what I can to keep mocked objects clean
+    config = SchedulerConfig(
+        controller=GeneralNodeConfig(
+            user_code_image=USER_CODE_DOCKER_IMAGE,
+            **{
+                k: v
+                for k, v in mock_config.controller.__dict__.items()
+                if k != "user_code_image"
+            },
+        ),
+        **{k: v for k, v in mock_config.__dict__.items() if k != "controller"},
+    )
+    spec = JobSpec(
+        probability_definition=ONLINE_PROBABILITY_DISTRIBUTION,
+        **{
+            k: v
+            for k, v in mock_spec.__dict__.items()
+            if k
+            in [
+                "name",
+                "initial_number_of_replicas",
+                "initial_schedule_parameters",
+                "optimization_parameters",
+                "replica_exchange_parameters",
+                "local_sampler",
+                "local_sampling_parameters",
+                "max_replicas",
+                "tempered_dist_family",
+                "dependencies",
+            ]
+        },
+    )
+
+    job = Job(
+        id=1,
+        spec=spec,
+        config=config,
+        node_registry={"mock": mk_mock_node_cls()},
+    )
+    job.check()
+
+    assert job.status == JobStatus.INITIALIZED
 
 
 def test_job_start_unchecked(mock_config, mock_spec):

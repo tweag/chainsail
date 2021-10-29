@@ -3,6 +3,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from typing import Dict, Optional
+import subprocess
+import tempfile
 
 import grpc
 import shortuuid
@@ -13,6 +15,16 @@ from chainsail.scheduler.db import TblJobs, TblNodes
 from chainsail.scheduler.errors import JobError, ObjectConstructionError
 from chainsail.scheduler.nodes.base import Node, NodeType
 from chainsail.scheduler.nodes.registry import NODE_CLS_REGISTRY
+
+JOB_CHECK_COMMAND_TEMPLATE = """
+docker run \
+    -e "USER_PROB_URL={prob_def}" \
+    -e "USER_INSTALL_SCRIPT=/chainsail/install_job_deps.sh" \
+    -e "DO_USER_CODE_CHECK=1" \
+    -e "NO_SERVER=1" \
+    -v {install_script_path}:/chainsail/install_job_deps.sh \
+    {user_code_image}
+"""
 
 
 class JobStatus(Enum):
@@ -58,9 +70,40 @@ class Job:
         self._node_cls = node_registry[self.config.node_type]
 
     def check(self) -> None:
+        """
+        Check that the distribution written by the user evaluates at the given initial state
+        """
         if self.status != JobStatus.CHECKING:
             raise JobError("Attempted to check a job which is not to be checked")
-        # TODO run actual check
+
+        # Run a docker container with the user code
+        # This requires a temporary file for the install script (mainly python deps atm)
+        with tempfile.NamedTemporaryFile("w") as f:
+            install_commands = "\n".join(
+                [d.installation_script for d in self.spec.dependencies]
+            )
+            f.write(install_commands)
+            f.flush()
+
+            command = JOB_CHECK_COMMAND_TEMPLATE.format(
+                prob_def=self.spec.probability_definition,
+                install_script_path=f.name,
+                user_code_image=self.config.controller.user_code_image,
+            )
+            logger.info("Check command : " + command)
+            command_result = subprocess.run(command, shell=True, capture_output=True)
+            logger.info("Check command return code: %s", command_result.returncode)
+            logger.info("Check command stdout:")
+            for stdout_line in command_result.stdout.decode("utf-8").split("\n"):
+                logger.info("  > %s", stdout_line)
+            logger.info("Check command stderr:")
+            for stderr_line in command_result.stderr.decode("utf-8").split("\n"):
+                logger.info("  > %s", stderr_line)
+            if command_result.returncode:
+                raise JobError("Check command failed")
+
+        self.status = JobStatus.INITIALIZED
+        self.sync_representation()
 
     def _initialize_nodes(self):
         if self.status == JobStatus.CHECKING:
