@@ -1,7 +1,6 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-
-import { Layout, Button, FlexCenter, FlexCol, Container, Navbar } from '../components';
+import { Button, Container, FlexCenter, FlexCol, Layout, Navbar } from '../components';
 import AnimationMainPage from '../components/AnimationMainPage';
 
 const Heading = () => (
@@ -79,18 +78,40 @@ const fireAnimation = () => {
   setTimeout(() => {
     const div_to_del = document.getElementById(id);
     if (div_to_del) {
+      ReactDOM.unmountComponentAtNode(div_to_del);
       div_to_del.remove();
     }
   }, 6000);
 };
 
 export default function Home({ isMobile }) {
+  // use `toggleAnim` to set whether the animation should be enabled or not
+  const [anim, setAnim] = useState(null);
+  const toggleAnim = useCallback(
+    (doAnim) => {
+      // should do anim, but it is not currently activated
+      if (doAnim && anim === null) {
+        console.log('Animation is now enabled');
+        const newAnim = setInterval(() => {
+          fireAnimation();
+        }, 3000);
+        setAnim(newAnim);
+      }
+      // should not do anim but is currently activated
+      if (!doAnim && anim !== null) {
+        console.log('Animation is now disabled');
+        clearInterval(anim);
+        setAnim(null);
+      }
+    },
+    [anim]
+  );
+
   useEffect(() => {
-    const anim = setInterval(() => {
-      fireAnimation();
-    }, 3000);
-    return () => clearInterval(anim);
-  }, []);
+    // disable animation on mobile screen
+    toggleAnim(!isMobile);
+    return () => toggleAnim(false);
+  }, [isMobile]);
   return (
     <Layout>
       <FlexCol
