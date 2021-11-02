@@ -16,28 +16,35 @@ const NegLogPChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
     const { data, error } = useSWR(`/api/graphite/neglogp/${jobId}/${simulationRun}`, fetcher, {
-      refreshInterval: 5000,
+      refreshInterval: 10000,
     });
     if (error) console.log(error);
-    const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
+    const ds = data ? Object.keys(data).map((key) => [Number(key), Number(data[key])]) : [];
     const chartData = {
       datasets: [
         {
-          labels: ds ? ds.map((d) => moment.unix(d[1]).format()) : [],
+          //labels: ds.map((d) => d[0]),//ds.filter((d) => d[0]),
           xAxisID: 'x',
           yAxisID: 'y',
           label: 'total negative log-probability',
-          data: ds
-            ? ds.map((d) => {
-                return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
-              })
-            : [],
+          //data: ds
+          //  ? ds.map((d) => {
+          //      return { x: d[0], y: d[1] };
+          //    })
+          //  : [],
+		//
+          type: 'line',
+	  pointRadius: 0,
+	  lineTension: 0,
+	  toolTips: false,
+	  data: ds ? ds.map((d) => { return {x: d[0], y: d[1]} }).filter(function (value, index, ar) { return index % 3 == 0;}) : [],
           fill: false,
           backgroundColor: 'rgb(255, 99, 132)',
           borderColor: 'rgba(255, 99, 132, 0.5)',
         },
       ],
     };
+	  console.log(chartData["datasets"][0]["data"])
     const options = {
       legend: {
         labels: {
@@ -47,13 +54,15 @@ const NegLogPChart = ({ job, simulationRun, isMobile }) => {
       scales: {
         xAxes: [
           {
+	    type: 'linear',
+	    display: true,
+	    scaleLabel: { display: true },
             id: 'x',
-            type: 'time',
-            time: { minUnit: 'second' },
+            //type: 'Numeric',
             gridLines: { color: 'rgb(256,256,256,0.3)', drawTicks: false },
             ticks: {
               fontColor: 'rgb(256,256,256,0.6)',
-              padding: 10,
+              //padding: 10,
             },
           },
         ],
