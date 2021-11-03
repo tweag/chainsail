@@ -12,39 +12,40 @@ import { Layout, FlexCol, FlexCenter, FlexRow, Container, Navbar } from '../comp
 import JobInfo from '../components/JobInfo';
 import fetcher from '../utils/fetcher';
 
+function thin (arr, n) {
+    return arr.filter(function (value, index) { return index % n == 0;})
+};
+
+function statsObjectToArray (obj) {
+    return Object.keys(obj).map((key) => [Number(key), obj[key]])
+};
+
 const NegLogPChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
-    const { data, error } = useSWR(`/api/graphite/neglogp/${jobId}/${simulationRun}`, fetcher, {
+    const { data, error } = useSWR(`/api/mcmc_stats/neglogp/${jobId}/${simulationRun}`, fetcher, {
       refreshInterval: 10000,
     });
     if (error) console.log(error);
-    const ds = data ? Object.keys(data).map((key) => [Number(key), Number(data[key])]) : [];
+      const ds = data ? statsObjectToArray(data) : [];
+      console.log(ds)
     const chartData = {
       datasets: [
         {
-          //labels: ds.map((d) => d[0]),//ds.filter((d) => d[0]),
           xAxisID: 'x',
           yAxisID: 'y',
           label: 'total negative log-probability',
-          //data: ds
-          //  ? ds.map((d) => {
-          //      return { x: d[0], y: d[1] };
-          //    })
-          //  : [],
-		//
           type: 'line',
 	  pointRadius: 0,
 	  lineTension: 0,
 	  toolTips: false,
-	  data: ds ? ds.map((d) => { return {x: d[0], y: d[1]} }).filter(function (value, index, ar) { return index % 3 == 0;}) : [],
+          data: ds ? thin(ds.map((d) => { return {x: d[0], y: d[1]} }), 3) : [],
           fill: false,
           backgroundColor: 'rgb(255, 99, 132)',
           borderColor: 'rgba(255, 99, 132, 0.5)',
         },
       ],
     };
-	  console.log(chartData["datasets"][0]["data"])
     const options = {
       legend: {
         labels: {
@@ -56,13 +57,12 @@ const NegLogPChart = ({ job, simulationRun, isMobile }) => {
           {
 	    type: 'linear',
 	    display: true,
-	    scaleLabel: { display: true },
-            id: 'x',
-            //type: 'Numeric',
+	      scaleLabel: { display: true, labelString: '# of MCMC samples', 
+              fontColor: 'rgb(256,256,256,0.6)'},            id: 'x',
             gridLines: { color: 'rgb(256,256,256,0.3)', drawTicks: false },
             ticks: {
               fontColor: 'rgb(256,256,256,0.6)',
-              //padding: 10,
+              padding: 10,
             },
           },
         ],
@@ -104,38 +104,21 @@ const AcceptanceRateChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
     const { data, error } = useSWR(
-      `/api/graphite/acceptancerate/${jobId}/${simulationRun}`,
+      `/api/mcmc_stats/acceptancerate/${jobId}/${simulationRun}`,
       fetcher,
       {
         refreshInterval: 10000,
       }
     );
-    if (error) console.log(error);
-    const dss =
-      data && data.length > 0
-        ? data.map((ds) => {
-            let acceptanceRate;
-            try {
-              acceptanceRate = ds.datapoints.filter((d) => d[0]).pop()[0];
-            } catch (err) {}
-            return {
-              acceptanceRate,
-              target: ds.target,
-            };
-          })
-        : [];
-    const giveReplicaLabel = (target) =>
-      target
-        .split('.')[2]
-        .split('_')
-        .map((r) => r.replace('replica', ''))
-        .join('<>');
+      if (error) console.log(error);
+      const dss = data ? statsObjectToArray(data).pop(): [];
+    const replicaLabels = [...Array(4).keys()].map( function (value) { return `${value + 1}<>${value + 2}` } );
     const chartData = {
-      labels: dss ? dss.map((ds) => giveReplicaLabel(ds.target)) : [],
+      labels: replicaLabels,
       datasets: [
         {
           label: 'acceptance rate',
-          data: dss ? dss.map((ds) => ds.acceptanceRate) : [],
+          data: dss.length > 1 ? dss[1] : [],
           fill: false,
           backgroundColor: 'rgb(255, 99, 132)',
           borderColor: 'rgba(255, 99, 132, 0.5)',
@@ -154,6 +137,8 @@ const AcceptanceRateChart = ({ job, simulationRun, isMobile }) => {
           {
             offset: true,
             gridLines: { color: 'rgb(256,256,256,0.3)', drawTicks: false },
+	      scaleLabel: { display: true, labelString: 'replica pairs', 
+              fontColor: 'rgb(256,256,256,0.6)'},
             ticks: {
               fontColor: 'rgb(256,256,256,0.6)',
               padding: 10,

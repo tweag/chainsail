@@ -14,6 +14,6 @@ export const GRAPHITE_LOGS_URL = (jobId) =>
 // MCMC stats
 export const MCMC_STATS_URL = process.env.MCMC_STATS_URL || 'http://127.0.0.1:8081';
 export const MCMC_STATS_NEGLOGP_URL = (jobId, simulationRun) =>
-  `${MCMC_STATS_URL}/mcmc_stats/${jobID}/${simulationRun}/neg_log_prob_sum`;
+  `${MCMC_STATS_URL}/mcmc_stats/${jobId}/${simulationRun}/neg_log_prob_sum`;
 export const MCMC_STATS_ACCEPTANCE_RATE_URL = (jobId, simulationRun) =>
   `${MCMC_STATS_URL}/mcmc_stats/${jobId}/${simulationRun}/re_acceptance_rates`;
