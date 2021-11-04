@@ -12,13 +12,15 @@ import { Layout, FlexCol, FlexCenter, FlexRow, Container, Navbar } from '../comp
 import JobInfo from '../components/JobInfo';
 import fetcher from '../utils/fetcher';
 
-function thin (arr, n) {
-    return arr.filter(function (value, index) { return index % n == 0;})
-};
+function thin(arr, n) {
+  return arr.filter(function (value, index) {
+    return index % n == 0;
+  });
+}
 
-function statsObjectToArray (obj) {
-    return Object.keys(obj).map((key) => [Number(key), obj[key]])
-};
+function statsObjectToArray(obj) {
+  return Object.keys(obj).map((key) => [Number(key), obj[key]]);
+}
 
 const NegLogPChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
@@ -27,8 +29,8 @@ const NegLogPChart = ({ job, simulationRun, isMobile }) => {
       refreshInterval: 10000,
     });
     if (error) console.log(error);
-      const ds = data ? statsObjectToArray(data) : [];
-      console.log(ds)
+    const ds = data ? statsObjectToArray(data) : [];
+    console.log(ds);
     const chartData = {
       datasets: [
         {
@@ -36,10 +38,17 @@ const NegLogPChart = ({ job, simulationRun, isMobile }) => {
           yAxisID: 'y',
           label: 'total negative log-probability',
           type: 'line',
-	  pointRadius: 0,
-	  lineTension: 0,
-	  toolTips: false,
-          data: ds ? thin(ds.map((d) => { return {x: d[0], y: d[1]} }), 3) : [],
+          pointRadius: 0,
+          lineTension: 0,
+          toolTips: false,
+          data: ds
+            ? thin(
+                ds.map((d) => {
+                  return { x: d[0], y: d[1] };
+                }),
+                3
+              )
+            : [],
           fill: false,
           backgroundColor: 'rgb(255, 99, 132)',
           borderColor: 'rgba(255, 99, 132, 0.5)',
@@ -55,10 +64,14 @@ const NegLogPChart = ({ job, simulationRun, isMobile }) => {
       scales: {
         xAxes: [
           {
-	    type: 'linear',
-	    display: true,
-	      scaleLabel: { display: true, labelString: '# of MCMC samples', 
-              fontColor: 'rgb(256,256,256,0.6)'},            id: 'x',
+            type: 'linear',
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: '# of MCMC samples',
+              fontColor: 'rgb(256,256,256,0.6)',
+            },
+            id: 'x',
             gridLines: { color: 'rgb(256,256,256,0.3)', drawTicks: false },
             ticks: {
               fontColor: 'rgb(256,256,256,0.6)',
@@ -110,9 +123,11 @@ const AcceptanceRateChart = ({ job, simulationRun, isMobile }) => {
         refreshInterval: 10000,
       }
     );
-      if (error) console.log(error);
-      const dss = data ? statsObjectToArray(data).pop(): [];
-    const replicaLabels = [...Array(4).keys()].map( function (value) { return `${value + 1}<>${value + 2}` } );
+    if (error) console.log(error);
+    const dss = data ? statsObjectToArray(data).pop() : [];
+    const replicaLabels = [...Array(4).keys()].map(function (value) {
+      return `${value + 1}<>${value + 2}`;
+    });
     const chartData = {
       labels: replicaLabels,
       datasets: [
@@ -137,8 +152,11 @@ const AcceptanceRateChart = ({ job, simulationRun, isMobile }) => {
           {
             offset: true,
             gridLines: { color: 'rgb(256,256,256,0.3)', drawTicks: false },
-	      scaleLabel: { display: true, labelString: 'replica pairs', 
-              fontColor: 'rgb(256,256,256,0.6)'},
+            scaleLabel: {
+              display: true,
+              labelString: 'replica pairs',
+              fontColor: 'rgb(256,256,256,0.6)',
+            },
             ticks: {
               fontColor: 'rgb(256,256,256,0.6)',
               padding: 10,
