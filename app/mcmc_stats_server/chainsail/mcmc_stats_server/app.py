@@ -26,8 +26,9 @@ def neg_log_prob_sum(job_id, simulation_run):
     energies = storage.load_all_energies()
     dump_step = storage.load_config()["re"]["dump_step"]
     summed_energies = energies.sum(0)
-    return jsonify({i * dump_step: summed_energy
-                    for i, summed_energy in enumerate(summed_energies)})
+    return jsonify(
+        {i * dump_step: summed_energy for i, summed_energy in enumerate(summed_energies)}
+    )
 
 
 @app.route("/mcmc_stats/<job_id>/<simulation_run>/re_acceptance_rates", methods=["GET"])
@@ -37,4 +38,3 @@ def re_acceptance_rates(job_id, simulation_run):
     config_blob = bucket.blob(f"{basename}/{job_id}/{simulation_run}/statistics/re_stats.txt")
     stats = np.loadtxt(StringIO(config_blob.download_as_text()), dtype=float)
     return jsonify({int(step_data[0]): list(step_data[1:]) for step_data in stats})
- 
