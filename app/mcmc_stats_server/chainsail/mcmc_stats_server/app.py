@@ -23,9 +23,17 @@ if not basename:
 @app.route("/mcmc_stats/<job_id>/<simulation_run>/neg_log_prob_sum", methods=["GET"])
 def neg_log_prob_sum(job_id, simulation_run):
     storage = SimulationStorage(basename, f"{job_id}/{simulation_run}", storage_backend)
-    energies = storage.load_all_energies()
+    energies = storage.load_all_energies(fail_if_not_existing=False)
     dump_step = storage.load_config()["re"]["dump_step"]
-    summed_energies = energies.sum(0)
+    try:
+        summed_energies = energies.sum(0)
+    except ValueError:
+        # this is raised if the array is jagged, i.e., not all energies have been written
+        # out yet for a given sampling step
+        min_n_energies = min(map(len, energies))
+        energies = np.array([single_replica_energies[:min_n_energies]
+                             for single_replica_energies in energies])
+        summed_energies = energies.sum(0)
     return jsonify(
         {i * dump_step: summed_energy for i, summed_energy in enumerate(summed_energies)}
     )
