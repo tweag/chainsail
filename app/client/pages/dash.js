@@ -25,12 +25,13 @@ function statsObjectToArray(obj) {
 const NegLogPChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
-    const { data, error } = useSWR(`/api/mcmc_stats/neglogp/${jobId}/${simulationRun}`, fetcher, {
-      refreshInterval: 10000,
-    });
+    const { data, error } = simulationRun
+      ? useSWR(`/api/mcmc_stats/neglogp/${jobId}/${simulationRun}`, fetcher, {
+          refreshInterval: 10000,
+        })
+      : { data: undefined, error: undefined };
     if (error) console.log(error);
     const ds = data ? statsObjectToArray(data) : [];
-    console.log(ds);
     const chartData = {
       datasets: [
         {
@@ -116,18 +117,21 @@ const NegLogPChart = ({ job, simulationRun, isMobile }) => {
 const AcceptanceRateChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
-    const { data, error } = useSWR(
-      `/api/mcmc_stats/acceptancerate/${jobId}/${simulationRun}`,
-      fetcher,
-      {
-        refreshInterval: 10000,
-      }
-    );
+    const { data, error } = simulationRun
+      ? useSWR(`/api/mcmc_stats/acceptancerate/${jobId}/${simulationRun}`, fetcher, {
+          refreshInterval: 10000,
+        })
+      : { data: undefined, error: undefined };
     if (error) console.log(error);
     const dss = data ? statsObjectToArray(data).pop() : [];
-    const replicaLabels = [...Array(4).keys()].map(function (value) {
-      return `${value + 1}<>${value + 2}`;
-    });
+    // 1st element of dss is the sample number, 2nd element an array with the
+    // acceptance rate values
+    const replicaLabels =
+      dss.length > 0
+        ? [...Array(dss[1].length).keys()].map(function (value) {
+            return `${value + 1}<>${value + 2}`;
+          })
+        : [];
     const chartData = {
       labels: replicaLabels,
       datasets: [
