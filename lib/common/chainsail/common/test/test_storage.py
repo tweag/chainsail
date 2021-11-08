@@ -36,6 +36,7 @@ class MockStorageBackend:
     def load(self, file_name, data_type="pickle"):
         return self.data[file_name]
 
+    @property
     def file_not_found_exception(self):
         return ValueError
 
