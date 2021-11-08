@@ -29,6 +29,7 @@ dir_structure = dict(
     DOS_FILE_NAME="dos.pickle",
     SCHEDULE_FILE_NAME="schedule.pickle",
     CONFIG_FILE_NAME="config.yml",
+    RE_ACCEPTANCE_RATES_FILE_NAME="statistics/re_stats.txt",
 )
 DirStructure = namedtuple("DirStructure", dir_structure)
 default_dir_structure = DirStructure(**dir_structure)
@@ -325,7 +326,9 @@ class SimulationStorage:
             self.dir_structure.SAMPLES_TEMPLATE.format(replica_name, from_samples, to_samples),
         )
 
-    def load_samples(self, replica_name, from_sample_num, to_sample_num, fail_if_not_existing=True):
+    def load_samples(
+        self, replica_name, from_sample_num, to_sample_num, fail_if_not_existing=True
+    ):
         try:
             return self.load(
                 self.dir_structure.SAMPLES_TEMPLATE.format(
@@ -362,19 +365,20 @@ class SimulationStorage:
                     continue
                 if what == "energies":
                     things_batch = self.load_energies(
-                        "replica" + str(r), n, n + dump_interval,
-                        fail_if_not_existing)[::step]
+                        "replica" + str(r), n, n + dump_interval, fail_if_not_existing
+                    )[::step]
                 elif what == "samples":
                     things_batch = self.load_samples(
-                        "replica" + str(r), n, n + dump_interval,
-                        fail_if_not_existing)[::step]
+                        "replica" + str(r), n, n + dump_interval, fail_if_not_existing
+                    )[::step]
                 else:
                     raise ValueError(
                         f"'what' argument has to be either 'energies' or 'samples', not {what}"
                     )
                 r_things.append(things_batch)
             things.append(np.concatenate(r_things))
-        return np.array(things)
+        equal_lengths = all(len(x) == len(things[0]) for x in things)
+        return np.array(things, dtype=None if equal_lengths else object)
 
     def load_all_samples(self, from_sample=0, step=1):
         return self._load_all("samples", from_sample, step)
@@ -388,7 +392,9 @@ class SimulationStorage:
     def load_energies(self, replica_name, from_energies, to_energies, fail_if_not_existing=True):
         try:
             return self.load(
-                self.dir_structure.ENERGIES_TEMPLATE.format(replica_name, from_energies, to_energies)
+                self.dir_structure.ENERGIES_TEMPLATE.format(
+                    replica_name, from_energies, to_energies
+                )
             )
         except self._storage_backend.file_not_found_exception as e:
             if fail_if_not_existing:
@@ -398,6 +404,9 @@ class SimulationStorage:
 
     def load_all_energies(self, from_sample=0, step=1, fail_if_not_existing=True):
         return self._load_all("energies", from_sample, step, fail_if_not_existing)
+
+    def load_re_acceptance_rates(self):
+        return self.load(self.dir_structure.RE_ACCEPTANCE_RATES_FILE_NAME, "text")
 
     def save_config(self, config_dict):
         self.save(

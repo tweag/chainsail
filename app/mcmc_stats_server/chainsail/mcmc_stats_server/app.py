@@ -1,10 +1,7 @@
-from io import BytesIO, StringIO
-from itertools import chain
+from io import StringIO
 import os
-from pickle import load
 
 from flask import Flask, jsonify
-from google.cloud import storage
 import numpy as np
 import yaml
 
@@ -31,8 +28,9 @@ def neg_log_prob_sum(job_id, simulation_run):
         # this is raised if the array is jagged, i.e., not all energies have been written
         # out yet for a given sampling step
         min_n_energies = min(map(len, energies))
-        energies = np.array([single_replica_energies[:min_n_energies]
-                             for single_replica_energies in energies])
+        energies = np.array(
+            [single_replica_energies[:min_n_energies] for single_replica_energies in energies]
+        )
         summed_energies = energies.sum(0)
     return jsonify(
         {i * dump_step: summed_energy for i, summed_energy in enumerate(summed_energies)}
@@ -41,8 +39,6 @@ def neg_log_prob_sum(job_id, simulation_run):
 
 @app.route("/mcmc_stats/<job_id>/<simulation_run>/re_acceptance_rates", methods=["GET"])
 def re_acceptance_rates(job_id, simulation_run):
-    client = storage.Client()
-    bucket = client.bucket(storage_config["backend_config"]["cloud"]["container_name"])
-    config_blob = bucket.blob(f"{basename}/{job_id}/{simulation_run}/statistics/re_stats.txt")
-    stats = np.loadtxt(StringIO(config_blob.download_as_text()), dtype=float)
+    storage = SimulationStorage(basename, f"{job_id}/{simulation_run}", storage_backend)
+    stats = np.loadtxt(StringIO(storage.load_re_acceptance_rates()))
     return jsonify({int(step_data[0]): list(step_data[1:]) for step_data in stats})

@@ -10,7 +10,6 @@ chainsail-common = { path = "../../lib/common", develop = true }
 Flask = "^1.1.2"
 PyYAML = "^5.3.1"
 uWSGI = "^2.0.19"
-google-cloud-storage = "^1.42.3"
 click = "^8.0.3"
 
 [tool.poetry.dev-dependencies]
