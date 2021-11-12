@@ -43,6 +43,10 @@ class MockStorageBackend(AbstractStorageBackend):
     def load(self, filename, data_type):
         return self._data[filename]
 
+    @property
+    def file_not_found_exception(self):
+        return ValueError
+
 
 class testREJobController(unittest.TestCase):
     def setUp(self):

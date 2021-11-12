@@ -80,6 +80,16 @@ services:
       - "2023-2024:2023-2024"
       - "8125:8125/udp"
       - "8126:8126"
+  mcmc-stats:
+    image: "chainsail-mcmc-stats-server"
+    restart: "always"
+    ports:
+      - "8081:5002"
+    volumes:
+      - ./config_dpl/storage.yaml:/config/storage.yaml
+    environment:
+      - STORAGE_CONFIG=/config/storage.yaml
+      - STORAGE_BASENAME=TODO
   client:
     image: "chainsail-client:latest"
     volumes:
