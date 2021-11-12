@@ -17,21 +17,28 @@ const Heading = () => (
           defining your probability density and its log-probability gradient.
         </div>
         <div>
-          This beta version of Chainsail is free. Please <a
-              href="mailto:support@chainsail.io"
-              className="transition duration-300 hover:opacity-50 font-bold"
-            >
-              e-mail us
-							 </a>{' '}
-	    to get your account authorized. We'd also be happy to give you a live demo!
+          This beta version of Chainsail is free. Please{' '}
+          <a
+            href="mailto:support@chainsail.io"
+            className="transition duration-300 hover:opacity-50 font-bold"
+          >
+            e-mail us
+          </a>{' '}
+          to get your account authorized. We'd also be happy to give you a live demo!
         </div>
         <FlexCol className="space-y-2">
-          <div>The <a
+          <div>
+            The{' '}
+            <a
               href="https://github.com/tweag/chainsail-resources"
               className="transition duration-300 hover:opacity-50 font-bold"
             >
               Chainsail resources repository
-		   </a> contains some background on the algorithms used in Chainsail and a complete walk-through. Also see our blog posts for details on the algorithms at work in Chainsail:</div>
+            </a>{' '}
+            contains some background on the algorithms used in Chainsail and a complete
+            walk-through. Also see our blog posts for details on the algorithms at work in
+            Chainsail:
+          </div>
           <FlexCol>
             <a
               href="https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/"
