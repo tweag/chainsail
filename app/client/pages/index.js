@@ -20,18 +20,18 @@ const Heading = () => (
           This beta version of Chainsail is free. Please{' '}
           <a
             href="mailto:support@chainsail.io"
-            className="transition duration-300 hover:opacity-50 font-bold"
+            className="inline text-blue-400 hover:text-white transition duration-300"
           >
             e-mail us
           </a>{' '}
-          to get your account authorized. We'd also be happy to give you a live demo!
+          to get your account authorized. Do ask us for a live demo!
         </div>
         <FlexCol className="space-y-2">
           <div>
             The{' '}
             <a
               href="https://github.com/tweag/chainsail-resources"
-              className="transition duration-300 hover:opacity-50 font-bold"
+              className="inline text-blue-400 hover:text-white transition duration-300"
             >
               Chainsail resources repository
             </a>{' '}
@@ -43,7 +43,7 @@ const Heading = () => (
             <a
               href="https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/"
               target="_blank"
-              className="transition duration-300 hover:opacity-50 font-bold"
+              className="inline text-blue-400 hover:text-white transition duration-300"
             >
               <i className="ml-2 mr-5 fas fa-chevron-right"></i>
               Replica Exchange
@@ -51,7 +51,7 @@ const Heading = () => (
             <a
               href="https://www.tweag.io/blog/2020-08-06-mcmc-intro3/"
               target="_blank"
-              className="transition duration-300 hover:opacity-50 font-bold"
+              className="inline text-blue-400 hover:text-white transition duration-300"
             >
               <i className="ml-2 mr-5 fas fa-chevron-right"></i>
               Hamiltonian Monte Carlo
