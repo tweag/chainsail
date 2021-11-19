@@ -264,7 +264,8 @@ const Job = ({ authed, isMobile }) => {
                     <a
                       target="_blank"
                       href="https://github.com/tweag/chainsail-resources/blob/main/chainsail_helpers"
-                      className="inline text-blue-400 hover:text-white transition duration-300"  target="_blank"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
+                      target="_blank"
                     >
                       chainsail-helpers
                     </a>{' '}
@@ -272,13 +273,23 @@ const Job = ({ authed, isMobile }) => {
                   </div>
                   <div>
                     The{' '}
-                    <a target="_blank" href="https://github.com/tweag/chainsail-resources" className="inline text-blue-400 hover:text-white transition duration-300">
+                    <a
+                      target="_blank"
+                      href="https://github.com/tweag/chainsail-resources"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
+                    >
                       chainsail-resources
                     </a>{' '}
                     repository contains examples for PDFs defined from scratch, using PyMC3 and
-        Stan. There you'll also find a <a href="https://github.com/tweag/chainsail-resources/blob/main/documentation/parameters.md" className="inline text-blue-400 hover:text-white transition duration-300" target="_blank">
-	    detailed explanation
-	</a> of all job parameters.
+                    Stan. There you'll also find a{' '}
+                    <a
+                      href="https://github.com/tweag/chainsail-resources/blob/main/documentation/parameters.md"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
+                      target="_blank"
+                    >
+                      detailed explanation
+                    </a>{' '}
+                    of all job parameters.
                   </div>
                 </FlexCol>
                 <FlexCol
@@ -287,7 +298,15 @@ const Job = ({ authed, isMobile }) => {
                 >
                   <div>
                     You can extract the samples from your distribution from the downloaded results
-                    by using the <a href="https://github.com/tweag/chainsail-resources/tree/main/chainsail_helpers/chainsail_helpers/scripts" className="inline text-blue-400 hover:text-white transition duration-300" target="_blank">concatenate-samples script</a> provided in the chainsail-helpers package.
+                    by using the{' '}
+                    <a
+                      href="https://github.com/tweag/chainsail-resources/tree/main/chainsail_helpers/chainsail_helpers/scripts"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
+                      target="_blank"
+                    >
+                      concatenate-samples script
+                    </a>{' '}
+                    provided in the chainsail-helpers package.
                   </div>
                 </FlexCol>
                 <FlexRow
