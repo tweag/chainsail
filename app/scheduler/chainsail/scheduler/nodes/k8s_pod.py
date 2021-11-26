@@ -54,7 +54,10 @@ def monitor_deployment(pod: "K8sNode") -> bool:
             logger.error("Pod failed during its creation process.")
             return False
         else:
-            logger.error("Unexpected pod status during its creation process")
+            logger.error(
+                f"Unexpected pod status during its creation process"
+                f"Pod status: {pod.status.value}"
+            )
             return False
 
 
