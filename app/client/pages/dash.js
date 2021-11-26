@@ -12,25 +12,43 @@ import { Layout, FlexCol, FlexCenter, FlexRow, Container, Navbar } from '../comp
 import JobInfo from '../components/JobInfo';
 import fetcher from '../utils/fetcher';
 
+function thin(arr, n) {
+  return arr.filter(function (value, index) {
+    return index % n == 0;
+  });
+}
+
+function statsObjectToArray(obj) {
+  return Object.keys(obj).map((key) => [Number(key), obj[key]]);
+}
+
 const NegLogPChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
-    const { data, error } = useSWR(`/api/graphite/neglogp/${jobId}/${simulationRun}`, fetcher, {
-      refreshInterval: 5000,
-    });
+    const { data, error } = simulationRun
+      ? useSWR(`/api/mcmc_stats/neglogp/${jobId}/${simulationRun}`, fetcher, {
+          refreshInterval: 10000,
+        })
+      : { data: undefined, error: undefined };
     if (error) console.log(error);
-    const ds = data && data.length > 0 ? data[0].datapoints.filter((d) => d[0]) : [];
+    const ds = data ? statsObjectToArray(data) : [];
     const chartData = {
       datasets: [
         {
-          labels: ds ? ds.map((d) => moment.unix(d[1]).format()) : [],
           xAxisID: 'x',
           yAxisID: 'y',
           label: 'total negative log-probability',
+          type: 'line',
+          pointRadius: 0,
+          lineTension: 0,
+          toolTips: false,
           data: ds
-            ? ds.map((d) => {
-                return { x: moment.unix(d[1]).format(), y: parseFloat(d[0]).toPrecision(2) };
-              })
+            ? thin(
+                ds.map((d) => {
+                  return { x: d[0], y: d[1] };
+                }),
+                3
+              )
             : [],
           fill: false,
           backgroundColor: 'rgb(255, 99, 132)',
@@ -47,9 +65,14 @@ const NegLogPChart = ({ job, simulationRun, isMobile }) => {
       scales: {
         xAxes: [
           {
+            type: 'linear',
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: '# of MCMC samples',
+              fontColor: 'rgb(256,256,256,0.6)',
+            },
             id: 'x',
-            type: 'time',
-            time: { minUnit: 'second' },
             gridLines: { color: 'rgb(256,256,256,0.3)', drawTicks: false },
             ticks: {
               fontColor: 'rgb(256,256,256,0.6)',
@@ -94,39 +117,27 @@ const NegLogPChart = ({ job, simulationRun, isMobile }) => {
 const AcceptanceRateChart = ({ job, simulationRun, isMobile }) => {
   if (job && job.id) {
     const jobId = job.id;
-    const { data, error } = useSWR(
-      `/api/graphite/acceptancerate/${jobId}/${simulationRun}`,
-      fetcher,
-      {
-        refreshInterval: 10000,
-      }
-    );
+    const { data, error } = simulationRun
+      ? useSWR(`/api/mcmc_stats/acceptancerate/${jobId}/${simulationRun}`, fetcher, {
+          refreshInterval: 10000,
+        })
+      : { data: undefined, error: undefined };
     if (error) console.log(error);
-    const dss =
-      data && data.length > 0
-        ? data.map((ds) => {
-            let acceptanceRate;
-            try {
-              acceptanceRate = ds.datapoints.filter((d) => d[0]).pop()[0];
-            } catch (err) {}
-            return {
-              acceptanceRate,
-              target: ds.target,
-            };
+    const dss = data ? statsObjectToArray(data).pop() : [];
+    // 1st element of dss is the sample number, 2nd element an array with the
+    // acceptance rate values
+    const replicaLabels =
+      dss.length > 0
+        ? [...Array(dss[1].length).keys()].map(function (value) {
+            return `${value + 1}<>${value + 2}`;
           })
         : [];
-    const giveReplicaLabel = (target) =>
-      target
-        .split('.')[2]
-        .split('_')
-        .map((r) => r.replace('replica', ''))
-        .join('<>');
     const chartData = {
-      labels: dss ? dss.map((ds) => giveReplicaLabel(ds.target)) : [],
+      labels: replicaLabels,
       datasets: [
         {
           label: 'acceptance rate',
-          data: dss ? dss.map((ds) => ds.acceptanceRate) : [],
+          data: dss.length > 1 ? dss[1] : [],
           fill: false,
           backgroundColor: 'rgb(255, 99, 132)',
           borderColor: 'rgba(255, 99, 132, 0.5)',
@@ -145,6 +156,11 @@ const AcceptanceRateChart = ({ job, simulationRun, isMobile }) => {
           {
             offset: true,
             gridLines: { color: 'rgb(256,256,256,0.3)', drawTicks: false },
+            scaleLabel: {
+              display: true,
+              labelString: 'replica pairs',
+              fontColor: 'rgb(256,256,256,0.6)',
+            },
             ticks: {
               fontColor: 'rgb(256,256,256,0.6)',
               padding: 10,

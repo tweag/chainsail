@@ -4,7 +4,7 @@ different locations (local file systems, cloud storage, ...)
 """
 import logging
 import os
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from collections import namedtuple
 from io import BytesIO, StringIO
 from pickle import dump, load
@@ -16,6 +16,7 @@ from libcloud.storage.types import Provider
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from libcloud.common.types import InvalidCredsError
+from libcloud.storage.types import ObjectDoesNotExistError
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ dir_structure = dict(
     DOS_FILE_NAME="dos.pickle",
     SCHEDULE_FILE_NAME="schedule.pickle",
     CONFIG_FILE_NAME="config.yml",
+    RE_ACCEPTANCE_RATES_FILE_NAME="statistics/re_stats.txt",
 )
 DirStructure = namedtuple("DirStructure", dir_structure)
 default_dir_structure = DirStructure(**dir_structure)
@@ -182,6 +184,10 @@ class AbstractStorageBackend(ABC):
     def load(self, file_name, data_type="pickle"):
         pass
 
+    @abstractproperty
+    def file_not_found_exception(self):
+        pass
+
 
 class LocalStorageBackend(AbstractStorageBackend):
     def write(self, data, file_name, data_type="pickle"):
@@ -204,6 +210,10 @@ class LocalStorageBackend(AbstractStorageBackend):
                 return f.read()
         else:
             raise ValueError("'data_type' has to be either 'text' or 'pickle'")
+
+    @property
+    def file_not_found_exception(self):
+        return FileNotFoundError
 
 
 def bytes_iterator_to_bytesio(stream):
@@ -267,6 +277,10 @@ class CloudStorageBackend(AbstractStorageBackend):
         else:
             raise ValueError("'data_type' has to be either 'text' or 'pickle'")
 
+    @property
+    def file_not_found_exception(self):
+        return ObjectDoesNotExistError
+
 
 class SimulationStorage:
     def __init__(self, basename, sim_path, storage_backend, dir_structure=default_dir_structure):
@@ -312,20 +326,32 @@ class SimulationStorage:
             self.dir_structure.SAMPLES_TEMPLATE.format(replica_name, from_samples, to_samples),
         )
 
-    def load_samples(self, replica_name, from_sample_num, to_sample_num):
-        return self.load(
-            self.dir_structure.SAMPLES_TEMPLATE.format(
-                replica_name, from_sample_num, to_sample_num
+    def load_samples(
+        self, replica_name, from_sample_num, to_sample_num, fail_if_not_existing=True
+    ):
+        try:
+            return self.load(
+                self.dir_structure.SAMPLES_TEMPLATE.format(
+                    replica_name, from_sample_num, to_sample_num
+                )
             )
-        )
+        except self._storage_backend.file_not_found_exception as e:
+            if fail_if_not_existing:
+                raise e
+            else:
+                return []
 
-    def _load_all(self, what, from_sample=0, step=1):
+    def _load_all(self, what, from_sample=0, step=1, fail_if_not_existing=True):
         """
         Loads any kind of quantity that is written out as a sort of "trace",
         meaning for every sample.
 
         Args:
           what(str): what to load; supported values are 'energies' and 'samples'
+          from_sample(int): sample number from which on to load files
+          step(int): return only every step-th sample
+          fail_if_not_existing(bool): if False, an attempt to read a non-existing
+              file yields an empty list instead of raising an exception
         """
         config = self.load_config()
         n_replicas = config["general"]["num_replicas"]
@@ -338,20 +364,21 @@ class SimulationStorage:
                 if n < from_sample:
                     continue
                 if what == "energies":
-                    things_batch = self.load_energies("replica" + str(r), n, n + dump_interval)[
-                        ::step
-                    ]
+                    things_batch = self.load_energies(
+                        "replica" + str(r), n, n + dump_interval, fail_if_not_existing
+                    )[::step]
                 elif what == "samples":
-                    things_batch = self.load_samples("replica" + str(r), n, n + dump_interval)[
-                        ::step
-                    ]
+                    things_batch = self.load_samples(
+                        "replica" + str(r), n, n + dump_interval, fail_if_not_existing
+                    )[::step]
                 else:
                     raise ValueError(
                         f"'what' argument has to be either 'energies' or 'samples', not {what}"
                     )
                 r_things.append(things_batch)
             things.append(np.concatenate(r_things))
-        return np.array(things)
+        equal_lengths = all(len(x) == len(things[0]) for x in things)
+        return np.array(things, dtype=None if equal_lengths else object)
 
     def load_all_samples(self, from_sample=0, step=1):
         return self._load_all("samples", from_sample, step)
@@ -362,13 +389,24 @@ class SimulationStorage:
             self.dir_structure.ENERGIES_TEMPLATE.format(replica_name, from_energies, to_energies),
         )
 
-    def load_energies(self, replica_name, from_energies, to_energies):
-        return self.load(
-            self.dir_structure.ENERGIES_TEMPLATE.format(replica_name, from_energies, to_energies)
-        )
+    def load_energies(self, replica_name, from_energies, to_energies, fail_if_not_existing=True):
+        try:
+            return self.load(
+                self.dir_structure.ENERGIES_TEMPLATE.format(
+                    replica_name, from_energies, to_energies
+                )
+            )
+        except self._storage_backend.file_not_found_exception as e:
+            if fail_if_not_existing:
+                raise e
+            else:
+                return []
 
-    def load_all_energies(self, from_sample=0, step=1):
-        return self._load_all("energies", from_sample, step)
+    def load_all_energies(self, from_sample=0, step=1, fail_if_not_existing=True):
+        return self._load_all("energies", from_sample, step, fail_if_not_existing)
+
+    def load_re_acceptance_rates(self):
+        return self.load(self.dir_structure.RE_ACCEPTANCE_RATES_FILE_NAME, "text")
 
     def save_config(self, config_dict):
         self.save(

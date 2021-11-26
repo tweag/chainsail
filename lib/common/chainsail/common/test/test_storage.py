@@ -36,6 +36,10 @@ class MockStorageBackend:
     def load(self, file_name, data_type="pickle"):
         return self.data[file_name]
 
+    @property
+    def file_not_found_exception(self):
+        return ValueError
+
 
 class testStorageBackendConfig(unittest.TestCase):
     def testLoadLocalStorageConfigValid(self):
@@ -97,13 +101,16 @@ class testSimulationStorage(unittest.TestCase):
         self._backend.data[full_fname] = obj
         self.assertEqual(self._storage.load(fname), obj)
 
-    def _write_fake_all_quantities(self, what):
+    def _write_fake_all_quantities(self, what, jagged=False):
         template = os.path.join(self._basename, self._sim_path, f"{what}/{what}")
         template += "_replica{}_{}-{}.pickle"
         self._backend.data[template.format(1, 0, 5)] = [1, 2, 3]
         self._backend.data[template.format(1, 5, 10)] = [4, 5, 6]
         self._backend.data[template.format(2, 0, 5)] = [7, 8, 9]
-        self._backend.data[template.format(2, 5, 10)] = [10, 11, 12]
+        if not jagged:
+            self._backend.data[template.format(2, 5, 10)] = [10, 11, 12]
+        else:
+            self._backend.data[template.format(2, 5, 10)] = [10, 11]
 
     def testLoadAllEnergies(self):
         self._write_fake_all_quantities("energies")
@@ -118,6 +125,20 @@ class testSimulationStorage(unittest.TestCase):
         energies = self._storage.load_all_energies(from_sample=5, step=2)
         expected = np.array([[4, 6], [10, 12]])
         self.assertTrue(np.all(energies == expected))
+
+    def testLoadAllEnergies_jagged(self):
+        self._write_fake_all_quantities("energies", jagged=True)
+        energies = self._storage.load_all_energies()
+        expected = np.array([[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11]], dtype=object)
+        self.assertTrue(np.all([np.all(ref == out) for ref, out in zip(expected, energies)]))
+
+        energies = self._storage.load_all_energies(from_sample=5)
+        expected = np.array([[4, 5, 6], [10, 11]], dtype=object)
+        self.assertTrue(np.all([np.all(ref == out) for ref, out in zip(expected, energies)]))
+
+        energies = self._storage.load_all_energies(from_sample=5, step=2)
+        expected = np.array([[4, 6], [10]], dtype=object)
+        self.assertTrue(np.all([np.all(ref == out) for ref, out in zip(expected, energies)]))
 
     def testLoadAllSamples(self):
         self._write_fake_all_quantities("samples")

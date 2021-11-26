@@ -18,14 +18,13 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-  # postgres admin
   pgadmin:
     image: dpage/pgadmin4:5.4
     environment:
       - PGADMIN_DEFAULT_EMAIL=user@domain.com
       - PGADMIN_DEFAULT_PASSWORD=SuperSecret
     volumes:
-      - ./config/pg-servers.json:/pgadmin4/servers.json
+      - ./config_dpl/pg-servers.json:/pgadmin4/servers.json
     ports:
       - "81:80"
     depends_on:
@@ -50,14 +49,15 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - SQLALCHEMY_DATABASE_URI=postgresql://postgres:resaas-dev@postgres:5432/postgres
       - CHAINSAIL_SCHEDULER_CONFIG=/config/scheduler.yaml
+      - CONCURRENCY=15
       - KUBECONFIG=/config/kubeconfig.yaml
     volumes:
-      - ./config:/config
+      - ./config_dpl:/config
       - ./kubeconfig-gke.yaml:/config/kubeconfig.yaml
   scheduler:
     image: "chainsail-scheduler:latest"
     volumes:
-      - ./config:/config
+      - ./config_dpl:/config
       - ./kubeconfig-gke.yaml:/config/kubeconfig.yaml
     ports:
       - "5000:5001"
@@ -84,10 +84,20 @@ services:
       - "2023-2024:2023-2024"
       - "8125:8125/udp"
       - "8126:8126"
+  mcmc-stats:
+    image: "chainsail-mcmc-stats-server"
+    restart: "always"
+    ports:
+      - "8081:5002"
+    volumes:
+      - ./config_dpl/storage.yaml:/config/storage.yaml
+    environment:
+      - STORAGE_CONFIG=/config/storage.yaml
+      - STORAGE_BASENAME=TODO
   client:
     image: "chainsail-client:latest"
     volumes:
-      # - /home/simeon/projects/resaas/app/client/next.config.js:/opt/app/next.config.js
+      - ./config_dpl/client_sa_key.json:/config/client_sa_key.json
       - ../app/client/next.config.js:/opt/app/next.config.js
     ports:
       - "3000:3000"

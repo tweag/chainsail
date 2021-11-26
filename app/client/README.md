@@ -33,13 +33,17 @@ $ gcloud compute config-ssh
 And then open an ssh channel to the Google Cloud VM like so:
 
 ```
-$ ssh -L 8080:localhost:8080 -L 5000:localhost:5000 resaas-dev.europe-west3-c.resaas-simeon-dev
+$ ssh -L 8080:localhost:8080 -L 5000:localhost:5000 -L 8081:localhost:8081 resaas-dev.europe-west3-c.resaas-simeon-dev
 ```
 
 That opens a new shell, which you don't use. Then open a new shell (on your local machine) and run the client locally with
 
 ```
-GOOGLE_APPLICATION_CREDENTIALS=client_sa_key.json GRAPHITE_URL=http://localhost:8080 SCHEDULER_URL=http://localhost:5000 yarn run dev
+$ GOOGLE_APPLICATION_CREDENTIALS=client_sa_key.json \
+  GRAPHITE_URL=http://localhost:8080 \
+  SCHEDULER_URL=http://localhost:5000 \
+  MCMC_STATS_URL=http://localhost:8081 \
+  yarn run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -60,20 +64,24 @@ directory to build an image:
 $ docker build -t chainsail-client:latest .
 ```
 
-To run the docker image make sure to fill `next.config.js` file with firebase secrets and mirror it
-to the appropriate path as follows:
+To run the docker image:
 
 ```shell
-$ docker run -v $PWD/next.config.js:/opt/app/next.config.js\
-  -p 3000:3000\
-  -e GRAPHITE_URL=<GRAPHITE_URL> \
-  -e SCHEDULER_URL=<SCHEDULER_URL> \
-  chainsail-client:latest
+$ docker run \
+    -v /path/to/client_service_account_key.json:/config/client_sa_key.json \
+	-e GOOGLE_APPLICATION_CREDENTIALS=/config/client_sa_key.json \
+    -p 3000:3000\
+    -e GRAPHITE_URL=<GRAPHITE URL> \
+    -e SCHEDULER_URL=<SCHEDULER URL> \
+	-e MCMC_STATS_URL=<MCMC STATS SERVER URL> \
+    chainsail-client:latest
 ```
 
 ## ... to AppEngine
 
-Run
+Fill the `app.yaml` file.
+
+Then run:
 
 ```shell
 $ npm run deploy

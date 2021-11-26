@@ -12,10 +12,8 @@ WORKDIR /app
 ##############################################################################
 FROM base as system-deps
 
-# up-to-date GCC
-RUN echo 'deb http://deb.debian.org/debian stable main' >> /etc/apt/sources.list
-RUN apt update -y
-RUN apt-get install -y gcc build-essential curl wget unzip libopenblas-dev && \
+RUN apt-get update && \
+    apt-get install -y curl wget unzip libncurses5-dev libncursesw5-dev libmagic1 && \
     rm -rf /var/lib/apt/lists/*
 
 
@@ -32,12 +30,12 @@ RUN pip install --upgrade pip && pip install "poetry==1.1.10"
 ##############################################################################
 FROM builder-common as builder
 
-# Install the controller
-COPY ./lib/grpc /app/lib/grpc
+# Install the scheduler
 COPY ./lib/common /app/lib/common
-COPY ./app/user_code_server /app/app/user_code_server
+COPY ./lib/grpc /app/lib/grpc
+COPY ./app/mcmc_stats_server /app/app/mcmc_stats_server
 
-RUN cd /app/app/user_code_server && \
+RUN cd /app/app/mcmc_stats_server && \
     poetry config virtualenvs.in-project true && \
     poetry run pip install --upgrade pip && \
     poetry install --no-dev
@@ -49,22 +47,11 @@ RUN cd /app/app/user_code_server && \
 FROM system-deps as app
 
 COPY --from=builder /app /app
+ENV PYTHONPATH=$PYTHONPATH:/app/app/mcmc_stats_server
 
-# Directory for user data
-RUN mkdir -p /probability
-
-# User-defined functions and data
-ENV PATH=$PATH:/probability
-ENV PYTHONPATH=$PYTHONPATH:/probability
-
-COPY docker/user-code/entrypoint.sh /app/entrypoint.sh
-RUN chmod 555 /app/entrypoint.sh
 # Adding the app venv bin to the front of path so it is the default pip, etc.
-ENV PATH=/app/app/user_code_server/.venv/bin:$PATH
+ENV PATH=/app/app/mcmc_stats_server/.venv/bin:$PATH
 
-WORKDIR /probability
+EXPOSE 5002
 
-ENV USER_CODE_SERVER_PORT=50052
-EXPOSE $USER_CODE_SERVER_PORT
-
-ENTRYPOINT ["/app/entrypoint.sh"]
+CMD uwsgi --ini /app/app/mcmc_stats_server/chainsail/mcmc_stats_server/app.ini --need-app --uid $(id -u www-data) --gid $(id -u www-data)
