@@ -1,0 +1,24 @@
+# This file defines the RBAC objects that need to be set up on the K8s cluster.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-deleter
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-admin-resaas-storage
+subjects:
+- kind: User
+  name: resaas-storage@resaas-simeon-dev.iam.gserviceaccount.com
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  # name: cluster-admin
+  name: pod-deleter
+  apiGroup: rbac.authorization.k8s.io
