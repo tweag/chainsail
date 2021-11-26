@@ -87,7 +87,8 @@ services:
   client:
     image: "chainsail-client:latest"
     volumes:
-      - /home/simeon/projects/resaas/app/client/next.config.js:/opt/app/next.config.js
+      # - /home/simeon/projects/resaas/app/client/next.config.js:/opt/app/next.config.js
+      - ../app/client/next.config.js:/opt/app/next.config.js
     ports:
       - "3000:3000"
     environment:
