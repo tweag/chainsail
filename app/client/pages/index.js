@@ -43,7 +43,7 @@ const Heading = () => (
             <a
               href="https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/"
               target="_blank"
-              className="inline hover:text-white transition duration-300"
+              className="inline"
             >
               <i className="ml-2 mr-5 fas fa-chevron-right"></i>
               Replica Exchange
@@ -51,7 +51,7 @@ const Heading = () => (
             <a
               href="https://www.tweag.io/blog/2020-08-06-mcmc-intro3/"
               target="_blank"
-              className="inline hover:text-white transition duration-300"
+              className="inline"
             >
               <i className="ml-2 mr-5 fas fa-chevron-right"></i>
               Hamiltonian Monte Carlo
