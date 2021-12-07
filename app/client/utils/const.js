@@ -9,7 +9,7 @@ export const JOBS_LIST_URL = `${SCHEDULER_URL}/jobs`;
 // Graphite
 export const GRAPHITE_URL = process.env.GRAPHITE_URL || 'http://127.0.0.1:8080';
 export const GRAPHITE_LOGS_URL = (jobId) =>
-  `${GRAPHITE_URL}/events/get_data?tags=log&tags=job${jobId}&from=-3hours&until=now`;
+  `${GRAPHITE_URL}/events/get_data?tags=log&tags=job${jobId}&from=-1y&until=now`;
 
 // MCMC stats
 export const MCMC_STATS_URL = process.env.MCMC_STATS_URL || 'http://127.0.0.1:8081';
