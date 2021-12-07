@@ -114,6 +114,8 @@ class K8sNodeConfig(HasDriver):
     ssh_private_key_path: str
     storage_config_path: str
     controller_config_path: str
+    pod_cpu: str
+    pod_memory: str
 
     def create_node_driver(self):
         pass
@@ -130,6 +132,10 @@ class K8sNodeConfigSchema(Schema):
     storage_config_path = fields.String(required=True)
     # The path to the controller.yaml controller config file
     controller_config_path = fields.String(required=True)
+    # The number of CPU the pod requests
+    pod_cpu = fields.String(required=True)
+    # The amount of memory the pod requests
+    pod_memory = fields.String(required=True)
 
     @post_load
     def make_k8s_node_config(self, data, **kwargs):

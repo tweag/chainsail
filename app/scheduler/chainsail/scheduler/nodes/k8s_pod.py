@@ -230,6 +230,12 @@ class K8sNode(Node):
                     sub_path=self._CM_FILE_JOBSPEC,
                 ),
             ],
+            resources=kub.client.V1ResourceRequirements(
+                requests={
+                    "cpu":self._node_config.pod_cpu, 
+                    "memory":self._node_config.pod_memory,
+                }
+            ),
         )
         ## VOLUMES
         # User code + Job spec + SSH key volume

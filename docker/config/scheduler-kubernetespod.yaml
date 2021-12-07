@@ -39,3 +39,7 @@ node_config:
   ssh_private_key_path: /config/unsafe_dev_key_rsa
   storage_config_path: /config/storage.yaml
   controller_config_path: /config/controller.yaml
+  # Pod resources requests
+  # Use `kubectl describe node <node-name>` to see the "Allocatable" resources
+  pod_cpu: "1600m"  
+  pod_memory: "5000000Ki"
