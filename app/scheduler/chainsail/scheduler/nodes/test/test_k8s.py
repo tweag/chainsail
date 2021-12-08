@@ -21,6 +21,8 @@ def mock_scheduler_config():
         "path/to/key.pem",
         "foo/controller.yaml",
         "foo/storage.yaml",
+        "1600m",
+        "5000000Ki",
     )
     scheduler_config = SchedulerConfig(
         controller=config,

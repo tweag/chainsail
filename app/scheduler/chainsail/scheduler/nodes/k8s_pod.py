@@ -232,8 +232,8 @@ class K8sNode(Node):
             ],
             resources=kub.client.V1ResourceRequirements(
                 requests={
-                    "cpu":self._node_config.pod_cpu, 
-                    "memory":self._node_config.pod_memory,
+                    "cpu": self._node_config.pod_cpu,
+                    "memory": self._node_config.pod_memory,
                 }
             ),
         )

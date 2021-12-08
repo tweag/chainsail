@@ -79,6 +79,8 @@ K8S_POD_CONFIG = {
     "ssh_private_key_path": "/home/someone/.ssh/key.pem",
     "controller_config_path": "/foo/bar/controller.yaml",
     "storage_config_path": "/foo/bar/storage.yaml",
+    "pod_cpu": "1600m",
+    "pod_memory": "5000000Ki",
 }
 
 VALID_CONFIG_K8S = {
