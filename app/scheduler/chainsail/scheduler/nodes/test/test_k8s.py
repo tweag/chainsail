@@ -35,9 +35,8 @@ def mock_scheduler_config():
     return scheduler_config
 
 
-@patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
-@patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
-def test_k8s_node_from_representation(mock_api, mock_kubeconfig, mock_scheduler_config):
+@patch("chainsail.scheduler.config.K8sNodeConfig.create_node_driver")
+def test_k8s_node_from_representation(mock_driver, mock_scheduler_config):
     from chainsail.common.spec import JobSpec
     from chainsail.scheduler.db import TblNodes
     from chainsail.scheduler.nodes.base import NodeType, NodeStatus
@@ -60,9 +59,8 @@ def test_k8s_node_from_representation(mock_api, mock_kubeconfig, mock_scheduler_
     assert node.representation
 
 
-@patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
-@patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
-def test_k8s_node_from_config_with_job(mock_api, mock_kubeconfig, mock_scheduler_config):
+@patch("chainsail.scheduler.config.K8sNodeConfig.create_node_driver")
+def test_k8s_node_from_config_with_job(mock_driver, mock_scheduler_config):
     from chainsail.common.spec import JobSpec
     from chainsail.scheduler.db import TblJobs
     from chainsail.scheduler.nodes.k8s_pod import K8sNode
@@ -73,11 +71,8 @@ def test_k8s_node_from_config_with_job(mock_api, mock_kubeconfig, mock_scheduler
     assert node.representation.job.id == 1
 
 
-@patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
-@patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
-def test_k8s_node_from_representation_then_create(
-    mock_api, mock_kubeconfig, mock_scheduler_config
-):
+@patch("chainsail.scheduler.config.K8sNodeConfig.create_node_driver")
+def test_k8s_node_from_representation_then_create(mock_driver, mock_scheduler_config):
     from chainsail.common.spec import JobSpec, PipDependencies
     from chainsail.scheduler.db import TblJobs, TblNodes
     from chainsail.scheduler.nodes.base import NodeType, NodeStatus
@@ -110,9 +105,8 @@ def test_k8s_node_from_representation_then_create(
     assert node.status == NodeStatus.RUNNING
 
 
-@patch("chainsail.scheduler.nodes.k8s_pod.load_kube_config")
-@patch("chainsail.scheduler.nodes.k8s_pod.CoreV1Api")
-def test_k8s_node_lifecycle(mock_api, mock_kubeconfig, mock_scheduler_config):
+@patch("chainsail.scheduler.config.K8sNodeConfig.create_node_driver")
+def test_k8s_node_lifecycle(mock_driver, mock_scheduler_config):
     from chainsail.common.spec import JobSpec
     from chainsail.scheduler.db import TblJobs, TblNodes
     from chainsail.scheduler.nodes.base import NodeStatus

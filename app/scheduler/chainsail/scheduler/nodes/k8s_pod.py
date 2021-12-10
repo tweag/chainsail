@@ -4,8 +4,7 @@ import time
 from typing import Callable, Optional, Tuple
 from enum import Enum
 import kubernetes as kub
-from kubernetes.config import load_kube_config
-from kubernetes.client import CoreV1Api, V1Pod, V1ConfigMap
+from kubernetes.client import V1Pod, V1ConfigMap
 from kubernetes.client.rest import ApiException
 from chainsail.common.spec import JobSpec, JobSpecSchema
 from chainsail.scheduler.config import (
@@ -98,12 +97,7 @@ class K8sNode(Node):
         self.spec = spec
         self._status = status
         self._address = address
-        # Load the kubernetes config:
-        # - Either from the file specified by KUBECONFIG environment variable if it exists
-        # - Or from the default location $HOME/.kube/config
-        load_kube_config()
-        self.core_v1 = CoreV1Api()
-        # self.core_v1 = node_config.create_node_driver()
+        self.api = node_config.create_node_driver()
 
     def _user_install_script(self) -> str:
         install_commands = "\n".join([d.installation_script for d in self.spec.dependencies])
@@ -112,7 +106,7 @@ class K8sNode(Node):
 
     def _get_logs(self) -> str:
         try:
-            events = self.core_v1.list_namespaced_event(
+            events = self.api.list_namespaced_event(
                 namespace=K8S_NAMESPACE, field_selector=f"involvedObject.name={self._name}"
             )
         except ApiException as e:
@@ -132,7 +126,7 @@ class K8sNode(Node):
         return logs
 
     def _read_pod(self) -> V1Pod:
-        pod = self.core_v1.read_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
+        pod = self.api.read_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
         return pod
 
     def _all_exist(self) -> bool:
@@ -258,7 +252,7 @@ class K8sNode(Node):
             spec=kub.client.V1PodSpec(
                 containers=[httpstan_container, user_code_container, container],
                 volumes=[job_volume, config_volume],
-                tolerations=[kub.client.V1Toleration(key="app", value="chainsail")]
+                tolerations=[kub.client.V1Toleration(key="app", value="chainsail")],
             ),
         )
         return pod
@@ -273,11 +267,9 @@ class K8sNode(Node):
         self._pod = self._create_pod()
         try:
             # Configmap
-            self.core_v1.create_namespaced_config_map(
-                body=self._configmap, namespace=K8S_NAMESPACE
-            )
+            self.api.create_namespaced_config_map(body=self._configmap, namespace=K8S_NAMESPACE)
             # Pod
-            self.core_v1.create_namespaced_pod(body=self._pod, namespace=K8S_NAMESPACE)
+            self.api.create_namespaced_pod(body=self._pod, namespace=K8S_NAMESPACE)
         except ApiException as e:
             self._status = NodeStatus.FAILED
             logs = self._get_logs()
@@ -300,10 +292,10 @@ class K8sNode(Node):
         logger.info("Restarting pod...")
         self._status = NodeStatus.RESTARTING
         try:
-            self.core_v1.replace_namespaced_config_map(
+            self.api.replace_namespaced_config_map(
                 name=self._name_cm, body=self._configmap, namespace=K8S_NAMESPACE
             )
-            self.core_v1.replace_namespaced_pod(
+            self.api.replace_namespaced_pod(
                 name=self._name, body=self._pod, namespace=K8S_NAMESPACE
             )
             restarted = True
@@ -319,12 +311,10 @@ class K8sNode(Node):
         logger.info("Deleting pod...")
         try:
             if self._pod:
-                self.core_v1.delete_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
+                self.api.delete_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
                 self._pod = None
             if self._configmap:
-                self.core_v1.delete_namespaced_config_map(
-                    name=self._name_cm, namespace=K8S_NAMESPACE
-                )
+                self.api.delete_namespaced_config_map(name=self._name_cm, namespace=K8S_NAMESPACE)
                 self._configmap = None
             self._status = NodeStatus.EXITED
             deleted = True
@@ -437,12 +427,10 @@ class K8sNode(Node):
         # Otherwise we can look up the compute resources
         else:
             try:
-                load_kube_config()
-                core_v1 = CoreV1Api()
-                # core_v1 = node_config.create_node_driver()
+                api = node_config.create_node_driver()
                 name = node_rep.name
-                pod = core_v1.read_namespaced_pod(name=name, namespace=K8S_NAMESPACE)
-                configmap = core_v1.read_namespaced_config_map(
+                pod = api.read_namespaced_pod(name=name, namespace=K8S_NAMESPACE)
+                configmap = api.read_namespaced_config_map(
                     name=cls._NAME_CM.format(name), namespace=K8S_NAMESPACE
                 )
             except ApiException as e:

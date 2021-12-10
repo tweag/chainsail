@@ -9,6 +9,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import yaml
 from libcloud.compute.base import NodeDriver
 from libcloud.compute.providers import Provider, get_driver
+from kubernetes.config import load_kube_config
+from kubernetes.client import CoreV1Api
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from marshmallow.exceptions import ValidationError
@@ -118,7 +120,11 @@ class K8sNodeConfig(HasDriver):
     pod_memory: str
 
     def create_node_driver(self):
-        pass
+        # Loads the kubernetes configuration from the config file mounted in the scheduler container.
+        kubeconfig = os.environ.get("KUBECONFIG", "~/.kube/config")
+        load_kube_config(config_file=kubeconfig)
+        api = CoreV1Api()
+        return api
 
 
 class K8sNodeConfigSchema(Schema):
