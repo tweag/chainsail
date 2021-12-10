@@ -31,10 +31,13 @@ spec:
         run: overprovisioning
     spec:
       priorityClassName: overprovisioning
+      tolerations:
+        - key: app
+          value: chainsail
       containers:
-      - name: reserve-resources
-        image: k8s.gcr.io/pause
-        resources:
-          requests:
-            cpu: "1800m"
-            memory: "5000000Ki"
+        - name: reserve-resources
+          image: k8s.gcr.io/pause
+          resources:
+            requests:
+              cpu: "1800m"
+              memory: "5000000Ki"

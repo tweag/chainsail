@@ -103,6 +103,7 @@ class K8sNode(Node):
         # - Or from the default location $HOME/.kube/config
         load_kube_config()
         self.core_v1 = CoreV1Api()
+        # self.core_v1 = node_config.create_node_driver()
 
     def _user_install_script(self) -> str:
         install_commands = "\n".join([d.installation_script for d in self.spec.dependencies])
@@ -257,6 +258,7 @@ class K8sNode(Node):
             spec=kub.client.V1PodSpec(
                 containers=[httpstan_container, user_code_container, container],
                 volumes=[job_volume, config_volume],
+                tolerations=[kub.client.V1Toleration(key="app", value="chainsail")]
             ),
         )
         return pod
@@ -437,6 +439,7 @@ class K8sNode(Node):
             try:
                 load_kube_config()
                 core_v1 = CoreV1Api()
+                # core_v1 = node_config.create_node_driver()
                 name = node_rep.name
                 pod = core_v1.read_namespaced_pod(name=name, namespace=K8S_NAMESPACE)
                 configmap = core_v1.read_namespaced_config_map(
