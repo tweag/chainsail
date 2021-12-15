@@ -74,7 +74,7 @@ def check_status(proc: Process) -> ProcessStatus:
 #  master process (running the controller in the current case) needs a way of identifying
 #  the workers.
 @click.option(
-    "--hostsfile", required=True, type=click.Path(exists=True), help="path to job hostsfile"
+    "--hostsfile", required=True, type=click.Path(exists=False), help="path to job hostsfile"
 )
 @click.option(
     "--job-spec", required=True, type=click.Path(exists=True), help="path to job spec json file"

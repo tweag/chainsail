@@ -25,6 +25,7 @@ chainsail-grpc = { path = "../../lib/grpc", develop = true }
 firebase-admin = "^4.5.2"
 uWSGI = "^2.0.19"
 cloudstorage = {extras = ["google"], version = "^0.11.0"}
+kubernetes = "^18.20.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

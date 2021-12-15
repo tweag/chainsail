@@ -8,6 +8,7 @@ from chainsail.scheduler.db import TblJobs, TblNodes
 
 class NodeType(Enum):
     LIBCLOUD_VM = "LibcloudVM"
+    KUBERNETES_POD = "KubernetesPod"
 
 
 class NodeStatus(Enum):
@@ -17,6 +18,7 @@ class NodeStatus(Enum):
     RESTARTING = "restarting"  # The node is being restarted
     EXITED = "exited"  # The node process has exited and the node is shut down
     FAILED = "failed"  # The node experienced an error
+    UNKNOWN = "unknown"  # The state of the node could not be obtained (possibility for K8s pods)
 
 
 class Node(ABC):
