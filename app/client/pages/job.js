@@ -164,7 +164,7 @@ const Job = ({ authed, isMobile }) => {
   const [probability_definition, setProbDef] = useState(
     'https://storage.googleapis.com/resaas-dev-public/mixture.zip'
   );
-  const [dependencies, setDeps] = useState(['numpy', 'scipy']);
+  const [dependencies, setDeps] = useState(['numpy', 'scipy', 'chainsail-helpers']);
 
   const [createdJobId, setCreatedJobID] = useState(null);
 
@@ -258,29 +258,55 @@ const Job = ({ authed, isMobile }) => {
                   className="w-full mb-10 text-base md:text-xl lg:w-2/3 md:text-justify"
                 >
                   <div>
-                    Every sampling job is specified through several parameters. This form is
-                    populated with values for a simple example: a mixture of Gaussians in two
-                    dimensions.
+                    Run Chainsail with an example density (a Gaussian mixture, pre-filled in the
+                    form) or define your own probability! To do that, use the probability density
+                    function (PDF) interfaces provided in the{' '}
+                    <a
+                      target="_blank"
+                      href="https://github.com/tweag/chainsail-resources/blob/main/chainsail_helpers"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
+                      target="_blank"
+                    >
+                      chainsail-helpers
+                    </a>{' '}
+                    Python package.
                   </div>
                   <div>
-                    If you like to define your own probability,{' '}
+                    The{' '}
                     <a
                       target="_blank"
-                      href="https://storage.googleapis.com/resaas-dev-public/mixture.zip"
+                      href="https://github.com/tweag/chainsail-resources"
                       className="inline text-blue-400 hover:text-white transition duration-300"
                     >
-                      download
+                      chainsail-resources
                     </a>{' '}
-                    the example and follow instructions in the source code. You can extract the
-                    samples from your distribution from the downloaded results by using a small{' '}
+                    repository contains examples for PDFs defined from scratch, using PyMC3 and
+                    Stan. There you'll also find a{' '}
                     <a
-                      target="_blank"
-                      href="https://storage.googleapis.com/resaas-dev-public/concatenate_samples.py"
+                      href="https://github.com/tweag/chainsail-resources/blob/main/documentation/parameters.md"
                       className="inline text-blue-400 hover:text-white transition duration-300"
+                      target="_blank"
                     >
-                      script
-                    </a>
-                    .
+                      detailed explanation
+                    </a>{' '}
+                    of all job parameters.
+                  </div>
+                </FlexCol>
+                <FlexCol
+                  between
+                  className="w-full mb-10 text-base md:text-xl lg:w-2/3 md:text-justify"
+                >
+                  <div>
+                    You can extract the samples from your distribution from the downloaded results
+                    by using the{' '}
+                    <a
+                      href="https://github.com/tweag/chainsail-resources/tree/main/chainsail_helpers/chainsail_helpers/scripts"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
+                      target="_blank"
+                    >
+                      concatenate-samples script
+                    </a>{' '}
+                    provided in the chainsail-helpers package.
                   </div>
                 </FlexCol>
                 <FlexRow
