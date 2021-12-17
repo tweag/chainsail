@@ -10,8 +10,8 @@ BUCKET_NAME=$1
 INTERNAL_IP=$(gcloud compute instances list --filter="name=('$(hostname)')" --format='[no-heading](INTERNAL_IP)')
 # There are 2 possible versions of the scheduler.yaml file
 # version number = 1 => Worker nodes are GCE VMs (node_type: LibcloudVM)
-# version number = 4 => Worker nodes are K8s Pods (node_type: KubernetesPod)
-VERSION_SCHEDULER=4
+# version number = 5 => Worker nodes are K8s Pods (node_type: KubernetesPod)
+VERSION_SCHEDULER=5
 
 # Fetch secret config files
 rm -rf config_dpl
