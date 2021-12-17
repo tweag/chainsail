@@ -109,8 +109,3 @@ services:
 volumes:
   redis:
   postgres:
-# # Uncomment to use with Minikube
-# networks:
-#   default:
-#     name: minikube
-#     external: true
