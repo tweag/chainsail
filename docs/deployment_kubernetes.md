@@ -35,7 +35,7 @@ This guide describes how to set up a Kubernetes cluster for the scheduler to sen
 
 ### Deploy Chainsail
 - **Export the kubernetes configuration**
-  - 1st method (recommended): Generate a static kubeconfig file ([GCP source](https://cloud.google.com/kubernetes-engine/docs/how-to/api-server-authentication#environments-without-gcloud))
+  - 1st method (recommended): Generate a static kubeconfig file ([GCP source](https://cloud.google.com/kubernetes-engine/docs/how-to/api-server-authentication#environments-without-gcloud))  
     Get the `endpoint` and `clusterCaCertificate` values for your cluster
     ```bash
     # endpoint
