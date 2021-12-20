@@ -165,8 +165,8 @@ class K8sNode(Node):
         install_script_target = os.path.join("/chainsail", self._CM_FILE_USERCODE)
         startup_probe_usercode = kub.client.V1Probe(
             tcp_socket=kub.client.V1TCPSocketAction(port=50052),
-            period_seconds=2,
-            failure_threshold=150,
+            period_seconds=1,
+            failure_threshold=300,
         )
         user_code_container = kub.client.V1Container(
             name="user-code",
@@ -204,8 +204,8 @@ class K8sNode(Node):
         if self._is_controller:
             startup_probe = kub.client.V1Probe(
                 tcp_socket=kub.client.V1TCPSocketAction(port=50051),
-                period_seconds=2,
-                failure_threshold=60,
+                period_seconds=1,
+                failure_threshold=300,
             )
         container = kub.client.V1Container(
             name="rex",
