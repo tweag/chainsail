@@ -93,31 +93,3 @@ This guide describes how to set up a Kubernetes cluster for the scheduler to sen
   ```bash
   docker-compose -f docker-compose.yaml up
   ```
-
-
-
-## Minikube
-**Disclaimer:** Instructions incomplete, don't use for now.
-- **Create the cluster**  
-  ```bash
-  minikube start
-  ```
-  However, be aware that minikube will create its own network at startup, named *minikube* by default (use `docker network ls` to check that). It is thus necessary to adapt the network of the scheduler in order for the latter to be able to communicate with the minikube cluster. The most simple way to arrange that is to adapt the network in the `docker-compose.yaml` file, by adding the following chunk at the end:
-  ```yaml
-  networks:
-    default:
-      name: minikube
-      external: true
-  ```
-- **Load the pod's docker images to Minikube**  
-  ```bash
-  minikube image load chainsail-mpi-node:dev
-  minikube image load chainsail-mpi-user-code:dev
-  minikube image load chainsail-mpi-httpstan-server:dev
-  ```
-- **Adapt image names**  
-  Get images names
-  ```bash
-  minikube image ls
-  ```
-  And adapt the images names in the `scheduler.yaml` file.
