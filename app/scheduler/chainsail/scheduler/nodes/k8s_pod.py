@@ -163,11 +163,17 @@ class K8sNode(Node):
         )
         # User code container
         install_script_target = os.path.join("/chainsail", self._CM_FILE_USERCODE)
+        startup_probe_usercode = kub.client.V1Probe(
+            tcp_socket=kub.client.V1TCPSocketAction(port=50052),
+            period_seconds=2,
+            failure_threshold=150,
+        )
         user_code_container = kub.client.V1Container(
             name="user-code",
             image=self._config.user_code_image,
             args=["python", "/app/app/user_code_server/chainsail/user_code_server/__init__.py"],
             ports=[kub.client.V1ContainerPort(container_port=50052)],
+            startup_probe=startup_probe_usercode,
             env=[
                 kub.client.V1EnvVar(name="USER_PROB_URL", value=self.spec.probability_definition),
                 kub.client.V1EnvVar(name="USER_INSTALL_SCRIPT", value=install_script_target),
