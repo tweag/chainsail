@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    chainsail.io.service: graphite
+  name: graphite
+spec:
+  serviceName: graphite
+  replicas: 1
+  selector:
+    matchLabels:
+      chainsail.io.service: graphite
+  template:
+    metadata:
+      labels:
+        chainsail.io.service: graphite
+    spec:
+      containers:
+      - image: graphiteapp/graphite-statsd:1.1.8-2
+        imagePullPolicy: IfNotPresent
+        name: graphite
+        ports:
+        - containerPort: 80
+        - containerPort: 2003
+        - containerPort: 2004
+        - containerPort: 2023
+        - containerPort: 2024
+        - containerPort: 8125
+          protocol: UDP
+        - containerPort: 8126
+        resources: {}
+      restartPolicy: Always
+      volumes:
+      - name: graphite
+        persistentVolumeClaim:
+          claimName: graphite
+  volumeClaimTemplates:
+  - metadata:
+      name: graphite
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 16Gi

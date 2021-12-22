@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    chainsail.io.service: redis
+  name: redis
+spec:
+  serviceName: redis
+  replicas: 1
+  selector:
+    matchLabels:
+      chainsail.io.service: redis
+  template:
+    metadata:
+      labels:
+        chainsail.io.service: redis
+    spec:
+      containers:
+      - image: redis:6.2-rc2-alpine
+        name: redis
+        ports:
+          - containerPort: 6379
+        resources: {}
+        volumeMounts:
+        - mountPath: /data
+          name: redis
+      restartPolicy: Always
+      volumes:
+      - name: redis
+        persistentVolumeClaim:
+          claimName: redis
+  volumeClaimTemplates:
+  - metadata:
+      name: redis
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 8Gi
