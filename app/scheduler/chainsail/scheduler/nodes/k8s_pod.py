@@ -159,11 +159,9 @@ class K8sNode(Node):
 
     def _create_worker_pod(self) -> V1Pod:
         ## VOLUMES
-        # User code + Job spec + SSH key volume
         job_volume = kub.client.V1Volume(
             name="job-volume", config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm)
         )
-        # Config volume
         config_volume = kub.client.V1Volume(
             name="config-volume",
             config_map=kub.client.V1ConfigMapVolumeSource(
@@ -247,15 +245,19 @@ class K8sNode(Node):
 
     def _create_controller_pod(self) -> V1Pod:
         ## VOLUMES
-        # Job spec + SSH key volume
         job_volume = kub.client.V1Volume(
             name="job-volume", config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm)
         )
-        # Config volume
         config_volume = kub.client.V1Volume(
             name="config-volume",
             config_map=kub.client.V1ConfigMapVolumeSource(
-                name=self._node_config.config_configmap_name, default_mode=0o700
+                name=self._node_config.config_configmap_name,
+                # `default_mode` argument:
+                # - Used to set permissions on created files by default.
+                #   Source: https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/volume/
+                # - Requires an octal integer value.
+                #   Source: https://stackoverflow.com/questions/11620151/what-do-numbers-starting-with-0-mean-in-python
+                default_mode=0o700,
             ),
         )
         ## CONTAINERS
