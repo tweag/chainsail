@@ -1,8 +1,8 @@
 # Setup guide for running jobs on a Kubernetes cluster
 This guide describes how to set up a Kubernetes cluster for the scheduler to send jobs onto.  
 
-## Google Kubernetes Engine  
-### (Optional) Provision a cluster  
+## Google Kubernetes Engine
+### (Optional) Provision a cluster
 - **Create a cluster**  
   ```bash
   gcloud container --project="resaas-simeon-dev" clusters create <cluster-name> --zone="europe-west3-c" --autoscaling-profile=optimize-utilization --cluster-ipv4-cidr=<cidr-range>(ex:"10.100.0.0/14") --machine-type="e2-small" --num-nodes=1 --enable-autoscaling --min-nodes=0 --max-nodes=3
@@ -18,20 +18,20 @@ This guide describes how to set up a Kubernetes cluster for the scheduler to sen
   ```
 - **Set up kubernetes objects**  
   - Fetch the cluster credentials  
-  ```bash
-  gcloud container clusters get-credentials <cluster-name> --zone="europe-west3-c"
-  kubectl config get-contexts   # verification
-  ```
+    ```bash
+    gcloud container clusters get-credentials <cluster-name> --zone="europe-west3-c"
+    kubectl config get-contexts   # verification
+    ```
   - Permission for the resaas-storage service account  
-  ```bash
-  cd /path/to/resaas/kubernetes/
-  kubectl apply -f rbac.yaml
-  ```
+    ```bash
+    cd /path/to/resaas/kubernetes/
+    kubectl apply -f rbac.yaml
+    ```
   - (Optional) Cluster overprovisioning  
-  ```bash
-  cd /path/to/resaas/kubernetes/
-  kubectl apply -f overprovisioning.yaml
-  ```
+    ```bash
+    cd /path/to/resaas/kubernetes/
+    kubectl apply -f overprovisioning.yaml
+    ```
 
 ### Deploy Chainsail
 - **Generate the kubernetes configuration** ([source](https://cloud.google.com/kubernetes-engine/docs/how-to/api-server-authentication#environments-without-gcloud))  
@@ -63,7 +63,7 @@ This guide describes how to set up a Kubernetes cluster for the scheduler to sen
       name: <cluster-name>
     current-context: <cluster-name>
     ```
-  This `kubeconfig.yaml` file provides the credentials for the scheduler to launch jobs onto the kubernetes cluster. It needs to be mounted into both the `scheduler` and the `celery-worker` containers. Make sure this is correctly specified in the `docker-compose.yaml` file :
+  This `kubeconfig.yaml` file provides the credentials for the scheduler to launch jobs onto the kubernetes cluster. It needs to be mounted into both the `scheduler` and the `celery-worker` containers. Make sure this is correctly specified in the `docker-compose.yaml` file:
   ```yaml
   # Example
   scheduler:
