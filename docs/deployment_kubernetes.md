@@ -42,7 +42,7 @@ This guide describes how to set up a Kubernetes cluster for the scheduler to sen
     # masterAuth.clusterCaCertificate
     gcloud container clusters describe <cluster-name> --zone=europe-west3-c --format="value(masterAuth.clusterCaCertificate)"
     ```
-    Create a `kubeconfig.yaml` file containing the following
+    Create a `kubeconfig.yaml` file containing the following (or modify the existing [`kubeconfig.yaml`](../docker/kubeconfig.yaml) template)
     ```yaml
     apiVersion: v1
     kind: Config
