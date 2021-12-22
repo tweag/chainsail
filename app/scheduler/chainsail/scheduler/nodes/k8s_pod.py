@@ -152,6 +152,28 @@ class K8sNode(Node):
         return configmap
 
     def _create_pod(self) -> V1Pod:
+        if self._is_controller:
+            return self._create_controller_pod()
+        else:
+            return self._create_worker_pod()
+
+    def _create_worker_pod(self) -> V1Pod:
+        ## VOLUMES
+        job_volume = kub.client.V1Volume(
+            name="job-volume", config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm)
+        )
+        config_volume = kub.client.V1Volume(
+            name="config-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(
+                name=self._node_config.config_configmap_name,
+                # `default_mode` argument:
+                # - Used to set permissions on created files by default.
+                #   Source: https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/volume/
+                # - Requires an octal integer value.
+                #   Source: https://stackoverflow.com/questions/11620151/what-do-numbers-starting-with-0-mean-in-python
+                default_mode=0o700,
+            ),
+        )
         ## CONTAINERS
         # TODO: Add something to replace `--log-driver=gcplogs` for every container
         # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
@@ -199,14 +221,70 @@ class K8sNode(Node):
         container_cmd = [self._config.cmd] + self._config.args
         container_cmd = [arg.format(job_id=self.representation.job.id) for arg in container_cmd]
         ssh_private_key_filename = os.path.basename(self._node_config.ssh_private_key_path)
+        container = kub.client.V1Container(
+            name="rex",
+            image=self._config.image,
+            args=container_cmd,
+            volume_mounts=[
+                kub.client.V1VolumeMount(name="config-volume", mount_path="/chainsail"),
+                kub.client.V1VolumeMount(
+                    name="job-volume",
+                    mount_path=f"/app/config/ssh/{self._CM_FILE_SSHKEY}",
+                    sub_path=self._CM_FILE_SSHKEY,
+                ),
+            ],
+            resources=kub.client.V1ResourceRequirements(
+                requests={
+                    "cpu": self._node_config.pod_cpu,
+                    "memory": self._node_config.pod_memory,
+                }
+            ),
+        )
+        ## POD
+        pod = kub.client.V1Pod(
+            api_version="v1",
+            kind="Pod",
+            metadata=kub.client.V1ObjectMeta(
+                name=self._name, labels={"app": "rex", "type": "worker"}
+            ),
+            spec=kub.client.V1PodSpec(
+                containers=[httpstan_container, user_code_container, container],
+                volumes=[job_volume, config_volume],
+                tolerations=[kub.client.V1Toleration(key="app", value="chainsail")],
+            ),
+        )
+        return pod
+
+    def _create_controller_pod(self) -> V1Pod:
+        ## VOLUMES
+        job_volume = kub.client.V1Volume(
+            name="job-volume", config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm)
+        )
+        config_volume = kub.client.V1Volume(
+            name="config-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(
+                name=self._node_config.config_configmap_name,
+                # `default_mode` argument:
+                # - Used to set permissions on created files by default.
+                #   Source: https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/volume/
+                # - Requires an octal integer value.
+                #   Source: https://stackoverflow.com/questions/11620151/what-do-numbers-starting-with-0-mean-in-python
+                default_mode=0o700,
+            ),
+        )
+        ## CONTAINERS
+        # TODO: Add something to replace `--log-driver=gcplogs` for every container
+        # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
+        # Controller container
+        container_cmd = [self._config.cmd] + self._config.args
+        container_cmd = [arg.format(job_id=self.representation.job.id) for arg in container_cmd]
+        ssh_private_key_filename = os.path.basename(self._node_config.ssh_private_key_path)
         # this startup probe checks the state of the gRPC server
-        startup_probe = None
-        if self._is_controller:
-            startup_probe = kub.client.V1Probe(
-                tcp_socket=kub.client.V1TCPSocketAction(port=50051),
-                period_seconds=1,
-                failure_threshold=300,
-            )
+        startup_probe = kub.client.V1Probe(
+            tcp_socket=kub.client.V1TCPSocketAction(port=50051),
+            period_seconds=1,
+            failure_threshold=300,
+        )
         container = kub.client.V1Container(
             name="rex",
             image=self._config.image,
@@ -222,11 +300,6 @@ class K8sNode(Node):
                 ),
                 kub.client.V1VolumeMount(
                     name="job-volume",
-                    mount_path=f"/app/config/ssh/{self._CM_FILE_SSHKEY}",
-                    sub_path=self._CM_FILE_SSHKEY,
-                ),
-                kub.client.V1VolumeMount(
-                    name="job-volume",
                     mount_path=f"/chainsail-jobspec/{self._CM_FILE_JOBSPEC}",
                     sub_path=self._CM_FILE_JOBSPEC,
                 ),
@@ -238,25 +311,15 @@ class K8sNode(Node):
                 }
             ),
         )
-        ## VOLUMES
-        # User code + Job spec + SSH key volume
-        job_volume = kub.client.V1Volume(
-            name="job-volume", config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm)
-        )
-        # Config volume
-        config_volume = kub.client.V1Volume(
-            name="config-volume",
-            config_map=kub.client.V1ConfigMapVolumeSource(
-                name=self._node_config.config_configmap_name, default_mode=0o700
-            ),
-        )
         ## POD
         pod = kub.client.V1Pod(
             api_version="v1",
             kind="Pod",
-            metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app": "rex"}),
+            metadata=kub.client.V1ObjectMeta(
+                name=self._name, labels={"app": "rex", "type": "controller"}
+            ),
             spec=kub.client.V1PodSpec(
-                containers=[httpstan_container, user_code_container, container],
+                containers=[container],
                 volumes=[job_volume, config_volume],
                 tolerations=[kub.client.V1Toleration(key="app", value="chainsail")],
             ),
