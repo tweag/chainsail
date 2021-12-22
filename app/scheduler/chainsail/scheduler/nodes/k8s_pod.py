@@ -165,7 +165,13 @@ class K8sNode(Node):
         config_volume = kub.client.V1Volume(
             name="config-volume",
             config_map=kub.client.V1ConfigMapVolumeSource(
-                name=self._node_config.config_configmap_name, default_mode=0o700
+                name=self._node_config.config_configmap_name,
+                # `default_mode` argument:
+                # - Used to set permissions on created files by default.
+                #   Source: https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/volume/
+                # - Requires an octal integer value.
+                #   Source: https://stackoverflow.com/questions/11620151/what-do-numbers-starting-with-0-mean-in-python
+                default_mode=0o700,
             ),
         )
         ## CONTAINERS
@@ -179,11 +185,17 @@ class K8sNode(Node):
         )
         # User code container
         install_script_target = os.path.join("/chainsail", self._CM_FILE_USERCODE)
+        startup_probe_usercode = kub.client.V1Probe(
+            tcp_socket=kub.client.V1TCPSocketAction(port=50052),
+            period_seconds=1,
+            failure_threshold=300,
+        )
         user_code_container = kub.client.V1Container(
             name="user-code",
             image=self._config.user_code_image,
             args=["python", "/app/app/user_code_server/chainsail/user_code_server/__init__.py"],
             ports=[kub.client.V1ContainerPort(container_port=50052)],
+            startup_probe=startup_probe_usercode,
             env=[
                 kub.client.V1EnvVar(name="USER_PROB_URL", value=self.spec.probability_definition),
                 kub.client.V1EnvVar(name="USER_INSTALL_SCRIPT", value=install_script_target),
@@ -270,8 +282,8 @@ class K8sNode(Node):
         # this startup probe checks the state of the gRPC server
         startup_probe = kub.client.V1Probe(
             tcp_socket=kub.client.V1TCPSocketAction(port=50051),
-            period_seconds=2,
-            failure_threshold=60,
+            period_seconds=1,
+            failure_threshold=300,
         )
         container = kub.client.V1Container(
             name="rex",

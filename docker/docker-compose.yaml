@@ -43,6 +43,9 @@ services:
         max-size: "200k"
         max-file: "10"
   celery-worker:
+    build:
+      context: ../
+      dockerfile: docker/celery/Dockerfile
     image: "chainsail-celery-worker:latest"
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
@@ -55,6 +58,9 @@ services:
       - ./config_dpl:/config
       - ./kubeconfig-gke.yaml:/config/kubeconfig.yaml
   scheduler:
+    build:
+      context: ../
+      dockerfile: docker/scheduler/Dockerfile
     image: "chainsail-scheduler:latest"
     volumes:
       - ./config_dpl:/config
@@ -70,6 +76,9 @@ services:
       - KUBECONFIG=/config/kubeconfig.yaml
     depends_on: [postgres, celery-worker, redis, graphite]
   nginx:
+    build:
+      context: ../
+      dockerfile: docker/nginx/Dockerfile
     image: "chainsail-nginx:latest"
     ports:
       - "80:80"
@@ -85,6 +94,9 @@ services:
       - "8125:8125/udp"
       - "8126:8126"
   mcmc-stats:
+    build:
+      context: ../
+      dockerfile: docker/mcmc-stats-server/Dockerfile
     image: "chainsail-mcmc-stats-server"
     restart: "always"
     ports:
@@ -95,6 +107,9 @@ services:
       - STORAGE_CONFIG=/config/storage.yaml
       - STORAGE_BASENAME=TODO
   client:
+    build:
+      context: ../app/client/
+      dockerfile: Dockerfile
     image: "chainsail-client:latest"
     volumes:
       - ./config_dpl/client_sa_key.json:/config/client_sa_key.json
