@@ -29,11 +29,19 @@ spec:
           protocol: UDP
         - containerPort: 8126
         resources: {}
+        volumeMounts:
+          - name: config-volume
+            mountPath: /opt/graphite/conf/storage-schemas.conf
+            subPath: storage-schemas.conf
+
       restartPolicy: Always
       volumes:
       - name: graphite
         persistentVolumeClaim:
           claimName: graphite
+      - name: config-volume
+        configMap:
+          name: graphite-config
   volumeClaimTemplates:
   - metadata:
       name: graphite
