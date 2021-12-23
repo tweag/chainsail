@@ -52,9 +52,9 @@ resource "kubernetes_secret_v1" "worker_node_config" {
     name = "worker-node-config"
   }
   data = {
-    "storage.yaml" = "${var.storage_yaml}"
-    "scheduler.yaml" = yamlencode(local.scheduler_yaml)
-    "controller.yaml" = yamlencode(local.controller_yaml)
+    "storage.yaml"        = "${var.storage_yaml}"
+    "scheduler.yaml"      = yamlencode(local.scheduler_yaml)
+    "controller.yaml"     = yamlencode(local.controller_yaml)
     "remote_logging.yaml" = yamlencode(local.remote_logging_yaml)
   }
 }
@@ -112,21 +112,21 @@ locals {
   }
 
   remote_logging_yaml = {
-    enabled = true
-    log_level = "DEBUG"
-    address = "graphite.default.svc.cluster.local"
-    port = 8080
+    enabled     = true
+    log_level   = "DEBUG"
+    address     = "graphite.default.svc.cluster.local"
+    port        = 8080
     buffer_size = 0
   }
 
   controller_yaml = {
     scheduler_address = "scheduler.default.svc.cluster.local"
-    scheduler_port = 5000
-    metrics_address = "graphite.default.svc.cluster.local"
-    metrics_port = 2004
-    runner = "chainsail.runners.rexfw:MPIRERunner"
-    storage_basename = "/storage"
-    log_level = "DEBUG"
+    scheduler_port    = 5000
+    metrics_address   = "graphite.default.svc.cluster.local"
+    metrics_port      = 2004
+    runner            = "chainsail.runners.rexfw:MPIRERunner"
+    storage_basename  = "/storage"
+    log_level         = "DEBUG"
     # FIXME: ensure that this path matches helm chart
     remote_logging_config_path = "/chainsail/remote_logging.yaml"
   }
