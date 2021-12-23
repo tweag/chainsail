@@ -1,0 +1,23 @@
+# Values for the minio helm chart
+replicas: 4
+
+resources:
+  requests:
+    memory: 100Mi
+
+# Buckets to be automatically created when minio starts
+buckets:
+  # Name of the bucket
+  - name: chainsail-samples
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: true
+    # set versioning for
+    # bucket [true|false]
+    versioning: false
+
+# Default user
+rootUser: 'chainsail'
+rootPassword: 'chainsail'
