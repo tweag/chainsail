@@ -27,7 +27,7 @@ locals {
         driver_kwargs = {
           key    = "chainsail"
           secret = "chainsail"
-          host   = data.kubernetes_service.minio.spec[0].cluster_ip
+          host   = "${data.kubernetes_service.minio.metadata[0].name}.${data.kubernetes_service.minio.metadata[0].namespace}.svc.cluster.local"
           port   = 9000
           secure = false
         }
