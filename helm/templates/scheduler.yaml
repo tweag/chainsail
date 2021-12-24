@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    chainsail.io.service: scheduler
+  name: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      chainsail.io.service: scheduler
+  template:
+    metadata:
+      labels:
+        chainsail.io.service: scheduler
+    spec:
+      containers:
+      - image: chainsail-scheduler:latest
+        imagePullPolicy: IfNotPresent
+        name: scheduler
+        ports:
+        - containerPort: 5001
+        resources: {}
+        env:
+          - name: CELERY_BROKER_URL
+            value: redis://redis.default.svc.cluster.local:6379/0
+          - name: CELERY_RESULT_BACKEND
+            value: redis://redis.default.svc.cluster.local:6379/1
+          - name: SQLALCHEMY_DATABASE_URI
+            value: postgresql://postgres:resaas-dev@postgres.default.svc.cluster.local:5432/postgres
+          - name: CHAINSAIL_SCHEDULER_CONFIG
+            value: /config/scheduler.yaml
+        #   - name: GOOGLE_APPLICATION_CREDENTIALS
+        #     value: maybe mount these here ?
+        volumeMounts:
+          - name: scheduler-config
+            readOnly: true
+            mountPath: /config/scheduler.yaml
+            subPath: scheduler.yaml
+          - name: logging-config
+            readOnly: true
+            mountPath: /config/remote_logging.yaml
+            subPath: remote_logging.yaml
+
+      restartPolicy: Always
+      volumes:
+      - name: scheduler-config
+        secret:
+          secretName: scheduler-yaml
+      - name: logging-config
+        secret:
+          secretName: remote-logging-yaml
