@@ -7,17 +7,17 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import yaml
+from chainsail.scheduler.errors import ConfigurationError
+from chainsail.scheduler.nodes.base import NodeType
+from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
+from kubernetes.client import CoreV1Api
+from kubernetes.config import load_incluster_config, load_kube_config
 from libcloud.compute.base import NodeDriver
 from libcloud.compute.providers import Provider, get_driver
-from kubernetes.config import load_kube_config
-from kubernetes.client import CoreV1Api
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from marshmallow.exceptions import ValidationError
 from marshmallow_enum import EnumField
-from chainsail.scheduler.errors import ConfigurationError
-from chainsail.scheduler.nodes.base import NodeType
-from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
 
 
 def lookup_driver_cls(provider_name: str) -> type:
@@ -40,7 +40,9 @@ def lookup_driver_cls(provider_name: str) -> type:
         try:
             provider = getattr(Provider, provider_name)
         except AttributeError:
-            raise ConfigurationError(f"Unrecognized libcloud provider name: '{provider_name}'")
+            raise ConfigurationError(
+                f"Unrecognized libcloud provider name: '{provider_name}'"
+            )
         return get_driver(provider)
 
 
@@ -120,9 +122,18 @@ class K8sNodeConfig(HasDriver):
     pod_memory: str
 
     def create_node_driver(self):
-        # Loads the kubernetes configuration from the config file mounted in the scheduler container.
-        kubeconfig = os.environ.get("KUBECONFIG", "~/.kube/config")
-        load_kube_config(config_file=kubeconfig)
+        """Loads the kubernetes client
+
+        If the KUBECONFIG environment variable is set, this will attempt to read the
+        config file at that path. If unset, this method assumes it is running from
+        within the k8s cluster and will attempt to load the config via its k8s
+        service account.
+        """
+        kubeconfig = os.environ.get("KUBECONFIG")
+        if kubeconfig:
+            load_kube_config(config_file=kubeconfig)
+        else:
+            load_incluster_config()
         api = CoreV1Api()
         return api
 
@@ -217,7 +228,9 @@ class SchedulerConfigSchema(Schema):
         # Lookup the expected schema for the driver config
         node_type = data["node_type"]
         if node_type not in NODE_CONFIG_SCHEMAS:
-            raise ValidationError(f"Scheduler config specified an unknown node_type: {node_type}")
+            raise ValidationError(
+                f"Scheduler config specified an unknown node_type: {node_type}"
+            )
         # Parse the node_config using the matching schema
         data["node_config"] = NODE_CONFIG_SCHEMAS[node_type].load(data["node_config"])
         return SchedulerConfig(**data)

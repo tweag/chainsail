@@ -1,27 +1,19 @@
 import logging
 import os
 import time
-from typing import Callable, Optional, Tuple
 from enum import Enum
-import kubernetes as kub
-from kubernetes.client import V1Pod, V1ConfigMap
-from kubernetes.client.rest import ApiException
-from chainsail.common.spec import JobSpec, JobSpecSchema
-from chainsail.scheduler.config import (
-    GeneralNodeConfig,
-    SchedulerConfig,
-    K8sNodeConfig,
-    load_scheduler_config,
-)
-from chainsail.scheduler.db import TblJobs, TblNodes
-from chainsail.scheduler.nodes.base import Node, NodeType, NodeStatus
-from chainsail.scheduler.errors import (
-    ConfigurationError,
-    MissingNodeError,
-    NodeError,
-    ObjectConstructionError,
-)
+from typing import Callable, Optional, Tuple
 
+import kubernetes as kub
+from chainsail.common.spec import JobSpec, JobSpecSchema
+from chainsail.scheduler.config import (GeneralNodeConfig, K8sNodeConfig,
+                                        SchedulerConfig, load_scheduler_config)
+from chainsail.scheduler.db import TblJobs, TblNodes
+from chainsail.scheduler.errors import (ConfigurationError, MissingNodeError,
+                                        NodeError, ObjectConstructionError)
+from chainsail.scheduler.nodes.base import Node, NodeStatus, NodeType
+from kubernetes.client import V1ConfigMap, V1Pod
+from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger("chainsail.scheduler")
 
@@ -100,17 +92,20 @@ class K8sNode(Node):
         self.api = node_config.create_node_driver()
 
     def _user_install_script(self) -> str:
-        install_commands = "\n".join([d.installation_script for d in self.spec.dependencies])
+        install_commands = "\n".join(
+            [d.installation_script for d in self.spec.dependencies]
+        )
         script = DEP_INSTALL_TEMPLATE.format(dep_install_commands=install_commands)
         return script
 
     def _get_logs(self) -> str:
         try:
             events = self.api.list_namespaced_event(
-                namespace=K8S_NAMESPACE, field_selector=f"involvedObject.name={self._name}"
+                namespace=K8S_NAMESPACE,
+                field_selector=f"involvedObject.name={self._name}",
             )
         except ApiException as e:
-            logger.warning("Unable to fetch pod events. Exception: {e}")
+            logger.warning(f"Unable to fetch pod events. Exception: {e}")
             return ""
         logs = ""
         for x in events.items:
@@ -121,7 +116,11 @@ class K8sNode(Node):
             else:
                 event_time = "unknown event time"
             logs += "{:23}   {}   {}   {:10}   {}\n".format(
-                event_time, x.involved_object.kind, x.involved_object.name, x.reason, x.message
+                event_time,
+                x.involved_object.kind,
+                x.involved_object.name,
+                x.reason,
+                x.message,
             )
         return logs
 
@@ -160,20 +159,30 @@ class K8sNode(Node):
             name="httpstan",
             image=self._config.httpstan_image,
             env=[kub.client.V1EnvVar(name="HTTPSTAN_PORT", value="8082")],
+            image_pull_policy="IfNotPresent",
         )
         # User code container
         install_script_target = os.path.join("/chainsail", self._CM_FILE_USERCODE)
         user_code_container = kub.client.V1Container(
             name="user-code",
             image=self._config.user_code_image,
-            args=["python", "/app/app/user_code_server/chainsail/user_code_server/__init__.py"],
+            image_pull_policy="IfNotPresent",
+            args=[
+                "python",
+                "/app/app/user_code_server/chainsail/user_code_server/__init__.py",
+            ],
             ports=[kub.client.V1ContainerPort(container_port=50052)],
             env=[
-                kub.client.V1EnvVar(name="USER_PROB_URL", value=self.spec.probability_definition),
-                kub.client.V1EnvVar(name="USER_INSTALL_SCRIPT", value=install_script_target),
+                kub.client.V1EnvVar(
+                    name="USER_PROB_URL", value=self.spec.probability_definition
+                ),
+                kub.client.V1EnvVar(
+                    name="USER_INSTALL_SCRIPT", value=install_script_target
+                ),
                 kub.client.V1EnvVar(name="USER_CODE_SERVER_PORT", value="50052"),
                 kub.client.V1EnvVar(
-                    name="REMOTE_LOGGING_CONFIG_PATH", value="/chainsail/remote_logging.yaml"
+                    name="REMOTE_LOGGING_CONFIG_PATH",
+                    value="/chainsail/remote_logging.yaml",
                 ),
             ],
             volume_mounts=[
@@ -191,8 +200,12 @@ class K8sNode(Node):
         )
         # Worker container
         container_cmd = [self._config.cmd] + self._config.args
-        container_cmd = [arg.format(job_id=self.representation.job.id) for arg in container_cmd]
-        ssh_private_key_filename = os.path.basename(self._node_config.ssh_private_key_path)
+        container_cmd = [
+            arg.format(job_id=self.representation.job.id) for arg in container_cmd
+        ]
+        ssh_private_key_filename = os.path.basename(
+            self._node_config.ssh_private_key_path
+        )
         # this startup probe checks the state of the gRPC server
         startup_probe = None
         if self._is_controller:
@@ -204,6 +217,7 @@ class K8sNode(Node):
         container = kub.client.V1Container(
             name="rex",
             image=self._config.image,
+            image_pull_policy="IfNotPresent",
             args=container_cmd,
             ports=[kub.client.V1ContainerPort(container_port=50051)],
             startup_probe=startup_probe,
@@ -235,7 +249,8 @@ class K8sNode(Node):
         ## VOLUMES
         # User code + Job spec + SSH key volume
         job_volume = kub.client.V1Volume(
-            name="job-volume", config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm)
+            name="job-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm),
         )
         # Config volume
         config_volume = kub.client.V1Volume(
@@ -267,10 +282,13 @@ class K8sNode(Node):
         self._pod = self._create_pod()
         try:
             # Configmap
-            self.api.create_namespaced_config_map(body=self._configmap, namespace=K8S_NAMESPACE)
+            self.api.create_namespaced_config_map(
+                body=self._configmap, namespace=K8S_NAMESPACE
+            )
             # Pod
             self.api.create_namespaced_pod(body=self._pod, namespace=K8S_NAMESPACE)
         except ApiException as e:
+            logger.exception(e)
             self._status = NodeStatus.FAILED
             logs = self._get_logs()
             self.sync_representation()
@@ -314,7 +332,9 @@ class K8sNode(Node):
                 self.api.delete_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
                 self._pod = None
             if self._configmap:
-                self.api.delete_namespaced_config_map(name=self._name_cm, namespace=K8S_NAMESPACE)
+                self.api.delete_namespaced_config_map(
+                    name=self._name_cm, namespace=K8S_NAMESPACE
+                )
                 self._configmap = None
             self._status = NodeStatus.EXITED
             deleted = True
@@ -359,7 +379,9 @@ class K8sNode(Node):
             self._address = pod.status.pod_ip
         except ApiException as e:
             logger.warning(
-                f"Unable to get pod's IP address. " f"Pod name: {self._name} " f"Exception: {e}"
+                f"Unable to get pod's IP address. "
+                f"Pod name: {self._name} "
+                f"Exception: {e}"
             )
 
     @property
