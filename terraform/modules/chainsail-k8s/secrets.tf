@@ -125,7 +125,7 @@ locals {
 
   controller_yaml = {
     scheduler_address = "scheduler.default.svc.cluster.local"
-    scheduler_port    = 5000
+    scheduler_port    = 5001
     metrics_address   = "graphite.default.svc.cluster.local"
     metrics_port      = 2004
     runner            = "chainsail.runners.rexfw:MPIRERunner"

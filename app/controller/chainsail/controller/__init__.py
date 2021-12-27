@@ -1,23 +1,24 @@
 import logging
-import time
 import os
+import time
 from dataclasses import asdict
 
 import requests
-from chainsail.common.spec import (
-    BoltzmannInitialScheduleParameters,
-    TemperedDistributionFamily,
-    get_sampler_from_params,
-)
+from chainsail.common.spec import (BoltzmannInitialScheduleParameters,
+                                   TemperedDistributionFamily,
+                                   get_sampler_from_params)
 from chainsail.common.storage import SimulationStorage
 from chainsail.common.storage import default_dir_structure as dir_structure
 from chainsail.common.tempering.ensembles import BoltzmannEnsemble
 from chainsail.controller.initial_schedules import make_geometric_schedule
-from chainsail.controller.initial_setup import setup_initial_states, setup_stepsizes
+from chainsail.controller.initial_setup import (setup_initial_states,
+                                                setup_stepsizes)
 from chainsail.controller.util import schedule_length
 from chainsail.schedule_estimation.dos_estimators import WHAM
-from chainsail.schedule_estimation.optimization_quantities import get_quantity_function
-from chainsail.schedule_estimation.schedule_optimizers import SingleParameterScheduleOptimizer
+from chainsail.schedule_estimation.optimization_quantities import \
+    get_quantity_function
+from chainsail.schedule_estimation.schedule_optimizers import \
+    SingleParameterScheduleOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,11 @@ def _config_template_from_params(re_params, local_sampling_params):
     local_sampling["stepsizes"] = None
     local_sampling["sampler"] = get_sampler_from_params(local_sampling_params).value
     general = dict(
-        n_iterations=None, basename=None, output_path=None, initial_states=None, num_replicas=None
+        n_iterations=None,
+        basename=None,
+        output_path=None,
+        initial_states=None,
+        num_replicas=None,
     )
 
     return dict(re=re, local_sampling=local_sampling, general=general)
@@ -220,10 +225,14 @@ class BaseREJobController:
         max_runs = opt_params.max_optimization_runs
         for run_counter in range(max_runs):
             logger.info(
-                "Schedule optimization simulation #{}/{} started".format(run_counter + 1, max_runs)
+                "Schedule optimization simulation #{}/{} started".format(
+                    run_counter + 1, max_runs
+                )
             )
             current_storage = SimulationStorage(
-                self._basename, "optimization_run{}".format(run_counter), self._storage_backend
+                self._basename,
+                "optimization_run{}".format(run_counter),
+                self._storage_backend,
             )
             if previous_schedule is not None:
                 schedule = self._calculate_schedule_from_dos(previous_storage, dos)
@@ -270,14 +279,20 @@ class BaseREJobController:
             schedule(dict): schedule of the current simulation
             prod(bool): whether this is the production run or not
         """
-        cfg_template = _config_template_from_params(self._re_params, self._local_sampling_params)
+        cfg_template = _config_template_from_params(
+            self._re_params, self._local_sampling_params
+        )
         updates = {
             "local_sampling": {},
             "general": {},
         }
         if previous_storage is not None:
-            updates["local_sampling"] = {"stepsizes": dir_structure.INITIAL_STEPSIZES_FILE_NAME}
-            updates["general"] = {"initial_states": dir_structure.INITIAL_STATES_FILE_NAME}
+            updates["local_sampling"] = {
+                "stepsizes": dir_structure.INITIAL_STEPSIZES_FILE_NAME
+            }
+            updates["general"] = {
+                "initial_states": dir_structure.INITIAL_STATES_FILE_NAME
+            }
         if prod:
             num_samples = self._re_params.num_production_samples
         else:
@@ -304,7 +319,9 @@ class BaseREJobController:
 
         return cfg_template
 
-    def _setup_simulation(self, current_storage, schedule, previous_storage=None, prod=False):
+    def _setup_simulation(
+        self, current_storage, schedule, previous_storage=None, prod=False
+    ):
         """
         Sets up a simulation such that a RE runner only has to start it.
 
@@ -330,7 +347,9 @@ class BaseREJobController:
                 *self._get_dos_subsample_params(previous_storage),
             )
 
-        config_dict = self._fill_config_template(current_storage, previous_storage, schedule, prod)
+        config_dict = self._fill_config_template(
+            current_storage, previous_storage, schedule, prod
+        )
         current_storage.save_config(config_dict)
         current_storage.save_schedule(schedule)
         self._scale_environment(schedule_length(schedule))
@@ -366,8 +385,12 @@ class BaseREJobController:
         optimization_result = self.optimize_schedule()
         final_opt_storage, final_schedule = optimization_result
 
-        prod_storage = SimulationStorage(self._basename, "production_run", self._storage_backend)
-        self._setup_simulation(prod_storage, final_schedule, final_opt_storage, prod=True)
+        prod_storage = SimulationStorage(
+            self._basename, "production_run", self._storage_backend
+        )
+        self._setup_simulation(
+            prod_storage, final_schedule, final_opt_storage, prod=True
+        )
         self._do_single_run(prod_storage)
 
 
@@ -480,6 +503,7 @@ class CloudREJobController(BaseREJobController):
                     continue
                 r.raise_for_status()
             except Exception as e:
+                logger.exception(e)
                 retries += 1
                 if retries > self.connection_retries:
                     raise e
@@ -496,7 +520,9 @@ class CloudREJobController(BaseREJobController):
         """
         for i in range(self.connection_retries):
             try:
-                logger.debug(f"Asking scheduler to add controller iteration {iteration}")
+                logger.debug(
+                    f"Asking scheduler to add controller iteration {iteration}"
+                )
                 add_iteration_endpoint = self.SCHEDULER_ADD_ITERATION_ENDPOINT.format(
                     id=self.job_id, iteration=iteration
                 )
@@ -554,13 +580,17 @@ def update_nodes_mpi(
                 f"Failed to request peer node list from scheduler with response: {repr(r)}"
             )
             if (i + 1) == controller.connection_retries:
-                logger.critical("Used all attempts for requesting node list from scheduler.")
+                logger.critical(
+                    "Used all attempts for requesting node list from scheduler."
+                )
                 raise e
             time.sleep(controller.connection_retry_interval)
     hosts = []
     for n in r.json():
         if n["is_worker"] is False:
-            logger.debug(f"Ignoring peer node {n['name']} since it is not flagged as worker node.")
+            logger.debug(
+                f"Ignoring peer node {n['name']} since it is not flagged as worker node."
+            )
             continue
         if n["in_use"]:
             # Note: this may also include t he controller host

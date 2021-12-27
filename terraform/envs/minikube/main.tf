@@ -43,7 +43,7 @@ module "chainsail-k8s" {
   job_ssh_pem        = filebase64("${path.module}/config/unsafe_dev_key_rsa.pem")
   job_ssh_pub        = filebase64("${path.module}/config/unsafe_dev_key_rsa.pub")
   storage_yaml       = local.storage_yaml
-  storage_url        = "${data.kubernetes_service.minio.metadata[0].name}.${data.kubernetes_service.minio.metadata[0].namespace}.svc.cluster.local:9000"
+  storage_url        = "http://${data.kubernetes_service.minio.metadata[0].name}.${data.kubernetes_service.minio.metadata[0].namespace}.svc.cluster.local:9000"
   storage_access_key = "chainsail"
   storage_secret_key = "chainsail"
   storage_bucket     = "chainsail-samples"
