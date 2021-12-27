@@ -1,38 +1,47 @@
 """
 Scheduler REST API and endpoint specifications
 """
-from datetime import datetime
+import functools
 import os
+from datetime import datetime
 
 from celery import chain
-from cloudstorage.exceptions import NotFoundError
-import functools
-from flask import abort, jsonify, request
-from firebase_admin.auth import (
-    verify_id_token,
-    InvalidIdTokenError,
-    ExpiredIdTokenError,
-    RevokedIdTokenError,
-)
 from chainsail.common.spec import JobSpecSchema
-from chainsail.scheduler.core import app, db, firebase_app
-from chainsail.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes, TblUsers
+from chainsail.scheduler.core import app, db, firebase_app, use_dev_user
+from chainsail.scheduler.db import (
+    JobViewSchema,
+    NodeViewSchema,
+    TblJobs,
+    TblNodes,
+    TblUsers,
+)
 from chainsail.scheduler.jobs import JobStatus
 from chainsail.scheduler.tasks import (
+    get_signed_url,
+    logger,
     scale_job_task,
     start_job_task,
     stop_job_task,
+    update_signed_url_task,
     watch_job_task,
     zip_results_task,
-    get_signed_url,
-    update_signed_url_task,
-    logger,
 )
+from cloudstorage.exceptions import NotFoundError
+from firebase_admin.auth import (
+    ExpiredIdTokenError,
+    InvalidIdTokenError,
+    RevokedIdTokenError,
+    verify_id_token,
+)
+from flask import abort, jsonify, request
 
 
 def _is_dev_mode():
     try:
-        is_dev = os.environ["PYTHON_ENV"] == "development" or os.environ["PYTHON_ENV"] == "dev"
+        is_dev = (
+            os.environ["PYTHON_ENV"] == "development"
+            or os.environ["PYTHON_ENV"] == "dev"
+        )
         return is_dev
     except:
         return False
@@ -41,42 +50,45 @@ def _is_dev_mode():
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        is_dev = _is_dev_mode()  # Verify user id token in non dev mode
-        try:
-            id_token = request.headers["Authorization"].split(" ").pop()
-            claims = verify_id_token(id_token, app=firebase_app)
-        except (InvalidIdTokenError, ExpiredIdTokenError, RevokedIdTokenError) as e:
-            if not is_dev:
+        # Get the current users email address
+        # If firebase is enabled, verify the users using the token provided in the authorization header
+        if firebase_app is not None:
+            try:
+                id_token = request.headers["Authorization"].split(" ").pop()
+                claims = verify_id_token(id_token, app=firebase_app)
+            except (
+                KeyError,
+                InvalidIdTokenError,
+                ExpiredIdTokenError,
+                RevokedIdTokenError,
+            ) as e:
                 return {"message": f"Unauthorized. Error: {e}"}, 401
-            else:
-                claims = None
-
-        user_id = claims.get("user_id", None)
-        if not is_dev and not user_id:
-            # empty uid
-            return {"message": "Unauthorized"}, 401
-
-        email = claims.get("email", None)
-        if not is_dev and not email:
-            # empty email
-            return {"message": "Unauthorized. No email found in token claim."}, 403
-
-        user = TblUsers.query.filter_by(email=email).first()
-        if not is_dev and not user:
-            # unregistered user
-            return (
-                {
-                    "message": f"User with id {user_id} and email {email} is not registered. Please contact our supporting team."
-                },
-                403,
-            )
-
-        if not is_dev and not user.is_allowed:
-            # user not allowed
-            return {
-                "message": "User with id {user_id} and email {email} is not allowed to use services."
-            }, 403
-
+            user_id = claims.get("user_id", None)
+            if not user_id:
+                # empty uid
+                return {"message": "Unauthorized"}, 401
+            email = claims.get("email", None)
+            if not email:
+                # empty email
+                return {"message": "Unauthorized. No email found in token claim."}, 403
+            user = TblUsers.query.filter_by(email=email).first()
+            if not user:
+                # unregistered user
+                return (
+                    {
+                        "message": f"User with id {user_id} and email {email} is not registered. Please contact our supporting team."
+                    },
+                    403,
+                )
+            if not user.is_allowed:
+                # user not allowed
+                return {
+                    "message": "User with id {user_id} and email {email} is not allowed to use services."
+                }, 403
+        # If firebase is disabled, we assume we are in "dev" mode with a specific user and
+        # do NOT check if the user exists in our internal auth table.
+        else:
+            user_id = use_dev_user
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
         return value
@@ -198,8 +210,12 @@ def job_nodes(job_id):
 def scale_job(job_id, n_replicas):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
+    # FIXME: Ideally we could check authorization for internal endpoints
     find_job(job_id)
-    logger.info(f"Scaling up job #{job_id} to {n_replicas} replicas...", extra={"job_id": job_id})
+    logger.info(
+        f"Scaling up job #{job_id} to {n_replicas} replicas...",
+        extra={"job_id": job_id},
+    )
     scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
     # Await the result, raising any exceptions that get thrown
     scaled = scaling_task.get()
@@ -211,6 +227,7 @@ def scale_job(job_id, n_replicas):
 @app.route("/internal/job/<job_id>/add_iteration/<iteration>", methods=["POST"])
 def add_iteration(job_id, iteration):
     """Adds an iteration entry to a job's list of controller iterations"""
+    # FIXME: Ideally we could check authorization for internal endpoints
     job = find_job(job_id)
     if job.controller_iterations is None:
         job.controller_iterations = []

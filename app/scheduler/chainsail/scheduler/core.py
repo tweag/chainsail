@@ -1,13 +1,14 @@
 # Config loading, sqlalchemy/flask declarations, etc.
 import os
 from pathlib import Path
+from typing import Optional
 
+import firebase_admin
 import yaml
 from celery import Celery
 from flask import Flask, has_app_context
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
-import firebase_admin
 
 
 class FlaskCelery(Celery):
@@ -69,10 +70,32 @@ ma = Marshmallow(app)
 # Celery support
 celery = FlaskCelery(app=app)
 
-# Set the environment variable GOOGLE_APPLICATION_CREDENTIALS to the file path of the JSON file
-# that contains your service account key.
-firebase_app_name = "chainsail"
-try:
-    firebase_app = firebase_admin.get_app(name=firebase_app_name)
-except:
-    firebase_app = firebase_admin.initialize_app(name=firebase_app_name)
+# FIXME: This is a hack to enable local deployments. We should
+# clean up logic for authorization.
+use_dev_user = os.environ.get("CHAINSAIL_USE_DEV_USER")
+
+
+def init_firebase_app(app_name: str) -> firebase_admin.App:
+    """Initializes firebase SDK
+
+    Intializes the firebase SDK, creating a new app if it does not
+    already exist. Uses default firebase credentials.
+
+    Args:
+        app_name: The name of the firebase app
+
+    Returns:
+        The firebase app
+    """
+    try:
+        firebase_app = firebase_admin.get_app(name=app_name)
+    except:
+        firebase_app = firebase_admin.initialize_app(name=app_name)
+    return firebase_app
+
+
+firebase_app: Optional[firebase_admin.App]
+if use_dev_user:
+    firebase_app = None
+else:
+    firebase_app = init_firebase_app("chainsail")
