@@ -18,3 +18,5 @@ grpc/poetry.lock
 *.tfstate
 *.tfstate.*
 .terraform
+
+node_modules
