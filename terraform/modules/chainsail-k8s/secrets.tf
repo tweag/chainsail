@@ -47,7 +47,9 @@ resource "kubernetes_secret_v1" "remote_logging_yaml" {
   }
 }
 
-resource "kubernetes_secret_v1" "worker_node_config" {
+# FIXME: This should also be a secret. Need to update the chainsail k8s node implementation
+# to use a secret instead of a configmap for this to be possible though.
+resource "kubernetes_config_map_v1" "worker_node_config" {
   metadata {
     name = "worker-node-config"
   }
@@ -58,9 +60,6 @@ resource "kubernetes_secret_v1" "worker_node_config" {
     "remote_logging.yaml" = yamlencode(local.remote_logging_yaml)
   }
 }
-
-# FIXME: need to create the `config-dpl-configmap` since the current k8s implementation
-# relies on it.
 
 locals {
   scheduler_yaml = {
@@ -106,8 +105,8 @@ locals {
       controller_config_path = "/config/controller.yaml"
       # TODO: Might want to make these variables in order to allow different values
       # in different environments
-      pod_cpu    = "1600m"
-      pod_memory = "5000000Ki"
+      pod_cpu    = "500m"
+      pod_memory = "100Mi"
     }
   }
 
