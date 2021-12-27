@@ -93,6 +93,10 @@ locals {
     }
     # FIXME: Ensure that this path matches helm chart
     remote_logging_config_path = "/config/remote_logging.yaml"
+    results_endpoint_url       = var.storage_url
+    results_access_key_id      = var.storage_access_key
+    results_secret_key         = var.storage_secret_key
+    results_bucket             = var.storage_bucket
     results_url_expiry_time    = 604800
     node_type                  = "KubernetesPod"
     node_config = {

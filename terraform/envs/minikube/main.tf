@@ -39,10 +39,14 @@ locals {
 
 
 module "chainsail-k8s" {
-  source       = "../../modules/chainsail-k8s"
-  job_ssh_pem  = filebase64("${path.module}/config/unsafe_dev_key_rsa.pem")
-  job_ssh_pub  = filebase64("${path.module}/config/unsafe_dev_key_rsa.pub")
-  storage_yaml = local.storage_yaml
+  source             = "../../modules/chainsail-k8s"
+  job_ssh_pem        = filebase64("${path.module}/config/unsafe_dev_key_rsa.pem")
+  job_ssh_pub        = filebase64("${path.module}/config/unsafe_dev_key_rsa.pub")
+  storage_yaml       = local.storage_yaml
+  storage_url        = "${data.kubernetes_service.minio.metadata[0].name}.${data.kubernetes_service.minio.metadata[0].namespace}.svc.cluster.local:9000"
+  storage_access_key = "chainsail"
+  storage_secret_key = "chainsail"
+  storage_bucket     = "chainsail-samples"
   # TODO: Make these images match whatever local build script we use
   # for rebuilding images
   image_controller = "chainsail-mpi-node-k8s:latest"
