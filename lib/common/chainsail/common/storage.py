@@ -11,12 +11,11 @@ from pickle import dump, load
 
 import numpy as np
 import yaml
+from libcloud.common.types import InvalidCredsError
 from libcloud.storage.providers import get_driver
-from libcloud.storage.types import Provider
+from libcloud.storage.types import ObjectDoesNotExistError, Provider
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
-from libcloud.common.types import InvalidCredsError
-from libcloud.storage.types import ObjectDoesNotExistError
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +86,9 @@ def load_storage_backend(backend_name: str, backend_config: dict):
             )
         driver_cls = get_driver(provider)
         driver = driver_cls(**backend_config["driver_kwargs"])
-        container = driver.get_container(container_name=backend_config["container_name"])
+        container = driver.get_container(
+            container_name=backend_config["container_name"]
+        )
         return CloudStorageBackend(driver, container)
     else:
         raise Exception(f"Unrecognized storage backend name: '{backend_name}'.")
@@ -112,7 +113,6 @@ class CloudBackendConfigSchema(Schema):
     libcloud_provider = fields.String(required=True)
     container_name = fields.String(required=True)
     driver_kwargs = fields.Dict(fields.String, fields.String, required=True)
-    storage_key_path = fields.String(required=True)
 
 
 # Registry used for looking up schema during deserialization
@@ -283,7 +283,9 @@ class CloudStorageBackend(AbstractStorageBackend):
 
 
 class SimulationStorage:
-    def __init__(self, basename, sim_path, storage_backend, dir_structure=default_dir_structure):
+    def __init__(
+        self, basename, sim_path, storage_backend, dir_structure=default_dir_structure
+    ):
         self._basename = basename
         self._sim_path = sim_path
         self._storage_backend = storage_backend
@@ -304,7 +306,9 @@ class SimulationStorage:
 
     @property
     def config_file_name(self):
-        return os.path.join(self._basename, self._sim_path, self.dir_structure.CONFIG_FILE_NAME)
+        return os.path.join(
+            self._basename, self._sim_path, self.dir_structure.CONFIG_FILE_NAME
+        )
 
     @property
     def dir_structure(self):
@@ -323,7 +327,9 @@ class SimulationStorage:
     def save_samples(self, samples, replica_name, from_samples, to_samples):
         self.save(
             samples,
-            self.dir_structure.SAMPLES_TEMPLATE.format(replica_name, from_samples, to_samples),
+            self.dir_structure.SAMPLES_TEMPLATE.format(
+                replica_name, from_samples, to_samples
+            ),
         )
 
     def load_samples(
@@ -386,10 +392,14 @@ class SimulationStorage:
     def save_energies(self, energies, replica_name, from_energies, to_energies):
         self.save(
             energies,
-            self.dir_structure.ENERGIES_TEMPLATE.format(replica_name, from_energies, to_energies),
+            self.dir_structure.ENERGIES_TEMPLATE.format(
+                replica_name, from_energies, to_energies
+            ),
         )
 
-    def load_energies(self, replica_name, from_energies, to_energies, fail_if_not_existing=True):
+    def load_energies(
+        self, replica_name, from_energies, to_energies, fail_if_not_existing=True
+    ):
         try:
             return self.load(
                 self.dir_structure.ENERGIES_TEMPLATE.format(
@@ -416,7 +426,9 @@ class SimulationStorage:
         )
 
     def load_config(self):
-        return yaml.safe_load(self.load(self.dir_structure.CONFIG_FILE_NAME, data_type="text"))
+        return yaml.safe_load(
+            self.load(self.dir_structure.CONFIG_FILE_NAME, data_type="text")
+        )
 
     def save_dos(self, dos):
         self.save(dos, self.dir_structure.DOS_FILE_NAME)

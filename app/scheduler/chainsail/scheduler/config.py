@@ -207,10 +207,11 @@ class SchedulerConfig:
     worker: GeneralNodeConfig
     node_type: NodeType
     node_config: HasDriver
-    results_endpoint_url: str
+    results_endpoint_url: Optional[str]
     results_access_key_id: str
     results_secret_key: str
     results_bucket: str
+    results_basename: str
     results_url_expiry_time: int
     remote_logging_config_path: str
 
@@ -228,6 +229,7 @@ class SchedulerConfigSchema(Schema):
     results_access_key_id = fields.String(required=True)
     results_secret_key = fields.String(required=True)
     results_bucket = fields.String(required=True)
+    results_basename = fields.String(required=True)
     results_url_expiry_time = fields.Int(required=True)
     node_config = fields.Dict(keys=fields.String())
 
