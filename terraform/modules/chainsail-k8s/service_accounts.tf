@@ -10,9 +10,11 @@ resource "kubernetes_role" "chainsail_scheduler" {
   rule {
     # TODO: Might want to further restrict api groups here as well
     #  See: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#-strong-api-groups-strong-
-    api_groups = [""]
-    resources  = ["pods"]
-    verbs      = ["get", "list", "watch", "create", "update", "patch", "delete"]
+    api_groups = ["*"]
+    resources  = ["*"]
+    #["pods"]
+    verbs = ["*"]
+    #["get", "list", "watch", "create", "update", "patch", "delete"]
   }
 }
 
@@ -42,6 +44,6 @@ resource "kubernetes_role_binding" "chainsail_scheduler" {
     kind = "ServiceAccount"
     name = kubernetes_service_account.chainsail_scheduler.metadata[0].name
     # TODO: Confirm that this namespace is correct
-    namespace = "kube-system"
+    namespace = "default"
   }
 }
