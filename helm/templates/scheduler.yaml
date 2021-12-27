@@ -22,6 +22,8 @@ spec:
         - containerPort: 5001
         resources: {}
         env:
+          - name: CHAINSAIL_USE_DEV_USER
+            value: {{ .Values.schedulerUseDevUser }}
           - name: CELERY_BROKER_URL
             value: redis://redis.default.svc.cluster.local:6379/0
           - name: CELERY_RESULT_BACKEND
