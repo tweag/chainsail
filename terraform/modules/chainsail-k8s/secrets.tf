@@ -97,6 +97,7 @@ locals {
     results_access_key_id      = var.storage_access_key
     results_secret_key         = var.storage_secret_key
     results_bucket             = var.storage_bucket
+    results_basename           = "/storage"
     results_url_expiry_time    = 604800
     node_type                  = "KubernetesPod"
     node_config = {
