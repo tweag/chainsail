@@ -114,8 +114,7 @@ class K8sNodeConfig(HasDriver):
     """Configurations for a `K8sNode`"""
 
     config_configmap_name: str
-    ssh_public_key: str
-    ssh_private_key_path: str
+    ssh_key_secret: str
     storage_config_path: str
     controller_config_path: str
     pod_cpu: str
@@ -141,10 +140,8 @@ class K8sNodeConfig(HasDriver):
 class K8sNodeConfigSchema(Schema):
     # The name of the deployed configmap which contains every config files
     config_configmap_name = fields.String(required=True)
-    # The ssh public key (contents) to install on the VM
-    ssh_public_key = fields.String(required=True)
-    # The path to the ssh private key to use for connecting to the VM
-    ssh_private_key_path = fields.String(required=True)
+    # The secret containing the job ssh private and public keys
+    ssh_key_secret = fields.String(required=True)
     # The path to the storage.yaml storage backend config file
     storage_config_path = fields.String(required=True)
     # The path to the controller.yaml controller config file

@@ -51,6 +51,10 @@ def get_job_blob_root(scheduler_config: SchedulerConfig, job_id: int):
     return f"{storage_basename}/{job_id}/"
 
 
+def sanitize_object_name(object_name: str) -> str:
+    return object_name.strip("/")
+
+
 @celery.task()
 def start_job_task(job_id):
     """Starts a job
@@ -78,6 +82,7 @@ def start_job_task(job_id):
         job.start()
         job.representation.started_at = datetime.utcnow()
         logger.info(f"Started job #{job_id}.", extra={"job_id": job_id})
+        logger.error(f"[Dorran!!] job had control node: {job.control_node}")
     except JobError as e:
         db.session.commit()
         logger.error(f"Failed to start job #{job_id}.", extra={"job_id": job_id})
@@ -131,6 +136,7 @@ def watch_job_task(job_id):
     # we can just ditch this start request.
     job_rep = TblJobs.query.filter_by(id=job_id).one()
     job = Job.from_representation(job_rep, scheduler_config)
+    logger.error(f"Job has control node: {job.control_node}")
     try:
         job.watch()
         job.sync_representation()
@@ -138,6 +144,7 @@ def watch_job_task(job_id):
     # TODO: Make this a more specific exception
     except Exception as e:
         # Flag job as failed
+        logger.error("[Dorran!] FAILING JOB in watch job task")
         job.status = JobStatus.FAILED
         job.sync_representation()
         job.representation.finished_at = datetime.utcnow()
@@ -152,11 +159,11 @@ def scale_job_task(job_id, n_replicas) -> bool:
     """Scales a running job to have size `n_replicas`
 
     Args:
-        job_id: The id of the job to stop
+        job_id: The id of the job to scale
         n_replicas: The number of replicas to scale to
 
     Raises:
-        JobError: If the job failed to stop
+        JobError: If the job failed to be scaled
     """
     try:
         job_rep = (
@@ -170,13 +177,15 @@ def scale_job_task(job_id, n_replicas) -> bool:
     # Load Job object from database entry
     job = Job.from_representation(job_rep, scheduler_config)
     try:
+        # FIXME: Debugging statement
+        logger.warning(job_rep)
         job.scale_to(n_replicas)
         logger.info(
             f"Scaled job #{job_id} to {n_replicas} replicas.", extra={"job_id": job_id}
         )
     except JobError as e:
         db.session.commit()
-        logger.error(f"Failed to stop #{job_id}.", extra={"job_id": job_id})
+        logger.error(f"Failed to scale #{job_id}.", extra={"job_id": job_id})
         raise e
     else:
         db.session.commit()
@@ -244,6 +253,6 @@ def zip_results_task(job_id):
             contents = s3_client.get_object(Bucket=container, Key=key)["Body"].read()
             zipf.writestr(blob_name_no_root, contents)
     archive_contents.seek(0)
-    blob_name = f"{job_blob_root}/{RESULTS_ARCHIVE_FILENAME}"
+    blob_name = sanitize_object_name(f"{job_blob_root}/{RESULTS_ARCHIVE_FILENAME}")
     s3_client.put_object(Body=archive_contents, Bucket=container, Key=blob_name)
     logger.info(f"Zipped results of job #{job_id}.", extra={"job_id": job_id})

@@ -30,16 +30,24 @@ RUN pip install --upgrade pip && pip install "poetry==1.1.10"
 ##############################################################################
 FROM builder-common as builder
 
-# Install the scheduler
+# Install scheduler dependencies:
+
+# Path dependencies
 COPY ./lib/common /app/lib/common
 COPY ./lib/grpc /app/lib/grpc
-COPY ./app/scheduler /app/app/scheduler
+
+RUN mkdir -p /app/app/scheduler
+COPY ./app/scheduler/pyproject.toml /app/app/scheduler
+COPY ./app/scheduler/poetry.lock /app/app/scheduler
 
 RUN cd /app/app/scheduler && \
     poetry config virtualenvs.in-project true && \
     poetry run pip install --upgrade pip && \
-    poetry install --no-dev
+    poetry install --no-dev --no-root
 
+COPY ./app/scheduler /app/app/scheduler
+RUN cd /app/app/scheduler && \
+    poetry install --no-dev
 
 ##############################################################################
 # FINAL

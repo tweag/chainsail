@@ -1,6 +1,6 @@
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from enum import Enum
 from typing import Dict, Optional
 
@@ -26,7 +26,7 @@ class JobStatus(Enum):
     FAILED = "failed"
 
 
-N_CREATION_THREADS = 10
+N_CREATION_THREADS = 3
 
 logger = logging.getLogger("chainsail.scheduler")
 
@@ -68,11 +68,15 @@ class Job:
         self.sync_representation()
 
     def start(self) -> None:
-        if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING, JobStatus.RESTART):
+        if self.status not in (
+            JobStatus.INITIALIZED,
+            JobStatus.STARTING,
+            JobStatus.RESTART,
+        ):
             raise JobError("Attempted to start a job which has already been started")
         self._initialize_nodes()
         self.status = JobStatus.STARTING
-        with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
+        with ProcessPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
             try:
                 # Create worker nodes first
                 logger.info(
@@ -82,7 +86,8 @@ class Job:
                 for created, logs in ex.map(lambda n: n.create(), self.nodes):
                     if not created:
                         raise JobError(
-                            f"Failed to start node for job {id}. Deployment logs: \n" + logs
+                            f"Failed to start node for job {id}. Deployment logs: \n"
+                            + logs
                         )
                 self.sync_representation()
                 # Then create control node
@@ -98,6 +103,7 @@ class Job:
                 # Cleanup created nodes on failure
                 for n in self.nodes:
                     n.delete()
+                logger.error("[Dorran!] FAILING JOB in job.start() method")
                 self.status = JobStatus.FAILED
                 self.sync_representation()
                 raise e
@@ -137,7 +143,9 @@ class Job:
     def _add_node(self, is_controller=False) -> Node:
         """Add a new node to a job"""
         if self.status in (JobStatus.STOPPED, JobStatus.SUCCESS, JobStatus.FAILED):
-            raise JobError(f"Attempted to add a node to a job ({self.id}) which has exited.")
+            raise JobError(
+                f"Attempted to add a node to a job ({self.id}) which has exited."
+            )
         new_node = self._node_cls.from_config(
             f"node-{shortuuid.uuid()}".lower(),
             self.config,
@@ -175,8 +183,12 @@ class Job:
     def scale_to(self, n_replicas: int):
         if n_replicas < 0:
             raise ValueError("Can only scale to >= 0 replicas")
+        # FIXME - Debugging statement
+        logger.warning(f"Scaling job which has status {self.status}")
         if self.status != JobStatus.RUNNING:
-            raise JobError(f"Attempted to scale job ({self.id}) which is not currently running.")
+            raise JobError(
+                f"Attempted to scale job ({self.id}) which is not currently running."
+            )
         requested_size = n_replicas
         current_size = len(self.nodes)
         print("current / requested size", current_size, n_replicas)
@@ -190,7 +202,9 @@ class Job:
                 started, logs = new_node.create()
                 if not started:
                     self.sync_representation()
-                    raise JobError(f"Failed to start new node while scaling up. Logs: \n {logs}")
+                    raise JobError(
+                        f"Failed to start new node while scaling up. Logs: \n {logs}"
+                    )
         else:
             # Scale down
             to_remove = current_size - requested_size
@@ -217,6 +231,7 @@ class Job:
             self.status = JobStatus.SUCCESS
             return True
         else:
+            logger.error("[Dorran!] FAILING JOB in watch() method")
             self.status = JobStatus.FAILED
             return False
 
@@ -252,7 +267,9 @@ class Job:
             node_rep: TblNodes
             node_cls = node_registry[NodeType(node_rep.node_type)]
             try:
-                node = node_cls.from_representation(spec, node_rep, config)
+                node = node_cls.from_representation(
+                    spec, node_rep, config, is_controller=not node_rep.is_worker
+                )
             except ObjectConstructionError:
                 node_rep.in_use = False
             else:
@@ -262,9 +279,11 @@ class Job:
                     if not control_node:
                         control_node = node
                     else:
-                        raise JobError("Job representation has more than one control node.")
-        if not control_node:
-            JobError("Job representation has no control node.")
+                        raise JobError(
+                            "Job representation has more than one control node."
+                        )
+        if nodes and not control_node:
+            raise JobError("Job representation had nodes but no control node.")
 
         return cls(
             id=job_rep.id,

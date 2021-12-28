@@ -6,13 +6,21 @@ from typing import Callable, Optional, Tuple
 
 import kubernetes as kub
 from chainsail.common.spec import JobSpec, JobSpecSchema
-from chainsail.scheduler.config import (GeneralNodeConfig, K8sNodeConfig,
-                                        SchedulerConfig, load_scheduler_config)
+from chainsail.scheduler.config import (
+    GeneralNodeConfig,
+    K8sNodeConfig,
+    SchedulerConfig,
+    load_scheduler_config,
+)
 from chainsail.scheduler.db import TblJobs, TblNodes
-from chainsail.scheduler.errors import (ConfigurationError, MissingNodeError,
-                                        NodeError, ObjectConstructionError)
+from chainsail.scheduler.errors import (
+    ConfigurationError,
+    MissingNodeError,
+    NodeError,
+    ObjectConstructionError,
+)
 from chainsail.scheduler.nodes.base import Node, NodeStatus, NodeType
-from kubernetes.client import V1ConfigMap, V1Pod
+from kubernetes.client import V1ConfigMap, V1KeyToPath, V1Pod, V1Volume
 from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger("chainsail.scheduler")
@@ -23,6 +31,9 @@ set -ex
 {dep_install_commands}
 """
 K8S_NAMESPACE = "default"
+K8S_SSH_PUB_KEY = "pub"
+K8S_SSH_PEM_KEY = "pem"
+K8S_SSH_PEM_KEY_FILE = "id.pem"
 
 
 def monitor_deployment(pod: "K8sNode") -> bool:
@@ -145,7 +156,6 @@ class K8sNode(Node):
             data={
                 self._CM_FILE_USERCODE: install_script_src,
                 self._CM_FILE_JOBSPEC: JobSpecSchema().dumps(self.spec),
-                self._CM_FILE_SSHKEY: self._node_config.ssh_public_key,
             },
         )
         return configmap
@@ -203,9 +213,6 @@ class K8sNode(Node):
         container_cmd = [
             arg.format(job_id=self.representation.job.id) for arg in container_cmd
         ]
-        ssh_private_key_filename = os.path.basename(
-            self._node_config.ssh_private_key_path
-        )
         # this startup probe checks the state of the gRPC server
         startup_probe = None
         if self._is_controller:
@@ -224,14 +231,7 @@ class K8sNode(Node):
             volume_mounts=[
                 kub.client.V1VolumeMount(name="config-volume", mount_path="/chainsail"),
                 kub.client.V1VolumeMount(
-                    name="config-volume",
-                    mount_path="/root/.ssh/id.pem",
-                    sub_path=ssh_private_key_filename,
-                ),
-                kub.client.V1VolumeMount(
-                    name="job-volume",
-                    mount_path=f"/app/config/ssh/{self._CM_FILE_SSHKEY}",
-                    sub_path=self._CM_FILE_SSHKEY,
+                    name="ssh-volume", mount_path="/root/.ssh", read_only=True
                 ),
                 kub.client.V1VolumeMount(
                     name="job-volume",
@@ -247,16 +247,32 @@ class K8sNode(Node):
             ),
         )
         ## VOLUMES
-        # User code + Job spec + SSH key volume
+        # User code + Job spec
         job_volume = kub.client.V1Volume(
             name="job-volume",
             config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm),
+        )
+        # SSH key volume
+        ssh_volume = V1Volume(
+            name="ssh-volume",
+            secret=kub.client.V1SecretVolumeSource(
+                secret_name=self._node_config.ssh_key_secret,
+                default_mode=0o400,
+                items=[
+                    V1KeyToPath(
+                        key=K8S_SSH_PUB_KEY, path=self._CM_FILE_SSHKEY, mode=0o400
+                    ),
+                    V1KeyToPath(
+                        key=K8S_SSH_PEM_KEY, path=K8S_SSH_PEM_KEY_FILE, mode=0o400
+                    ),
+                ],
+            ),
         )
         # Config volume
         config_volume = kub.client.V1Volume(
             name="config-volume",
             config_map=kub.client.V1ConfigMapVolumeSource(
-                name=self._node_config.config_configmap_name, default_mode=0o700
+                name=self._node_config.config_configmap_name, default_mode=0o400
             ),
         )
         ## POD
@@ -265,8 +281,10 @@ class K8sNode(Node):
             kind="Pod",
             metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app": "rex"}),
             spec=kub.client.V1PodSpec(
+                # Note: we don't want k8s to restart this pod since chainsail handles retries internally
+                restart_policy="Never",
                 containers=[httpstan_container, user_code_container, container],
-                volumes=[job_volume, config_volume],
+                volumes=[job_volume, config_volume, ssh_volume],
                 tolerations=[kub.client.V1Toleration(key="app", value="chainsail")],
             ),
         )
@@ -289,6 +307,7 @@ class K8sNode(Node):
             self.api.create_namespaced_pod(body=self._pod, namespace=K8S_NAMESPACE)
         except ApiException as e:
             logger.exception(e)
+            logger.error("[Dorran!] FAILING JOB in node.create()")
             self._status = NodeStatus.FAILED
             logs = self._get_logs()
             self.sync_representation()
@@ -298,6 +317,9 @@ class K8sNode(Node):
         if ready:
             self._status = NodeStatus.RUNNING
         else:
+            logger.error(
+                "[Dorran!] FAILING JOB in node.create() after monitor_deployment() was called"
+            )
             self._status = NodeStatus.FAILED
         logs = self._get_logs()
         self.refresh_address()
@@ -376,10 +398,10 @@ class K8sNode(Node):
     def refresh_address(self):
         try:
             pod = self._read_pod()
-            self._address = pod.status.pod_ip
+            self._address = pod.metadata.name
         except ApiException as e:
             logger.warning(
-                f"Unable to get pod's IP address. "
+                f"Unable to get pod's address. "
                 f"Pod name: {self._name} "
                 f"Exception: {e}"
             )
@@ -391,19 +413,12 @@ class K8sNode(Node):
     def refresh_status(self):
         # See https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
         if not self._pod:
+            # TODO: Can we remove this status update here?
             self._status = NodeStatus.INITIALIZED
             return
         if self.status == NodeStatus.FAILED:
             return
-        try:
-            pod = self._read_pod()
-        except Exception as e:
-            logger.error(
-                f"Unable to read pod status. Status not updated. "
-                f"Pod name: {self._name} "
-                f"Exception: {e}"
-            )
-            return
+        pod = self._read_pod()
         phase = pod.status.phase
         ctrs_statuses = pod.status.container_statuses
         if ctrs_statuses:
@@ -417,6 +432,7 @@ class K8sNode(Node):
         elif phase == "Succeeded":
             self._status = NodeStatus.EXITED
         elif phase == "Failed":
+            logger.error("[Dorran!] FAILING JOB in refresh_status()")
             self._status = NodeStatus.FAILED
         elif phase == "Unknown":
             self._status = NodeStatus.UNKNOWN
@@ -470,7 +486,7 @@ class K8sNode(Node):
                 status=NodeStatus(node_rep.status),
                 pod=pod,
                 configmap=configmap,
-                address=pod.status.pod_ip,
+                address=pod.metadata.name,
             )
 
     @classmethod

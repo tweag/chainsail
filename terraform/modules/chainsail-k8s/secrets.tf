@@ -5,7 +5,7 @@ resource "kubernetes_secret_v1" "job_ssh_key" {
   metadata {
     name = "job-ssh-key"
   }
-  data = {
+  binary_data = {
     pub = "${var.job_ssh_pub}"
     pem = "${var.job_ssh_pem}"
   }
@@ -46,6 +46,7 @@ resource "kubernetes_secret_v1" "remote_logging_yaml" {
     "remote_logging.yaml" = yamlencode(local.remote_logging_yaml)
   }
 }
+
 
 # FIXME: This should also be a secret. Need to update the chainsail k8s node implementation
 # to use a secret instead of a configmap for this to be possible though.
@@ -103,9 +104,8 @@ locals {
     node_config = {
       # FIXME: Had to hard-code this name to avoid a cyclical dependency
       config_configmap_name = "worker-node-config"
-      ssh_public_key        = "${var.job_ssh_pub}"
+      ssh_key_secret        = kubernetes_secret_v1.job_ssh_key.metadata[0].name
       # FIXME: These paths need to match in the helm chart values as well
-      ssh_private_key_path   = "/config/unsafe_dev_key_rsa"
       storage_config_path    = "/config/storage.yaml"
       controller_config_path = "/config/controller.yaml"
       # TODO: Might want to make these variables in order to allow different values
