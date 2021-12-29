@@ -48,7 +48,7 @@ def get_job_blob_root(scheduler_config: SchedulerConfig, job_id: int):
     storage_basename = scheduler_config.results_basename
     if storage_basename.startswith("/"):
         storage_basename = storage_basename[1:]
-    return f"{storage_basename}/{job_id}/"
+    return f"{storage_basename}/{job_id}"
 
 
 def sanitize_object_name(object_name: str) -> str:
@@ -205,7 +205,7 @@ def get_signed_url(job_id):
         "get_object",
         Params={
             "Bucket": container,
-            "Key": f"{job_blob_root}/{RESULTS_ARCHIVE_FILENAME}",
+            "Key": sanitize_object_name(f"{job_blob_root}/{RESULTS_ARCHIVE_FILENAME}"),
         },
         ExpiresIn=scheduler_config.results_url_expiry_time,
     )
@@ -251,7 +251,7 @@ def zip_results_task(job_id):
             if is_results_archive:
                 continue
             # Note: Loading entire object into memory here
-            blob_name_no_root = key.split("/")[-1]
+            blob_name_no_root = key[len(job_blob_root) :]
             contents = s3_client.get_object(Bucket=container, Key=key)["Body"].read()
             zipf.writestr(blob_name_no_root, contents)
     archive_contents.seek(0)
