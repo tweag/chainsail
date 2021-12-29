@@ -11,6 +11,7 @@ pkgs.mkShell {
     python38Packages.tkinter
     ncurses
     file
+    kubectl
   ];
   # Setting the LD_LIBRARY_PATH environment variable.
   # Can also make use of the `.overrideAttrs` medthod to prevent from overwriting it (See PR #310 for details)
