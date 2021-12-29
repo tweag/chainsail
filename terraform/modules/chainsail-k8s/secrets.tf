@@ -85,8 +85,9 @@ locals {
       httpstan_image  = "${var.image_httpstan}"
     }
     worker = {
-      image           = "${var.image_worker}"
-      cmd             = "/usr/sbin/sshd"
+      image = "${var.image_worker}"
+      cmd   = "/usr/sbin/sshd"
+      # FIXME [Dorran]: Switch back to -D
       args            = ["-D"]
       ports           = [26]
       user_code_image = "${var.image_user_code}"

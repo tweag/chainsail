@@ -164,6 +164,7 @@ class GeneralNodeConfig:
     user_code_image: str
     httpstan_image: str
     args: Optional[List[str]] = None
+    max_nodes_per_job: int = 50
 
 
 class GeneralNodeConfigSchema(Schema):
@@ -173,6 +174,7 @@ class GeneralNodeConfigSchema(Schema):
     user_code_image = fields.String(required=True)
     httpstan_image = fields.String(required=True)
     args = fields.List(fields.String())
+    max_nodes_per_job = fields.Int()
 
     @post_load
     def make_general_node_config(self, data, **kwargs):

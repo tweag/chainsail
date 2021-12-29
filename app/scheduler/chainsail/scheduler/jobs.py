@@ -75,38 +75,38 @@ class Job:
         ):
             raise JobError("Attempted to start a job which has already been started")
         self._initialize_nodes()
-        self.status = JobStatus.STARTING
-        with ProcessPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
-            try:
-                # Create worker nodes first
-                logger.info(
-                    f"Creating {len(self.nodes)} worker nodes...",
-                    extra={"job_id": self.id},
-                )
-                for created, logs in ex.map(lambda n: n.create(), self.nodes):
-                    if not created:
-                        raise JobError(
-                            f"Failed to start node for job {id}. Deployment logs: \n"
-                            + logs
-                        )
-                self.sync_representation()
-                # Then create control node
-                logger.debug("Creating control node...", extra={"job_id": self.id})
-                logger.debug("Control node name: " + self.control_node.name)
-                created, logs = self.control_node.create()
-                self.sync_representation()
+        # FIXME: Parallel execution here was prone to deadlocks / serialization issues
+        # need to revisit.
+        # with ProcessPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
+        try:
+            # Create worker nodes first
+            logger.info(
+                f"Creating {len(self.nodes)} worker nodes...",
+                extra={"job_id": self.id},
+            )
+            for created, logs in map(lambda n: n.create(), self.nodes):
                 if not created:
                     raise JobError(
                         f"Failed to start node for job {id}. Deployment logs: \n" + logs
                     )
-            except Exception as e:
-                # Cleanup created nodes on failure
-                for n in self.nodes:
-                    n.delete()
-                logger.error("[Dorran!] FAILING JOB in job.start() method")
-                self.status = JobStatus.FAILED
-                self.sync_representation()
-                raise e
+            self.sync_representation()
+            # Then create control node
+            logger.debug("Creating control node...", extra={"job_id": self.id})
+            logger.debug("Control node name: " + self.control_node.name)
+            created, logs = self.control_node.create()
+            self.sync_representation()
+            if not created:
+                raise JobError(
+                    f"Failed to start node for job {id}. Deployment logs: \n" + logs
+                )
+        except Exception as e:
+            # Cleanup created nodes on failure
+            for n in self.nodes:
+                n.delete()
+            logger.error("[Dorran!] FAILING JOB in job.start() method")
+            self.status = JobStatus.FAILED
+            self.sync_representation()
+            raise e
         self.status = JobStatus.RUNNING
         self.sync_representation()
 

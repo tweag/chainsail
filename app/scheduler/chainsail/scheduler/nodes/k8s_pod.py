@@ -20,7 +20,16 @@ from chainsail.scheduler.errors import (
     ObjectConstructionError,
 )
 from chainsail.scheduler.nodes.base import Node, NodeStatus, NodeType
-from kubernetes.client import V1ConfigMap, V1KeyToPath, V1Pod, V1Volume
+from kubernetes.client import (
+    V1ConfigMap,
+    V1KeyToPath,
+    V1ObjectMeta,
+    V1Pod,
+    V1Service,
+    V1ServicePort,
+    V1ServiceSpec,
+    V1Volume,
+)
 from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger("chainsail.scheduler")
@@ -34,6 +43,7 @@ K8S_NAMESPACE = "default"
 K8S_SSH_PUB_KEY = "pub"
 K8S_SSH_PEM_KEY = "pem"
 K8S_SSH_PEM_KEY_FILE = "id.pem"
+PORT_RANGE_MIN = 4000
 
 
 def monitor_deployment(pod: "K8sNode") -> bool:
@@ -63,6 +73,10 @@ def monitor_deployment(pod: "K8sNode") -> bool:
             return False
 
 
+def service_fqdn(svc_name: str) -> str:
+    return f"{svc_name}.{K8S_NAMESPACE}.svc.cluster.local"
+
+
 class K8sNode(Node):
     """A Chainsail node implementation which creates a Kubernetes Pod for each node."""
 
@@ -83,6 +97,7 @@ class K8sNode(Node):
         status: Optional[NodeStatus] = NodeStatus.INITIALIZED,
         # If creating from existing resources, can specify the k8s objects
         pod: Optional[V1Pod] = None,
+        service: Optional[V1Service] = None,
         configmap: Optional[V1ConfigMap] = None,
         address: Optional[str] = None,
     ):
@@ -91,6 +106,7 @@ class K8sNode(Node):
         self._name_cm = self._NAME_CM.format(name)
         # Manifests
         self._pod = pod
+        self._service = service
         self._configmap = configmap
         # Others
         self._is_controller = is_controller
@@ -214,10 +230,16 @@ class K8sNode(Node):
             arg.format(job_id=self.representation.job.id) for arg in container_cmd
         ]
         # this startup probe checks the state of the gRPC server
-        startup_probe = None
         if self._is_controller:
             startup_probe = kub.client.V1Probe(
                 tcp_socket=kub.client.V1TCPSocketAction(port=50051),
+                period_seconds=2,
+                failure_threshold=60,
+            )
+        # startup probe for workers checks the state of the ssh server
+        else:
+            startup_probe = kub.client.V1Probe(
+                tcp_socket=kub.client.V1TCPSocketAction(port=26),
                 period_seconds=2,
                 failure_threshold=60,
             )
@@ -230,9 +252,7 @@ class K8sNode(Node):
             startup_probe=startup_probe,
             volume_mounts=[
                 kub.client.V1VolumeMount(name="config-volume", mount_path="/chainsail"),
-                kub.client.V1VolumeMount(
-                    name="ssh-volume", mount_path="/root/.ssh", read_only=True
-                ),
+                kub.client.V1VolumeMount(name="ssh-volume", mount_path="/root/.ssh"),
                 kub.client.V1VolumeMount(
                     name="job-volume",
                     mount_path=f"/chainsail-jobspec/{self._CM_FILE_JOBSPEC}",
@@ -257,7 +277,7 @@ class K8sNode(Node):
             name="ssh-volume",
             secret=kub.client.V1SecretVolumeSource(
                 secret_name=self._node_config.ssh_key_secret,
-                default_mode=0o400,
+                default_mode=0o600,
                 items=[
                     V1KeyToPath(
                         key=K8S_SSH_PUB_KEY, path=self._CM_FILE_SSHKEY, mode=0o400
@@ -272,14 +292,16 @@ class K8sNode(Node):
         config_volume = kub.client.V1Volume(
             name="config-volume",
             config_map=kub.client.V1ConfigMapVolumeSource(
-                name=self._node_config.config_configmap_name, default_mode=0o400
+                name=self._node_config.config_configmap_name, default_mode=0o600
             ),
         )
         ## POD
         pod = kub.client.V1Pod(
             api_version="v1",
             kind="Pod",
-            metadata=kub.client.V1ObjectMeta(name=self._name, labels={"app": "rex"}),
+            metadata=kub.client.V1ObjectMeta(
+                name=self._name, labels={"app": "rex", "node_name": self._name}
+            ),
             spec=kub.client.V1PodSpec(
                 # Note: we don't want k8s to restart this pod since chainsail handles retries internally
                 restart_policy="Never",
@@ -288,7 +310,27 @@ class K8sNode(Node):
                 tolerations=[kub.client.V1Toleration(key="app", value="chainsail")],
             ),
         )
-        return pod
+        # TODO: Expose distinct ports for controller / worker nodes
+        service = V1Service(
+            metadata=V1ObjectMeta(name=self._name),
+            spec=V1ServiceSpec(
+                selector={"node_name": self._name},
+                ports=[
+                    V1ServicePort(name="controller-grpc", port=50051),
+                    V1ServicePort(name="openmpi-oob", port=3999),
+                    V1ServicePort(name="openmpi-ssh", port=26),
+                ]
+                # Need to expose ports for each node in the network
+                + [
+                    V1ServicePort(
+                        name=f"openmpi-btl-{PORT_RANGE_MIN + i}",
+                        port=PORT_RANGE_MIN + i,
+                    )
+                    for i in range(0, self._config.max_nodes_per_job)
+                ],
+            ),
+        )
+        return pod, service
 
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
@@ -297,7 +339,7 @@ class K8sNode(Node):
         ## CREATE RESOURCES
         self._status = NodeStatus.CREATING
         self._configmap = self._create_configmap()
-        self._pod = self._create_pod()
+        self._pod, self._service = self._create_pod()
         try:
             # Configmap
             self.api.create_namespaced_config_map(
@@ -305,6 +347,11 @@ class K8sNode(Node):
             )
             # Pod
             self.api.create_namespaced_pod(body=self._pod, namespace=K8S_NAMESPACE)
+            # Service
+            # if self._is_controller:
+            self.api.create_namespaced_service(
+                body=self._service, namespace=K8S_NAMESPACE
+            )
         except ApiException as e:
             logger.exception(e)
             logger.error("[Dorran!] FAILING JOB in node.create()")
@@ -358,6 +405,7 @@ class K8sNode(Node):
                     name=self._name_cm, namespace=K8S_NAMESPACE
                 )
                 self._configmap = None
+            # FIXME [Dorran] - Delete service here
             self._status = NodeStatus.EXITED
             deleted = True
         except ApiException as e:
@@ -398,7 +446,7 @@ class K8sNode(Node):
     def refresh_address(self):
         try:
             pod = self._read_pod()
-            self._address = pod.metadata.name
+            self._address = service_fqdn(pod.metadata.name)
         except ApiException as e:
             logger.warning(
                 f"Unable to get pod's address. "
@@ -468,6 +516,12 @@ class K8sNode(Node):
                 api = node_config.create_node_driver()
                 name = node_rep.name
                 pod = api.read_namespaced_pod(name=name, namespace=K8S_NAMESPACE)
+                if is_controller:
+                    service = api.read_namespaced_service(
+                        name=name, namespace=K8S_NAMESPACE
+                    )
+                else:
+                    service = None
                 configmap = api.read_namespaced_config_map(
                     name=cls._NAME_CM.format(name), namespace=K8S_NAMESPACE
                 )
@@ -485,8 +539,9 @@ class K8sNode(Node):
                 representation=node_rep,
                 status=NodeStatus(node_rep.status),
                 pod=pod,
+                service=service,
                 configmap=configmap,
-                address=pod.metadata.name,
+                address=service_fqdn(pod.metadata.name),
             )
 
     @classmethod

@@ -108,7 +108,8 @@ def stop_job_task(job_id, exit_status=None):
     if exit_status:
         exit_status = JobStatus(exit_status)
     try:
-        job.stop()
+        # FIXME [Dorran]: Re-enable
+        # job.stop()
         job.representation.finished_at = datetime.utcnow()
         logger.info(f"Stopped job #{job_id}.", extra={"job_id": job_id})
         if exit_status:
@@ -143,6 +144,7 @@ def watch_job_task(job_id):
         job.representation.finished_at = datetime.utcnow()
     # TODO: Make this a more specific exception
     except Exception as e:
+        logger.exception(e)
         # Flag job as failed
         logger.error("[Dorran!] FAILING JOB in watch job task")
         job.status = JobStatus.FAILED

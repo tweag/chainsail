@@ -1,6 +1,5 @@
-from sqlalchemy.types import ARRAY
-
 from chainsail.scheduler.core import db, ma
+from sqlalchemy.types import ARRAY
 
 
 class TblJobs(db.Model):
@@ -35,7 +34,7 @@ class TblNodes(db.Model):
     node_type = db.Column(db.String(50), nullable=False)
     entrypoint = db.Column(db.String(250), nullable=True)
     status = db.Column(db.String(50), nullable=True)
-    address = db.Column(db.String(50), nullable=True)
+    address = db.Column(db.String(500), nullable=True)
     ports = db.Column(db.String(50), nullable=True)
     # Flag for indicating whether the node is currently used by the job
     # nodes which have been removed as a part of restarts, scaling, etc.

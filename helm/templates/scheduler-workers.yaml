@@ -32,6 +32,8 @@ spec:
             value: /config/scheduler.yaml
           - name: CONCURRENCY
             value: "5"
+          - name: GRPC_DNS_RESOLVER
+            value: native
         volumeMounts:
           - name: scheduler-config
             readOnly: true

@@ -20,6 +20,8 @@ RUN apt-get update && \
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 # Disable password authentication
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+# Disable StrictMode (required for k8s secret volumes to work properly since their symlinks have open permissions)
+RUN sed -i 's/#StrictModes yes/StrictModes no/' /etc/ssh/sshd_config
 # Listen on a non-default port to avoid clashing with the host's ssh
 RUN sed -i 's/#Port 22/Port 26/' /etc/ssh/sshd_config
 # SSH login fix. Otherwise user is kicked off after login
@@ -83,7 +85,7 @@ COPY --from=builder /app /app
 
 # Extra configuration
 ADD docker/node/.openmpi /root/.openmpi
-ADD docker/node/ssh/known_hosts /etc/ssh/ssh_config
+ADD docker/node/ssh/ssh_config /etc/ssh/ssh_config
 ADD docker/node/entrypoint.sh /app/entrypoint.sh
 
 # Directory for user data
