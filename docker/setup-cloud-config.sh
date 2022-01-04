@@ -37,6 +37,9 @@ sed -ri "s/(address:).*/\1 $INTERNAL_IP/" remote_logging.yaml
 echo "Fetching docker/config_dpl/firebase_service_account.json"
 gcloud secrets versions access 1 --secret="firebase-sa" > firebase_service_account.json
 
+echo "Fetching docker/config_dpl/storage_key.json"
+gcloud secrets versions access 1 --secret="storage-key-json" > storage_key.json
+
 # Fetch .env.local
 cd ../../app/client || exit
 echo "Fetching app/client/.env.local"
