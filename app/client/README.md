@@ -79,27 +79,34 @@ $ docker run \
 
 ## ... to AppEngine
 
-Create a file `app.yaml` file from the template in `app.yaml.template`. To make completing the required fields easier, here's some useful information: 
+Create a file `app.yaml` file from the template in `app.yaml.template`. To make completing the required fields easier, here's some useful information:
 
 By default, on our current dev VMs, the ports are
+
 - 8000 for Graphite,
 - 80 for the scheduler,
 - 8081 for the MCMC stats server.
 
 The two current development VMs have the following IPs:
+
 - `resaas-dev`: 10.156.0.2
 - `ressas-dev2`: 10.156.0.3
 
 The project number can be obtained via the following command:
+
 ```bash
 $ gcloud projects list --format="value(PROJECT_NUMBER)"
 ```
+
 The location is currently "europe-west3" and the connector ID can be obtained via
+
 ```bash
 $ gcloud compute networks vpc-access connectors list --region europe-west3 --format="value(CONNECTOR_ID)"
 ```
-If you'd like to deploy a new / different service (meaning, not the default one which `chainsail.io` points to), change `service: default` to, e.g., `service: test`. 
+
+If you'd like to deploy a new / different service (meaning, not the default one which `chainsail.io` points to), change `service: default` to, e.g., `service: test`.
 Once all fields are filled in, run:
+
 ```shell
 $ npm run deploy
 ```
