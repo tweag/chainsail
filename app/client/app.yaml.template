@@ -1,0 +1,18 @@
+env: standard
+runtime: nodejs12
+service: default
+
+env_variables:
+  # these are GCP-internal IPs + port, such as http://10.156.0.3:80
+  GRAPHITE_URL: TODO
+  SCHEDULER_URL: TODO
+  MCMC_STATS_URL: TODO
+
+vpc_access_connector:
+  # Be sure to replace <project number>, <location> and <connector ID> with the correct values 
+  name: projects/<project number>/locations/<location>/connectors/<connector ID>
+
+handlers:
+  - url: /.*
+    secure: always
+    script: auto
