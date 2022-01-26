@@ -12,7 +12,7 @@ from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
 FAILURE_LOG = "deployment failed for some reason..."
 SUCCESS_LOG = "deployment succeeded"
 
-USER_CODE_DOCKER_IMAGE = "chainsail-user-code:dev"
+USER_CODE_DOCKER_IMAGE = "chainsail-user-code"
 ONLINE_PROBABILITY_DISTRIBUTION = (
     "https://storage.googleapis.com/resaas-dev-public/mixture.zip"
 )
@@ -168,15 +168,16 @@ def test_job_check(mock_config: SchedulerConfig, mock_spec: JobSpec):
     from chainsail.scheduler.jobs import Job, JobStatus
 
     # doing what I can to keep mocked objects clean
+    controller_config = GeneralNodeConfig(
+        user_code_image=USER_CODE_DOCKER_IMAGE,
+        **{
+            k: v
+            for k, v in mock_config.controller.__dict__.items()
+            if k != "user_code_image"
+        },
+    )
     config = SchedulerConfig(
-        controller=GeneralNodeConfig(
-            user_code_image=USER_CODE_DOCKER_IMAGE,
-            **{
-                k: v
-                for k, v in mock_config.controller.__dict__.items()
-                if k != "user_code_image"
-            },
-        ),
+        controller=controller_config,
         **{k: v for k, v in mock_config.__dict__.items() if k != "controller"},
     )
     spec = JobSpec(

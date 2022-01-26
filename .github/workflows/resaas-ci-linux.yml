@@ -41,6 +41,11 @@ jobs:
           PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
           rm ./poetry.lock
 
+      # Build and load user code image for user code check in
+      # scheduler unit tests
+      - name: Build user code image
+        run: |
+          docker build -f docker/user-code/Dockerfile -t chainsail-user-code .
       # Python Applications
       - name: Install and test resaas.scheduler
         run: |
