@@ -88,9 +88,9 @@ class Job:
                 install_script_path=f.name,
                 user_code_image=self.config.controller.user_code_image,
             )
-            logger.info("Check command : " + command)
+            logger.debug("Check command : " + command)
             command_result = subprocess.run(command, shell=True, capture_output=True)
-            logger.info("Check command return code: %s", command_result.returncode)
+            logger.debug("Check command return code: %s", command_result.returncode)
             logger.info("Check command stdout:")
             for stdout_line in command_result.stdout.decode("utf-8").split("\n"):
                 logger.info("  > %s", stdout_line)
