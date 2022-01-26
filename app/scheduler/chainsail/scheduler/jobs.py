@@ -88,15 +88,23 @@ class Job:
                 install_script_path=f.name,
                 user_code_image=self.config.controller.user_code_image,
             )
+            logger.info(
+                "Checking whether probability distribution for job #{self.id} can be evaluated...",
+                extra={"job_id": self.id},
+            )
             logger.debug("Check command : " + command)
             command_result = subprocess.run(command, shell=True, capture_output=True)
-            logger.debug("Check command return code: %s", command_result.returncode)
-            logger.info("Check command stdout:")
+            logger.debug(
+                "Check command return code: %s",
+                command_result.returncode,
+                extra={"job_id": self.id},
+            )
+            logger.info("Check command stdout:", extra={"job_id": self.id})
             for stdout_line in command_result.stdout.decode("utf-8").split("\n"):
-                logger.info("  > %s", stdout_line)
-            logger.info("Check command stderr:")
+                logger.info("  > %s", stdout_line, extra={"job_id": self.id})
+            logger.info("Check command stderr:", extra={"job_id": self.id})
             for stderr_line in command_result.stderr.decode("utf-8").split("\n"):
-                logger.info("  > %s", stderr_line)
+                logger.info("  > %s", stderr_line, extra={"job_id": self.id})
             if command_result.returncode:
                 raise JobError("Check command failed")
 
