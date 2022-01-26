@@ -40,9 +40,7 @@ def lookup_driver_cls(provider_name: str) -> type:
         try:
             provider = getattr(Provider, provider_name)
         except AttributeError:
-            raise ConfigurationError(
-                f"Unrecognized libcloud provider name: '{provider_name}'"
-            )
+            raise ConfigurationError(f"Unrecognized libcloud provider name: '{provider_name}'")
         return get_driver(provider)
 
 
@@ -174,10 +172,7 @@ class GeneralNodeConfigSchema(Schema):
 
 
 # Global registry of node config schemas
-NODE_CONFIG_SCHEMAS: Dict[NodeType, Schema] = {
-    NodeType.LIBCLOUD_VM: VMNodeConfigSchema(),
-    NodeType.KUBERNETES_POD: K8sNodeConfigSchema(),
-}
+NODE_CONFIG_SCHEMAS: Dict[NodeType, Schema] = {NodeType.LIBCLOUD_VM: VMNodeConfigSchema()}
 
 
 @dataclass
@@ -219,9 +214,7 @@ class SchedulerConfigSchema(Schema):
         # Lookup the expected schema for the driver config
         node_type = data["node_type"]
         if node_type not in NODE_CONFIG_SCHEMAS:
-            raise ValidationError(
-                f"Scheduler config specified an unknown node_type: {node_type}"
-            )
+            raise ValidationError(f"Scheduler config specified an unknown node_type: {node_type}")
         # Parse the node_config using the matching schema
         data["node_config"] = NODE_CONFIG_SCHEMAS[node_type].load(data["node_config"])
         return SchedulerConfig(**data)

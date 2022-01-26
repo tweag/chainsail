@@ -24,9 +24,7 @@ RESULTS_ARCHIVE_FILENAME = "results.zip"
 logger = logging.getLogger("chainsail.scheduler")
 
 scheduler_config = load_scheduler_config()
-configure_logging(
-    "chainsail.scheduler", "DEBUG", scheduler_config.remote_logging_config_path
-)
+configure_logging("chainsail.scheduler", "DEBUG", scheduler_config.remote_logging_config_path)
 
 
 def get_storage_driver_container(scheduler_config):
@@ -42,9 +40,7 @@ def get_storage_driver_container(scheduler_config):
     backend_config = storage_config["backend_config"]
     container_name = backend_config["cloud"]["container_name"]
 
-    storage_driver = GoogleStorageDriver(
-        key=backend_config["cloud"]["storage_key_path"]
-    )
+    storage_driver = GoogleStorageDriver(key=backend_config["cloud"]["storage_key_path"])
     container = storage_driver.get_container(container_name)
 
     return storage_driver, container
@@ -54,9 +50,7 @@ def get_job_blob_root(scheduler_config, job_id):
     controller_config_path = scheduler_config.node_config.controller_config_path
     with open(controller_config_path) as f:
         raw_controller_config = yaml.load(f, Loader=yaml.FullLoader)
-    storage_basename = (
-        ControllerConfigSchema().load(raw_controller_config).storage_basename
-    )
+    storage_basename = ControllerConfigSchema().load(raw_controller_config).storage_basename
     if storage_basename.startswith("/"):
         storage_basename = storage_basename[1:]
     return os.path.join(storage_basename, str(job_id)) + "/"
@@ -77,11 +71,7 @@ def check_job_task(job_id):
     # to avoid the job being checked multiple times. If the row is locked then
     # we can just ditch this check request.
     try:
-        job_rep = (
-            TblJobs.query.with_for_update(of=TblJobs, nowait=True)
-            .filter_by(id=job_id)
-            .one()
-        )
+        job_rep = TblJobs.query.with_for_update(of=TblJobs, nowait=True).filter_by(id=job_id).one()
     except OperationalError:
         # TODO: Log that the row could not be queried
         return
@@ -114,11 +104,7 @@ def start_job_task(job_id):
     # to avoid the job being started multiple times. If the row is locked then
     # we can just ditch this start request.
     try:
-        job_rep = (
-            TblJobs.query.with_for_update(of=TblJobs, nowait=True)
-            .filter_by(id=job_id)
-            .one()
-        )
+        job_rep = TblJobs.query.with_for_update(of=TblJobs, nowait=True).filter_by(id=job_id).one()
     except OperationalError:
         # TODO: Log that the row could not be queried
         return
@@ -146,9 +132,7 @@ def stop_job_task(job_id, exit_status=None):
         JobError: If the job failed to stop
     """
     # Load Job object from database entry
-    job = Job.from_representation(
-        TblJobs.query.filter_by(id=job_id).one(), scheduler_config
-    )
+    job = Job.from_representation(TblJobs.query.filter_by(id=job_id).one(), scheduler_config)
     if exit_status:
         exit_status = JobStatus(exit_status)
     try:
@@ -208,11 +192,7 @@ def scale_job_task(job_id, n_replicas) -> bool:
         JobError: If the job failed to stop
     """
     try:
-        job_rep = (
-            TblJobs.query.with_for_update(of=TblJobs, nowait=True)
-            .filter_by(id=job_id)
-            .one()
-        )
+        job_rep = TblJobs.query.with_for_update(of=TblJobs, nowait=True).filter_by(id=job_id).one()
     except OperationalError:
         # Another process is already scaling this job
         return False
@@ -220,9 +200,7 @@ def scale_job_task(job_id, n_replicas) -> bool:
     job = Job.from_representation(job_rep, scheduler_config)
     try:
         job.scale_to(n_replicas)
-        logger.info(
-            f"Scaled job #{job_id} to {n_replicas} replicas.", extra={"job_id": job_id}
-        )
+        logger.info(f"Scaled job #{job_id} to {n_replicas} replicas.", extra={"job_id": job_id})
     except JobError as e:
         db.session.commit()
         logger.error(f"Failed to stop #{job_id}.", extra={"job_id": job_id})
@@ -233,18 +211,14 @@ def scale_job_task(job_id, n_replicas) -> bool:
 
 
 def get_signed_url(job_id):
-    logger.info(
-        f"Getting signed URL for results of job #{job_id}...", extra={"job_id": job_id}
-    )
+    logger.info(f"Getting signed URL for results of job #{job_id}...", extra={"job_id": job_id})
     storage_driver, container = get_storage_driver_container(scheduler_config)
     job_blob_root = get_job_blob_root(scheduler_config, job_id)
     zip_blob = container.get_blob(os.path.join(job_blob_root, RESULTS_ARCHIVE_FILENAME))
     signed_url = storage_driver.generate_blob_download_url(
         zip_blob, expires=scheduler_config.results_url_expiry_time
     )
-    logger.info(
-        f"Obtained signed URL for results of job #{job_id}.", extra={"job_id": job_id}
-    )
+    logger.info(f"Obtained signed URL for results of job #{job_id}.", extra={"job_id": job_id})
 
     return signed_url
 

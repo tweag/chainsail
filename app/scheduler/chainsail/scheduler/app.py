@@ -41,10 +41,7 @@ from chainsail.scheduler.tasks import (
 
 def _is_dev_mode():
     try:
-        is_dev = (
-            os.environ["PYTHON_ENV"] == "development"
-            or os.environ["PYTHON_ENV"] == "dev"
-        )
+        is_dev = os.environ["PYTHON_ENV"] == "development" or os.environ["PYTHON_ENV"] == "dev"
         return is_dev
     except:
         return False
@@ -145,9 +142,7 @@ def create_job(user_id):
             {},
         )
     except:
-        logger.error(
-            f"Failed to launch checks for job #{job.id}.", extra={"job_id": job.id}
-        )
+        logger.error(f"Failed to launch checks for job #{job.id}.", extra={"job_id": job.id})
         job.status = JobStatus.FAILED
         db.session.commit()
 

@@ -71,9 +71,7 @@ def test_vm_node_from_config_with_job(mock_scheduler_config):
     from chainsail.scheduler.nodes.vm import VMNode
 
     job_spec = JobSpec("gs://my-bucket/scripts")
-    node = VMNode.from_config(
-        "dummy-1", mock_scheduler_config, job_spec, job_rep=TblJobs(id=1)
-    )
+    node = VMNode.from_config("dummy-1", mock_scheduler_config, job_spec, job_rep=TblJobs(id=1))
     assert node.representation
     assert node.representation.job.id == 1
 
@@ -107,9 +105,7 @@ def test_vm_node_from_representation_then_create(mock_scheduler_config):
     from chainsail.scheduler.nodes.base import NodeStatus, NodeType
     from chainsail.scheduler.nodes.vm import VMNode
 
-    job_spec = JobSpec(
-        "gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])]
-    )
+    job_spec = JobSpec("gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])])
     node_rep = TblNodes(
         id=1,
         job_id=1,
@@ -121,9 +117,7 @@ def test_vm_node_from_representation_then_create(mock_scheduler_config):
         job=TblJobs(),
     )
 
-    with patch(
-        "chainsail.scheduler.nodes.vm.prepare_deployment"
-    ) as mock_prepare_deployment:
+    with patch("chainsail.scheduler.nodes.vm.prepare_deployment") as mock_prepare_deployment:
         # Create the node object
         node = VMNode.from_representation(
             job_spec,

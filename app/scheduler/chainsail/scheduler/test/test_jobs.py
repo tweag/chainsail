@@ -13,9 +13,7 @@ FAILURE_LOG = "deployment failed for some reason..."
 SUCCESS_LOG = "deployment succeeded"
 
 USER_CODE_DOCKER_IMAGE = "chainsail-user-code"
-ONLINE_PROBABILITY_DISTRIBUTION = (
-    "https://storage.googleapis.com/resaas-dev-public/mixture.zip"
-)
+ONLINE_PROBABILITY_DISTRIBUTION = "https://storage.googleapis.com/resaas-dev-public/mixture.zip"
 
 
 def mock_create(node: Mock, fails: bool):
@@ -170,11 +168,7 @@ def test_job_check(mock_config: SchedulerConfig, mock_spec: JobSpec):
     # doing what I can to keep mocked objects clean
     controller_config = GeneralNodeConfig(
         user_code_image=USER_CODE_DOCKER_IMAGE,
-        **{
-            k: v
-            for k, v in mock_config.controller.__dict__.items()
-            if k != "user_code_image"
-        },
+        **{k: v for k, v in mock_config.controller.__dict__.items() if k != "user_code_image"},
     )
     config = SchedulerConfig(
         controller=controller_config,
@@ -416,8 +410,6 @@ def test_job_from_representation_preserves_status(mock_config):
         status=JobStatus.STOPPED,
     )
 
-    job = Job.from_representation(
-        rep, mock_config, node_registry={"mock": mk_mock_node_cls()}
-    )
+    job = Job.from_representation(rep, mock_config, node_registry={"mock": mk_mock_node_cls()})
 
     assert job.status == JobStatus.STOPPED

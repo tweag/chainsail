@@ -40,7 +40,6 @@ jobs:
           poetry install
           PYTHONPATH=$PYTHONPATH:$PWD poetry run pytest
           rm ./poetry.lock
-
       # Build and load user code image for user code check in
       # scheduler unit tests
       - name: Build user code image
