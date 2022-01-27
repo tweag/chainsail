@@ -14,7 +14,7 @@ class TblJobs(db.Model):
     spec = db.Column(db.Unicode(), nullable=True)
     status = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime(), nullable=False)
-    checked_at = db.Column(db.DateTime(), nullable=False)
+    checked_at = db.Column(db.DateTime(), nullable=True)
     started_at = db.Column(db.DateTime(), nullable=True)
     finished_at = db.Column(db.DateTime(), nullable=True)
     # the ARRAY type limits us to postgresql databases
