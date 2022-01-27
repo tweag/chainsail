@@ -174,7 +174,7 @@ class GeneralNodeConfigSchema(Schema):
 # Global registry of node config schemas
 NODE_CONFIG_SCHEMAS: Dict[NodeType, Schema] = {
     NodeType.LIBCLOUD_VM: VMNodeConfigSchema(),
-    NodeType.KUBERNETES_POD: K8sNodeConfigSchema,
+    NodeType.KUBERNETES_POD: K8sNodeConfigSchema(),
 }
 
 
