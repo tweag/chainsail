@@ -57,6 +57,7 @@ services:
     volumes:
       - ./config_dpl:/config
       - ./kubeconfig-gke.yaml:/config/kubeconfig.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
   scheduler:
     build:
       context: ../
