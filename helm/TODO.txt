@@ -18,12 +18,12 @@ Notes:
   * Currently job nodes get a single configmap containing all of the various config files they need
   * Scheduler uses a kubeconfig.yaml
 
-[] - Service account for scheduler + celery
+[X] - Service account for scheduler + celery
     * This can be done as a part of the helm chart
 
-[] - Scheduler deployment + service
+[X] - Scheduler deployment + service
 
-[] - Scheduler workers
+[X] - Scheduler workers
 
 Extras:
 [ ] - Rules for networking
