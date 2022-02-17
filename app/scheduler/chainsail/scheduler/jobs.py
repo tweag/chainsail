@@ -17,13 +17,17 @@ from chainsail.scheduler.nodes.base import Node, NodeType
 from chainsail.scheduler.nodes.registry import NODE_CLS_REGISTRY
 
 JOB_CHECK_COMMAND_TEMPLATE = """
-docker run \
+docker create --name check_job{job_id} \
     -e "USER_PROB_URL={prob_def}" \
     -e "USER_INSTALL_SCRIPT=/chainsail/install_job_deps.sh" \
     -e "DO_USER_CODE_CHECK=1" \
     -e "NO_SERVER=1" \
-    -v {install_script_path}:/chainsail/install_job_deps.sh \
-    {user_code_image}
+    -v /chainsail \
+    {user_code_image} && \
+docker cp {install_script_path} jobcheck:/chainsail/install_job_deps.sh && \
+docker start check_job{job_id} && \
+docker stop check_job{job_id} && \
+docker rm check_job{job_id}
 """
 
 
@@ -86,6 +90,7 @@ class Job:
             command = JOB_CHECK_COMMAND_TEMPLATE.format(
                 prob_def=self.spec.probability_definition,
                 install_script_path=f.name,
+                job_id=self.id,
                 user_code_image=self.config.controller.user_code_image,
             )
             logger.info(
