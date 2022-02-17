@@ -15,6 +15,8 @@ spec:
       labels:
         chainsail.io.service: graphite
     spec:
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8}}
       containers:
       - image: graphiteapp/graphite-statsd:1.1.8-2
         imagePullPolicy: IfNotPresent
@@ -33,7 +35,6 @@ spec:
           - name: config-volume
             mountPath: /opt/graphite/conf/storage-schemas.conf
             subPath: storage-schemas.conf
-
       restartPolicy: Always
       volumes:
       - name: graphite

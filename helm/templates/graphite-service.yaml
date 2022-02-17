@@ -25,10 +25,10 @@ spec:
   - name: "2024"
     port: 2024
     targetPort: 2024
-  - name: "8125"
-    port: 8125
-    protocol: UDP
-    targetPort: 8125
+  # - name: "8125"
+  #   port: 8125
+  #   protocol: UDP
+  #   targetPort: 8125
   - name: "8126"
     port: 8126
     targetPort: 8126

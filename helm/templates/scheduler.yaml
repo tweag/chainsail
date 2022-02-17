@@ -14,9 +14,11 @@ spec:
       labels:
         chainsail.io.service: scheduler
     spec:
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8}}
       containers:
-      - image: chainsail-scheduler:latest
-        imagePullPolicy: IfNotPresent
+      - image: {{ .Values.imageHubNamespace }}/chainsail-scheduler:{{ .Values.imageTag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         name: scheduler
         ports:
         - containerPort: 5001
