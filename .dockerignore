@@ -1,0 +1,22 @@
+.vscode
+*.pyc
+*/**/__pycache__
+**/htmlcov/
+**/.pytest_cache/
+.coverage
+*.*~
+
+.python-version
+
+# No lockfiles for libraries
+common/poetry.lock
+runners/**/poetry.lock
+schedule_estimation/poetry.lock
+grpc/poetry.lock
+
+# Terraform state
+*.tfstate
+*.tfstate.*
+.terraform
+
+node_modules
