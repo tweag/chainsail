@@ -54,7 +54,7 @@ def check_user(func):
         except (InvalidIdTokenError, ExpiredIdTokenError, RevokedIdTokenError) as e:
             if not is_dev:
                 return {
-                    "message": f"Invalid/Expired/Revoked account token. Re-logging to your account may refresh the token. If the problem persists, please contact support@chainsail.io. Error: {e}"
+                    "message": f"Invalid/Expired/Revoked account token. Logging out and in again may refresh the token. If the problem persists, please contact support@chainsail.io. Error: {e}"
                 }, 401
             else:
                 claims = None
