@@ -63,7 +63,7 @@ def check_user(func):
         if not is_dev and not user_id:
             # empty uid
             return {
-                "message": "Unauthorized access: No user ID found in token claim. Re-logging to your account may solve this issue. If the problem persists, please contact support@chainsail.io."
+                "message": "Unauthorized access: No user ID found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."
             }, 401
 
         email = claims.get("email", None)
