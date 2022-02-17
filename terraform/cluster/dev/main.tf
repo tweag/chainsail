@@ -63,7 +63,7 @@ locals {
       local = {}
       cloud = {
         libcloud_provider = "GOOGLE_STORAGE"
-        container_name    = "chainsail-samples"
+        container_name    = local.env_config.storage_bucket
         driver_kwargs = {
           key     = local.env_config.storage_access_id
           secret  = local.env_config.storage_secret_key
