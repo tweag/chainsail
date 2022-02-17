@@ -70,7 +70,7 @@ def check_user(func):
         if not is_dev and not email:
             # empty email
             return {
-                "message": "Unauthorized access: No email found in token claim. Re-logging to your account may solve this issue. If the problem persists, please contact support@chainsail.io."
+                "message": "Unauthorized access: No email found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."
             }, 403
 
         user = TblUsers.query.filter_by(email=email).first()
