@@ -88,4 +88,5 @@ module "chainsail_k8s" {
   image_worker       = "${local.env_config.container_registry}/chainsail-mpi-node-k8s:latest"
   image_httpstan     = "${local.env_config.container_registry}/httpstan-server:latest"
   image_user_code    = "${local.env_config.container_registry}/chainsail-user-code:latest"
+  image_pull_policy  = "Always"
 }

@@ -119,6 +119,7 @@ class K8sNodeConfig(HasDriver):
     controller_config_path: str
     pod_cpu: str
     pod_memory: str
+    image_pull_policy: str
 
     def create_node_driver(self):
         """Loads the kubernetes client
@@ -150,6 +151,8 @@ class K8sNodeConfigSchema(Schema):
     pod_cpu = fields.String(required=True)
     # The amount of memory the pod requests
     pod_memory = fields.String(required=True)
+    # The k8s ImagePullPolicy
+    image_pull_policy = fields.String(required=True)
 
     @post_load
     def make_k8s_node_config(self, data, **kwargs):

@@ -59,3 +59,9 @@ variable "image_httpstan" {
   description = "Docker image for httpstan"
   type        = string
 }
+
+variable "image_pull_policy" {
+  description = "Image pull policy to go in scheduler.yaml"
+  type        = string
+  default     = "IfNotPresent"
+}

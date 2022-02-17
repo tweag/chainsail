@@ -185,14 +185,14 @@ class K8sNode(Node):
             name="httpstan",
             image=self._config.httpstan_image,
             env=[kub.client.V1EnvVar(name="HTTPSTAN_PORT", value="8082")],
-            image_pull_policy="IfNotPresent",
+            image_pull_policy=self._node_config.image_pull_policy,
         )
         # User code container
         install_script_target = os.path.join("/chainsail", self._CM_FILE_USERCODE)
         user_code_container = kub.client.V1Container(
             name="user-code",
             image=self._config.user_code_image,
-            image_pull_policy="IfNotPresent",
+            image_pull_policy=self._node_config.image_pull_policy,
             args=[
                 "python",
                 "/app/app/user_code_server/chainsail/user_code_server/__init__.py",
@@ -246,7 +246,7 @@ class K8sNode(Node):
         container = kub.client.V1Container(
             name="rex",
             image=self._config.image,
-            image_pull_policy="IfNotPresent",
+            image_pull_policy=self._node_config.image_pull_policy,
             args=container_cmd,
             ports=[kub.client.V1ContainerPort(container_port=50051)],
             startup_probe=startup_probe,

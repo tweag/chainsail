@@ -111,8 +111,9 @@ locals {
       controller_config_path = "/config/controller.yaml"
       # TODO: Might want to make these variables in order to allow different values
       # in different environments
-      pod_cpu    = "500m"
-      pod_memory = "100Mi"
+      pod_cpu           = "500m"
+      pod_memory        = "100Mi"
+      image_pull_policy = var.image_pull_policy
     }
   }
 
