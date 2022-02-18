@@ -216,18 +216,20 @@ const Job = ({ authed, isMobile }) => {
         setErr(false);
         setCreatedJobID(data.job_id);
         setIsModelActive(true);
+      } else if (data.message) {
+        setErr(true);
+        setErrMsg(data.message);
+        setIsModelActive(true);
       } else {
         setErr(true);
-        setErrMsg(
-          'Something went wrong. To help us debug, please contact simeon.carstens@tweag.io.'
-        );
+        setErrMsg('Something went wrong. To help us debug, please contact support@chainsail.io.');
         console.log(data);
         setIsModelActive(true);
       }
     } catch (e) {
       setErr(true);
       setErrMsg(
-        'Something went wrong. To help us debug, please contact simeon.carstens@tweag.io.' +
+        'Something went wrong. To help us debug, please contact support@chainsail.io.' +
           (e.message ? ` Error: ${e.message}` : '') // Error object have a .message property containing the full message
       );
       setIsModelActive(true);

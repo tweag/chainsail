@@ -16,7 +16,13 @@ from firebase_admin.auth import (
 )
 from chainsail.common.spec import JobSpecSchema
 from chainsail.scheduler.core import app, db, firebase_app
-from chainsail.scheduler.db import JobViewSchema, NodeViewSchema, TblJobs, TblNodes, TblUsers
+from chainsail.scheduler.db import (
+    JobViewSchema,
+    NodeViewSchema,
+    TblJobs,
+    TblNodes,
+    TblUsers,
+)
 from chainsail.scheduler.jobs import JobStatus
 from chainsail.scheduler.tasks import (
     scale_job_task,
@@ -47,26 +53,32 @@ def check_user(func):
             claims = verify_id_token(id_token, app=firebase_app)
         except (InvalidIdTokenError, ExpiredIdTokenError, RevokedIdTokenError) as e:
             if not is_dev:
-                return {"message": f"Unauthorized. Error: {e}"}, 401
+                return {
+                    "message": f"Invalid/Expired/Revoked account token. Logging out and in again may refresh the token. If the problem persists, please contact support@chainsail.io. Error: {e}"
+                }, 401
             else:
                 claims = None
 
         user_id = claims.get("user_id", None)
         if not is_dev and not user_id:
             # empty uid
-            return {"message": "Unauthorized"}, 401
+            return {
+                "message": "Unauthorized access: No user ID found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."
+            }, 401
 
         email = claims.get("email", None)
         if not is_dev and not email:
             # empty email
-            return {"message": "Unauthorized. No email found in token claim."}, 403
+            return {
+                "message": "Unauthorized access: No email found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."
+            }, 403
 
         user = TblUsers.query.filter_by(email=email).first()
         if not is_dev and not user:
             # unregistered user
             return (
                 {
-                    "message": f"User with id {user_id} and email {email} is not registered. Please contact our supporting team."
+                    "message": f"Unauthorized access. Please contact support@chainsail.io to be granted access to Chainsail. Error: User with email {email} not found in database."
                 },
                 403,
             )
@@ -74,7 +86,7 @@ def check_user(func):
         if not is_dev and not user.is_allowed:
             # user not allowed
             return {
-                "message": "User with id {user_id} and email {email} is not allowed to use services."
+                "message": f"Unauthorized access. Please contact support@chainsail.io to be granted access to Chainsail. Error: User with email {email} is not allowed to use the services."
             }, 403
 
         kwargs.update(user_id=user_id)
@@ -199,7 +211,10 @@ def scale_job(job_id, n_replicas):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
     find_job(job_id)
-    logger.info(f"Scaling up job #{job_id} to {n_replicas} replicas...", extra={"job_id": job_id})
+    logger.info(
+        f"Scaling up job #{job_id} to {n_replicas} replicas...",
+        extra={"job_id": job_id},
+    )
     scaling_task = scale_job_task.apply_async((job_id, n_replicas), {})
     # Await the result, raising any exceptions that get thrown
     scaled = scaling_task.get()
