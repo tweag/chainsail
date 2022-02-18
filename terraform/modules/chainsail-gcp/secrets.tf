@@ -1,12 +1,15 @@
 locals {
   chainsail_environment_config = {
-    storage_url        = "https://storage.googleapis.com"
-    storage_access_id  = google_storage_hmac_key.key.access_id
-    storage_secret_key = google_storage_hmac_key.key.secret
-    storage_bucket     = google_storage_bucket.results.name
-    container_registry = "${lower(google_container_registry.registry.location)}.gcr.io/${data.google_project.project.name}"
-    cluster_name       = google_container_cluster.chainsail.name
-    cluster_location   = google_container_cluster.chainsail.location
+    storage_url            = "https://storage.googleapis.com"
+    storage_access_id      = google_storage_hmac_key.key.access_id
+    storage_secret_key     = google_storage_hmac_key.key.secret
+    storage_bucket         = google_storage_bucket.results.name
+    container_registry     = "${lower(google_container_registry.registry.location)}.gcr.io/${data.google_project.project.name}"
+    cluster_name           = google_container_cluster.chainsail.name
+    cluster_location       = google_container_cluster.chainsail.location
+    backend_fqdn           = google_dns_record_set.chainsail_backend.name
+    backend_address        = google_compute_address.chainsail_backend.address
+    backend_static_ip_name = google_compute_address.chainsail_backend.name
   }
 }
 

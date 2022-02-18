@@ -27,7 +27,7 @@ data "google_project" "project" {}
 module "chainsail_gcp" {
   source              = "../../modules/chainsail-gcp"
   storage_location    = "EU"
-  node_location       = "europe-west6"
+  node_location       = "europe-west6-a"
   core_node_type      = "e2-standard-8"
   job_node_type       = "e2-standard-8"
   ssh_pem_secret_name = "chainsail_job_ssh_pem"

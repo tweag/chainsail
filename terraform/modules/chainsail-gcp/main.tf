@@ -45,6 +45,22 @@ resource "google_container_cluster" "chainsail" {
   # Note: removing the default node pool in favor of an explicitely managed one
   remove_default_node_pool = true
   initial_node_count       = 1
+
+  cluster_autoscaling {
+    enabled = true
+    # Global resource limits (for all node pools in cluster)
+    resource_limits {
+      resource_type = "cpu"
+      minimum       = "1"
+      maximum       = "64"
+    }
+    resource_limits {
+      resource_type = "memory"
+      # Note: Memory is given in GB
+      minimum = "1"
+      maximum = "128"
+    }
+  }
 }
 
 resource "google_container_node_pool" "core_nodes" {
@@ -54,7 +70,7 @@ resource "google_container_node_pool" "core_nodes" {
 
   autoscaling {
     max_node_count = 5
-    min_node_count = 0
+    min_node_count = 1
   }
 
   node_config {
@@ -96,4 +112,43 @@ resource "google_container_node_pool" "job_nodes" {
       "https://www.googleapis.com/auth/cloud-platform"
     ]
   }
+}
+
+# TODO: Create and use non-default network
+data "google_compute_network" "default_network" {
+  name = "default"
+}
+
+resource "google_dns_managed_zone" "private_zone" {
+  name        = "private-zone"
+  dns_name    = "internal.chainsail.io."
+  description = "Internal (private) DNS zone for chainsail services"
+  visibility  = "private"
+
+  private_visibility_config {
+    networks {
+      network_url = data.google_compute_network.default_network.id
+    }
+  }
+}
+
+# TODO: Static IP Address
+resource "google_compute_address" "chainsail_backend" {
+  name         = "chainsail-backend-ingress"
+  description  = "Static IP for chainsail backend ingress service"
+  address_type = "INTERNAL"
+  # purpose       = "VPC_PEERING"
+  # network = data.google_compute_network.default_network.id
+  # prefix_length = 30
+}
+
+# TODO: DNS for Static IP Address
+resource "google_dns_record_set" "chainsail_backend" {
+  name = "backend.${google_dns_managed_zone.private_zone.dns_name}"
+  type = "A"
+  # TODO: Can probably cache this longer since we're using a static IP
+  ttl = 300
+
+  managed_zone = google_dns_managed_zone.private_zone.name
+  rrdatas      = [google_compute_address.chainsail_backend.address]
 }

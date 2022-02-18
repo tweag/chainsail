@@ -4,11 +4,11 @@ metadata:
   labels:
     chainsail.io.service: graphite
   name: graphite
-  annotations:
-    networking.gke.io/load-balancer-type: "Internal"
+  # annotations:
+  #   networking.gke.io/load-balancer-type: "Internal"
 spec:
   # See also: https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing
-  type: LoadBalancer
+  type: NodePort
   ports:
   - name: "8080"
     port: 8080
