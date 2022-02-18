@@ -14,7 +14,7 @@ terraform {
 
 provider "google" {
   project = "resaas-simeon-dev"
-  region  = "europe-west6"
+  region  = "europe-west3"
 }
 
 data "google_client_config" "default" {}
