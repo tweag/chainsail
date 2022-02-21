@@ -69,8 +69,8 @@ locals {
   graphite_service_name = "graphite"
   graphite_service_port = "8080"
 
-  mcmc_stats_service_name = "mcmc-stats"
-  mcmc_stats_service_port = "8081"
+  mcmc_stats_service_name = "mcmc-stats-server"
+  mcmc_stats_service_port = "5002"
 
   storage_yaml = yamlencode({
     backend = "cloud"
@@ -146,7 +146,13 @@ resource "kubernetes_ingress" "chainsail_backend" {
             service_port = local.graphite_service_port
           }
         }
-        # TODO: Add path for mcmc stats service
+        path {
+          path = "/mcmc-stats(/|$)(.*)"
+          backend {
+            service_name = local.mcmc_stats_service_name
+            service_port = local.mcmc_stats_service_port
+          }
+        }
       }
     }
   }
