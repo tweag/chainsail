@@ -47,19 +47,7 @@ resource "google_container_cluster" "chainsail" {
   initial_node_count       = 1
 
   cluster_autoscaling {
-    enabled = true
-    # Global resource limits (for all node pools in cluster)
-    resource_limits {
-      resource_type = "cpu"
-      minimum       = "1"
-      maximum       = "64"
-    }
-    resource_limits {
-      resource_type = "memory"
-      # Note: Memory is given in GB
-      minimum = "1"
-      maximum = "128"
-    }
+    enabled = false
   }
 }
 
@@ -71,6 +59,14 @@ resource "google_container_node_pool" "core_nodes" {
   autoscaling {
     max_node_count = 5
     min_node_count = 1
+  }
+
+  initial_node_count = 1
+
+  lifecycle {
+    ignore_changes = [
+      initial_node_count
+    ]
   }
 
   node_config {
