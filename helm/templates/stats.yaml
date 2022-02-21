@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    chainsail.io.service: mcmc-stats-server
+  name: mcmc-stats-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      chainsail.io.service: mcmc-stats-server
+  template:
+    metadata:
+      labels:
+        chainsail.io.service: mcmc-stats-server
+    spec:
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8}}
+      containers:
+      - image: {{ .Values.imageHubNamespace }}/chainsail-mcmc-stats-server:{{ .Values.imageTag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        name: mcmc-stats-server
+        ports:
+        - containerPort: 5002
+        resources: {}
+        env:
+          - name: STORAGE_BASENAME
+            value: /storage
+          - name: STORAGE_CONFIG
+            value: /config/storage.yaml
+        volumeMounts:
+          - name: storage-config
+            readOnly: true
+            mountPath: /config/storage.yaml
+            subPath: storage.yaml
+      restartPolicy: Always
+      volumes:
+      - name: storage-config
+        secret:
+          secretName: storage-yaml

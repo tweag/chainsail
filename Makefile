@@ -27,4 +27,5 @@ images:
 	docker build -t "${HUB_NAMESPACE}/chainsail-user-code:latest" -f docker/user-code/Dockerfile .
 	docker build -t "${HUB_NAMESPACE}/httpstan-server:latest" -f docker/httpstan-server/Dockerfile .
 	docker build -t "${HUB_NAMESPACE}/chainsail-mpi-node-k8s:latest" -f docker/node/Dockerfile .
+	docker build -t "${HUB_NAMESPACE}/chainsail-mcmc-stats-server:latest" -f docker/mcmc-stats-server/Dockerfile .
 	@echo "Done."
