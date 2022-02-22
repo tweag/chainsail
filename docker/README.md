@@ -1,33 +1,42 @@
 # docker
 
-`docker-compose` can be used to spin up a full Chainsail deployment.
+Docker images for all chainsail back-end components.
 
-Before running it, you need to build the images:
+## Building
+
+Build using the make:
+
+```console
+cd ..
+
+make images
 ```
-docker build -t "chainsail-celery-worker:latest" -f ./celery/Dockerfile ../
-docker build -t "chainsail-scheduler:latest" -f ./scheduler/Dockerfile ../
-docker build -t "chainsail-nginx:latest" -f ./nginx/Dockerfile ../
-docker build -t "chainsail-client:latest" -f ../app/client/Dockerfile ../app/client/
-```
 
-If you get errors about missing permissions to pull those images, you need to build them with tags locally.
+## Descriptions
+### scheduler
 
-## client
+Scheduler app behind a uWSGI app server and an NGINX reverse proxy.
 
-TODO
+### celery
 
-## scheduler
+The celery worker for the scheduler.
 
-Docker image containing the scheduler app behind a uWSGI app server and an NGINX reverse proxy.
+### mcmc-stats-server
 
-## celery-worker
+A small server which queries chainsail job storage and returns MCMC samples.
 
-Docker image containing the celery worker.
+### user-code
 
-## node
+A small gRPC server which evaluates user-defined probability distributions.
 
-Docker image containing all dependencies required to run resaas job nodes, including 
-`controller`. 
+### httpstan-server
+
+An http-stan server which can be used for evalulating Stan models.
+
+### node
+
+Docker image containing all dependencies required to run resaas job nodes, including
+`controller`.
 
 Accepts the following configurations:
 
