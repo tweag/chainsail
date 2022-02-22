@@ -9,7 +9,7 @@
 replicaCount: 1
 
 image:
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 tolerations:
   # Allow scheduling on "core" service nodes
@@ -26,5 +26,5 @@ imageTag: 'latest'
 
 # If set, the scheduler will be switched into `dev` mode and assume
 # the provided user name for all requests.
-schedulerUseDevUser: ''
+schedulerUseDevUser: 'AnonymousDevModeUser'
 schedulerNumWorkers: 1
