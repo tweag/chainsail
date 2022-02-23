@@ -3,7 +3,6 @@ from datetime import datetime
 from unittest.mock import MagicMock, Mock
 
 import pytest
-
 from chainsail.common.spec import JobSpec, JobSpecSchema
 from chainsail.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from chainsail.scheduler.nodes.base import NodeStatus, NodeType
@@ -260,21 +259,6 @@ def test_job_scale_down(mock_config, mock_spec):
     assert all([n.status == NodeStatus.RUNNING for n in job.nodes])
 
 
-def test_scale_non_running_job_raises(mock_config, mock_spec):
-    from chainsail.scheduler.errors import JobError
-    from chainsail.scheduler.jobs import Job
-
-    job = Job(
-        id=1,
-        spec=mock_spec,
-        config=mock_config,
-        node_registry={"mock": mk_mock_node_cls()},
-    )
-
-    with pytest.raises(JobError):
-        job.scale_to(2)
-
-
 def _add_nodes_to_job_rep(job_rep, num_nodes, num_controllers):
     from chainsail.scheduler.db import TblNodes
     from chainsail.scheduler.nodes.base import NodeStatus
@@ -340,6 +324,8 @@ def test_job_from_representation_preserves_status(mock_config):
         status=JobStatus.STOPPED,
     )
 
-    job = Job.from_representation(rep, mock_config, node_registry={"mock": mk_mock_node_cls()})
+    job = Job.from_representation(
+        rep, mock_config, node_registry={"mock": mk_mock_node_cls()}
+    )
 
     assert job.status == JobStatus.STOPPED
