@@ -108,8 +108,7 @@ def stop_job_task(job_id, exit_status=None):
     if exit_status:
         exit_status = JobStatus(exit_status)
     try:
-        # FIXME [Dorran]: Re-enable
-        # job.stop()
+        job.stop()
         job.representation.finished_at = datetime.utcnow()
         logger.info(f"Stopped job #{job_id}.", extra={"job_id": job_id})
         if exit_status:
@@ -179,8 +178,6 @@ def scale_job_task(job_id, n_replicas) -> bool:
     # Load Job object from database entry
     job = Job.from_representation(job_rep, scheduler_config)
     try:
-        # FIXME: Debugging statement
-        logger.warning(job_rep)
         job.scale_to(n_replicas)
         logger.info(
             f"Scaled job #{job_id} to {n_replicas} replicas.", extra={"job_id": job_id}

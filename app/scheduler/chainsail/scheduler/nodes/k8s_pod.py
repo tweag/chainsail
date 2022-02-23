@@ -348,7 +348,6 @@ class K8sNode(Node):
             # Pod
             self.api.create_namespaced_pod(body=self._pod, namespace=K8S_NAMESPACE)
             # Service
-            # if self._is_controller:
             self.api.create_namespaced_service(
                 body=self._service, namespace=K8S_NAMESPACE
             )
@@ -405,7 +404,10 @@ class K8sNode(Node):
                     name=self._name_cm, namespace=K8S_NAMESPACE
                 )
                 self._configmap = None
-            # FIXME [Dorran] - Delete service here
+            if self._service:
+                self.api.delete_namespaced_service(
+                    name=self._name, namespace=K8S_NAMESPACE
+                )
             self._status = NodeStatus.EXITED
             deleted = True
         except ApiException as e:
@@ -516,12 +518,9 @@ class K8sNode(Node):
                 api = node_config.create_node_driver()
                 name = node_rep.name
                 pod = api.read_namespaced_pod(name=name, namespace=K8S_NAMESPACE)
-                if is_controller:
-                    service = api.read_namespaced_service(
-                        name=name, namespace=K8S_NAMESPACE
-                    )
-                else:
-                    service = None
+                service = api.read_namespaced_service(
+                    name=name, namespace=K8S_NAMESPACE
+                )
                 configmap = api.read_namespaced_config_map(
                     name=cls._NAME_CM.format(name), namespace=K8S_NAMESPACE
                 )
