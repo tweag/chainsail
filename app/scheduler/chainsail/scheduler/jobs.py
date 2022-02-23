@@ -183,12 +183,6 @@ class Job:
     def scale_to(self, n_replicas: int):
         if n_replicas < 0:
             raise ValueError("Can only scale to >= 0 replicas")
-        # FIXME - Debugging statement
-        logger.warning(f"Scaling job which has status {self.status}")
-        if self.status != JobStatus.RUNNING:
-            raise JobError(
-                f"Attempted to scale job ({self.id}) which is not currently running."
-            )
         requested_size = n_replicas
         current_size = len(self.nodes)
         print("current / requested size", current_size, n_replicas)
