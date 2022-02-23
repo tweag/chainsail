@@ -20,3 +20,6 @@ grpc/poetry.lock
 .terraform
 
 node_modules
+
+# Generated files
+app/client/app.yaml

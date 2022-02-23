@@ -4,7 +4,7 @@
 ###############################################################################
 
 terraform {
-  required_version = "=1.1.5"
+  required_version = ">=1.1.5"
   backend "gcs" {
     # Note: Bucket must be manually provisioned if it doesn't exist
     bucket = "chainsail-dev-terraform-state"
