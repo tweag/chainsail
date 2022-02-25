@@ -235,7 +235,9 @@ def zip_results_task(job_id):
     s3_client, container = get_storage_driver_container(scheduler_config)
     job_blob_root = get_job_blob_root(scheduler_config, job_id)
 
-    objects = s3_client.list_objects(Bucket="chainsail-samples", Prefix=job_blob_root)
+    objects = s3_client.list_objects(
+        Bucket=scheduler_config.results_bucket, Prefix=job_blob_root
+    )
     if "Contents" not in objects:
         raise JobError("No results files found in results backend.")
 
