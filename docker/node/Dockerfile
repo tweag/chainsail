@@ -13,7 +13,7 @@ WORKDIR /app
 FROM base as system-deps
 
 RUN apt-get update && \
-    apt-get install -y curl wget unzip openssh-client openssh-server wait-for-it && \
+    apt-get install -y curl wget unzip openssh-client openssh-server && \
     rm -rf /var/lib/apt/lists/*
 
 # Global SSH configurations

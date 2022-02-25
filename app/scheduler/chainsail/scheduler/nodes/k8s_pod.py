@@ -177,6 +177,40 @@ class K8sNode(Node):
         return configmap
 
     def _create_pod(self) -> V1Pod:
+        if self._is_controller:
+            return self._create_controller_pod()
+        else:
+            return self._create_worker_pod()
+
+    def _create_worker_pod(self) -> Tuple[V1Pod, V1Service]:
+        ## VOLUMES
+        job_volume = kub.client.V1Volume(
+            name="job-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm),
+        )
+        config_volume = kub.client.V1Volume(
+            name="config-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(
+                name=self._node_config.config_configmap_name,
+                default_mode=0o600,
+            ),
+        )
+        # SSH key volume
+        ssh_volume = V1Volume(
+            name="ssh-volume",
+            secret=kub.client.V1SecretVolumeSource(
+                secret_name=self._node_config.ssh_key_secret,
+                default_mode=0o600,
+                items=[
+                    V1KeyToPath(
+                        key=K8S_SSH_PUB_KEY, path=self._CM_FILE_SSHKEY, mode=0o400
+                    ),
+                    V1KeyToPath(
+                        key=K8S_SSH_PEM_KEY, path=K8S_SSH_PEM_KEY_FILE, mode=0o400
+                    ),
+                ],
+            ),
+        )
         ## CONTAINERS
         # TODO: Add something to replace `--log-driver=gcplogs` for every container
         # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
@@ -189,6 +223,11 @@ class K8sNode(Node):
         )
         # User code container
         install_script_target = os.path.join("/chainsail", self._CM_FILE_USERCODE)
+        startup_probe_usercode = kub.client.V1Probe(
+            tcp_socket=kub.client.V1TCPSocketAction(port=50052),
+            period_seconds=1,
+            failure_threshold=300,
+        )
         user_code_container = kub.client.V1Container(
             name="user-code",
             image=self._config.user_code_image,
@@ -198,6 +237,7 @@ class K8sNode(Node):
                 "/app/app/user_code_server/chainsail/user_code_server/__init__.py",
             ],
             ports=[kub.client.V1ContainerPort(container_port=50052)],
+            startup_probe=startup_probe_usercode,
             env=[
                 kub.client.V1EnvVar(
                     name="USER_PROB_URL", value=self.spec.probability_definition
@@ -229,20 +269,112 @@ class K8sNode(Node):
         container_cmd = [
             arg.format(job_id=self.representation.job.id) for arg in container_cmd
         ]
-        # this startup probe checks the state of the gRPC server
-        if self._is_controller:
-            startup_probe = kub.client.V1Probe(
-                tcp_socket=kub.client.V1TCPSocketAction(port=50051),
-                period_seconds=2,
-                failure_threshold=60,
-            )
+
         # startup probe for workers checks the state of the ssh server
-        else:
-            startup_probe = kub.client.V1Probe(
-                tcp_socket=kub.client.V1TCPSocketAction(port=26),
-                period_seconds=2,
-                failure_threshold=60,
-            )
+        startup_probe = kub.client.V1Probe(
+            tcp_socket=kub.client.V1TCPSocketAction(port=26),
+            period_seconds=2,
+            failure_threshold=60,
+        )
+        container = kub.client.V1Container(
+            name="rex",
+            image=self._config.image,
+            image_pull_policy=self._node_config.image_pull_policy,
+            startup_probe=startup_probe,
+            args=container_cmd,
+            volume_mounts=[
+                kub.client.V1VolumeMount(name="config-volume", mount_path="/chainsail"),
+                kub.client.V1VolumeMount(name="ssh-volume", mount_path="/root/.ssh"),
+                kub.client.V1VolumeMount(
+                    name="job-volume",
+                    mount_path=f"/chainsail-jobspec/{self._CM_FILE_JOBSPEC}",
+                    sub_path=self._CM_FILE_JOBSPEC,
+                ),
+            ],
+            resources=kub.client.V1ResourceRequirements(
+                requests={
+                    "cpu": self._node_config.pod_cpu,
+                    "memory": self._node_config.pod_memory,
+                }
+            ),
+        )
+        ## POD
+        pod = kub.client.V1Pod(
+            api_version="v1",
+            kind="Pod",
+            metadata=kub.client.V1ObjectMeta(
+                name=self._name, labels={"app": "rex", "type": "worker"}
+            ),
+            spec=kub.client.V1PodSpec(
+                containers=[httpstan_container, user_code_container, container],
+                volumes=[job_volume, config_volume, ssh_volume],
+            ),
+        )
+        # TODO: Expose distinct ports for controller / worker nodes
+        service = V1Service(
+            metadata=V1ObjectMeta(name=self._name),
+            spec=V1ServiceSpec(
+                selector={"node_name": self._name},
+                ports=[
+                    V1ServicePort(name="controller-grpc", port=50051),
+                    V1ServicePort(name="openmpi-oob", port=3999),
+                    V1ServicePort(name="openmpi-ssh", port=26),
+                ]
+                # Need to expose ports for each node in the network
+                + [
+                    V1ServicePort(
+                        name=f"openmpi-btl-{PORT_RANGE_MIN + i}",
+                        port=PORT_RANGE_MIN + i,
+                    )
+                    for i in range(0, self._config.max_nodes_per_job)
+                ],
+            ),
+        )
+        return pod, service
+
+    def _create_controller_pod(self) -> Tuple[V1Pod, V1Service]:
+        ## VOLUMES
+        # User code + Job spec
+        job_volume = kub.client.V1Volume(
+            name="job-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm),
+        )
+        # SSH key volume
+        ssh_volume = V1Volume(
+            name="ssh-volume",
+            secret=kub.client.V1SecretVolumeSource(
+                secret_name=self._node_config.ssh_key_secret,
+                default_mode=0o600,
+                items=[
+                    V1KeyToPath(
+                        key=K8S_SSH_PUB_KEY, path=self._CM_FILE_SSHKEY, mode=0o400
+                    ),
+                    V1KeyToPath(
+                        key=K8S_SSH_PEM_KEY, path=K8S_SSH_PEM_KEY_FILE, mode=0o400
+                    ),
+                ],
+            ),
+        )
+        config_volume = kub.client.V1Volume(
+            name="config-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(
+                name=self._node_config.config_configmap_name, default_mode=0o600
+            ),
+        )
+        ## CONTAINERS
+        # TODO: Add something to replace `--log-driver=gcplogs` for every container
+        # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
+        # Controller container
+        container_cmd = [self._config.cmd] + self._config.args
+        container_cmd = [
+            arg.format(job_id=self.representation.job.id) for arg in container_cmd
+        ]
+        # this startup probe checks the state of the gRPC server
+        startup_probe = kub.client.V1Probe(
+            tcp_socket=kub.client.V1TCPSocketAction(port=50051),
+            period_seconds=1,
+            failure_threshold=300,
+        )
         container = kub.client.V1Container(
             name="rex",
             image=self._config.image,
@@ -266,35 +398,6 @@ class K8sNode(Node):
                 }
             ),
         )
-        ## VOLUMES
-        # User code + Job spec
-        job_volume = kub.client.V1Volume(
-            name="job-volume",
-            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm),
-        )
-        # SSH key volume
-        ssh_volume = V1Volume(
-            name="ssh-volume",
-            secret=kub.client.V1SecretVolumeSource(
-                secret_name=self._node_config.ssh_key_secret,
-                default_mode=0o600,
-                items=[
-                    V1KeyToPath(
-                        key=K8S_SSH_PUB_KEY, path=self._CM_FILE_SSHKEY, mode=0o400
-                    ),
-                    V1KeyToPath(
-                        key=K8S_SSH_PEM_KEY, path=K8S_SSH_PEM_KEY_FILE, mode=0o400
-                    ),
-                ],
-            ),
-        )
-        # Config volume
-        config_volume = kub.client.V1Volume(
-            name="config-volume",
-            config_map=kub.client.V1ConfigMapVolumeSource(
-                name=self._node_config.config_configmap_name, default_mode=0o600
-            ),
-        )
         ## POD
         pod = kub.client.V1Pod(
             api_version="v1",
@@ -305,9 +408,9 @@ class K8sNode(Node):
             spec=kub.client.V1PodSpec(
                 # Note: we don't want k8s to restart this pod since chainsail handles retries internally
                 restart_policy="Never",
-                containers=[httpstan_container, user_code_container, container],
+                containers=[container],
                 volumes=[job_volume, config_volume, ssh_volume],
-                tolerations=[kub.client.V1Toleration(key="app", value="chainsail")],
+                labels={"app": "rex", "type": "controller"},
             ),
         )
         # TODO: Expose distinct ports for controller / worker nodes

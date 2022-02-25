@@ -7,32 +7,24 @@ from datetime import datetime
 
 from celery import chain
 from chainsail.common.spec import JobSpecSchema
+
+<<<<<<< HEAD
 from chainsail.scheduler.core import app, db, firebase_app, use_dev_user
-from chainsail.scheduler.db import (
-    JobViewSchema,
-    NodeViewSchema,
-    TblJobs,
-    TblNodes,
-    TblUsers,
-)
+
+=======
+from chainsail.scheduler.core import app, db, firebase_app
+
+>>>>>>> origin/main
+from chainsail.scheduler.db import (JobViewSchema, NodeViewSchema, TblJobs,
+                                    TblNodes, TblUsers)
 from chainsail.scheduler.jobs import JobStatus
-from chainsail.scheduler.tasks import (
-    get_signed_url,
-    logger,
-    scale_job_task,
-    start_job_task,
-    stop_job_task,
-    update_signed_url_task,
-    watch_job_task,
-    zip_results_task,
-)
+from chainsail.scheduler.tasks import (get_signed_url, logger, scale_job_task,
+                                       start_job_task, stop_job_task,
+                                       update_signed_url_task, watch_job_task,
+                                       zip_results_task)
 from cloudstorage.exceptions import NotFoundError
-from firebase_admin.auth import (
-    ExpiredIdTokenError,
-    InvalidIdTokenError,
-    RevokedIdTokenError,
-    verify_id_token,
-)
+from firebase_admin.auth import (ExpiredIdTokenError, InvalidIdTokenError,
+                                 RevokedIdTokenError, verify_id_token)
 from flask import abort, jsonify, request
 
 
@@ -62,28 +54,28 @@ def check_user(func):
                 ExpiredIdTokenError,
                 RevokedIdTokenError,
             ) as e:
-                return {"message": f"Unauthorized. Error: {e}"}, 401
+                return {"message": f"Invalid/Expired/Revoked account token. Logging out and in again may refresh the token. If the problem persists, please contact support@chainsail.io. Error: {e}"}, 401
             user_id = claims.get("user_id", None)
             if not user_id:
                 # empty uid
-                return {"message": "Unauthorized"}, 401
+                return {"message": "Unauthorized access: No user ID found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."}, 401
             email = claims.get("email", None)
             if not email:
                 # empty email
-                return {"message": "Unauthorized. No email found in token claim."}, 403
+                return {"message": "Unauthorized access: No email found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."}, 401
             user = TblUsers.query.filter_by(email=email).first()
             if not user:
                 # unregistered user
                 return (
                     {
-                        "message": f"User with id {user_id} and email {email} is not registered. Please contact our supporting team."
+                        "message": f"Unauthorized access. Please contact support@chainsail.io to be granted access to Chainsail. Error: User with email {email} not found in database."
                     },
                     403,
                 )
             if not user.is_allowed:
                 # user not allowed
                 return {
-                    "message": "User with id {user_id} and email {email} is not allowed to use services."
+                    "message": f"Unauthorized access. Please contact support@chainsail.io to be granted access to Chainsail. Error: User with email {email} is not allowed to use the services."
                 }, 403
         # If firebase is disabled, we assume we are in "dev" mode with a specific user and
         # do NOT check if the user exists in our internal auth table.

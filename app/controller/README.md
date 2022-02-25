@@ -40,7 +40,7 @@ The controller can be used as a stand-alone app on a single machine. To that end
 5. prepare a job configuration JSON file (an example is provided in `examples/local_run/job.json`).
 6. execute the local controller run script via
    ```bash
-   $ poetry run chainsail-controller-local --job_spec <job config file> --basename <some file system path>
+   $ poetry run chainsail-controller-local --job-spec <job config file> --basename <some file system path>
    ```
 
 , which will run the main optimization loop and a production run and write all results to the directory specified via the `--basename` argument.
