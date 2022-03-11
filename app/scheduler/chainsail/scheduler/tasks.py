@@ -78,10 +78,16 @@ def check_job_task(job_id):
     job = Job.from_representation(job_rep, scheduler_config)
     try:
         job.check()
-        logger.info(f"Successfully checked whether probability distribution for job #{job_id} can be evaluated." , extra={"job_id": job_id})
+        logger.info(
+            f"Successfully checked whether probability distribution for job #{job_id} can be evaluated.",
+            extra={"job_id": job_id},
+        )
     except JobError as e:
         job.status = JobStatus.FAILED
-        logger.error(f"Probability distribution for job #{job_id} cannot be evaluated.", extra={"job_id": job_id})
+        logger.error(
+            f"Probability distribution for job #{job_id} cannot be evaluated.",
+            extra={"job_id": job_id},
+        )
         raise e
     else:
         job.status = JobStatus.INITIALIZED
