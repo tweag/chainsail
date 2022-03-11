@@ -24,7 +24,7 @@ docker create --name check_job{job_id} \
     -e "NO_SERVER=1" \
     -v /chainsail \
     {user_code_image} && \
-docker cp {install_script_path} jobcheck:/chainsail/install_job_deps.sh && \
+docker cp {install_script_path} check_job{job_id}:/chainsail/install_job_deps.sh && \
 docker start check_job{job_id} && \
 docker stop check_job{job_id} && \
 docker rm check_job{job_id}
