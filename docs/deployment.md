@@ -156,6 +156,15 @@ To upgrade an already running chainsail cluster to a newer version of the chart.
 helm upgrade -f helm/values-dev.yaml chainsail ./helm
 ```
 
+If using the `latest` tag for images in the helm chart, you will also need to restart the services so that
+the latest image is pulled:
+
+```console
+kubectl rollout restart deployment scheduler-worker
+kubectl rollout restart deployment scheduler
+kubectl rollout restart deployment mcmc-stats-server
+```
+
 ### Allowing / disallowing application users
 
 The scheduler pod supports adding / removing user email addresses from the allowed users whitelist.
