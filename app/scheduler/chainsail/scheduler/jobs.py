@@ -110,7 +110,7 @@ class Job:
             logger.info("Check command stderr:", extra={"job_id": self.id})
             for stderr_line in command_result.stderr.decode("utf-8").split("\n"):
                 logger.info("  > %s", stderr_line, extra={"job_id": self.id})
-            if command_result.returncode:
+            if command_result.returncode != 0:
                 raise JobError("Check command failed")
 
         self.status = JobStatus.INITIALIZED
