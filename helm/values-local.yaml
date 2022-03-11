@@ -17,7 +17,7 @@ tolerations:
     value: 'true'
     effect: 'NoSchedule'
 
-imageHubNamespace: 'eu.gcr.io/resaas-simeon-dev'
+imageHubNamespace: ''
 imageTag: 'latest'
 
 ##############################################################################
