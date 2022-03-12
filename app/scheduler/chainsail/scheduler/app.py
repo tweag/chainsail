@@ -123,6 +123,24 @@ def get_zip_chain(job_id):
     return chain(zip_results_task.si(job_id), update_signed_url_task.si(job_id))
 
 
+def validate_uploaded_files(flask_file_objs):
+    # No use using logger here as the user won't be able to see it (no user ID).
+    # Include user id in error message to be able to associate this with a user.
+    # No check whether the single file uploaded is a valid zip file, as this is
+    # being done on the frontend side.
+    if len(flask_file_objs) == 0:
+        raise FileNotFoundError("No file uploaded by user with id {user_id}")
+    elif len(flask_file_objs) > 1:
+        raise ValueError("More than one file uploaded by user with id {user_id}")
+
+
+def save_uploaded_user_prob(flask_file_obj, user_id):
+    storage_driver, container = get_storage_driver_container()
+    blob_name = os.path.join(USER_PROB_BLOB_ROOT, f"{user_id}_{shortuuid.uuid()}.zip")
+    storage_driver.upload_blob(container, flask_file_obj, blob_name=blob_name)
+    return blob_name
+
+
 @app.route("/job/<job_id>", methods=["GET"])
 @check_user
 def get_job(job_id, user_id):

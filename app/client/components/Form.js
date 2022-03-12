@@ -48,4 +48,42 @@ const FormField = ({
   </FlexRow>
 );
 
-export { FormField };
+const FileFormField = ({
+  disabled,
+  label,
+  labelIconClassName,
+  inputName,
+  placeholder,
+  setActiveField,
+  className,
+  width,
+  value,
+  onChange,
+  optional,
+}) => (
+  <FlexRow className={`h-10 text-xs md:text-base ${width ? width : 'w-full'} ${className}`}>
+    <label
+      className="h-full p-5 text-white rounded-l-lg whitespace-nowrap min-w-min bg-purple-700"
+      onClick={() => setActiveField(inputName)}
+    >
+      <FlexCenter className="w-full h-full">
+        {label}
+        {optional ? '' : ' *'}
+        {labelIconClassName && <div className={`ml-2 ${labelIconClassName}`}></div>}
+      </FlexCenter>
+    </label>
+
+    <input
+      type="file"
+      name={inputName}
+      accept=".zip"
+      class="form-control block px-3 py-1.5 text-base font-normal text-white bg-clip-padding rounded transition ease-in-out m-0 focus:border-blue-600 focus:outline-none"
+      onFocus={() => setActiveField(inputName)}
+      onBlur={() => setActiveField('')}
+      disabled={disabled}
+      onChange={onChange}
+    />
+  </FlexRow>
+);
+
+export { FormField, FileFormField };

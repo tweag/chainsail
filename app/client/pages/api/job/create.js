@@ -4,5 +4,5 @@ import handleRequestResponse from '../../../utils/handleRequestResponse';
 export default async (req, res) => {
   const url = JOB_CREATION_URL;
   const method = 'POST';
-  await handleRequestResponse(req, res, url, method);
+  await handleRequestResponse(req, res, url, method, 'multipart/form-data');
 };
