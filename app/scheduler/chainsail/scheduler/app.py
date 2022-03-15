@@ -3,10 +3,10 @@ Scheduler REST API and endpoint specifications
 """
 import functools
 import logging
-import os
 from datetime import datetime
+import json
+import os
 
-from celery import chain
 from chainsail.common.custom_logging import configure_logging
 from chainsail.common.spec import JobSpecSchema
 from chainsail.scheduler.config import load_scheduler_config
@@ -20,28 +20,39 @@ from chainsail.scheduler.db import (
 )
 from chainsail.scheduler.jobs import JobStatus
 from chainsail.scheduler.tasks import (
-    get_signed_url,
-    logger,
     scale_job_task,
     start_job_task,
     stop_job_task,
-    update_signed_url_task,
     watch_job_task,
     zip_results_task,
+    update_signed_url_task,
 )
+from chainsail.scheduler.utils import (
+    get_signed_url,
+    get_s3_client_and_container,
+)
+
+
 from cloudstorage.exceptions import NotFoundError
+from celery import chain
+from flask import abort, jsonify, request
 from firebase_admin.auth import (
     ExpiredIdTokenError,
     InvalidIdTokenError,
     RevokedIdTokenError,
     verify_id_token,
 )
-from flask import abort, jsonify, request
+import shortuuid
+
 
 logger = logging.getLogger("chainsail.scheduler")
 
 scheduler_config = load_scheduler_config()
 configure_logging("chainsail.scheduler", "INFO", scheduler_config.remote_logging_config_path)
+
+SCHEDULER_CONFIG = load_scheduler_config()
+USER_PROB_BLOB_ROOT = "user_probs/"
+USER_PROB_URL_EXPIRY_TIME = 31540000  # in seconds; approximately a year
 
 
 def _is_dev_mode():
@@ -135,9 +146,13 @@ def validate_uploaded_files(flask_file_objs):
 
 
 def save_uploaded_user_prob(flask_file_obj, user_id):
-    storage_driver, container = get_storage_driver_container()
+    """Saves a werkzeug FileStorage object to a blob with a random name
+    that contains the user ID
+    """
+    s3, container = get_s3_client_and_container()
     blob_name = os.path.join(USER_PROB_BLOB_ROOT, f"{user_id}_{shortuuid.uuid()}.zip")
-    storage_driver.upload_blob(container, flask_file_obj, blob_name=blob_name)
+    flask_file_obj.save('/tmp/gttre.zip')
+    s3.upload_fileobj(flask_file_obj, container, blob_name)
     return blob_name
 
 
@@ -153,9 +168,17 @@ def get_job(job_id, user_id):
 @check_user
 def create_job(user_id):
     """Create a job"""
+    uploaded_files = list(request.files.values())
+    validate_uploaded_files(uploaded_files)
+    user_prob_blob_name = save_uploaded_user_prob(uploaded_files[0], user_id)
+    signed_url = get_signed_url(user_prob_blob_name, USER_PROB_URL_EXPIRY_TIME)
+    form_data = {
+        "probability_definition": signed_url,
+        **dict(((k, json.loads(v)) for k, v in request.form.items())),
+    }
     # Validate the provided job spec
     schema = JobSpecSchema()
-    job_spec = schema.load(request.json)
+    job_spec = schema.load(form_data)
     job = TblJobs(
         user_id=user_id,
         status=JobStatus.INITIALIZED.value,
