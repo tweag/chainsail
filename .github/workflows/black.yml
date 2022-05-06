@@ -1,12 +1,12 @@
 name: Lint
 
 on:
-    pull_request:
-        branches:
-            - main
-    push:
-        branches:
-            - main
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
 
 jobs:
   lint:
@@ -16,5 +16,5 @@ jobs:
       - uses: actions/setup-python@v2
       - name: 'Python Black check'
         run: |
-          pip install black==20.8b1 && \
+          pip install black==22.3.0 && \
           black --config pyproject.toml --check --diff .
