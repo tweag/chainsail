@@ -4,8 +4,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from chainsail.common.spec import JobSpec, JobSpecSchema
-from chainsail.scheduler.config import (GeneralNodeConfig, SchedulerConfig,
-                                        VMNodeConfig)
+from chainsail.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from chainsail.scheduler.nodes.base import NodeStatus, NodeType
 from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
 
@@ -138,7 +137,7 @@ def mock_config():
         results_access_key_id="id",
         results_secret_key="secret",
         results_bucket="results",
-        results_basename="results_base"
+        results_basename="results_base",
     )
     return config
 
@@ -330,8 +329,6 @@ def test_job_from_representation_preserves_status(mock_config):
         status=JobStatus.STOPPED,
     )
 
-    job = Job.from_representation(
-        rep, mock_config, node_registry={"mock": mk_mock_node_cls()}
-    )
+    job = Job.from_representation(rep, mock_config, node_registry={"mock": mk_mock_node_cls()})
 
     assert job.status == JobStatus.STOPPED

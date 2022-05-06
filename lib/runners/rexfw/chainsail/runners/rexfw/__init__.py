@@ -36,12 +36,8 @@ class MPIRERunner(AbstractRERunner):
         run_id = runner_config.get("run_id", self.DEFAULT_RUN_ID)
         metrics_host = runner_config.get("metrics_host", self.DEFAULT_METRICS_HOST)
         metrics_port = runner_config.get("metrics_port", self.DEFAULT_METRICS_PORT)
-        user_code_host = runner_config.get(
-            "user_code_host", self.DEFAULT_USER_CODE_HOST
-        )
-        user_code_port = runner_config.get(
-            "user_code_port", self.DEFAULT_USER_CODE_PORT
-        )
+        user_code_host = runner_config.get("user_code_host", self.DEFAULT_USER_CODE_HOST)
+        user_code_port = runner_config.get("user_code_port", self.DEFAULT_USER_CODE_PORT)
 
         model_config = storage.load_config()
         n_replicas = model_config["general"]["num_replicas"]
@@ -80,9 +76,7 @@ class MPIRERunner(AbstractRERunner):
         logger.debug(f"Calling mpirun with: {cmd}")
         # run in subprocess, but capture both stdout and stderr and
         # redirect them to the parent's process stdout
-        process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # https://stackoverflow.com/a/53830668/1656472
         while True:

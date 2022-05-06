@@ -12,10 +12,10 @@ from chainsail.common.util import log_sum_exp
 sigmas = np.arange(1, 5, 0.1)
 samples = np.array([np.random.normal(0, s, size=500) for s in sigmas])
 # calculate the "energies"
-energies = 0.5 * samples ** 2
+energies = 0.5 * samples**2
 # morph normal distributions into samples of harmonic oscillator at different
 # inverse temperatures beta = 1 / sigma ** 2
-schedule = {"beta": 1.0 / sigmas ** 2}
+schedule = {"beta": 1.0 / sigmas**2}
 
 
 class testWHAM(unittest.TestCase):

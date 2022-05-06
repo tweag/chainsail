@@ -96,9 +96,7 @@ class Job:
             created, logs = self.control_node.create()
             self.sync_representation()
             if not created:
-                raise JobError(
-                    f"Failed to start node for job {id}. Deployment logs: \n" + logs
-                )
+                raise JobError(f"Failed to start node for job {id}. Deployment logs: \n" + logs)
         except Exception as e:
             # Cleanup created nodes on failure
             for n in self.nodes:
@@ -142,9 +140,7 @@ class Job:
     def _add_node(self, is_controller=False) -> Node:
         """Add a new node to a job"""
         if self.status in (JobStatus.STOPPED, JobStatus.SUCCESS, JobStatus.FAILED):
-            raise JobError(
-                f"Attempted to add a node to a job ({self.id}) which has exited."
-            )
+            raise JobError(f"Attempted to add a node to a job ({self.id}) which has exited.")
         new_node = self._node_cls.from_config(
             f"node-{shortuuid.uuid()}".lower(),
             self.config,
@@ -197,9 +193,7 @@ class Job:
                 started, logs = new_node.create()
                 if not started:
                     self.sync_representation()
-                    raise JobError(
-                        f"Failed to start new node while scaling up. Logs: \n {logs}"
-                    )
+                    raise JobError(f"Failed to start new node while scaling up. Logs: \n {logs}")
         else:
             # Scale down
             logger.info(f"Scaling down from {current_size} to {n_replicas} replicas...")
@@ -278,9 +272,7 @@ class Job:
                     if not control_node:
                         control_node = node
                     else:
-                        raise JobError(
-                            "Job representation has more than one control node."
-                        )
+                        raise JobError("Job representation has more than one control node.")
         if nodes and not control_node:
             raise JobError("Job representation had nodes but no control node.")
 

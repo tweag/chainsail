@@ -133,21 +133,15 @@ class testSimulationStorage(unittest.TestCase):
         self._write_fake_all_quantities("energies", jagged=True)
         energies = self._storage.load_all_energies()
         expected = np.array([[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11]], dtype=object)
-        self.assertTrue(
-            np.all([np.all(ref == out) for ref, out in zip(expected, energies)])
-        )
+        self.assertTrue(np.all([np.all(ref == out) for ref, out in zip(expected, energies)]))
 
         energies = self._storage.load_all_energies(from_sample=5)
         expected = np.array([[4, 5, 6], [10, 11]], dtype=object)
-        self.assertTrue(
-            np.all([np.all(ref == out) for ref, out in zip(expected, energies)])
-        )
+        self.assertTrue(np.all([np.all(ref == out) for ref, out in zip(expected, energies)]))
 
         energies = self._storage.load_all_energies(from_sample=5, step=2)
         expected = np.array([[4, 6], [10]], dtype=object)
-        self.assertTrue(
-            np.all([np.all(ref == out) for ref, out in zip(expected, energies)])
-        )
+        self.assertTrue(np.all([np.all(ref == out) for ref, out in zip(expected, energies)]))
 
     def testLoadAllSamples(self):
         self._write_fake_all_quantities("samples")

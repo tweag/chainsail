@@ -104,7 +104,7 @@ class BasicHMCSampler(AbstractSampler):
         )
 
     def _total_energy(self, q, p):
-        return -self._pdf.log_prob(q) + 0.5 * np.sum(p ** 2)
+        return -self._pdf.log_prob(q) + 0.5 * np.sum(p**2)
 
     def sample(self):
         """Draws a single sample."""
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     class HO:
         def log_prob(self, x):
-            return -0.5 * np.sum(x ** 2)
+            return -0.5 * np.sum(x**2)
 
         def log_prob_gradient(self, x):
             return -x

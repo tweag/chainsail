@@ -69,11 +69,7 @@ def start_job_task(job_id):
     # to avoid the job being started multiple times. If the row is locked then
     # we can just ditch this start request.
     try:
-        job_rep = (
-            TblJobs.query.with_for_update(of=TblJobs, nowait=True)
-            .filter_by(id=job_id)
-            .one()
-        )
+        job_rep = TblJobs.query.with_for_update(of=TblJobs, nowait=True).filter_by(id=job_id).one()
     except OperationalError:
         # TODO: Log that the row could not be queried
         return
@@ -101,9 +97,7 @@ def stop_job_task(job_id, exit_status=None):
         JobError: If the job failed to stop
     """
     # Load Job object from database entry
-    job = Job.from_representation(
-        TblJobs.query.filter_by(id=job_id).one(), scheduler_config
-    )
+    job = Job.from_representation(TblJobs.query.filter_by(id=job_id).one(), scheduler_config)
     if exit_status:
         exit_status = JobStatus(exit_status)
     try:
@@ -173,9 +167,7 @@ def scale_job_task(job_id, n_replicas) -> bool:
     job = Job.from_representation(job_rep, scheduler_config)
     try:
         job.scale_to(n_replicas)
-        logger.info(
-            f"Scaled job #{job_id} to {n_replicas} replicas.", extra={"job_id": job_id}
-        )
+        logger.info(f"Scaled job #{job_id} to {n_replicas} replicas.", extra={"job_id": job_id})
     except JobError as e:
         logger.error(f"Failed to scale #{job_id}.", extra={"job_id": job_id})
         logger.exception(e)
@@ -187,9 +179,7 @@ def scale_job_task(job_id, n_replicas) -> bool:
 
 
 def get_signed_url(job_id):
-    logger.info(
-        f"Getting signed URL for results of job #{job_id}...", extra={"job_id": job_id}
-    )
+    logger.info(f"Getting signed URL for results of job #{job_id}...", extra={"job_id": job_id})
     # FIXME: new implementation
     s3_client, container = get_storage_driver_container(scheduler_config)
     job_blob_root = get_job_blob_root(scheduler_config, job_id)
@@ -201,9 +191,7 @@ def get_signed_url(job_id):
         },
         ExpiresIn=scheduler_config.results_url_expiry_time,
     )
-    logger.info(
-        f"Obtained signed URL for results of job #{job_id}.", extra={"job_id": job_id}
-    )
+    logger.info(f"Obtained signed URL for results of job #{job_id}.", extra={"job_id": job_id})
     # TODO: Remove debugging statement here
     logger.warn(response)
     return response
@@ -230,9 +218,7 @@ def zip_results_task(job_id):
     s3_client, container = get_storage_driver_container(scheduler_config)
     job_blob_root = get_job_blob_root(scheduler_config, job_id)
 
-    objects = s3_client.list_objects(
-        Bucket=scheduler_config.results_bucket, Prefix=job_blob_root
-    )
+    objects = s3_client.list_objects(Bucket=scheduler_config.results_bucket, Prefix=job_blob_root)
     if "Contents" not in objects:
         raise JobError("No results files found in results backend.")
 

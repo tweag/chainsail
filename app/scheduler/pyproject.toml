@@ -12,7 +12,7 @@ scheduler-remove-user = 'chainsail.scheduler.db_util:remove_user'
 [tool.poetry.dependencies]
 python = "^3.8"
 chainsail-common = { path = "../../lib/common", develop = true }
-Flask = "^1.1.2"
+Flask = "^1.1.4"
 apache-libcloud = "^3.3.0"
 marshmallow = "^3.10.0"
 SQLAlchemy = "^1.3.22"
@@ -32,6 +32,8 @@ uWSGI = "^2.0.19"
 cloudstorage = {extras = ["google"], version = "^0.11.0"}
 kubernetes = "^18.20.0"
 boto3 = "^1.20.26"
+# # Note: Need to place an upper bound here due to a bug in flask
+# MarkupSafe = "<=2.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

@@ -41,17 +41,12 @@ from flask import abort, jsonify, request
 logger = logging.getLogger("chainsail.scheduler")
 
 scheduler_config = load_scheduler_config()
-configure_logging(
-    "chainsail.scheduler", "INFO", scheduler_config.remote_logging_config_path
-)
+configure_logging("chainsail.scheduler", "INFO", scheduler_config.remote_logging_config_path)
 
 
 def _is_dev_mode():
     try:
-        is_dev = (
-            os.environ["PYTHON_ENV"] == "development"
-            or os.environ["PYTHON_ENV"] == "dev"
-        )
+        is_dev = os.environ["PYTHON_ENV"] == "development" or os.environ["PYTHON_ENV"] == "dev"
         return is_dev
     except:
         return False

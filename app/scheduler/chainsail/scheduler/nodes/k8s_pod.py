@@ -117,9 +117,7 @@ class K8sNode(Node):
         self.api = node_config.create_node_driver()
 
     def _user_install_script(self) -> str:
-        install_commands = "\n".join(
-            [d.installation_script for d in self.spec.dependencies]
-        )
+        install_commands = "\n".join([d.installation_script for d in self.spec.dependencies])
         script = DEP_INSTALL_TEMPLATE.format(dep_install_commands=install_commands)
         return script
 
@@ -197,12 +195,8 @@ class K8sNode(Node):
             ],
             ports=[kub.client.V1ContainerPort(container_port=50052)],
             env=[
-                kub.client.V1EnvVar(
-                    name="USER_PROB_URL", value=self.spec.probability_definition
-                ),
-                kub.client.V1EnvVar(
-                    name="USER_INSTALL_SCRIPT", value=install_script_target
-                ),
+                kub.client.V1EnvVar(name="USER_PROB_URL", value=self.spec.probability_definition),
+                kub.client.V1EnvVar(name="USER_INSTALL_SCRIPT", value=install_script_target),
                 kub.client.V1EnvVar(name="USER_CODE_SERVER_PORT", value="50052"),
                 kub.client.V1EnvVar(
                     name="REMOTE_LOGGING_CONFIG_PATH",
@@ -224,9 +218,7 @@ class K8sNode(Node):
         )
         # Worker container
         container_cmd = [self._config.cmd] + self._config.args
-        container_cmd = [
-            arg.format(job_id=self.representation.job.id) for arg in container_cmd
-        ]
+        container_cmd = [arg.format(job_id=self.representation.job.id) for arg in container_cmd]
         # this startup probe checks the state of the gRPC server
         if self._is_controller:
             startup_probe = kub.client.V1Probe(
@@ -277,12 +269,8 @@ class K8sNode(Node):
                 secret_name=self._node_config.ssh_key_secret,
                 default_mode=0o600,
                 items=[
-                    V1KeyToPath(
-                        key=K8S_SSH_PUB_KEY, path=self._CM_FILE_SSHKEY, mode=0o400
-                    ),
-                    V1KeyToPath(
-                        key=K8S_SSH_PEM_KEY, path=K8S_SSH_PEM_KEY_FILE, mode=0o400
-                    ),
+                    V1KeyToPath(key=K8S_SSH_PUB_KEY, path=self._CM_FILE_SSHKEY, mode=0o400),
+                    V1KeyToPath(key=K8S_SSH_PEM_KEY, path=K8S_SSH_PEM_KEY_FILE, mode=0o400),
                 ],
             ),
         )
@@ -340,15 +328,11 @@ class K8sNode(Node):
         self._pod, self._service = self._create_pod()
         try:
             # Configmap
-            self.api.create_namespaced_config_map(
-                body=self._configmap, namespace=K8S_NAMESPACE
-            )
+            self.api.create_namespaced_config_map(body=self._configmap, namespace=K8S_NAMESPACE)
             # Pod
             self.api.create_namespaced_pod(body=self._pod, namespace=K8S_NAMESPACE)
             # Service
-            self.api.create_namespaced_service(
-                body=self._service, namespace=K8S_NAMESPACE
-            )
+            self.api.create_namespaced_service(body=self._service, namespace=K8S_NAMESPACE)
         except ApiException as e:
             logger.exception(e)
             self._status = NodeStatus.FAILED
@@ -394,14 +378,10 @@ class K8sNode(Node):
                 self.api.delete_namespaced_pod(name=self._name, namespace=K8S_NAMESPACE)
                 self._pod = None
             if self._configmap:
-                self.api.delete_namespaced_config_map(
-                    name=self._name_cm, namespace=K8S_NAMESPACE
-                )
+                self.api.delete_namespaced_config_map(name=self._name_cm, namespace=K8S_NAMESPACE)
                 self._configmap = None
             if self._service:
-                self.api.delete_namespaced_service(
-                    name=self._name, namespace=K8S_NAMESPACE
-                )
+                self.api.delete_namespaced_service(name=self._name, namespace=K8S_NAMESPACE)
             self._status = NodeStatus.EXITED
             deleted = True
         except ApiException as e:
@@ -445,9 +425,7 @@ class K8sNode(Node):
             self._address = service_fqdn(pod.metadata.name)
         except ApiException as e:
             logger.warning(
-                f"Unable to get pod's address. "
-                f"Pod name: {self._name} "
-                f"Exception: {e}"
+                f"Unable to get pod's address. " f"Pod name: {self._name} " f"Exception: {e}"
             )
 
     @property
@@ -511,9 +489,7 @@ class K8sNode(Node):
                 api = node_config.create_node_driver()
                 name = node_rep.name
                 pod = api.read_namespaced_pod(name=name, namespace=K8S_NAMESPACE)
-                service = api.read_namespaced_service(
-                    name=name, namespace=K8S_NAMESPACE
-                )
+                service = api.read_namespaced_service(name=name, namespace=K8S_NAMESPACE)
                 configmap = api.read_namespaced_config_map(
                     name=cls._NAME_CM.format(name), namespace=K8S_NAMESPACE
                 )
