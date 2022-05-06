@@ -103,7 +103,6 @@ class Job:
             # Cleanup created nodes on failure
             for n in self.nodes:
                 n.delete()
-            logger.error("[Dorran!] FAILING JOB in job.start() method")
             self.status = JobStatus.FAILED
             self.sync_representation()
             raise e
@@ -181,14 +180,16 @@ class Job:
         self.nodes.remove(node)
 
     def scale_to(self, n_replicas: int):
+        logger.info("Scaling initiated")
         if n_replicas < 0:
             raise ValueError("Can only scale to >= 0 replicas")
         requested_size = n_replicas
         current_size = len(self.nodes)
-        print("current / requested size", current_size, n_replicas)
         if requested_size == current_size:
+            logger.info(f"Already have the requested number of replicas. Returning.")
             return None
         elif requested_size > current_size:
+            logger.info(f"Scaling up from {current_size} to {n_replicas} replicas...")
             # Scale up
             to_add = requested_size - current_size
             for _ in range(to_add):
@@ -201,6 +202,7 @@ class Job:
                     )
         else:
             # Scale down
+            logger.info(f"Scaling down from {current_size} to {n_replicas} replicas...")
             to_remove = current_size - requested_size
             for node in self.nodes[-to_remove:]:
                 self._remove_node(node)
@@ -213,6 +215,7 @@ class Job:
         # Something is still off with the node representation.
         # self.control_node.listening_ports[0]
         port = 50051
+        logger.info("Initiating connection with control node")
         with grpc.insecure_channel(f"{ip}:{port}") as channel:
             stub = HealthStub(channel)
             while True:
@@ -221,11 +224,13 @@ class Job:
                     break
                 else:
                     time.sleep(1)
+        logger.info("Control node connection terminated.")
         if response.status == HealthCheckResponse.SUCCESS:
+            logger.info("Control node reported final status as SUCCESS")
             self.status = JobStatus.SUCCESS
             return True
         else:
-            logger.error("[Dorran!] FAILING JOB in watch() method")
+            logger.info("Control node reported final status as FAILED")
             self.status = JobStatus.FAILED
             return False
 

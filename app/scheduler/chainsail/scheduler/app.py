@@ -2,30 +2,48 @@
 Scheduler REST API and endpoint specifications
 """
 import functools
+import logging
 import os
 from datetime import datetime
 
 from celery import chain
+from chainsail.common.custom_logging import configure_logging
 from chainsail.common.spec import JobSpecSchema
-
-<<<<<<< HEAD
+from chainsail.scheduler.config import load_scheduler_config
 from chainsail.scheduler.core import app, db, firebase_app, use_dev_user
-
-=======
-from chainsail.scheduler.core import app, db, firebase_app
-
->>>>>>> origin/main
-from chainsail.scheduler.db import (JobViewSchema, NodeViewSchema, TblJobs,
-                                    TblNodes, TblUsers)
+from chainsail.scheduler.db import (
+    JobViewSchema,
+    NodeViewSchema,
+    TblJobs,
+    TblNodes,
+    TblUsers,
+)
 from chainsail.scheduler.jobs import JobStatus
-from chainsail.scheduler.tasks import (get_signed_url, logger, scale_job_task,
-                                       start_job_task, stop_job_task,
-                                       update_signed_url_task, watch_job_task,
-                                       zip_results_task)
+from chainsail.scheduler.tasks import (
+    get_signed_url,
+    logger,
+    scale_job_task,
+    start_job_task,
+    stop_job_task,
+    update_signed_url_task,
+    watch_job_task,
+    zip_results_task,
+)
 from cloudstorage.exceptions import NotFoundError
-from firebase_admin.auth import (ExpiredIdTokenError, InvalidIdTokenError,
-                                 RevokedIdTokenError, verify_id_token)
+from firebase_admin.auth import (
+    ExpiredIdTokenError,
+    InvalidIdTokenError,
+    RevokedIdTokenError,
+    verify_id_token,
+)
 from flask import abort, jsonify, request
+
+logger = logging.getLogger("chainsail.scheduler")
+
+scheduler_config = load_scheduler_config()
+configure_logging(
+    "chainsail.scheduler", "INFO", scheduler_config.remote_logging_config_path
+)
 
 
 def _is_dev_mode():
@@ -54,15 +72,21 @@ def check_user(func):
                 ExpiredIdTokenError,
                 RevokedIdTokenError,
             ) as e:
-                return {"message": f"Invalid/Expired/Revoked account token. Logging out and in again may refresh the token. If the problem persists, please contact support@chainsail.io. Error: {e}"}, 401
+                return {
+                    "message": f"Invalid/Expired/Revoked account token. Logging out and in again may refresh the token. If the problem persists, please contact support@chainsail.io. Error: {e}"
+                }, 401
             user_id = claims.get("user_id", None)
             if not user_id:
                 # empty uid
-                return {"message": "Unauthorized access: No user ID found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."}, 401
+                return {
+                    "message": "Unauthorized access: No user ID found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."
+                }, 401
             email = claims.get("email", None)
             if not email:
                 # empty email
-                return {"message": "Unauthorized access: No email found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."}, 401
+                return {
+                    "message": "Unauthorized access: No email found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."
+                }, 401
             user = TblUsers.query.filter_by(email=email).first()
             if not user:
                 # unregistered user
