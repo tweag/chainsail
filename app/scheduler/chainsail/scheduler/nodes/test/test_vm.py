@@ -36,6 +36,11 @@ def mock_scheduler_config():
         node_config=node_config,
         results_url_expiry_time=42,
         remote_logging_config_path=None,
+        results_endpoint_url="foo",
+        results_access_key_id="id",
+        results_secret_key="secret",
+        results_bucket="results",
+        results_basename="results_base",
     )
     return scheduler_config
 
