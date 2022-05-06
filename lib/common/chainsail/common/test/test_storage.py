@@ -1,12 +1,15 @@
 import os
 import unittest
-from unittest.mock import patch
-from pickle import load, dump
+from pickle import dump, load
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import numpy as np
-
-from chainsail.common.storage import SimulationStorage, pickle_to_stream, LocalStorageBackend
+from chainsail.common.storage import (
+    LocalStorageBackend,
+    SimulationStorage,
+    pickle_to_stream,
+)
 
 obj = ["a", "list", 42]
 
@@ -20,7 +23,6 @@ CLOUD_STORAGE_CONFIG = {
             "libcloud_provider": "S3",
             "container_name": "foobar",
             "driver_kwargs": {"key": "xxxxxxxxxx"},
-            "storage_key_path": "/dev/null",
         },
     },
 }
@@ -67,7 +69,8 @@ class testSimulationStorage(unittest.TestCase):
             "re": {"dump_interval": 5},
         }
         patcher = patch(
-            "chainsail.common.storage.SimulationStorage.load_config", return_value=mock_config
+            "chainsail.common.storage.SimulationStorage.load_config",
+            return_value=mock_config,
         )
         patcher.start()
         self.addCleanup(patcher, patcher.stop)
@@ -130,15 +133,21 @@ class testSimulationStorage(unittest.TestCase):
         self._write_fake_all_quantities("energies", jagged=True)
         energies = self._storage.load_all_energies()
         expected = np.array([[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11]], dtype=object)
-        self.assertTrue(np.all([np.all(ref == out) for ref, out in zip(expected, energies)]))
+        self.assertTrue(
+            np.all([np.all(ref == out) for ref, out in zip(expected, energies)])
+        )
 
         energies = self._storage.load_all_energies(from_sample=5)
         expected = np.array([[4, 5, 6], [10, 11]], dtype=object)
-        self.assertTrue(np.all([np.all(ref == out) for ref, out in zip(expected, energies)]))
+        self.assertTrue(
+            np.all([np.all(ref == out) for ref, out in zip(expected, energies)])
+        )
 
         energies = self._storage.load_all_energies(from_sample=5, step=2)
         expected = np.array([[4, 6], [10]], dtype=object)
-        self.assertTrue(np.all([np.all(ref == out) for ref, out in zip(expected, energies)]))
+        self.assertTrue(
+            np.all([np.all(ref == out) for ref, out in zip(expected, energies)])
+        )
 
     def testLoadAllSamples(self):
         self._write_fake_all_quantities("samples")
