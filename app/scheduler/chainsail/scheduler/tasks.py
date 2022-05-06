@@ -11,6 +11,7 @@ from tempfile import NamedTemporaryFile
 import boto3
 import yaml
 from botocore.exceptions import ClientError
+from celery.utils.log import get_task_logger
 from chainsail.common.configs import ControllerConfigSchema
 from chainsail.common.custom_logging import configure_logging
 from chainsail.scheduler.config import SchedulerConfig, load_scheduler_config
@@ -22,12 +23,11 @@ from cloudstorage.drivers.google import GoogleStorageDriver
 from sqlalchemy.exc import OperationalError
 
 RESULTS_ARCHIVE_FILENAME = "results.zip"
-logger = logging.getLogger("chainsail.scheduler")
 
+logger_name = "chainsail.scheduler.tasks"
+logger = get_task_logger(logger_name)
 scheduler_config = load_scheduler_config()
-configure_logging(
-    "chainsail.scheduler", "DEBUG", scheduler_config.remote_logging_config_path
-)
+configure_logging(logger_name, "DEBUG", scheduler_config.remote_logging_config_path)
 
 # FIXME: Results retrieval logic and storage backend logic should be homogenized
 
@@ -82,7 +82,6 @@ def start_job_task(job_id):
         job.start()
         job.representation.started_at = datetime.utcnow()
         logger.info(f"Started job #{job_id}.", extra={"job_id": job_id})
-        logger.error(f"[Dorran!!] job had control node: {job.control_node}")
     except JobError as e:
         db.session.commit()
         logger.error(f"Failed to start job #{job_id}.", extra={"job_id": job_id})
@@ -121,7 +120,7 @@ def stop_job_task(job_id, exit_status=None):
         db.session.commit()
 
 
-@celery.task(autoretry_for=(Exception,), max_retries=3, retry_backoff=2)
+@celery.task(autoretry_for=(Exception,), max_retries=5, retry_backoff=2)
 def watch_job_task(job_id):
     """Watches a running job until it completes and updates its status in the database
 
@@ -131,12 +130,9 @@ def watch_job_task(job_id):
     Raises:
         JobError: If the job failed to start
     """
-    # Load Job object from database entry and lock its row using FOR UPDATE
-    # to avoid the job being started multiple times. If the row is locked then
-    # we can just ditch this start request.
+    logger.info(f"Watching job {job_id}")
     job_rep = TblJobs.query.filter_by(id=job_id).one()
     job = Job.from_representation(job_rep, scheduler_config)
-    logger.error(f"Job has control node: {job.control_node}")
     try:
         job.watch()
         job.sync_representation()
@@ -145,7 +141,6 @@ def watch_job_task(job_id):
     except Exception as e:
         logger.exception(e)
         # Flag job as failed
-        logger.error("[Dorran!] FAILING JOB in watch job task")
         job.status = JobStatus.FAILED
         job.sync_representation()
         job.representation.finished_at = datetime.utcnow()
@@ -167,14 +162,13 @@ def scale_job_task(job_id, n_replicas) -> bool:
         JobError: If the job failed to be scaled
     """
     try:
-        job_rep = (
-            TblJobs.query.with_for_update(of=TblJobs, nowait=True)
-            .filter_by(id=job_id)
-            .one()
-        )
+        logger.info(f"Attempting to aquire lock for job {job_id}")
+        job_rep = TblJobs.query.filter_by(id=job_id).one()
     except OperationalError:
         # Another process is already scaling this job
+        logger.error(f"Failed to aquire lock for job {job_id} in scale_job_task")
         return False
+    logger.info(f"Successfully aquired lock for job {job_id}")
     # Load Job object from database entry
     job = Job.from_representation(job_rep, scheduler_config)
     try:
@@ -183,8 +177,9 @@ def scale_job_task(job_id, n_replicas) -> bool:
             f"Scaled job #{job_id} to {n_replicas} replicas.", extra={"job_id": job_id}
         )
     except JobError as e:
-        db.session.commit()
         logger.error(f"Failed to scale #{job_id}.", extra={"job_id": job_id})
+        logger.exception(e)
+        db.session.commit()
         raise e
     else:
         db.session.commit()
