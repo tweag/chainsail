@@ -50,9 +50,7 @@ def get_signed_url(blob_path, expiry_time, s3=None, container=None):
     if not s3 and not container:
         s3, container = get_s3_client_and_container()
     elif (s3 and not container) or (not s3 and container):
-        raise ValueError(
-            "Either both 's3' and 'container' have to be given or none of them"
-        )
+        raise ValueError("Either both 's3' and 'container' have to be given or none of them")
     response = s3.generate_presigned_url(
         "get_object",
         Params={

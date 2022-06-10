@@ -159,7 +159,10 @@ def get_results_signed_url(job_id):
     # FIXME: new implementation
     s3_client, container = get_s3_client_and_container()
     job_blob_root = get_job_blob_root(job_id)
-    signed_url = get_signed_url(f"{job_blob_root}/{RESULTS_ARCHIVE_FILENAME}", expiry_time=scheduler_config.results_url_expiry_time)
+    signed_url = get_signed_url(
+        f"{job_blob_root}/{RESULTS_ARCHIVE_FILENAME}",
+        expiry_time=scheduler_config.results_url_expiry_time,
+    )
     logger.info(f"Obtained signed URL for results of job #{job_id}.", extra={"job_id": job_id})
 
     return signed_url
