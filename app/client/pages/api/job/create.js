@@ -6,3 +6,9 @@ export default async (req, res) => {
   const method = 'POST';
   await handleRequestResponse(req, res, url, method, 'multipart/form-data');
 };
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
