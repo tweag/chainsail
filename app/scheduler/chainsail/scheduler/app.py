@@ -151,7 +151,6 @@ def save_uploaded_user_prob(flask_file_obj, user_id):
     """
     s3, container = get_s3_client_and_container()
     blob_name = os.path.join(USER_PROB_BLOB_ROOT, f"{user_id}_{shortuuid.uuid()}.zip")
-    flask_file_obj.save('/tmp/gttre.zip')
     s3.upload_fileobj(flask_file_obj, container, blob_name)
     return blob_name
 
