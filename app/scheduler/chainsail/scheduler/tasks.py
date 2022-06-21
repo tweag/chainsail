@@ -9,6 +9,7 @@ from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 import boto3
+import grpc
 import yaml
 from botocore.exceptions import ClientError
 from celery.utils.log import get_task_logger
@@ -114,7 +115,7 @@ def stop_job_task(job_id, exit_status=None):
         db.session.commit()
 
 
-@celery.task(autoretry_for=(Exception,), max_retries=5, retry_backoff=2)
+@celery.task(autoretry_for=(grpc.RpcError,), max_retries=5, retry_backoff=2)
 def watch_job_task(job_id):
     """Watches a running job until it completes and updates its status in the database
 
@@ -127,21 +128,9 @@ def watch_job_task(job_id):
     logger.info(f"Watching job {job_id}")
     job_rep = TblJobs.query.filter_by(id=job_id).one()
     job = Job.from_representation(job_rep, scheduler_config)
-    try:
-        job.watch()
-        job.sync_representation()
-        job.representation.finished_at = datetime.utcnow()
-    # TODO: Make this a more specific exception
-    except Exception as e:
-        logger.exception(e)
-        # Flag job as failed
-        job.status = JobStatus.FAILED
-        job.sync_representation()
-        job.representation.finished_at = datetime.utcnow()
-        db.session.commit()
-        raise e
-    else:
-        db.session.commit()
+    job_succeeded = job.watch()
+    if not job_succeeded:
+        raise Exception(f"Job {job_id} failed.")
 
 
 @celery.task()
@@ -157,7 +146,7 @@ def scale_job_task(job_id, n_replicas) -> bool:
     """
     try:
         logger.info(f"Attempting to aquire lock for job {job_id}")
-        job_rep = TblJobs.query.filter_by(id=job_id).one()
+        job_rep = TblJobs.query.with_for_update(of=TblJobs, nowait=True).filter_by(id=job_id).one()
     except OperationalError:
         # Another process is already scaling this job
         logger.error(f"Failed to aquire lock for job {job_id} in scale_job_task")
