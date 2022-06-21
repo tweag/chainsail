@@ -114,7 +114,7 @@ EOT
 
 
 # This ingress is the primary way the chainsail backend should be accessed via the internal network
-resource "kubernetes_ingress" "chainsail_backend" {
+resource "kubernetes_ingress_v1" "chainsail_backend" {
   depends_on = [helm_release.ingress_nginx]
   # Note: setting this to false so that Terraform will return even if the services
   # aren't available. This allows us to install those later via Helm.
@@ -135,22 +135,34 @@ resource "kubernetes_ingress" "chainsail_backend" {
         path {
           path = "/scheduler(/|$)(.*)"
           backend {
-            service_name = local.scheduler_service_name
-            service_port = local.scheduler_service_port
+	    service {
+              name = local.scheduler_service_name
+              port {
+	        number = local.scheduler_service_port
+              }
+	    }
           }
         }
         path {
           path = "/graphite(/|$)(.*)"
           backend {
-            service_name = local.graphite_service_name
-            service_port = local.graphite_service_port
+	    service {
+	      name = local.graphite_service_name
+              port {
+	        number = local.graphite_service_port
+              }
+	    }
           }
         }
         path {
           path = "/mcmc-stats(/|$)(.*)"
           backend {
-            service_name = local.mcmc_stats_service_name
-            service_port = local.mcmc_stats_service_port
+            service {
+	      name = local.mcmc_stats_service_name
+              port {
+	        number = local.mcmc_stats_service_port
+              }
+	    }
           }
         }
       }
