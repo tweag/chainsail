@@ -55,16 +55,32 @@ and add them to Minikube's Docker registry. One way to do this is:
 # This makes docker commands use Minikube's Docker daemon
 eval $(minikube docker-env)
 
-make images
+HUB_NAMESPACE="eu.gcr.io/resaas-simeon-dev/" make images
 ```
+The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml`, but with a trailing slash (`/`).
 
-Then, you can install chainsail with Helm:
+Then, you can install Chainsail with Helm:
 
 ```console
 helm install -f helm/values-local.yaml chainsail ./helm
 ```
 
-**FIXME: Add instructions for running local client and connecting it to minikube**
+### Running the client locally
+
+For development purposes, you can run the frontend web app locally.
+But to get access to your minikube services, you need to create service tunnels.
+To do that, first get a list of all services with
+```console
+kubectl get svc
+```
+For each service (`scheduler` / `graphite` / `mcmc-stats-server`) you now need to establish a service tunnel via
+```console
+minikube service <service> --url &
+```
+. That command will print the URL and port at which the respective service will be reachable.
+
+With that in hand, you can follow the instruction in the [`fronend README`](app/client/README#Develop), but skip the SSH tunneling part.
+In the final call to `yarn run dev`, adapt the URLs in the environment variables to match the output of the service tunnel commands.
 
 ### Deploying changes
 
@@ -77,6 +93,14 @@ helm upgrade -f helm/values-local.yaml chainsail ./helm
 ```
 
 ## Cloud deployment
+
+### Prerequisites
+You need to make sure that your local Google Cloud credentials are set correctly.
+To that end, run
+```console
+gcloud auth application-default login --project resaas-simeon-dev
+``` 
+.
 
 ### 1. Provision the cloud environment on Google Cloud
 
@@ -107,11 +131,12 @@ terraform apply
 ### 3. Deploy chainsail back-end
 
 If Docker images have not already been built and pushed to the Google Cloud Container Registry for your desired version of chainsail, you should go ahead and build those now.
+In order to be able to push the images to the container registry, your user needs to have access to the `eu.artifacts.resaas-simeon-dev` bucket.
+The name of the bucket might vary depending on the `zone` and `node_location` entries in the `chainsail_gcp` Terraform module in `terraform/base/dev/main.tf`.
 
-For example:
-
+To build and push images, run
 ```console
-make push-images
+HUB_NAMESPACE="eu.gcr.io/resaas-simeon-dev/" make push-images
 ```
 
 The first time you deploy chainsail, you will need to fetch the cluster's kubernetes access credentials using `gcloud`:
@@ -119,6 +144,7 @@ The first time you deploy chainsail, you will need to fetch the cluster's kubern
 ```console
 gcloud container clusters get-credentials --region $GCP_REGION chainsail
 ```
+The GCP region can be found in `terraform/base/dev/main.tf` in the `node_location` entry of the `chainsail_gcp` module.
 
 Once all of the desired images are published, you can install chainsail with:
 
