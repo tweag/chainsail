@@ -115,7 +115,7 @@ def stop_job_task(job_id, exit_status=None):
         db.session.commit()
 
 
-@celery.task(autoretry_for=(grpc.RpcError,), max_retries=5, retry_backoff=2)
+@celery.task(autoretry_for=(grpc.RpcError,), max_retries=10, retry_backoff=2)
 def watch_job_task(job_id):
     """Watches a running job until it completes and updates its status in the database
 
