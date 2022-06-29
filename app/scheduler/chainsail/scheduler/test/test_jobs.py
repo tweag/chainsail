@@ -3,7 +3,6 @@ from datetime import datetime
 from unittest.mock import MagicMock, Mock
 
 import pytest
-
 from chainsail.common.spec import JobSpec, JobSpecSchema
 from chainsail.scheduler.config import GeneralNodeConfig, SchedulerConfig, VMNodeConfig
 from chainsail.scheduler.nodes.base import NodeStatus, NodeType
@@ -134,6 +133,11 @@ def mock_config():
         ),
         results_url_expiry_time=42,
         remote_logging_config_path=None,
+        results_endpoint_url="foo",
+        results_access_key_id="id",
+        results_secret_key="secret",
+        results_bucket="results",
+        results_basename="results_base",
     )
     return config
 
@@ -258,21 +262,6 @@ def test_job_scale_down(mock_config, mock_spec):
     # One extra node for the control process
     assert len(job.nodes) == 1
     assert all([n.status == NodeStatus.RUNNING for n in job.nodes])
-
-
-def test_scale_non_running_job_raises(mock_config, mock_spec):
-    from chainsail.scheduler.errors import JobError
-    from chainsail.scheduler.jobs import Job
-
-    job = Job(
-        id=1,
-        spec=mock_spec,
-        config=mock_config,
-        node_registry={"mock": mk_mock_node_cls()},
-    )
-
-    with pytest.raises(JobError):
-        job.scale_to(2)
 
 
 def _add_nodes_to_job_rep(job_rep, num_nodes, num_controllers):

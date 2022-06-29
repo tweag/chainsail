@@ -34,7 +34,7 @@ class testOptimizationQuantities(unittest.TestCase):
 
     def testAcceptanceRate(self):
         beta1 = 1.0
-        beta2 = 1.0 / 3.0 ** 2
+        beta2 = 1.0 / 3.0**2
         result = acceptance_rate(self._log_dos, self._energies, beta1, beta2)
         # obtained from numerical integration
         # TODO: figure out what the analytical expression (it's probably some
@@ -45,7 +45,7 @@ class testOptimizationQuantities(unittest.TestCase):
 
     def testLogPartitionFunction(self):
         beta1 = 1.0
-        beta2 = 1.0 / 3.0 ** 2
+        beta2 = 1.0 / 3.0**2
         est_Z1 = log_partition_function(self._log_dos, self._energies, beta1)
         est_Z2 = log_partition_function(self._log_dos, self._energies, beta2)
         true_Z1 = np.sqrt(2 * np.pi / beta1)

@@ -51,7 +51,7 @@ class MPIRERunner(AbstractRERunner):
             "--allow-run-as-root",
             "--hostfile",
             hostsfile,
-            "--oversubscribe",
+            # "--oversubscribe",
             "-n",
             f"{n_replicas + 1}",
             self.REXFW_SCRIPT,

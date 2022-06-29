@@ -49,6 +49,11 @@ VALID_CONFIG_VM = {
     "node_config": VM_NODE_CONFIG,
     "results_url_expiry_time": 42,
     "remote_logging_config_path": "/I/am/some/path",
+    "results_endpoint_url": "foo",
+    "results_access_key_id": "id",
+    "results_secret_key": "secret",
+    "results_bucket": "results",
+    "results_basename": "results_base",
 }
 
 VALID_CONFIG_VM_CHAINSAIL_DRIVER = {
@@ -71,16 +76,21 @@ VALID_CONFIG_VM_CHAINSAIL_DRIVER = {
     "node_config": VM_NODE_CONFIG_CHAINSAIL_DRIVER,
     "results_url_expiry_time": 42,
     "remote_logging_config_path": "/I/am/some/path",
+    "results_endpoint_url": "foo",
+    "results_access_key_id": "id",
+    "results_secret_key": "secret",
+    "results_bucket": "results",
+    "results_basename": "results_base",
 }
 
 K8S_POD_CONFIG = {
     "config_configmap_name": "fake-name",
-    "ssh_public_key": "notARealKey",
-    "ssh_private_key_path": "/home/someone/.ssh/key.pem",
     "controller_config_path": "/foo/bar/controller.yaml",
+    "image_pull_policy": "IfNotPresent",
     "storage_config_path": "/foo/bar/storage.yaml",
     "pod_cpu": "1600m",
     "pod_memory": "5000000Ki",
+    "ssh_key_secret": "secret",
 }
 
 VALID_CONFIG_K8S = {
@@ -103,6 +113,11 @@ VALID_CONFIG_K8S = {
     "node_config": K8S_POD_CONFIG,
     "results_url_expiry_time": 42,
     "remote_logging_config_path": "/I/am/some/path",
+    "results_endpoint_url": "foo",
+    "results_access_key_id": "id",
+    "results_secret_key": "secret",
+    "results_bucket": "results",
+    "results_basename": "results_base",
 }
 
 # The below config fails to specify inputs for the driver

@@ -1,0 +1,9 @@
+controller:
+  service:
+    external:
+      enabled: false
+    internal:
+      enabled: true
+      annotations:
+        # Create internal LB
+        cloud.google.com/load-balancer-type: 'Internal'

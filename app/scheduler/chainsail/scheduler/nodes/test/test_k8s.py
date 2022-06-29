@@ -1,8 +1,9 @@
 from unittest.mock import Mock, patch
+
 import pytest
 from chainsail.common.spec import JobSpec
-from chainsail.scheduler.config import GeneralNodeConfig, SchedulerConfig, K8sNodeConfig
-from chainsail.scheduler.nodes.base import NodeType, NodeStatus
+from chainsail.scheduler.config import GeneralNodeConfig, K8sNodeConfig, SchedulerConfig
+from chainsail.scheduler.nodes.base import NodeStatus, NodeType
 
 
 @pytest.fixture
@@ -31,6 +32,11 @@ def mock_scheduler_config():
         node_config=node_config,
         results_url_expiry_time=42,
         remote_logging_config_path=None,
+        results_endpoint_url="foo",
+        results_access_key_id="id",
+        results_secret_key="secret",
+        results_bucket="results",
+        results_basename="results_base",
     )
     return scheduler_config
 
@@ -39,7 +45,7 @@ def mock_scheduler_config():
 def test_k8s_node_from_representation(mock_driver, mock_scheduler_config):
     from chainsail.common.spec import JobSpec
     from chainsail.scheduler.db import TblNodes
-    from chainsail.scheduler.nodes.base import NodeType, NodeStatus
+    from chainsail.scheduler.nodes.base import NodeStatus, NodeType
     from chainsail.scheduler.nodes.k8s_pod import K8sNode
 
     job_spec = JobSpec("gs://my-bucket/scripts")
@@ -75,7 +81,7 @@ def test_k8s_node_from_config_with_job(mock_driver, mock_scheduler_config):
 def test_k8s_node_from_representation_then_create(mock_driver, mock_scheduler_config):
     from chainsail.common.spec import JobSpec, PipDependencies
     from chainsail.scheduler.db import TblJobs, TblNodes
-    from chainsail.scheduler.nodes.base import NodeType, NodeStatus
+    from chainsail.scheduler.nodes.base import NodeStatus, NodeType
     from chainsail.scheduler.nodes.k8s_pod import K8sNode
 
     job_spec = JobSpec("gs://my-bucket/scripts", dependencies=[PipDependencies(["numpy"])])

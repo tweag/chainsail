@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    chainsail.io.service: postgres
+  name: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+        chainsail.io.service: postgres
+  template:
+    metadata:
+      labels:
+        chainsail.io.service: postgres
+    spec:
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8}}
+      containers:
+      - image: postgres:11.5-alpine
+        imagePullPolicy: IfNotPresent
+        name: postgres
+        args:
+          - postgres
+          - -c
+          - log_statement=all
+        env:
+        # FIXME: Secret for password
+        - name: POSTGRES_PASSWORD
+          value: resaas-dev
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        ports:
+          - containerPort: 5432
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres
+      restartPolicy: Always
+      volumes:
+      - name: postgres
+        persistentVolumeClaim:
+          claimName: postgres
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 16Gi

@@ -1,12 +1,15 @@
 import os
 import unittest
-from unittest.mock import patch
-from pickle import load, dump
+from pickle import dump, load
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import numpy as np
-
-from chainsail.common.storage import SimulationStorage, pickle_to_stream, LocalStorageBackend
+from chainsail.common.storage import (
+    LocalStorageBackend,
+    SimulationStorage,
+    pickle_to_stream,
+)
 
 obj = ["a", "list", 42]
 
@@ -20,7 +23,6 @@ CLOUD_STORAGE_CONFIG = {
             "libcloud_provider": "S3",
             "container_name": "foobar",
             "driver_kwargs": {"key": "xxxxxxxxxx"},
-            "storage_key_path": "/dev/null",
         },
     },
 }
@@ -67,7 +69,8 @@ class testSimulationStorage(unittest.TestCase):
             "re": {"dump_interval": 5},
         }
         patcher = patch(
-            "chainsail.common.storage.SimulationStorage.load_config", return_value=mock_config
+            "chainsail.common.storage.SimulationStorage.load_config",
+            return_value=mock_config,
         )
         patcher.start()
         self.addCleanup(patcher, patcher.stop)

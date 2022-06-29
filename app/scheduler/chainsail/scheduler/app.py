@@ -1,21 +1,16 @@
 """
 Scheduler REST API and endpoint specifications
 """
-from datetime import datetime
+import functools
+import logging
 import os
+from datetime import datetime
 
 from celery import chain
-from cloudstorage.exceptions import NotFoundError
-import functools
-from flask import abort, jsonify, request
-from firebase_admin.auth import (
-    verify_id_token,
-    InvalidIdTokenError,
-    ExpiredIdTokenError,
-    RevokedIdTokenError,
-)
+from chainsail.common.custom_logging import configure_logging
 from chainsail.common.spec import JobSpecSchema
-from chainsail.scheduler.core import app, db, firebase_app
+from chainsail.scheduler.config import load_scheduler_config
+from chainsail.scheduler.core import app, db, firebase_app, use_dev_user
 from chainsail.scheduler.db import (
     JobViewSchema,
     NodeViewSchema,
@@ -25,15 +20,28 @@ from chainsail.scheduler.db import (
 )
 from chainsail.scheduler.jobs import JobStatus
 from chainsail.scheduler.tasks import (
+    get_signed_url,
+    logger,
     scale_job_task,
     start_job_task,
     stop_job_task,
+    update_signed_url_task,
     watch_job_task,
     zip_results_task,
-    get_signed_url,
-    update_signed_url_task,
-    logger,
 )
+from cloudstorage.exceptions import NotFoundError
+from firebase_admin.auth import (
+    ExpiredIdTokenError,
+    InvalidIdTokenError,
+    RevokedIdTokenError,
+    verify_id_token,
+)
+from flask import abort, jsonify, request
+
+logger = logging.getLogger("chainsail.scheduler")
+
+scheduler_config = load_scheduler_config()
+configure_logging("chainsail.scheduler", "INFO", scheduler_config.remote_logging_config_path)
 
 
 def _is_dev_mode():
@@ -47,48 +55,51 @@ def _is_dev_mode():
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        is_dev = _is_dev_mode()  # Verify user id token in non dev mode
-        try:
-            id_token = request.headers["Authorization"].split(" ").pop()
-            claims = verify_id_token(id_token, app=firebase_app)
-        except (InvalidIdTokenError, ExpiredIdTokenError, RevokedIdTokenError) as e:
-            if not is_dev:
+        # Get the current users email address
+        # If firebase is enabled, verify the users using the token provided in the authorization header
+        if firebase_app is not None:
+            try:
+                id_token = request.headers["Authorization"].split(" ").pop()
+                claims = verify_id_token(id_token, app=firebase_app)
+            except (
+                KeyError,
+                InvalidIdTokenError,
+                ExpiredIdTokenError,
+                RevokedIdTokenError,
+            ) as e:
                 return {
                     "message": f"Invalid/Expired/Revoked account token. Logging out and in again may refresh the token. If the problem persists, please contact support@chainsail.io. Error: {e}"
                 }, 401
-            else:
-                claims = None
-
-        user_id = claims.get("user_id", None)
-        if not is_dev and not user_id:
-            # empty uid
-            return {
-                "message": "Unauthorized access: No user ID found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."
-            }, 401
-
-        email = claims.get("email", None)
-        if not is_dev and not email:
-            # empty email
-            return {
-                "message": "Unauthorized access: No email found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."
-            }, 403
-
-        user = TblUsers.query.filter_by(email=email).first()
-        if not is_dev and not user:
-            # unregistered user
-            return (
-                {
-                    "message": f"Unauthorized access. Please contact support@chainsail.io to be granted access to Chainsail. Error: User with email {email} not found in database."
-                },
-                403,
-            )
-
-        if not is_dev and not user.is_allowed:
-            # user not allowed
-            return {
-                "message": f"Unauthorized access. Please contact support@chainsail.io to be granted access to Chainsail. Error: User with email {email} is not allowed to use the services."
-            }, 403
-
+            user_id = claims.get("user_id", None)
+            if not user_id:
+                # empty uid
+                return {
+                    "message": "Unauthorized access: No user ID found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."
+                }, 401
+            email = claims.get("email", None)
+            if not email:
+                # empty email
+                return {
+                    "message": "Unauthorized access: No email found in token claim. Logging out and in again may solve this issue. If the problem persists, please contact support@chainsail.io."
+                }, 401
+            user = TblUsers.query.filter_by(email=email).first()
+            if not user:
+                # unregistered user
+                return (
+                    {
+                        "message": f"Unauthorized access. Please contact support@chainsail.io to be granted access to Chainsail. Error: User with email {email} not found in database."
+                    },
+                    403,
+                )
+            if not user.is_allowed:
+                # user not allowed
+                return {
+                    "message": f"Unauthorized access. Please contact support@chainsail.io to be granted access to Chainsail. Error: User with email {email} is not allowed to use the services."
+                }, 403
+        # If firebase is disabled, we assume we are in "dev" mode with a specific user and
+        # do NOT check if the user exists in our internal auth table.
+        else:
+            user_id = use_dev_user
         kwargs.update(user_id=user_id)
         value = func(*args, **kwargs)
         return value
@@ -210,6 +221,7 @@ def job_nodes(job_id):
 def scale_job(job_id, n_replicas):
     """Cheap and dirty way to allow for jobs to be scaled."""
     n_replicas = int(n_replicas)
+    # FIXME: Ideally we could check authorization for internal endpoints
     find_job(job_id)
     logger.info(
         f"Scaling up job #{job_id} to {n_replicas} replicas...",
@@ -226,6 +238,7 @@ def scale_job(job_id, n_replicas):
 @app.route("/internal/job/<job_id>/add_iteration/<iteration>", methods=["POST"])
 def add_iteration(job_id, iteration):
     """Adds an iteration entry to a job's list of controller iterations"""
+    # FIXME: Ideally we could check authorization for internal endpoints
     job = find_job(job_id)
     if job.controller_iterations is None:
         job.controller_iterations = []

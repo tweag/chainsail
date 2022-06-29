@@ -1,6 +1,6 @@
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from enum import Enum
 from typing import Dict, Optional
 
@@ -26,7 +26,7 @@ class JobStatus(Enum):
     FAILED = "failed"
 
 
-N_CREATION_THREADS = 10
+N_CREATION_THREADS = 3
 
 logger = logging.getLogger("chainsail.scheduler")
 
@@ -68,39 +68,42 @@ class Job:
         self.sync_representation()
 
     def start(self) -> None:
-        if self.status not in (JobStatus.INITIALIZED, JobStatus.STARTING, JobStatus.RESTART):
+        if self.status not in (
+            JobStatus.INITIALIZED,
+            JobStatus.STARTING,
+            JobStatus.RESTART,
+        ):
             raise JobError("Attempted to start a job which has already been started")
         self._initialize_nodes()
-        self.status = JobStatus.STARTING
-        with ThreadPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
-            try:
-                # Create worker nodes first
-                logger.info(
-                    f"Creating {len(self.nodes)} worker nodes...",
-                    extra={"job_id": self.id},
-                )
-                for created, logs in ex.map(lambda n: n.create(), self.nodes):
-                    if not created:
-                        raise JobError(
-                            f"Failed to start node for job {id}. Deployment logs: \n" + logs
-                        )
-                self.sync_representation()
-                # Then create control node
-                logger.debug("Creating control node...", extra={"job_id": self.id})
-                logger.debug("Control node name: " + self.control_node.name)
-                created, logs = self.control_node.create()
-                self.sync_representation()
+        # FIXME: Parallel execution here was prone to deadlocks / serialization issues
+        # need to revisit.
+        # with ProcessPoolExecutor(max_workers=N_CREATION_THREADS) as ex:
+        try:
+            # Create worker nodes first
+            logger.info(
+                f"Creating {len(self.nodes)} worker nodes...",
+                extra={"job_id": self.id},
+            )
+            for created, logs in map(lambda n: n.create(), self.nodes):
                 if not created:
                     raise JobError(
                         f"Failed to start node for job {id}. Deployment logs: \n" + logs
                     )
-            except Exception as e:
-                # Cleanup created nodes on failure
-                for n in self.nodes:
-                    n.delete()
-                self.status = JobStatus.FAILED
-                self.sync_representation()
-                raise e
+            self.sync_representation()
+            # Then create control node
+            logger.debug("Creating control node...", extra={"job_id": self.id})
+            logger.debug("Control node name: " + self.control_node.name)
+            created, logs = self.control_node.create()
+            self.sync_representation()
+            if not created:
+                raise JobError(f"Failed to start node for job {id}. Deployment logs: \n" + logs)
+        except Exception as e:
+            # Cleanup created nodes on failure
+            for n in self.nodes:
+                n.delete()
+            self.status = JobStatus.FAILED
+            self.sync_representation()
+            raise e
         self.status = JobStatus.RUNNING
         self.sync_representation()
 
@@ -173,16 +176,16 @@ class Job:
         self.nodes.remove(node)
 
     def scale_to(self, n_replicas: int):
+        logger.info("Scaling initiated")
         if n_replicas < 0:
             raise ValueError("Can only scale to >= 0 replicas")
-        if self.status != JobStatus.RUNNING:
-            raise JobError(f"Attempted to scale job ({self.id}) which is not currently running.")
         requested_size = n_replicas
         current_size = len(self.nodes)
-        print("current / requested size", current_size, n_replicas)
         if requested_size == current_size:
+            logger.info(f"Already have the requested number of replicas. Returning.")
             return None
         elif requested_size > current_size:
+            logger.info(f"Scaling up from {current_size} to {n_replicas} replicas...")
             # Scale up
             to_add = requested_size - current_size
             for _ in range(to_add):
@@ -193,6 +196,7 @@ class Job:
                     raise JobError(f"Failed to start new node while scaling up. Logs: \n {logs}")
         else:
             # Scale down
+            logger.info(f"Scaling down from {current_size} to {n_replicas} replicas...")
             to_remove = current_size - requested_size
             for node in self.nodes[-to_remove:]:
                 self._remove_node(node)
@@ -205,6 +209,7 @@ class Job:
         # Something is still off with the node representation.
         # self.control_node.listening_ports[0]
         port = 50051
+        logger.info("Initiating connection with control node")
         with grpc.insecure_channel(f"{ip}:{port}") as channel:
             stub = HealthStub(channel)
             while True:
@@ -213,10 +218,13 @@ class Job:
                     break
                 else:
                     time.sleep(1)
+        logger.info("Control node connection terminated.")
         if response.status == HealthCheckResponse.SUCCESS:
+            logger.info("Control node reported final status as SUCCESS")
             self.status = JobStatus.SUCCESS
             return True
         else:
+            logger.info("Control node reported final status as FAILED")
             self.status = JobStatus.FAILED
             return False
 
@@ -252,7 +260,9 @@ class Job:
             node_rep: TblNodes
             node_cls = node_registry[NodeType(node_rep.node_type)]
             try:
-                node = node_cls.from_representation(spec, node_rep, config)
+                node = node_cls.from_representation(
+                    spec, node_rep, config, is_controller=not node_rep.is_worker
+                )
             except ObjectConstructionError:
                 node_rep.in_use = False
             else:
@@ -263,8 +273,8 @@ class Job:
                         control_node = node
                     else:
                         raise JobError("Job representation has more than one control node.")
-        if not control_node:
-            JobError("Job representation has no control node.")
+        if nodes and not control_node:
+            raise JobError("Job representation had nodes but no control node.")
 
         return cls(
             id=job_rep.id,

@@ -1,4 +1,0 @@
-Host *
-  IdentityFile /root/.ssh/id.pem
-  StrictHostKeyChecking accept-new
-  Port 26

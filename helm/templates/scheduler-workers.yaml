@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    chainsail.io.service: scheduler-worker
+  name: scheduler-worker
+spec:
+  replicas: {{ .Values.schedulerNumWorkers }}
+  selector:
+    matchLabels:
+      chainsail.io.service: scheduler-worker
+  template:
+    metadata:
+      labels:
+        chainsail.io.service: scheduler-worker
+    spec:
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8}}
+      serviceAccountName: chainsail-scheduler
+      automountServiceAccountToken: true
+      containers:
+      - image: {{ .Values.imageHubNamespace }}chainsail-celery-worker:{{ .Values.imageTag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        name: scheduler-worker
+        resources: {}
+        env:
+          - name: CELERY_BROKER_URL
+            value: redis://redis.default.svc.cluster.local:6379/0
+          - name: CELERY_RESULT_BACKEND
+            value: redis://redis.default.svc.cluster.local:6379/1
+          - name: SQLALCHEMY_DATABASE_URI
+            value: postgresql://postgres:resaas-dev@postgres.default.svc.cluster.local:5432/postgres
+          - name: CHAINSAIL_SCHEDULER_CONFIG
+            value: /config/scheduler.yaml
+          - name: CONCURRENCY
+            value: "5"
+          - name: GRPC_DNS_RESOLVER
+            value: native
+        volumeMounts:
+          - name: scheduler-config
+            readOnly: true
+            mountPath: /config/scheduler.yaml
+            subPath: scheduler.yaml
+          - name: logging-config
+            readOnly: true
+            mountPath: /config/remote_logging.yaml
+            subPath: remote_logging.yaml
+
+      restartPolicy: Always
+      volumes:
+      - name: scheduler-config
+        secret:
+          secretName: scheduler-yaml
+      - name: logging-config
+        secret:
+          secretName: remote-logging-yaml

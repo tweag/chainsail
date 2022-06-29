@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    chainsail.io.service: scheduler
+  name: scheduler
+  # annotations:
+  #   # For cloud deployments, only expose service on internal VPC
+  #   networking.gke.io/load-balancer-type: "Internal"
+spec:
+  # See also: https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing
+  type: NodePort
+  ports:
+  - name: "5001"
+    port: 5001
+    targetPort: 5001
+  selector:
+    chainsail.io.service: scheduler

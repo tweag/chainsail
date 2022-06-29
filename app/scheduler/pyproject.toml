@@ -3,6 +3,11 @@ name = "chainsail-scheduler"
 version = "0.1.0"
 description = "Job scheduler for chainsail"
 authors = ["dorranh <dorran.howell@tweag.io>"]
+packages = [ { include = 'chainsail' } ]
+
+[tool.poetry.scripts]
+scheduler-add-user = 'chainsail.scheduler.db_util:add_user'
+scheduler-remove-user = 'chainsail.scheduler.db_util:remove_user'
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -26,6 +31,9 @@ firebase-admin = "^4.5.2"
 uWSGI = "^2.0.19"
 cloudstorage = {extras = ["google"], version = "^0.11.0"}
 kubernetes = "^18.20.0"
+boto3 = "^1.20.26"
+# # Note: Need to place an upper bound here due to a bug in flask
+MarkupSafe = "<=2.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
@@ -47,4 +55,3 @@ omit = ["*test*"]
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-

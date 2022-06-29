@@ -1,6 +1,6 @@
 import logging
-import time
 import os
+import time
 from dataclasses import asdict
 
 import requests
@@ -37,7 +37,11 @@ def _config_template_from_params(re_params, local_sampling_params):
     local_sampling["stepsizes"] = None
     local_sampling["sampler"] = get_sampler_from_params(local_sampling_params).value
     general = dict(
-        n_iterations=None, basename=None, output_path=None, initial_states=None, num_replicas=None
+        n_iterations=None,
+        basename=None,
+        output_path=None,
+        initial_states=None,
+        num_replicas=None,
     )
 
     return dict(re=re, local_sampling=local_sampling, general=general)
@@ -223,7 +227,9 @@ class BaseREJobController:
                 "Schedule optimization simulation #{}/{} started".format(run_counter + 1, max_runs)
             )
             current_storage = SimulationStorage(
-                self._basename, "optimization_run{}".format(run_counter), self._storage_backend
+                self._basename,
+                "optimization_run{}".format(run_counter),
+                self._storage_backend,
             )
             if previous_schedule is not None:
                 schedule = self._calculate_schedule_from_dos(previous_storage, dos)
@@ -480,6 +486,7 @@ class CloudREJobController(BaseREJobController):
                     continue
                 r.raise_for_status()
             except Exception as e:
+                logger.exception(e)
                 retries += 1
                 if retries > self.connection_retries:
                     raise e

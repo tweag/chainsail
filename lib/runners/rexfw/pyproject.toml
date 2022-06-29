@@ -11,7 +11,8 @@ numpy = "*"
 pyyaml = "*"
 chainsail-common = { path = "../../common", develop = true }
 rexfw = { git = "https://github.com/tweag/rexfw", branch = "resaas" }
-mpi4py = "^3.0.3"
+# Note: Pinning mpi4py to a commit due to https://github.com/mpi4py/mpi4py/issues/160
+mpi4py = { git = "https://github.com/mpi4py/mpi4py", rev = "fc20dedf73ed83acb9b5b491003f42368a1bcd1e" }
 click = "^7.1.2"
 
 

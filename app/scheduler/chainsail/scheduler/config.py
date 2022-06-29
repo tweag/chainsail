@@ -7,17 +7,17 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import yaml
+from chainsail.scheduler.errors import ConfigurationError
+from chainsail.scheduler.nodes.base import NodeType
+from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
+from kubernetes.client import CoreV1Api
+from kubernetes.config import load_incluster_config, load_kube_config
 from libcloud.compute.base import NodeDriver
 from libcloud.compute.providers import Provider, get_driver
-from kubernetes.config import load_kube_config
-from kubernetes.client import CoreV1Api
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
 from marshmallow.exceptions import ValidationError
 from marshmallow_enum import EnumField
-from chainsail.scheduler.errors import ConfigurationError
-from chainsail.scheduler.nodes.base import NodeType
-from chainsail.scheduler.nodes.mock import DeployableDummyNodeDriver
 
 
 def lookup_driver_cls(provider_name: str) -> type:
@@ -112,17 +112,26 @@ class K8sNodeConfig(HasDriver):
     """Configurations for a `K8sNode`"""
 
     config_configmap_name: str
-    ssh_public_key: str
-    ssh_private_key_path: str
+    ssh_key_secret: str
     storage_config_path: str
     controller_config_path: str
     pod_cpu: str
     pod_memory: str
+    image_pull_policy: str
 
     def create_node_driver(self):
-        # Loads the kubernetes configuration from the config file mounted in the scheduler container.
-        kubeconfig = os.environ.get("KUBECONFIG", "~/.kube/config")
-        load_kube_config(config_file=kubeconfig)
+        """Loads the kubernetes client
+
+        If the KUBECONFIG environment variable is set, this will attempt to read the
+        config file at that path. If unset, this method assumes it is running from
+        within the k8s cluster and will attempt to load the config via its k8s
+        service account.
+        """
+        kubeconfig = os.environ.get("KUBECONFIG")
+        if kubeconfig:
+            load_kube_config(config_file=kubeconfig)
+        else:
+            load_incluster_config()
         api = CoreV1Api()
         return api
 
@@ -130,10 +139,8 @@ class K8sNodeConfig(HasDriver):
 class K8sNodeConfigSchema(Schema):
     # The name of the deployed configmap which contains every config files
     config_configmap_name = fields.String(required=True)
-    # The ssh public key (contents) to install on the VM
-    ssh_public_key = fields.String(required=True)
-    # The path to the ssh private key to use for connecting to the VM
-    ssh_private_key_path = fields.String(required=True)
+    # The secret containing the job ssh private and public keys
+    ssh_key_secret = fields.String(required=True)
     # The path to the storage.yaml storage backend config file
     storage_config_path = fields.String(required=True)
     # The path to the controller.yaml controller config file
@@ -142,6 +149,8 @@ class K8sNodeConfigSchema(Schema):
     pod_cpu = fields.String(required=True)
     # The amount of memory the pod requests
     pod_memory = fields.String(required=True)
+    # The k8s ImagePullPolicy
+    image_pull_policy = fields.String(required=True)
 
     @post_load
     def make_k8s_node_config(self, data, **kwargs):
@@ -156,6 +165,7 @@ class GeneralNodeConfig:
     user_code_image: str
     httpstan_image: str
     args: Optional[List[str]] = None
+    max_nodes_per_job: int = 50
 
 
 class GeneralNodeConfigSchema(Schema):
@@ -165,6 +175,7 @@ class GeneralNodeConfigSchema(Schema):
     user_code_image = fields.String(required=True)
     httpstan_image = fields.String(required=True)
     args = fields.List(fields.String())
+    max_nodes_per_job = fields.Int()
 
     @post_load
     def make_general_node_config(self, data, **kwargs):
@@ -196,6 +207,11 @@ class SchedulerConfig:
     worker: GeneralNodeConfig
     node_type: NodeType
     node_config: HasDriver
+    results_endpoint_url: Optional[str]
+    results_access_key_id: str
+    results_secret_key: str
+    results_bucket: str
+    results_basename: str
     results_url_expiry_time: int
     remote_logging_config_path: str
 
@@ -209,7 +225,12 @@ class SchedulerConfigSchema(Schema):
     worker = fields.Nested(GeneralNodeConfigSchema, required=True)
     node_type = EnumField(NodeType, by_value=True, required=True)
     remote_logging_config_path = fields.String(required=True)
-    results_url_expiry_time = fields.Int()
+    results_endpoint_url = fields.String()
+    results_access_key_id = fields.String(required=True)
+    results_secret_key = fields.String(required=True)
+    results_bucket = fields.String(required=True)
+    results_basename = fields.String(required=True)
+    results_url_expiry_time = fields.Int(required=True)
     node_config = fields.Dict(keys=fields.String())
 
     @post_load

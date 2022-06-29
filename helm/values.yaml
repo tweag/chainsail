@@ -1,0 +1,30 @@
+##############################################################################
+# Default values for chainsail chart.
+#
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+##############################################################################
+# General Settings
+##############################################################################
+replicaCount: 1
+
+image:
+  pullPolicy: Always
+
+tolerations:
+  # Allow scheduling on "core" service nodes
+  - key: 'for_core_services'
+    value: 'true'
+    effect: 'NoSchedule'
+
+imageHubNamespace: 'eu.gcr.io/resaas-simeon-dev'
+imageTag: 'latest'
+
+##############################################################################
+# Scheduler Settings
+##############################################################################
+
+# If set, the scheduler will be switched into `dev` mode and assume
+# the provided user name for all requests.
+schedulerUseDevUser: ''
+schedulerNumWorkers: 1

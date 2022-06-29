@@ -11,12 +11,11 @@ from pickle import dump, load
 
 import numpy as np
 import yaml
+from libcloud.common.types import InvalidCredsError
 from libcloud.storage.providers import get_driver
-from libcloud.storage.types import Provider
+from libcloud.storage.types import ObjectDoesNotExistError, Provider
 from marshmallow import Schema, fields
 from marshmallow.decorators import post_load
-from libcloud.common.types import InvalidCredsError
-from libcloud.storage.types import ObjectDoesNotExistError
 
 logger = logging.getLogger(__name__)
 
@@ -111,8 +110,7 @@ class LocalBackendConfigSchema(Schema):
 class CloudBackendConfigSchema(Schema):
     libcloud_provider = fields.String(required=True)
     container_name = fields.String(required=True)
-    driver_kwargs = fields.Dict(fields.String, fields.String, required=True)
-    storage_key_path = fields.String(required=True)
+    driver_kwargs = fields.Dict(fields.String, required=True)
 
 
 # Registry used for looking up schema during deserialization

@@ -1,27 +1,36 @@
 import logging
 import os
 import time
-from typing import Callable, Optional, Tuple
 from enum import Enum
+from typing import Callable, Optional, Tuple
+
 import kubernetes as kub
-from kubernetes.client import V1Pod, V1ConfigMap
-from kubernetes.client.rest import ApiException
 from chainsail.common.spec import JobSpec, JobSpecSchema
 from chainsail.scheduler.config import (
     GeneralNodeConfig,
-    SchedulerConfig,
     K8sNodeConfig,
+    SchedulerConfig,
     load_scheduler_config,
 )
 from chainsail.scheduler.db import TblJobs, TblNodes
-from chainsail.scheduler.nodes.base import Node, NodeType, NodeStatus
 from chainsail.scheduler.errors import (
     ConfigurationError,
     MissingNodeError,
     NodeError,
     ObjectConstructionError,
 )
-
+from chainsail.scheduler.nodes.base import Node, NodeStatus, NodeType
+from kubernetes.client import (
+    V1ConfigMap,
+    V1KeyToPath,
+    V1ObjectMeta,
+    V1Pod,
+    V1Service,
+    V1ServicePort,
+    V1ServiceSpec,
+    V1Volume,
+)
+from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger("chainsail.scheduler")
 
@@ -31,14 +40,16 @@ set -ex
 {dep_install_commands}
 """
 K8S_NAMESPACE = "default"
+K8S_SSH_PUB_KEY = "pub"
+K8S_SSH_PEM_KEY = "pem"
+K8S_SSH_PEM_KEY_FILE = "id.pem"
+PORT_RANGE_MIN = 4000
 
 
 def monitor_deployment(pod: "K8sNode") -> bool:
     """Monitor the proper creation and startup of a pod.
-
     Args:
         pod: The pod instance to monitor
-
     Returns:
         A boolean indicating the success or failure of the pod creation
     """
@@ -58,6 +69,10 @@ def monitor_deployment(pod: "K8sNode") -> bool:
                 f"Pod status: {pod.status.value}"
             )
             return False
+
+
+def service_fqdn(svc_name: str) -> str:
+    return f"{svc_name}.{K8S_NAMESPACE}.svc.cluster.local"
 
 
 class K8sNode(Node):
@@ -80,6 +95,7 @@ class K8sNode(Node):
         status: Optional[NodeStatus] = NodeStatus.INITIALIZED,
         # If creating from existing resources, can specify the k8s objects
         pod: Optional[V1Pod] = None,
+        service: Optional[V1Service] = None,
         configmap: Optional[V1ConfigMap] = None,
         address: Optional[str] = None,
     ):
@@ -88,6 +104,7 @@ class K8sNode(Node):
         self._name_cm = self._NAME_CM.format(name)
         # Manifests
         self._pod = pod
+        self._service = service
         self._configmap = configmap
         # Others
         self._is_controller = is_controller
@@ -107,10 +124,11 @@ class K8sNode(Node):
     def _get_logs(self) -> str:
         try:
             events = self.api.list_namespaced_event(
-                namespace=K8S_NAMESPACE, field_selector=f"involvedObject.name={self._name}"
+                namespace=K8S_NAMESPACE,
+                field_selector=f"involvedObject.name={self._name}",
             )
         except ApiException as e:
-            logger.warning("Unable to fetch pod events. Exception: {e}")
+            logger.warning(f"Unable to fetch pod events. Exception: {e}")
             return ""
         logs = ""
         for x in events.items:
@@ -121,7 +139,11 @@ class K8sNode(Node):
             else:
                 event_time = "unknown event time"
             logs += "{:23}   {}   {}   {:10}   {}\n".format(
-                event_time, x.involved_object.kind, x.involved_object.name, x.reason, x.message
+                event_time,
+                x.involved_object.kind,
+                x.involved_object.name,
+                x.reason,
+                x.message,
             )
         return logs
 
@@ -146,34 +168,11 @@ class K8sNode(Node):
             data={
                 self._CM_FILE_USERCODE: install_script_src,
                 self._CM_FILE_JOBSPEC: JobSpecSchema().dumps(self.spec),
-                self._CM_FILE_SSHKEY: self._node_config.ssh_public_key,
             },
         )
         return configmap
 
     def _create_pod(self) -> V1Pod:
-        if self._is_controller:
-            return self._create_controller_pod()
-        else:
-            return self._create_worker_pod()
-
-    def _create_worker_pod(self) -> V1Pod:
-        ## VOLUMES
-        job_volume = kub.client.V1Volume(
-            name="job-volume", config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm)
-        )
-        config_volume = kub.client.V1Volume(
-            name="config-volume",
-            config_map=kub.client.V1ConfigMapVolumeSource(
-                name=self._node_config.config_configmap_name,
-                # `default_mode` argument:
-                # - Used to set permissions on created files by default.
-                #   Source: https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/volume/
-                # - Requires an octal integer value.
-                #   Source: https://stackoverflow.com/questions/11620151/what-do-numbers-starting-with-0-mean-in-python
-                default_mode=0o700,
-            ),
-        )
         ## CONTAINERS
         # TODO: Add something to replace `--log-driver=gcplogs` for every container
         # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
@@ -182,26 +181,26 @@ class K8sNode(Node):
             name="httpstan",
             image=self._config.httpstan_image,
             env=[kub.client.V1EnvVar(name="HTTPSTAN_PORT", value="8082")],
+            image_pull_policy=self._node_config.image_pull_policy,
         )
         # User code container
         install_script_target = os.path.join("/chainsail", self._CM_FILE_USERCODE)
-        startup_probe_usercode = kub.client.V1Probe(
-            tcp_socket=kub.client.V1TCPSocketAction(port=50052),
-            period_seconds=1,
-            failure_threshold=300,
-        )
         user_code_container = kub.client.V1Container(
             name="user-code",
             image=self._config.user_code_image,
-            args=["python", "/app/app/user_code_server/chainsail/user_code_server/__init__.py"],
+            image_pull_policy=self._node_config.image_pull_policy,
+            args=[
+                "python",
+                "/app/app/user_code_server/chainsail/user_code_server/__init__.py",
+            ],
             ports=[kub.client.V1ContainerPort(container_port=50052)],
-            startup_probe=startup_probe_usercode,
             env=[
                 kub.client.V1EnvVar(name="USER_PROB_URL", value=self.spec.probability_definition),
                 kub.client.V1EnvVar(name="USER_INSTALL_SCRIPT", value=install_script_target),
                 kub.client.V1EnvVar(name="USER_CODE_SERVER_PORT", value="50052"),
                 kub.client.V1EnvVar(
-                    name="REMOTE_LOGGING_CONFIG_PATH", value="/chainsail/remote_logging.yaml"
+                    name="REMOTE_LOGGING_CONFIG_PATH",
+                    value="/chainsail/remote_logging.yaml",
                 ),
             ],
             volume_mounts=[
@@ -220,84 +219,30 @@ class K8sNode(Node):
         # Worker container
         container_cmd = [self._config.cmd] + self._config.args
         container_cmd = [arg.format(job_id=self.representation.job.id) for arg in container_cmd]
-        ssh_private_key_filename = os.path.basename(self._node_config.ssh_private_key_path)
-        container = kub.client.V1Container(
-            name="rex",
-            image=self._config.image,
-            args=container_cmd,
-            volume_mounts=[
-                kub.client.V1VolumeMount(name="config-volume", mount_path="/chainsail"),
-                kub.client.V1VolumeMount(
-                    name="job-volume",
-                    mount_path=f"/app/config/ssh/{self._CM_FILE_SSHKEY}",
-                    sub_path=self._CM_FILE_SSHKEY,
-                ),
-            ],
-            resources=kub.client.V1ResourceRequirements(
-                requests={
-                    "cpu": self._node_config.pod_cpu,
-                    "memory": self._node_config.pod_memory,
-                }
-            ),
-        )
-        ## POD
-        pod = kub.client.V1Pod(
-            api_version="v1",
-            kind="Pod",
-            metadata=kub.client.V1ObjectMeta(
-                name=self._name, labels={"app": "rex", "type": "worker"}
-            ),
-            spec=kub.client.V1PodSpec(
-                containers=[httpstan_container, user_code_container, container],
-                volumes=[job_volume, config_volume],
-                tolerations=[kub.client.V1Toleration(key="app", value="chainsail")],
-            ),
-        )
-        return pod
-
-    def _create_controller_pod(self) -> V1Pod:
-        ## VOLUMES
-        job_volume = kub.client.V1Volume(
-            name="job-volume", config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm)
-        )
-        config_volume = kub.client.V1Volume(
-            name="config-volume",
-            config_map=kub.client.V1ConfigMapVolumeSource(
-                name=self._node_config.config_configmap_name,
-                # `default_mode` argument:
-                # - Used to set permissions on created files by default.
-                #   Source: https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/volume/
-                # - Requires an octal integer value.
-                #   Source: https://stackoverflow.com/questions/11620151/what-do-numbers-starting-with-0-mean-in-python
-                default_mode=0o700,
-            ),
-        )
-        ## CONTAINERS
-        # TODO: Add something to replace `--log-driver=gcplogs` for every container
-        # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
-        # Controller container
-        container_cmd = [self._config.cmd] + self._config.args
-        container_cmd = [arg.format(job_id=self.representation.job.id) for arg in container_cmd]
-        ssh_private_key_filename = os.path.basename(self._node_config.ssh_private_key_path)
         # this startup probe checks the state of the gRPC server
-        startup_probe = kub.client.V1Probe(
-            tcp_socket=kub.client.V1TCPSocketAction(port=50051),
-            period_seconds=1,
-            failure_threshold=300,
-        )
+        if self._is_controller:
+            startup_probe = kub.client.V1Probe(
+                tcp_socket=kub.client.V1TCPSocketAction(port=50051),
+                period_seconds=2,
+                failure_threshold=60,
+            )
+        # startup probe for workers checks the state of the ssh server
+        else:
+            startup_probe = kub.client.V1Probe(
+                tcp_socket=kub.client.V1TCPSocketAction(port=26),
+                period_seconds=2,
+                failure_threshold=60,
+            )
         container = kub.client.V1Container(
             name="rex",
             image=self._config.image,
+            image_pull_policy=self._node_config.image_pull_policy,
             args=container_cmd,
             ports=[kub.client.V1ContainerPort(container_port=50051)],
             startup_probe=startup_probe,
             volume_mounts=[
                 kub.client.V1VolumeMount(name="config-volume", mount_path="/chainsail"),
-                kub.client.V1VolumeMount(
-                    name="config-volume",
-                    mount_path="/root/.ssh/id.pem",
-                    sub_path=ssh_private_key_filename,
-                ),
+                kub.client.V1VolumeMount(name="ssh-volume", mount_path="/root/.ssh"),
                 kub.client.V1VolumeMount(
                     name="job-volume",
                     mount_path=f"/chainsail-jobspec/{self._CM_FILE_JOBSPEC}",
@@ -311,20 +256,67 @@ class K8sNode(Node):
                 }
             ),
         )
+        ## VOLUMES
+        # User code + Job spec
+        job_volume = kub.client.V1Volume(
+            name="job-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(name=self._name_cm),
+        )
+        # SSH key volume
+        ssh_volume = V1Volume(
+            name="ssh-volume",
+            secret=kub.client.V1SecretVolumeSource(
+                secret_name=self._node_config.ssh_key_secret,
+                default_mode=0o600,
+                items=[
+                    V1KeyToPath(key=K8S_SSH_PUB_KEY, path=self._CM_FILE_SSHKEY, mode=0o400),
+                    V1KeyToPath(key=K8S_SSH_PEM_KEY, path=K8S_SSH_PEM_KEY_FILE, mode=0o400),
+                ],
+            ),
+        )
+        # Config volume
+        config_volume = kub.client.V1Volume(
+            name="config-volume",
+            config_map=kub.client.V1ConfigMapVolumeSource(
+                name=self._node_config.config_configmap_name, default_mode=0o600
+            ),
+        )
         ## POD
         pod = kub.client.V1Pod(
             api_version="v1",
             kind="Pod",
             metadata=kub.client.V1ObjectMeta(
-                name=self._name, labels={"app": "rex", "type": "controller"}
+                name=self._name, labels={"app": "rex", "node_name": self._name}
             ),
             spec=kub.client.V1PodSpec(
-                containers=[container],
-                volumes=[job_volume, config_volume],
+                # Note: we don't want k8s to restart this pod since chainsail handles retries internally
+                restart_policy="Never",
+                containers=[httpstan_container, user_code_container, container],
+                volumes=[job_volume, config_volume, ssh_volume],
                 tolerations=[kub.client.V1Toleration(key="app", value="chainsail")],
             ),
         )
-        return pod
+        # TODO: Expose distinct ports for controller / worker nodes
+        service = V1Service(
+            metadata=V1ObjectMeta(name=self._name),
+            spec=V1ServiceSpec(
+                selector={"node_name": self._name},
+                ports=[
+                    V1ServicePort(name="controller-grpc", port=50051),
+                    V1ServicePort(name="openmpi-oob", port=3999),
+                    V1ServicePort(name="openmpi-ssh", port=26),
+                ]
+                # Need to expose ports for each node in the network
+                + [
+                    V1ServicePort(
+                        name=f"openmpi-btl-{PORT_RANGE_MIN + i}",
+                        port=PORT_RANGE_MIN + i,
+                    )
+                    for i in range(0, self._config.max_nodes_per_job)
+                ],
+            ),
+        )
+        return pod, service
 
     def create(self) -> Tuple[bool, str]:
         if self._status != NodeStatus.INITIALIZED:
@@ -333,13 +325,16 @@ class K8sNode(Node):
         ## CREATE RESOURCES
         self._status = NodeStatus.CREATING
         self._configmap = self._create_configmap()
-        self._pod = self._create_pod()
+        self._pod, self._service = self._create_pod()
         try:
             # Configmap
             self.api.create_namespaced_config_map(body=self._configmap, namespace=K8S_NAMESPACE)
             # Pod
             self.api.create_namespaced_pod(body=self._pod, namespace=K8S_NAMESPACE)
+            # Service
+            self.api.create_namespaced_service(body=self._service, namespace=K8S_NAMESPACE)
         except ApiException as e:
+            logger.exception(e)
             self._status = NodeStatus.FAILED
             logs = self._get_logs()
             self.sync_representation()
@@ -385,6 +380,8 @@ class K8sNode(Node):
             if self._configmap:
                 self.api.delete_namespaced_config_map(name=self._name_cm, namespace=K8S_NAMESPACE)
                 self._configmap = None
+            if self._service:
+                self.api.delete_namespaced_service(name=self._name, namespace=K8S_NAMESPACE)
             self._status = NodeStatus.EXITED
             deleted = True
         except ApiException as e:
@@ -425,10 +422,10 @@ class K8sNode(Node):
     def refresh_address(self):
         try:
             pod = self._read_pod()
-            self._address = pod.status.pod_ip
+            self._address = service_fqdn(pod.metadata.name)
         except ApiException as e:
             logger.warning(
-                f"Unable to get pod's IP address. " f"Pod name: {self._name} " f"Exception: {e}"
+                f"Unable to get pod's address. " f"Pod name: {self._name} " f"Exception: {e}"
             )
 
     @property
@@ -438,19 +435,12 @@ class K8sNode(Node):
     def refresh_status(self):
         # See https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
         if not self._pod:
+            # TODO: Can we remove this status update here?
             self._status = NodeStatus.INITIALIZED
             return
         if self.status == NodeStatus.FAILED:
             return
-        try:
-            pod = self._read_pod()
-        except Exception as e:
-            logger.error(
-                f"Unable to read pod status. Status not updated. "
-                f"Pod name: {self._name} "
-                f"Exception: {e}"
-            )
-            return
+        pod = self._read_pod()
         phase = pod.status.phase
         ctrs_statuses = pod.status.container_statuses
         if ctrs_statuses:
@@ -499,6 +489,7 @@ class K8sNode(Node):
                 api = node_config.create_node_driver()
                 name = node_rep.name
                 pod = api.read_namespaced_pod(name=name, namespace=K8S_NAMESPACE)
+                service = api.read_namespaced_service(name=name, namespace=K8S_NAMESPACE)
                 configmap = api.read_namespaced_config_map(
                     name=cls._NAME_CM.format(name), namespace=K8S_NAMESPACE
                 )
@@ -516,8 +507,9 @@ class K8sNode(Node):
                 representation=node_rep,
                 status=NodeStatus(node_rep.status),
                 pod=pod,
+                service=service,
                 configmap=configmap,
-                address=pod.status.pod_ip,
+                address=service_fqdn(pod.metadata.name),
             )
 
     @classmethod

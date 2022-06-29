@@ -11,6 +11,10 @@ pkgs.mkShell {
     python38Packages.tkinter
     ncurses
     file
+    gnumake
+    terraform
+    kubernetes-helm
+    minikube
     kubectl
   ];
   # Setting the LD_LIBRARY_PATH environment variable.
