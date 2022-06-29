@@ -9,7 +9,7 @@ from chainsail.common.samplers.rwmc import RWMCSampler
 
 class Normal(AbstractPDF):
     def log_prob(self, x):
-        return -0.5 * np.sum(x ** 2)
+        return -0.5 * np.sum(x**2)
 
     def log_prob_gradient(self, x):
         return -x

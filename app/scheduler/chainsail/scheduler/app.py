@@ -2,10 +2,22 @@
 Scheduler REST API and endpoint specifications
 """
 import functools
-import logging
-from datetime import datetime
 import json
+import logging
 import os
+
+from datetime import datetime
+
+import shortuuid
+from celery import chain
+from cloudstorage.exceptions import NotFoundError
+from firebase_admin.auth import (
+    ExpiredIdTokenError,
+    InvalidIdTokenError,
+    RevokedIdTokenError,
+    verify_id_token,
+)
+from flask import abort, jsonify, request
 
 from chainsail.common.custom_logging import configure_logging
 from chainsail.common.spec import JobSpecSchema
@@ -32,25 +44,11 @@ from chainsail.scheduler.utils import (
     get_s3_client_and_container,
 )
 
-
-from cloudstorage.exceptions import NotFoundError
-from celery import chain
-from flask import abort, jsonify, request
-from firebase_admin.auth import (
-    ExpiredIdTokenError,
-    InvalidIdTokenError,
-    RevokedIdTokenError,
-    verify_id_token,
-)
-import shortuuid
-
-
 logger = logging.getLogger("chainsail.scheduler")
 
 scheduler_config = load_scheduler_config()
 configure_logging("chainsail.scheduler", "INFO", scheduler_config.remote_logging_config_path)
 
-SCHEDULER_CONFIG = load_scheduler_config()
 USER_PROB_BLOB_ROOT = "user_probs/"
 USER_PROB_URL_EXPIRY_TIME = 31540000  # in seconds; approximately a year
 

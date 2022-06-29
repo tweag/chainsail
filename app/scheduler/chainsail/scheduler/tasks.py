@@ -5,7 +5,9 @@ import zipfile
 from datetime import datetime
 from io import BytesIO
 
+import grpc
 from celery.utils.log import get_task_logger
+from sqlalchemy.exc import OperationalError
 
 from chainsail.common.custom_logging import configure_logging
 from chainsail.scheduler.config import load_scheduler_config
@@ -13,15 +15,12 @@ from chainsail.scheduler.core import celery, db
 from chainsail.scheduler.db import TblJobs
 from chainsail.scheduler.errors import JobError
 from chainsail.scheduler.jobs import Job, JobStatus
-
 from chainsail.scheduler.utils import (
     get_job_blob_root,
     get_s3_client_and_container,
     get_signed_url,
     sanitize_object_name,
 )
-from sqlalchemy.exc import OperationalError
-
 
 RESULTS_ARCHIVE_FILENAME = "results.zip"
 
@@ -90,7 +89,7 @@ def stop_job_task(job_id, exit_status=None):
         db.session.commit()
 
 
-@celery.task(autoretry_for=(Exception,), max_retries=5, retry_backoff=2)
+@celery.task(autoretry_for=(grpc.RpcError,), max_retries=10, retry_backoff=2)
 def watch_job_task(job_id):
     """Watches a running job until it completes and updates its status in the database
 
@@ -103,21 +102,9 @@ def watch_job_task(job_id):
     logger.info(f"Watching job {job_id}")
     job_rep = TblJobs.query.filter_by(id=job_id).one()
     job = Job.from_representation(job_rep, scheduler_config)
-    try:
-        job.watch()
-        job.sync_representation()
-        job.representation.finished_at = datetime.utcnow()
-    # TODO: Make this a more specific exception
-    except Exception as e:
-        logger.exception(e)
-        # Flag job as failed
-        job.status = JobStatus.FAILED
-        job.sync_representation()
-        job.representation.finished_at = datetime.utcnow()
-        db.session.commit()
-        raise e
-    else:
-        db.session.commit()
+    job_succeeded = job.watch()
+    if not job_succeeded:
+        raise Exception(f"Job {job_id} failed.")
 
 
 @celery.task()
@@ -133,7 +120,7 @@ def scale_job_task(job_id, n_replicas) -> bool:
     """
     try:
         logger.info(f"Attempting to aquire lock for job {job_id}")
-        job_rep = TblJobs.query.filter_by(id=job_id).one()
+        job_rep = TblJobs.query.with_for_update(of=TblJobs, nowait=True).filter_by(id=job_id).one()
     except OperationalError:
         # Another process is already scaling this job
         logger.error(f"Failed to aquire lock for job {job_id} in scale_job_task")
@@ -164,7 +151,6 @@ def get_results_signed_url(job_id):
         expiry_time=scheduler_config.results_url_expiry_time,
     )
     logger.info(f"Obtained signed URL for results of job #{job_id}.", extra={"job_id": job_id})
-
     return signed_url
 
 

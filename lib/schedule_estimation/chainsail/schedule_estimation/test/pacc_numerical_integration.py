@@ -10,8 +10,8 @@ from scipy.integrate import dblquad
 
 def pacc(x, y, beta1, beta2):
     integrand = min(
-        np.exp(-0.5 * x ** 2 * beta1 - 0.5 * y ** 2 * beta2),
-        np.exp(-0.5 * y ** 2 * beta1 - 0.5 * x ** 2 * beta2),
+        np.exp(-0.5 * x**2 * beta1 - 0.5 * y**2 * beta2),
+        np.exp(-0.5 * y**2 * beta1 - 0.5 * x**2 * beta2),
     )
     return integrand / (np.sqrt(2 * np.pi / beta1) * np.sqrt(2 * np.pi / beta2))
 
