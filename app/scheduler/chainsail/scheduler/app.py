@@ -173,7 +173,6 @@ def create_job(user_id):
         "probability_definition": signed_url,
         **dict(((k, json.loads(v)) for k, v in request.form.items())),
     }
-    print(form_data)
     # Validate the provided job spec
     schema = JobSpecSchema()
     job_spec = schema.load(form_data)

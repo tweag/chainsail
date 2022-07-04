@@ -7,9 +7,3 @@ export default async (req, res) => {
   const method = 'GET';
   await handleRequestResponse(req, res, url, method);
 };
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};

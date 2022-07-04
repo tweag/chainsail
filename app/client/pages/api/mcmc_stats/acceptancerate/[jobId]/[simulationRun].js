@@ -8,9 +8,3 @@ export default async (req, res) => {
   const checkAuth = false;
   await handleRequestResponse(req, res, url, method, checkAuth);
 };
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
