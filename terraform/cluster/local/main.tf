@@ -35,6 +35,7 @@ locals {
     }
     }
   )
+  container_registry = "eu.gcr.io/resaas-simeon-dev"
 }
 
 
@@ -49,10 +50,10 @@ module "chainsail-k8s" {
   storage_bucket     = "chainsail-samples"
   # TODO: Make these images match whatever local build script we use
   # for rebuilding images
-  image_controller = "chainsail-mpi-node-k8s:latest"
-  image_worker     = "chainsail-mpi-node-k8s:latest"
-  image_httpstan   = "httpstan-server:latest"
-  image_user_code  = "chainsail-user-code:latest"
+  image_controller = "${local.container_registry}/chainsail-mpi-node-k8s:latest"
+  image_worker     = "${local.container_registry}/chainsail-mpi-node-k8s:latest"
+  image_httpstan   = "${local.container_registry}/httpstan-server:latest"
+  image_user_code  = "${local.container_registry}/chainsail-user-code:latest"
 }
 
 ###############################################################################

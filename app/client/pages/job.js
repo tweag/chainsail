@@ -9,6 +9,7 @@ import {
   FlexRow,
   FlexCol,
   FlexCenter,
+  FileFormField,
   FormField,
   MathTex,
   Navbar,
@@ -106,8 +107,8 @@ const Descs = ({ activeField, seeMoreFields }) => (
       name={['probability_definition']}
       icon="fas fa-link"
     >
-      Probability definition: URL to zip archive including importable Python module providing the
-      probability density
+      Probability definition: zip archive including importable Python module providing the
+      probability density (max. size: 2 Mb)
     </FieldDescription>
     <FieldDescription activeField={activeField} name={['dependencies']} icon="fas fa-bolt">
       Dependencies: comma-separated list of dependencies to install on compute nodes
@@ -161,9 +162,7 @@ const Job = ({ authed, isMobile }) => {
   const [num_optimization_samples, setNumOptimizationSamples] = useState(5000);
   const [minimum_beta, setMinBeta] = useState(0.01);
   const [target_acceptance_rate, setTargetAcceptanceRate] = useState(0.2);
-  const [probability_definition, setProbDef] = useState(
-    'https://storage.googleapis.com/resaas-dev-public/mixture.zip'
-  );
+  const [probability_definition, setProbDef] = useState(null);
   const [dependencies, setDeps] = useState(['numpy', 'scipy', 'chainsail-helpers']);
 
   const [createdJobId, setCreatedJobID] = useState(null);
@@ -178,8 +177,10 @@ const Job = ({ authed, isMobile }) => {
   // Active model state
   const [isModalActive, setIsModelActive] = useState(false);
 
+  const uploadFile = () => {};
+
   const createJob = async () => {
-    const body = JSON.stringify({
+    const body = {
       name: job_name,
       initial_number_of_replicas:
         seeMoreFields && initial_number_of_replicas
@@ -200,15 +201,19 @@ const Job = ({ authed, isMobile }) => {
       optimization_parameters: {
         optimization_quantity_target: target_acceptance_rate,
       },
-      probability_definition,
       dependencies: [{ type: 'pip', deps: dependencies }],
-    });
+    };
 
+    let data = new FormData();
+    for (var key in body) {
+      data.append(key, JSON.stringify(body[key]));
+    }
+    data.append('probability_definition', probability_definition);
     const requestOptions = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
+      body: data,
     };
+
     try {
       let response = await fetch('/api/job/create', requestOptions);
       let data = await response.json();
@@ -260,8 +265,16 @@ const Job = ({ authed, isMobile }) => {
                   className="w-full mb-10 text-base md:text-xl lg:w-2/3 md:text-justify"
                 >
                   <div>
-                    Run Chainsail with an example density (a Gaussian mixture, pre-filled in the
-                    form) or define your own probability! To do that, use the probability density
+                    Run Chainsail with an ready-made density (download an{' '}
+                    <a
+                      target="_blank"
+                      href="https://storage.googleapis.com/resaas-dev-public/mixture.zip"
+                      className="inline text-blue-400 hover:text-white transition duration-300"
+                      target="_blank"
+                    >
+                      example
+                    </a>
+                    ) or define your own probability! To do that, use the probability density
                     function (PDF) interfaces provided in the{' '}
                     <a
                       target="_blank"
@@ -356,13 +369,18 @@ const Job = ({ authed, isMobile }) => {
                           value={max_replicas}
                           onChange={(e) => setMaxReplicas(e.target.value)}
                         />
-                        <FormField
-                          label="Probability definition"
+                        <FileFormField
+                          label="Probability definition (.zip)"
                           inputName="probability_definition"
-                          inputType="url"
                           setActiveField={setActiveField}
-                          value={probability_definition}
-                          onChange={(e) => setProbDef(e.target.value)}
+                          onChange={function (e) {
+                            if (e.target.files[0].size > 2097152) {
+                              alert('File exceeds maximum size (2 Mb)');
+                              e.target.value = '';
+                            } else {
+                              setProbDef(e.target.files[0]);
+                            }
+                          }}
                         />
                         <FormField
                           label="Dependencies"

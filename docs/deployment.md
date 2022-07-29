@@ -79,7 +79,7 @@ minikube service <service> --url &
 ```
 . That command will print the URL and port at which the respective service will be reachable.
 
-With that in hand, you can follow the instruction in the [`fronend README`](app/client/README#Develop), but skip the SSH tunneling part.
+With that in hand, you can follow the instruction in the [`frontend README`](app/client/README#Develop), but skip the SSH tunneling part.
 In the final call to `yarn run dev`, adapt the URLs in the environment variables to match the output of the service tunnel commands.
 
 ### Deploying changes

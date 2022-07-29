@@ -2,11 +2,23 @@
 Scheduler REST API and endpoint specifications
 """
 import functools
+import json
 import logging
 import os
+
 from datetime import datetime
 
+import shortuuid
 from celery import chain
+from cloudstorage.exceptions import NotFoundError
+from firebase_admin.auth import (
+    ExpiredIdTokenError,
+    InvalidIdTokenError,
+    RevokedIdTokenError,
+    verify_id_token,
+)
+from flask import abort, jsonify, request
+
 from chainsail.common.custom_logging import configure_logging
 from chainsail.common.spec import JobSpecSchema
 from chainsail.scheduler.config import load_scheduler_config
@@ -20,28 +32,25 @@ from chainsail.scheduler.db import (
 )
 from chainsail.scheduler.jobs import JobStatus
 from chainsail.scheduler.tasks import (
-    get_signed_url,
-    logger,
     scale_job_task,
     start_job_task,
     stop_job_task,
-    update_signed_url_task,
     watch_job_task,
     zip_results_task,
+    update_signed_url_task,
 )
-from cloudstorage.exceptions import NotFoundError
-from firebase_admin.auth import (
-    ExpiredIdTokenError,
-    InvalidIdTokenError,
-    RevokedIdTokenError,
-    verify_id_token,
+from chainsail.scheduler.utils import (
+    get_signed_url,
+    get_s3_client_and_container,
 )
-from flask import abort, jsonify, request
 
 logger = logging.getLogger("chainsail.scheduler")
 
 scheduler_config = load_scheduler_config()
 configure_logging("chainsail.scheduler", "INFO", scheduler_config.remote_logging_config_path)
+
+USER_PROB_BLOB_ROOT = "user_probs/"
+USER_PROB_URL_EXPIRY_TIME = 31540000  # in seconds; approximately a year
 
 
 def _is_dev_mode():
@@ -123,6 +132,27 @@ def get_zip_chain(job_id):
     return chain(zip_results_task.si(job_id), update_signed_url_task.si(job_id))
 
 
+def validate_uploaded_files(flask_file_objs):
+    # No use using logger here as the user won't be able to see it (no user ID).
+    # Include user id in error message to be able to associate this with a user.
+    # No check whether the single file uploaded is a valid zip file, as this is
+    # being done on the frontend side.
+    if len(flask_file_objs) == 0:
+        raise FileNotFoundError("No file uploaded by user with id {user_id}")
+    elif len(flask_file_objs) > 1:
+        raise ValueError("More than one file uploaded by user with id {user_id}")
+
+
+def save_uploaded_user_prob(flask_file_obj, user_id):
+    """Saves a werkzeug FileStorage object to a blob with a random name
+    that contains the user ID
+    """
+    s3, container = get_s3_client_and_container()
+    blob_name = os.path.join(USER_PROB_BLOB_ROOT, f"{user_id}_{shortuuid.uuid()}.zip")
+    s3.upload_fileobj(flask_file_obj, container, blob_name)
+    return blob_name
+
+
 @app.route("/job/<job_id>", methods=["GET"])
 @check_user
 def get_job(job_id, user_id):
@@ -135,9 +165,17 @@ def get_job(job_id, user_id):
 @check_user
 def create_job(user_id):
     """Create a job"""
+    uploaded_files = list(request.files.values())
+    validate_uploaded_files(uploaded_files)
+    user_prob_blob_name = save_uploaded_user_prob(uploaded_files[0], user_id)
+    signed_url = get_signed_url(user_prob_blob_name, USER_PROB_URL_EXPIRY_TIME)
+    form_data = {
+        "probability_definition": signed_url,
+        **dict(((k, json.loads(v)) for k, v in request.form.items())),
+    }
     # Validate the provided job spec
     schema = JobSpecSchema()
-    job_spec = schema.load(request.json)
+    job_spec = schema.load(form_data)
     job = TblJobs(
         user_id=user_id,
         status=JobStatus.INITIALIZED.value,

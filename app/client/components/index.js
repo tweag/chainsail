@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Layout from './Layout';
 import Button from './Button';
 import { FlexCenter, FlexCol, FlexRow } from './Flex';
-import { FormField } from './Form';
+import { FormField, FileFormField } from './Form';
 import Code from './Code';
 import MathTex from './MathTex';
 import Navbar from './Navbar';
@@ -25,6 +25,7 @@ export {
   FlexCol,
   FlexRow,
   FormField,
+  FileFormField,
   Image,
   JobButton,
   Layout,
