@@ -131,7 +131,7 @@ class ReplicaExchangeParameters:
     num_production_samples: int = 10000
     num_optimization_samples: int = 5000
     dump_interval: int = 500
-    dump_step: int = 5
+    dump_step: int = 1
     swap_interval: int = 5
     statistics_update_interval: int = 50
     status_interval: int = 100
