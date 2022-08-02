@@ -1,4 +1,8 @@
-{ pkgs ? import ./nix { } }:
+{
+    src ? import ./nix/sources.nix,
+    pkgs ? import src.nixpkgs { }
+}:
+
 pkgs.mkShell {
   buildInputs = with pkgs; [
     (python38.withPackages (pp: with pp; [ black ]))
