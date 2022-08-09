@@ -2,9 +2,7 @@
 Utility functions used by multiple modules
 """
 import os
-import yaml
 
-from chainsail.common.configs import ControllerConfigSchema
 from chainsail.scheduler.config import load_scheduler_config
 
 import boto3
@@ -31,10 +29,7 @@ def get_s3_client_and_container():
 
 
 def get_storage_basename():
-    controller_config_path = scheduler_config.node_config.controller_config_path
-    with open(controller_config_path) as f:
-        raw_controller_config = yaml.load(f, Loader=yaml.FullLoader)
-    storage_basename = ControllerConfigSchema().load(raw_controller_config).storage_basename
+    storage_basename = scheduler_config.results_basename
     if storage_basename.startswith("/"):
         storage_basename = storage_basename[1:]
 
