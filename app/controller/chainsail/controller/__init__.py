@@ -535,6 +535,9 @@ class CloudREJobController(BaseREJobController):
         """
         iteration = storage.sim_path
         self._ask_scheduler_to_add_iteration(iteration)
+        # dirty hack to give nodes time to finish installing packages etc.
+        import time
+        time.sleep(120)
         super()._do_single_run(storage)
 
 
