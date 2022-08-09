@@ -24,6 +24,7 @@ then
       echo 'USER_INSTALL_SCRIPT not specified. No extra install steps.'
 else
       echo "Executing additional install script at $USER_INSTALL_SCRIPT"
+      export PIP_DEFAULT_TIMEOUT=100
       bash "$USER_INSTALL_SCRIPT"
 fi
 
