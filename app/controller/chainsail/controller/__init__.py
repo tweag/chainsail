@@ -82,38 +82,35 @@ def optimization_objects_from_spec(job_spec):
     sched_parameters = job_spec.initial_schedule_parameters
     init_num_replicas = job_spec.initial_number_of_replicas
 
-    if dist_family == TemperedDistributionFamily.BOLTZMANN:
-        if type(sched_parameters) == BoltzmannInitialScheduleParameters:
-            opt_params = job_spec.optimization_parameters
-            dos_estimator = WHAM(BoltzmannEnsemble)
-            schedule_optimizer = SingleParameterScheduleOptimizer(
-                opt_params.optimization_quantity_target,
-                1.0,
-                sched_parameters.minimum_beta,
-                opt_params.decrement,
-                get_quantity_function(opt_params.optimization_quantity),
-                "beta",
-                job_spec.max_replicas,
-            )
+    if type(sched_parameters) == BoltzmannInitialScheduleParameters:                                #changed: removed the if clause, b/c dist_family could be Boltzman or likelihood_tempered
+        opt_params = job_spec.optimization_parameters
+        dos_estimator = WHAM(BoltzmannEnsemble)
+        schedule_optimizer = SingleParameterScheduleOptimizer(
+            opt_params.optimization_quantity_target,
+            1.0,
+            sched_parameters.minimum_beta,
+            opt_params.decrement,
+            get_quantity_function(opt_params.optimization_quantity),
+            "beta",
+            job_spec.max_replicas,
+        )
 
-            initial_schedule = make_geometric_schedule(
-                "beta", init_num_replicas, sched_parameters.minimum_beta, 1.0
-            )
-        else:
-            raise ValueError(
-                (
-                    f"Initial schedule parameters '{sched_parameters}' not copmatible "
-                    f"with tempered distribution family '{dist_family}'."
-                )
-            )
-
-        return dict(
-            dos_estimator=dos_estimator,
-            schedule_optimizer=schedule_optimizer,
-            initial_schedule=initial_schedule,
+        initial_schedule = make_geometric_schedule(
+            "beta", init_num_replicas, sched_parameters.minimum_beta, 1.0
         )
     else:
-        raise ValueError(f"Invalid distribution family '{dist_family}'")
+        raise ValueError(
+            (
+                f"Initial schedule parameters '{sched_parameters}' not copmatible "
+                f"with tempered distribution family '{dist_family}'."
+            )
+        )
+
+    return dict(
+        dos_estimator=dos_estimator,
+        schedule_optimizer=schedule_optimizer,
+        initial_schedule=initial_schedule,
+    )
 
 
 class BaseREJobController:
@@ -133,6 +130,7 @@ class BaseREJobController:
         schedule_optimizer,
         dos_estimator,
         initial_schedule,
+        tempered_dist_family,                                                                              #changed: add an argument
         basename="",
     ):
         """
@@ -173,6 +171,7 @@ class BaseREJobController:
         self._re_params = re_params
         self._local_sampling_params = local_sampling_params
         self._optimization_params = optimization_params
+        self._tempered_dist_family=tempered_dist_family
 
     def _scale_environment(self, num_replicas):
         """
@@ -280,6 +279,7 @@ class BaseREJobController:
         updates = {
             "local_sampling": {},
             "general": {},
+            "dist_family":{},                                                                               #changed updates to include tempered_dist_family
         }
         if previous_storage is not None:
             updates["local_sampling"] = {"stepsizes": dir_structure.INITIAL_STEPSIZES_FILE_NAME}
@@ -304,6 +304,8 @@ class BaseREJobController:
             "schedule": dir_structure.SCHEDULE_FILE_NAME,
             "dump_interval": self._re_params.dump_interval,
         }
+
+        updates["dist_family"]=self.tempered_dist_family                                    #changed
 
         for k, v in updates.items():
             cfg_template[k].update(**v)
@@ -396,11 +398,12 @@ class CloudREJobController(BaseREJobController):
         dos_estimator,
         initial_schedule,
         node_updater,
+        tempered_dist_family,                                                                             #changed: add an argument  
         basename="",
         connection_retries=5,
         connection_retry_interval=1,
         connection_timeout=1200,
-        scaling_timeout=1200,
+        scaling_timeout=1200,                                                                   
     ):
         """
         Initializes a Replica Exchange job controller which runs within a
@@ -461,6 +464,7 @@ class CloudREJobController(BaseREJobController):
         self.connection_retry_interval = connection_retry_interval
         self.connection_timeout = connection_timeout
         self.scaling_timeout = scaling_timeout
+        self.tempered_dist_family=tempered_dist_family                                                 #changed
 
     def _scale_environment(self, num_replicas):
         """

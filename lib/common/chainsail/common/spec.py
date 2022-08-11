@@ -216,6 +216,7 @@ LOCAL_SAMPLING_PARAMETERS_SCHEMAS = {
 
 class TemperedDistributionFamily(Enum):
     BOLTZMANN = "boltzmann"
+    LIKELIHOOD_TEMPERED="likelihood_tempered"                                                                                           #changed: extending the enum
 
 
 class BoltzmannInitialScheduleParametersSchema(Schema):
@@ -227,7 +228,8 @@ class BoltzmannInitialScheduleParametersSchema(Schema):
 
 
 INITIAL_SCHEDULE_PARAMETERS_SCHEMAS = {
-    TemperedDistributionFamily.BOLTZMANN: BoltzmannInitialScheduleParametersSchema
+    TemperedDistributionFamily.BOLTZMANN: BoltzmannInitialScheduleParametersSchema, 
+    TemperedDistributionFamily.LIKELIHOOD_TEMPERED: BoltzmannInitialScheduleParametersSchema
 }
 
 
@@ -276,9 +278,8 @@ class JobSpecSchema(Schema):
 
     @post_load
     def make_job_spec(self, data, **kwargs):
-        tempered_dist_family = data.get(
-            "tempered_dist_family", TemperedDistributionFamily.BOLTZMANN
-        )
+        #if temeperd_dist_family is not specified in the data, we take by default BoltzmannTempered
+        tempered_dist_family = data.get("tempered_dist_family", TemperedDistributionFamily.BOLTZMANN)                                                                                 
         if "initial_schedule_parameters" in data:
             init_sched_params = data["initial_schedule_parameters"]
             init_sched_schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[tempered_dist_family]()
@@ -288,12 +289,13 @@ class JobSpecSchema(Schema):
             ls_params = data["local_sampling_parameters"]
             ls_schema = LOCAL_SAMPLING_PARAMETERS_SCHEMAS[local_sampler]()
             data["local_sampling_parameters"] = ls_schema.load(ls_params)
-        return JobSpec(**data)
+        return JobSpec(tempered_dist_family=tempered_dist_family,**data)
 
 
 class JobSpec:
     def __init__(
         self,
+        tempered_dist_family: TemperedDistributionFamily,                                                       #changed 
         probability_definition: str,
         name: Optional[str] = None,
         initial_number_of_replicas: int = 5,
@@ -306,8 +308,7 @@ class JobSpec:
         replica_exchange_parameters: Optional[ReplicaExchangeParameters] = None,
         local_sampler: Optional[LocalSampler] = LocalSampler.NAIVE_HMC,
         local_sampling_parameters: Optional[NaiveHMCParameters] = None,
-        max_replicas: int = 20,
-        tempered_dist_family: TemperedDistributionFamily = TemperedDistributionFamily.BOLTZMANN,
+        max_replicas: int = 20,                                                        
         dependencies: Optional[Dependencies] = None,
     ):
         self.probability_definition = probability_definition
