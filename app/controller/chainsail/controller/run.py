@@ -124,7 +124,8 @@ def run(job, config, storage, hostsfile, job_spec):
         node_updater=partial(update_nodes_mpi, hostfile_path=hostsfile),
         basename=f"{config.storage_basename}/{job}",
         **optimization_objects,
-        job_spec.tempered_dist_family,                                                                        #changed
+        # changed
+        job_spec.tempered_dist_family
     )
 
     # Start controller in another process

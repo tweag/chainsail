@@ -82,7 +82,8 @@ def optimization_objects_from_spec(job_spec):
     sched_parameters = job_spec.initial_schedule_parameters
     init_num_replicas = job_spec.initial_number_of_replicas
 
-    if type(sched_parameters) == BoltzmannInitialScheduleParameters:                                #changed: removed the if clause, b/c dist_family could be Boltzman or likelihood_tempered
+    # changed: removed the if clause, b/c dist_family could be Boltzman or likelihood_tempered
+    if type(sched_parameters) == BoltzmannInitialScheduleParameters:  
         opt_params = job_spec.optimization_parameters
         dos_estimator = WHAM(BoltzmannEnsemble)
         schedule_optimizer = SingleParameterScheduleOptimizer(
@@ -130,7 +131,8 @@ class BaseREJobController:
         schedule_optimizer,
         dos_estimator,
         initial_schedule,
-        tempered_dist_family,                                                                              #changed: add an argument
+        # changed: add an argument
+        tempered_dist_family,
         basename="",
     ):
         """
@@ -156,7 +158,7 @@ class BaseREJobController:
               an estimate for the density of states
             dos_estimator(:class:`WHAM`): WHAM object which estimates the
               density of states from samples of a previous simulation
-            initial_schedule(dict`): initial parameter schedule
+            initial_schedule(dict): initial parameter schedule
               maker object which calculates a very first Replica Exchange
               schedule
             basename(str): optional basename to the simulation storage path
@@ -279,7 +281,8 @@ class BaseREJobController:
         updates = {
             "local_sampling": {},
             "general": {},
-            "dist_family":{},                                                                               #changed updates to include tempered_dist_family
+            #changed: updates to include tempered_dist_family
+            "dist_family":{}
         }
         if previous_storage is not None:
             updates["local_sampling"] = {"stepsizes": dir_structure.INITIAL_STEPSIZES_FILE_NAME}
@@ -305,7 +308,8 @@ class BaseREJobController:
             "dump_interval": self._re_params.dump_interval,
         }
 
-        updates["dist_family"]=self.tempered_dist_family                                    #changed
+        # changed
+        updates["dist_family"] = self.tempered_dist_family
 
         for k, v in updates.items():
             cfg_template[k].update(**v)
@@ -398,12 +402,13 @@ class CloudREJobController(BaseREJobController):
         dos_estimator,
         initial_schedule,
         node_updater,
-        tempered_dist_family,                                                                             #changed: add an argument  
+        # changed: add an argument
+        tempered_dist_family,
         basename="",
         connection_retries=5,
         connection_retry_interval=1,
         connection_timeout=1200,
-        scaling_timeout=1200,                                                                   
+        scaling_timeout=1200
     ):
         """
         Initializes a Replica Exchange job controller which runs within a
@@ -464,7 +469,8 @@ class CloudREJobController(BaseREJobController):
         self.connection_retry_interval = connection_retry_interval
         self.connection_timeout = connection_timeout
         self.scaling_timeout = scaling_timeout
-        self.tempered_dist_family=tempered_dist_family                                                 #changed
+        # changed
+        self.tempered_dist_family = tempered_dist_family
 
     def _scale_environment(self, num_replicas):
         """

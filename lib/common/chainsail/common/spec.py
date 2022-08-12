@@ -216,7 +216,8 @@ LOCAL_SAMPLING_PARAMETERS_SCHEMAS = {
 
 class TemperedDistributionFamily(Enum):
     BOLTZMANN = "boltzmann"
-    LIKELIHOOD_TEMPERED="likelihood_tempered"                                                                                           #changed: extending the enum
+    # changed: extending the enum
+    LIKELIHOOD_TEMPERED = "likelihood_tempered"
 
 
 class BoltzmannInitialScheduleParametersSchema(Schema):
@@ -278,8 +279,9 @@ class JobSpecSchema(Schema):
 
     @post_load
     def make_job_spec(self, data, **kwargs):
-        #if temeperd_dist_family is not specified in the data, we take by default BoltzmannTempered
-        tempered_dist_family = data.get("tempered_dist_family", TemperedDistributionFamily.BOLTZMANN)                                                                                 
+        # if temeperd_dist_family is not specified in the data, we take by
+        # default BoltzmannTempered
+        tempered_dist_family = data.get("tempered_dist_family", TemperedDistributionFamily.BOLTZMANN)
         if "initial_schedule_parameters" in data:
             init_sched_params = data["initial_schedule_parameters"]
             init_sched_schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[tempered_dist_family]()
@@ -295,7 +297,8 @@ class JobSpecSchema(Schema):
 class JobSpec:
     def __init__(
         self,
-        tempered_dist_family: TemperedDistributionFamily,                                                       #changed 
+        # changed
+        tempered_dist_family: TemperedDistributionFamily,
         probability_definition: str,
         name: Optional[str] = None,
         initial_number_of_replicas: int = 5,
@@ -308,7 +311,7 @@ class JobSpec:
         replica_exchange_parameters: Optional[ReplicaExchangeParameters] = None,
         local_sampler: Optional[LocalSampler] = LocalSampler.NAIVE_HMC,
         local_sampling_parameters: Optional[NaiveHMCParameters] = None,
-        max_replicas: int = 20,                                                        
+        max_replicas: int = 20,
         dependencies: Optional[Dependencies] = None,
     ):
         self.probability_definition = probability_definition
