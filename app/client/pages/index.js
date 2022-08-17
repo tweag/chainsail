@@ -68,7 +68,9 @@ const Heading = () => (
 
 const CopyrightFooter = () => (
   <FlexCenter className="h-10 mx-10 text-xs md:mx-20 lg:mx-40">
-    <div className="opacity-30">All rights reserved. Copyright © 2021 by</div>
+    <div className="opacity-30">
+      All rights reserved. Copyright © 2021-{new Date().getFullYear()} by
+    </div>
     <a href="https://www.tweag.io/">
       <img
         src="/tweag_logo_footer.svg"
