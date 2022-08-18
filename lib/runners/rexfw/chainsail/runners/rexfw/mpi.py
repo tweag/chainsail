@@ -13,10 +13,12 @@ from mpi4py import MPI
 from chainsail.common import import_from_user
 from chainsail.common.storage import SimulationStorage, load_storage_config
 from chainsail.common.tempering.tempered_distributions import BoltzmannTemperedDistribution
+from chainsail.common.tempering.tempered_distributions import LikelihoodTemperedPosterior
 from chainsail.common.samplers import get_sampler
 from chainsail.common.spec import TemperedDistributionFamily
 from chainsail.common.pdfs import SafeUserPDF
 from chainsail.grpc import user_code_pb2
+
 
 
 from rexfw.communicators.mpi import MPICommunicator

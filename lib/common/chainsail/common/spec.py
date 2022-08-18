@@ -291,7 +291,7 @@ class JobSpecSchema(Schema):
             ls_params = data["local_sampling_parameters"]
             ls_schema = LOCAL_SAMPLING_PARAMETERS_SCHEMAS[local_sampler]()
             data["local_sampling_parameters"] = ls_schema.load(ls_params)
-        return JobSpec(tempered_dist_family=tempered_dist_family,**data)
+        return JobSpec(**data)
 
 
 class JobSpec:
