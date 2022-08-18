@@ -22,7 +22,7 @@ from chainsail.schedule_estimation.schedule_optimizers import SingleParameterSch
 logger = logging.getLogger(__name__)
 
 
-def _config_template_from_params(re_params, local_sampling_params):
+def _config_template_from_params(re_params, local_sampling_params, dist_family):
     """
     Makes a nested dictionary from parameter dataclasses.
 
@@ -43,6 +43,7 @@ def _config_template_from_params(re_params, local_sampling_params):
         initial_states=None,
         num_replicas=None,
     )
+    re["dist_family"] = dist_family
 
     return dict(re=re, local_sampling=local_sampling, general=general)
 
@@ -128,11 +129,11 @@ class BaseREJobController:
         optimization_params,
         re_runner,
         storage_backend,
+        # changed: add an argument
+        tempered_dist_family,
         schedule_optimizer,
         dos_estimator,
         initial_schedule,
-        # changed: add an argument
-        tempered_dist_family,
         basename="",
     ):
         """
@@ -277,12 +278,10 @@ class BaseREJobController:
             schedule(dict): schedule of the current simulation
             prod(bool): whether this is the production run or not
         """
-        cfg_template = _config_template_from_params(self._re_params, self._local_sampling_params)
+        cfg_template = _config_template_from_params(self._re_params, self._local_sampling_params, self._tempered_dist_family)
         updates = {
             "local_sampling": {},
             "general": {},
-            #changed: updates to include tempered_dist_family
-            "dist_family":{}
         }
         if previous_storage is not None:
             updates["local_sampling"] = {"stepsizes": dir_structure.INITIAL_STEPSIZES_FILE_NAME}
@@ -308,8 +307,6 @@ class BaseREJobController:
             "dump_interval": self._re_params.dump_interval,
         }
 
-        # changed
-        updates["dist_family"] = self.tempered_dist_family
 
         for k, v in updates.items():
             cfg_template[k].update(**v)
