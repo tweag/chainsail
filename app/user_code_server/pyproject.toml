@@ -13,12 +13,12 @@ python = "^3.8"
 numpy = "*"
 chainsail-common = { path = "../../lib/common", develop = true }
 chainsail-grpc = { path = "../../lib/grpc", develop = true }
-click = "^7.1.2"
+click = "^8.0.0"
 grpcio = "^1.35.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
-black = "^22.3.0"
+black = "22.3.0"
 flake8 = "^3.8.4"
 pylint = "^2.6.0"
 mypy = "^0.790"
