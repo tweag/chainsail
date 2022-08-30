@@ -216,7 +216,6 @@ LOCAL_SAMPLING_PARAMETERS_SCHEMAS = {
 
 class TemperedDistributionFamily(Enum):
     BOLTZMANN = "boltzmann"
-    # changed: extending the enum
     LIKELIHOOD_TEMPERED = "likelihood_tempered"
 
 
@@ -297,7 +296,6 @@ class JobSpecSchema(Schema):
 class JobSpec:
     def __init__(
         self,
-        # changed
         tempered_dist_family: TemperedDistributionFamily,
         probability_definition: str,
         name: Optional[str] = None,

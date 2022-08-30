@@ -83,7 +83,6 @@ def optimization_objects_from_spec(job_spec):
     sched_parameters = job_spec.initial_schedule_parameters
     init_num_replicas = job_spec.initial_number_of_replicas
 
-    # changed: removed the if clause, b/c dist_family could be Boltzman or likelihood_tempered
     if type(sched_parameters) == BoltzmannInitialScheduleParameters:  
         opt_params = job_spec.optimization_parameters
         dos_estimator = WHAM(BoltzmannEnsemble)
@@ -129,7 +128,6 @@ class BaseREJobController:
         optimization_params,
         re_runner,
         storage_backend,
-        # changed: add an argument
         tempered_dist_family,
         schedule_optimizer,
         dos_estimator,
@@ -399,7 +397,6 @@ class CloudREJobController(BaseREJobController):
         dos_estimator,
         initial_schedule,
         node_updater,
-        # changed: add an argument
         tempered_dist_family,
         basename="",
         connection_retries=5,
@@ -466,7 +463,6 @@ class CloudREJobController(BaseREJobController):
         self.connection_retry_interval = connection_retry_interval
         self.connection_timeout = connection_timeout
         self.scaling_timeout = scaling_timeout
-        # changed
         self.tempered_dist_family = tempered_dist_family
 
     def _scale_environment(self, num_replicas):

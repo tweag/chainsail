@@ -213,7 +213,6 @@ def run_rexfw_mpi(
         schedule = storage.load_schedule()
 
         # Turn user-defined pdf into a Boltzmann distribution
-        # changed: suit different tempered distribution families
         if config["re"]["dist_family"] == TemperedDistributionFamily.BOLTZMANN.value:
             tempered_pdf = BoltzmannTemperedDistribution(bare_pdf, schedule["beta"][rank - 1])
         if config["re"]["dist_family"] == TemperedDistributionFamily.LIKELIHOOD_TEMPERED.value:
