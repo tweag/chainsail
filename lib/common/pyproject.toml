@@ -20,7 +20,7 @@ chainsail-grpc = { path="../grpc", develop=true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
-black = "^20.8b1"
+black = "^22.3.0"
 flake8 = "^3.8.4"
 pylint = "^2.6.0"
 mypy = "^0.790"
