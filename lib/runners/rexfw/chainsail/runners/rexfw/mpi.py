@@ -213,10 +213,12 @@ def run_rexfw_mpi(
         schedule = storage.load_schedule()
 
         # Turn user-defined pdf into a Boltzmann distribution
-        if config["re"]["dist_family"] == TemperedDistributionFamily.BOLTZMANN.value:
+        if (dist_family := config["re"]["dist_family"]) == TemperedDistributionFamily.BOLTZMANN.value:
             tempered_pdf = BoltzmannTemperedDistribution(bare_pdf, schedule["beta"][rank - 1])
-        if config["re"]["dist_family"] == TemperedDistributionFamily.LIKELIHOOD_TEMPERED.value:
+        elif dist_family == TemperedDistributionFamily.LIKELIHOOD_TEMPERED.value:
             tempered_pdf = LikelihoodTemperedPosterior(bare_pdf, schedule["beta"][rank - 1])
+        else:
+            raise ValueError(f"Invalid tempered distribution family: '{dist_family}'")
 
         # If an initial state is already defined in the config, use that instead
         # of the user-specified one.

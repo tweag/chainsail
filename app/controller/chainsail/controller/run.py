@@ -121,11 +121,10 @@ def run(job, config, storage, hostsfile, job_spec):
         job_spec.optimization_parameters,
         runner,
         storage_backend,
+        tempered_dist_family=job_spec.tempered_dist_family,
         node_updater=partial(update_nodes_mpi, hostfile_path=hostsfile),
         basename=f"{config.storage_basename}/{job}",
         **optimization_objects,
-        # changed
-        job_spec.tempered_dist_family
     )
 
     # Start controller in another process

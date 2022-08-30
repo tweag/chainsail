@@ -278,9 +278,9 @@ class JobSpecSchema(Schema):
 
     @post_load
     def make_job_spec(self, data, **kwargs):
-        # if temeperd_dist_family is not specified in the data, we take by
-        # default BoltzmannTempered
-        tempered_dist_family = data.get("tempered_dist_family", TemperedDistributionFamily.BOLTZMANN)
+        # if tempered_dist_family is not specified in the data, we use the
+        # Boltzmann tempering scheme by default
+        tempered_dist_family = data["tempered_dist_family"]
         if "initial_schedule_parameters" in data:
             init_sched_params = data["initial_schedule_parameters"]
             init_sched_schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[tempered_dist_family]()
@@ -296,8 +296,8 @@ class JobSpecSchema(Schema):
 class JobSpec:
     def __init__(
         self,
-        tempered_dist_family: TemperedDistributionFamily,
         probability_definition: str,
+        tempered_dist_family: TemperedDistributionFamily,
         name: Optional[str] = None,
         initial_number_of_replicas: int = 5,
         initial_schedule_parameters: Optional[

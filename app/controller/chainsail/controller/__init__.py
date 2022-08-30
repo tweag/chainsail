@@ -43,7 +43,7 @@ def _config_template_from_params(re_params, local_sampling_params, dist_family):
         initial_states=None,
         num_replicas=None,
     )
-    re["dist_family"] = dist_family
+    re["dist_family"] = dist_family.value
 
     return dict(re=re, local_sampling=local_sampling, general=general)
 
@@ -83,29 +83,30 @@ def optimization_objects_from_spec(job_spec):
     sched_parameters = job_spec.initial_schedule_parameters
     init_num_replicas = job_spec.initial_number_of_replicas
 
-    if type(sched_parameters) == BoltzmannInitialScheduleParameters:  
-        opt_params = job_spec.optimization_parameters
-        dos_estimator = WHAM(BoltzmannEnsemble)
-        schedule_optimizer = SingleParameterScheduleOptimizer(
-            opt_params.optimization_quantity_target,
-            1.0,
-            sched_parameters.minimum_beta,
-            opt_params.decrement,
-            get_quantity_function(opt_params.optimization_quantity),
-            "beta",
-            job_spec.max_replicas,
-        )
+    if dist_family in (TemperedDistributionFamily.BOLTZMANN, TemperedDistributionFamily.LIKELIHOOD_TEMPERED):
+        if type(sched_parameters) == BoltzmannInitialScheduleParameters:
+            opt_params = job_spec.optimization_parameters
+            dos_estimator = WHAM(BoltzmannEnsemble)
+            schedule_optimizer = SingleParameterScheduleOptimizer(
+                opt_params.optimization_quantity_target,
+                1.0,
+                sched_parameters.minimum_beta,
+                opt_params.decrement,
+                get_quantity_function(opt_params.optimization_quantity),
+                "beta",
+                job_spec.max_replicas,
+                )
 
-        initial_schedule = make_geometric_schedule(
-            "beta", init_num_replicas, sched_parameters.minimum_beta, 1.0
-        )
-    else:
-        raise ValueError(
-            (
+            initial_schedule = make_geometric_schedule(
+                "beta", init_num_replicas, sched_parameters.minimum_beta, 1.0
+                )
+        else:
+            raise ValueError(
                 f"Initial schedule parameters '{sched_parameters}' not copmatible "
                 f"with tempered distribution family '{dist_family}'."
-            )
-        )
+                )
+    else:
+        raise ValueError(f"Unknown tempered distribution family: '{dist_family}'")
 
     return dict(
         dos_estimator=dos_estimator,
@@ -152,6 +153,9 @@ class BaseREJobController:
               simulation (depends on the environment)
             base_storage(:class:`AbstractStorage`:): storage backend for
               reading / writing strings from / to permanent simulation storage
+            tempered_dist_family(:class:`TemperedDistributionFamily`): tempered
+              distribution family enum member that tells which tempering scheme
+              will be used
             schedule_optimizer(:class:`AbstractScheduleOptimizer`): schedule
               optimizer which calculates a new schedule based on
               an estimate for the density of states
@@ -169,10 +173,10 @@ class BaseREJobController:
         self._dos_estimator = dos_estimator
         self._storage_backend = storage_backend
         self._basename = basename
+        self._tempered_dist_family = tempered_dist_family
         self._re_params = re_params
         self._local_sampling_params = local_sampling_params
         self._optimization_params = optimization_params
-        self._tempered_dist_family=tempered_dist_family
 
     def _scale_environment(self, num_replicas):
         """
@@ -212,7 +216,7 @@ class BaseREJobController:
         calculated and a very first simulation is run. Its samples are then
         used to calculate an estimate of the density of states, which is then
         used to calculate the schedule and initial states for the next
-        optimization run..
+        optimization run.
         Its results are then used to improve the schedule in another run and
         so on and so forth.
         """
@@ -276,7 +280,8 @@ class BaseREJobController:
             schedule(dict): schedule of the current simulation
             prod(bool): whether this is the production run or not
         """
-        cfg_template = _config_template_from_params(self._re_params, self._local_sampling_params, self._tempered_dist_family)
+        cfg_template = _config_template_from_params(
+            self._re_params, self._local_sampling_params, self._tempered_dist_family)
         updates = {
             "local_sampling": {},
             "general": {},
@@ -304,7 +309,6 @@ class BaseREJobController:
             "schedule": dir_structure.SCHEDULE_FILE_NAME,
             "dump_interval": self._re_params.dump_interval,
         }
-
 
         for k, v in updates.items():
             cfg_template[k].update(**v)
@@ -436,6 +440,9 @@ class CloudREJobController(BaseREJobController):
             node_updater(callable): function which updates information on the
               available nodes after rescaling, e.g., writes a MPI host file. Should only
               accept a single argument, the controller instance.
+            tempered_dist_family(:class:`TemperedDistributionFamily`): tempered
+              distribution family enum member that tells which tempering scheme
+              will be used
             basename(str): optional basename to the simulation storage path
               (required for running locally or when reusing an existing bucket)
             connection_retries(int): the number of connection attempts to make when
