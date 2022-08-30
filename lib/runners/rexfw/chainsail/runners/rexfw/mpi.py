@@ -20,7 +20,6 @@ from chainsail.common.pdfs import SafeUserPDF
 from chainsail.grpc import user_code_pb2
 
 
-
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
 from rexfw.slaves import Slave
@@ -213,7 +212,9 @@ def run_rexfw_mpi(
         schedule = storage.load_schedule()
 
         # Turn user-defined pdf into a Boltzmann distribution
-        if (dist_family := config["re"]["dist_family"]) == TemperedDistributionFamily.BOLTZMANN.value:
+        if (
+            dist_family := config["re"]["dist_family"]
+        ) == TemperedDistributionFamily.BOLTZMANN.value:
             tempered_pdf = BoltzmannTemperedDistribution(bare_pdf, schedule["beta"][rank - 1])
         elif dist_family == TemperedDistributionFamily.LIKELIHOOD_TEMPERED.value:
             tempered_pdf = LikelihoodTemperedPosterior(bare_pdf, schedule["beta"][rank - 1])

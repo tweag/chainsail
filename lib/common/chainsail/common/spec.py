@@ -228,8 +228,8 @@ class BoltzmannInitialScheduleParametersSchema(Schema):
 
 
 INITIAL_SCHEDULE_PARAMETERS_SCHEMAS = {
-    TemperedDistributionFamily.BOLTZMANN: BoltzmannInitialScheduleParametersSchema, 
-    TemperedDistributionFamily.LIKELIHOOD_TEMPERED: BoltzmannInitialScheduleParametersSchema
+    TemperedDistributionFamily.BOLTZMANN: BoltzmannInitialScheduleParametersSchema,
+    TemperedDistributionFamily.LIKELIHOOD_TEMPERED: BoltzmannInitialScheduleParametersSchema,
 }
 
 
@@ -280,7 +280,9 @@ class JobSpecSchema(Schema):
     def make_job_spec(self, data, **kwargs):
         # if no tempered distribution family is specified in data, use
         # use Boltzmann scheme by default
-        tempered_dist_family = data.get("tempered_dist_family", TemperedDistributionFamily.BOLTZMANN)
+        tempered_dist_family = data.get(
+            "tempered_dist_family", TemperedDistributionFamily.BOLTZMANN
+        )
         if "initial_schedule_parameters" in data:
             init_sched_params = data["initial_schedule_parameters"]
             init_sched_schema = INITIAL_SCHEDULE_PARAMETERS_SCHEMAS[tempered_dist_family]()

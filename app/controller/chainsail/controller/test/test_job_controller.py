@@ -7,7 +7,7 @@ from chainsail.common.spec import (
     NaiveHMCParameters,
     ReplicaExchangeParameters,
     OptimizationParameters,
-    TemperedDistributionFamily
+    TemperedDistributionFamily,
 )
 from chainsail.controller import BaseREJobController
 
