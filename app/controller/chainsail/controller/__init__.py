@@ -83,7 +83,10 @@ def optimization_objects_from_spec(job_spec):
     sched_parameters = job_spec.initial_schedule_parameters
     init_num_replicas = job_spec.initial_number_of_replicas
 
-    if dist_family in (TemperedDistributionFamily.BOLTZMANN, TemperedDistributionFamily.LIKELIHOOD_TEMPERED):
+    if dist_family in (
+        TemperedDistributionFamily.BOLTZMANN,
+        TemperedDistributionFamily.LIKELIHOOD_TEMPERED,
+    ):
         if type(sched_parameters) == BoltzmannInitialScheduleParameters:
             opt_params = job_spec.optimization_parameters
             dos_estimator = WHAM(BoltzmannEnsemble)
@@ -95,16 +98,16 @@ def optimization_objects_from_spec(job_spec):
                 get_quantity_function(opt_params.optimization_quantity),
                 "beta",
                 job_spec.max_replicas,
-                )
+            )
 
             initial_schedule = make_geometric_schedule(
                 "beta", init_num_replicas, sched_parameters.minimum_beta, 1.0
-                )
+            )
         else:
             raise ValueError(
                 f"Initial schedule parameters '{sched_parameters}' not copmatible "
                 f"with tempered distribution family '{dist_family}'."
-                )
+            )
     else:
         raise ValueError(f"Unknown tempered distribution family: '{dist_family}'")
 
@@ -281,7 +284,8 @@ class BaseREJobController:
             prod(bool): whether this is the production run or not
         """
         cfg_template = _config_template_from_params(
-            self._re_params, self._local_sampling_params, self._tempered_dist_family)
+            self._re_params, self._local_sampling_params, self._tempered_dist_family
+        )
         updates = {
             "local_sampling": {},
             "general": {},
@@ -406,7 +410,7 @@ class CloudREJobController(BaseREJobController):
         connection_retries=5,
         connection_retry_interval=1,
         connection_timeout=1200,
-        scaling_timeout=1200
+        scaling_timeout=1200,
     ):
         """
         Initializes a Replica Exchange job controller which runs within a
