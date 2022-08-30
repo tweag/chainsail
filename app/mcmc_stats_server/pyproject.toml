@@ -7,7 +7,7 @@ authors = ["Simeon Carstens <simeon.carstens@tweag.io>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 chainsail-common = { path = "../../lib/common", develop = true }
-Flask = "^1.1.2"
+Flask = "^2.2.2"
 PyYAML = "^5.3.1"
 uWSGI = "^2.0.19"
 click = "^8.0.3"
