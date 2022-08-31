@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Layout from './Layout';
 import Button from './Button';
 import { FlexCenter, FlexCol, FlexRow } from './Flex';
-import { FormField, FileFormField } from './Form';
+import { FormField, FileFormField, Dropdown } from './Form';
 import Code from './Code';
 import MathTex from './MathTex';
 import Navbar from './Navbar';
@@ -21,6 +21,7 @@ export {
   ChartBar,
   Code,
   Container,
+  Dropdown,
   FlexCenter,
   FlexCol,
   FlexRow,

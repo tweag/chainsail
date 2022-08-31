@@ -86,4 +86,41 @@ const FileFormField = ({
   </FlexRow>
 );
 
-export { FormField, FileFormField };
+const options = [
+  { label: 'Global tempering', value: 'boltzmann' },
+  { label: 'Likelihood tempering', value: 'likelihood_tempered' },
+];
+
+const Dropdown = ({
+  disabled,
+  label,
+  labelIconClassName,
+  inputName,
+  placeholder,
+  setActiveField,
+  className,
+  width,
+  value,
+  onChange,
+  optional,
+}) => (
+  <FlexRow className={`h-10 text-xs md:text-base ${width ? width : 'w-full'} ${className}`}>
+    <label
+      className="h-full p-5 text-white rounded-l-lg whitespace-nowrap min-w-min bg-purple-700"
+      onClick={() => setActiveField(inputName)}
+    >
+      <FlexCenter className="w-full h-full">
+        {label}
+        {optional ? '' : ' *'}
+        {labelIconClassName && <div className={`ml-2 ${labelIconClassName}`}></div>}
+      </FlexCenter>
+    </label>
+
+	<select value={value} onChange={onChange} className="flex-grow h-full px-2 text-black rounded-r-lg" disabled={disabled}>
+        <option value="boltzmann" selected>Global tempering</option>
+        <option value="likelihood_tempered">Likelihood tempering</option>
+    </select>
+  </FlexRow>
+);
+
+export { FormField, FileFormField, Dropdown };
