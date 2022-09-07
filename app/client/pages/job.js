@@ -129,15 +129,17 @@ const Descs = ({ activeField, seeMoreFields }) => (
         name={['tempered_distribution_family']}
         math="\{\mathbb{P}\}"
       >
-            Tempering scheme: the family of tempered distributions Chainsail uses; explanation of choices <a
-                      target="_blank"
-                      href="https://github.com/tweag/chainsail-resources/blob/main/documentation/algorithms/replica_exchange.md"
-                      className="inline text-blue-400 hover:text-white transition duration-300"
-                      target="_blank"
-            >
-	    here
-	</a>
-.
+        Tempering scheme: the family of tempered distributions Chainsail uses; explanation of
+        choices{' '}
+        <a
+          target="_blank"
+          href="https://github.com/tweag/chainsail-resources/blob/main/documentation/algorithms/replica_exchange.md"
+          className="inline text-blue-400 hover:text-white transition duration-300"
+          target="_blank"
+        >
+          here
+        </a>
+        .
       </FieldDescription>
     )}
     {seeMoreFields && (

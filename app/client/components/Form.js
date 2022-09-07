@@ -116,9 +116,16 @@ const Dropdown = ({
       </FlexCenter>
     </label>
 
-	<select value={value} onChange={onChange} className="flex-grow h-full px-2 text-black rounded-r-lg" disabled={disabled}>
-        <option value="boltzmann" selected>Global tempering</option>
-        <option value="likelihood_tempered">Likelihood tempering</option>
+    <select
+      value={value}
+      onChange={onChange}
+      className="flex-grow h-full px-2 text-black rounded-r-lg"
+      disabled={disabled}
+    >
+      <option value="boltzmann" selected>
+        Global tempering
+      </option>
+      <option value="likelihood_tempered">Likelihood tempering</option>
     </select>
   </FlexRow>
 );
