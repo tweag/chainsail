@@ -86,11 +86,6 @@ const FileFormField = ({
   </FlexRow>
 );
 
-const options = [
-  { label: 'Global tempering', value: 'boltzmann' },
-  { label: 'Likelihood tempering', value: 'likelihood_tempered' },
-];
-
 const Dropdown = ({
   disabled,
   label,
