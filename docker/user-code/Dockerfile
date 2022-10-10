@@ -61,6 +61,7 @@ COPY docker/user-code/entrypoint.sh /app/entrypoint.sh
 RUN chmod 555 /app/entrypoint.sh
 # Adding the app venv bin to the front of path so it is the default pip, etc.
 ENV PATH=/app/app/user_code_server/.venv/bin:$PATH
+RUN pip install scipy==1.9.1 numpy==1.23.2 pymc==4.1.7 requests==2.28.1 chainsail-helpers==0.1.3.1
 
 WORKDIR /probability
 

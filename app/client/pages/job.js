@@ -111,7 +111,16 @@ const Descs = ({ activeField, seeMoreFields }) => (
       probability density (max. size: 2 Mb)
     </FieldDescription>
     <FieldDescription activeField={activeField} name={['dependencies']} icon="fas fa-bolt">
-      Dependencies: comma-separated list of dependencies to install on compute nodes
+      Dependencies: comma-separated list of dependencies to install on compute nodes; see list of
+      preinstalled dependencies{' '}
+      <a
+        target="_blank"
+        href="https://github.com/tweag/chainsail-resources/blob/main/documentation/defining_custom_probability.md"
+        className="inline text-blue-400 hover:text-white transition duration-300"
+        target="_blank"
+      >
+        here
+      </a>
     </FieldDescription>
     {seeMoreFields && (
       <FieldDescription
