@@ -9,3 +9,4 @@ $ poetry run python -m grpc_tools.protoc \
            --grpc_python_out=./chainsail/grpc \
            ./protos/*.proto
 ```
+After that, fix the second import in all `*_grpc.py` files by prepending a `chainsail.grpc.`.

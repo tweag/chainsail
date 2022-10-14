@@ -461,6 +461,7 @@ class CloudREJobController(BaseREJobController):
             optimization_params,
             re_runner,
             storage_backend,
+            tempered_dist_family,
             schedule_optimizer,
             dos_estimator,
             initial_schedule,
@@ -474,7 +475,6 @@ class CloudREJobController(BaseREJobController):
         self.connection_retry_interval = connection_retry_interval
         self.connection_timeout = connection_timeout
         self.scaling_timeout = scaling_timeout
-        self.tempered_dist_family = tempered_dist_family
 
     def _scale_environment(self, num_replicas):
         """
