@@ -46,8 +46,7 @@ class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
         return user_code_pb2.LogPriorGradientResponse(gradient_bytes=gradient.tobytes())
 
     def InitialState(self, request, context):
-        logger.info("Retrieving initial state",
-                    extra={"job_id": request.job_id})
+        logger.info("Retrieving initial state", extra={"job_id": request.job_id})
         return user_code_pb2.InitialStateResponse(initial_state_bytes=initial_states.tobytes())
 
 
@@ -70,8 +69,7 @@ def run(port, remote_logging_config):
 
     logger.debug("Starting user code gRPC server")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
-    user_code_pb2_grpc.add_UserCodeServicer_to_server(
-        UserCodeServicer(), server)
+    user_code_pb2_grpc.add_UserCodeServicer_to_server(UserCodeServicer(), server)
     server.add_insecure_port(f"[::]:{port}")
     server.start()
     server.wait_for_termination()
