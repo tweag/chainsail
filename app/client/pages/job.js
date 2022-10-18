@@ -139,7 +139,7 @@ const Descs = ({ activeField, seeMoreFields }) => (
         >
           here
         </a>
-        .
+        . Note that the likelihood tempering scheme does not support PyMC and Stan interfaces.
       </FieldDescription>
     )}
     {seeMoreFields && (
