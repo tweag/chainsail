@@ -535,6 +535,10 @@ class CloudREJobController(BaseREJobController):
         """
         iteration = storage.sim_path
         self._ask_scheduler_to_add_iteration(iteration)
+        # Dirty hack to give nodes time (two mintues) to finish installing packages, compile Stan models etc.
+        # The fact that the controller can just kick off sampling whenever it likes, irrespective of whether the
+        # user code containers are ready, is a bug and tracked in https://github.com/tweag/chainsail/issues/386.
+        time.sleep(120)
         super()._do_single_run(storage)
 
 
