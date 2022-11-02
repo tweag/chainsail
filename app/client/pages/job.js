@@ -4,6 +4,7 @@ import firebaseClient from '../utils/firebaseClient';
 import { verifyIdToken } from '../utils/firebaseAdmin';
 import {
   Container,
+  Dropdown,
   Link,
   Layout,
   FlexRow,
@@ -128,8 +129,17 @@ const Descs = ({ activeField, seeMoreFields }) => (
         name={['tempered_distribution_family']}
         math="\{\mathbb{P}\}"
       >
-        Tempered distribution family: the family of tempered distributions to use. For now, only
-        tempering whole probabilities ("Boltzmann") is supported
+        Tempering scheme: the family of tempered distributions Chainsail uses; explanation of
+        choices{' '}
+        <a
+          target="_blank"
+          href="https://github.com/tweag/chainsail-resources/blob/main/documentation/algorithms/replica_exchange.md"
+          className="inline text-blue-400 hover:text-white transition duration-300"
+          target="_blank"
+        >
+          here
+        </a>
+        . Note that the likelihood tempering scheme does not support PyMC and Stan interfaces.
       </FieldDescription>
     )}
     {seeMoreFields && (
@@ -432,14 +442,11 @@ const Job = ({ authed, isMobile }) => {
                             onChange={(e) => setNumOptimizationSamples(e.target.value)}
                           />
                         </FlexRow>
-                        <FormField
+                        <Dropdown
                           optional
-                          label="Tempered distribution family"
+                          label="Tempering scheme"
                           inputName="tempered_distribution_family"
-                          hasDropdown
                           setActiveField={setActiveField}
-                          disabled
-                          defaultValue="Boltzmann"
                           value={tempered_distribution_family}
                           onChange={(e) => setTemperedDist(e.target.value)}
                         />
