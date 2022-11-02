@@ -13,13 +13,17 @@ from mpi4py import MPI
 from chainsail.common import import_from_user
 from chainsail.common.storage import SimulationStorage, load_storage_config
 from chainsail.common.tempering.tempered_distributions import BoltzmannTemperedDistribution
+from chainsail.common.tempering.tempered_distributions import LikelihoodTemperedPosterior
 from chainsail.common.samplers import get_sampler
+from chainsail.common.spec import TemperedDistributionFamily
 from chainsail.common.pdfs import SafeUserPDF
 from chainsail.grpc import user_code_pb2
+
 
 from rexfw.communicators.mpi import MPICommunicator
 from rexfw.convenience import setup_default_re_master, setup_default_replica
 from rexfw.slaves import Slave
+
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +212,14 @@ def run_rexfw_mpi(
         schedule = storage.load_schedule()
 
         # Turn user-defined pdf into a Boltzmann distribution
-        tempered_pdf = BoltzmannTemperedDistribution(bare_pdf, schedule["beta"][rank - 1])
+        if (
+            dist_family := config["re"]["dist_family"]
+        ) == TemperedDistributionFamily.BOLTZMANN.value:
+            tempered_pdf = BoltzmannTemperedDistribution(bare_pdf, schedule["beta"][rank - 1])
+        elif dist_family == TemperedDistributionFamily.LIKELIHOOD_TEMPERED.value:
+            tempered_pdf = LikelihoodTemperedPosterior(bare_pdf, schedule["beta"][rank - 1])
+        else:
+            raise ValueError(f"Invalid tempered distribution family: '{dist_family}'")
 
         # If an initial state is already defined in the config, use that instead
         # of the user-specified one.

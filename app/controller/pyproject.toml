@@ -17,18 +17,20 @@ numpy = "*"
 chainsail-common = { path = "../../lib/common", develop = true }
 chainsail-grpc = { path = "../../lib/grpc", develop = true }
 chainsail-schedule-optimization = { path = "../../lib/schedule_estimation", develop = true }
-click = "^7.1.2"
+click = "^8.0.0"
 
 # Runners can be installed as extras for convenience
 chainsail-runner-rexfw = { path = "../../lib/runners/rexfw", optional = true, develop = true }
 grpcio = "^1.35.0"
+regex = "^2022.8.17"
+black = "22.3.0"
 
 [tool.poetry.extras]
 rexfw = ["chainsail-runner-rexfw"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
-black = "^20.8b1"
+black = "22.3.0"
 flake8 = "^3.8.4"
 pylint = "^2.6.0"
 mypy = "^0.790"

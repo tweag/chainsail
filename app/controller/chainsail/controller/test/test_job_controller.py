@@ -7,6 +7,7 @@ from chainsail.common.spec import (
     NaiveHMCParameters,
     ReplicaExchangeParameters,
     OptimizationParameters,
+    TemperedDistributionFamily,
 )
 from chainsail.controller import BaseREJobController
 
@@ -73,6 +74,7 @@ class testREJobController(unittest.TestCase):
             opt_params,
             MockRERunner(),
             MockStorageBackend(),
+            TemperedDistributionFamily.BOLTZMANN,
             optimizer,
             MockWham(),
             initial_schedule,

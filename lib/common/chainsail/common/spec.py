@@ -216,6 +216,7 @@ LOCAL_SAMPLING_PARAMETERS_SCHEMAS = {
 
 class TemperedDistributionFamily(Enum):
     BOLTZMANN = "boltzmann"
+    LIKELIHOOD_TEMPERED = "likelihood_tempered"
 
 
 class BoltzmannInitialScheduleParametersSchema(Schema):
@@ -227,7 +228,8 @@ class BoltzmannInitialScheduleParametersSchema(Schema):
 
 
 INITIAL_SCHEDULE_PARAMETERS_SCHEMAS = {
-    TemperedDistributionFamily.BOLTZMANN: BoltzmannInitialScheduleParametersSchema
+    TemperedDistributionFamily.BOLTZMANN: BoltzmannInitialScheduleParametersSchema,
+    TemperedDistributionFamily.LIKELIHOOD_TEMPERED: BoltzmannInitialScheduleParametersSchema,
 }
 
 
@@ -276,6 +278,8 @@ class JobSpecSchema(Schema):
 
     @post_load
     def make_job_spec(self, data, **kwargs):
+        # if no tempered distribution family is specified in data, use
+        # use Boltzmann scheme by default
         tempered_dist_family = data.get(
             "tempered_dist_family", TemperedDistributionFamily.BOLTZMANN
         )
@@ -295,6 +299,7 @@ class JobSpec:
     def __init__(
         self,
         probability_definition: str,
+        tempered_dist_family: TemperedDistributionFamily = TemperedDistributionFamily.BOLTZMANN,
         name: Optional[str] = None,
         initial_number_of_replicas: int = 5,
         initial_schedule_parameters: Optional[
@@ -307,7 +312,6 @@ class JobSpec:
         local_sampler: Optional[LocalSampler] = LocalSampler.NAIVE_HMC,
         local_sampling_parameters: Optional[NaiveHMCParameters] = None,
         max_replicas: int = 20,
-        tempered_dist_family: TemperedDistributionFamily = TemperedDistributionFamily.BOLTZMANN,
         dependencies: Optional[Dependencies] = None,
     ):
         self.probability_definition = probability_definition

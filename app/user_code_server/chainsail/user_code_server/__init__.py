@@ -27,6 +27,24 @@ class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
         gradient = pdf.log_prob_gradient(state)
         return user_code_pb2.LogProbGradientResponse(gradient_bytes=gradient.tobytes())
 
+    def LogLikelihood(self, request, context):
+        state = np.frombuffer(request.state_bytes)
+        return user_code_pb2.LogLikelihoodResponse(log_likelihood_result=pdf.log_likelihood(state))
+
+    def LogLikelihoodGradient(self, request, context):
+        state = np.frombuffer(request.state_bytes)
+        gradient = pdf.log_likelihood_gradient(state)
+        return user_code_pb2.LogLikelihoodGradientResponse(gradient_bytes=gradient.tobytes())
+
+    def LogPrior(self, request, context):
+        state = np.frombuffer(request.state_bytes)
+        return user_code_pb2.LogPriorResponse(log_prior_result=pdf.log_prior(state))
+
+    def LogPriorGradient(self, request, context):
+        state = np.frombuffer(request.state_bytes)
+        gradient = pdf.log_prior_gradient(state)
+        return user_code_pb2.LogPriorGradientResponse(gradient_bytes=gradient.tobytes())
+
     def InitialState(self, request, context):
         logger.info("Retrieving initial state", extra={"job_id": request.job_id})
         return user_code_pb2.InitialStateResponse(initial_state_bytes=initial_states.tobytes())

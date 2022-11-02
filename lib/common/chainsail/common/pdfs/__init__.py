@@ -67,3 +67,29 @@ class SafeUserPDF(AbstractPDF):
         )
         response = self._stub.LogProbGradient(request)
         return _decode_array(response.gradient_bytes)
+
+    def log_likelihood(self, state):
+        request = user_code_pb2.LogLikelihoodRequest(
+            state_bytes=_encode_array(state), job_id=self._job_id
+        )
+        return self._stub.LogLikelihood(request).log_likelihood_result
+
+    def log_likelihood_gradient(self, state):
+        request = user_code_pb2.LogLikelihoodGradientRequest(
+            state_bytes=_encode_array(state), job_id=self._job_id
+        )
+        response = self._stub.LogLikelihoodGradient(request)
+        return _decode_array(response.gradient_bytes)
+
+    def log_prior(self, state):
+        request = user_code_pb2.LogPriorRequest(
+            state_bytes=_encode_array(state), job_id=self._job_id
+        )
+        return self._stub.LogPrior(request).log_prior_result
+
+    def log_prior_gradient(self, state):
+        request = user_code_pb2.LogPriorGradientRequest(
+            state_bytes=_encode_array(state), job_id=self._job_id
+        )
+        response = self._stub.LogPriorGradient(request)
+        return _decode_array(response.gradient_bytes)

@@ -24,6 +24,26 @@ class UserCodeStub(object):
             request_serializer=user__code__pb2.LogProbGradientRequest.SerializeToString,
             response_deserializer=user__code__pb2.LogProbGradientResponse.FromString,
         )
+        self.LogLikelihood = channel.unary_unary(
+            "/UserCode/LogLikelihood",
+            request_serializer=user__code__pb2.LogLikelihoodRequest.SerializeToString,
+            response_deserializer=user__code__pb2.LogLikelihoodResponse.FromString,
+        )
+        self.LogLikelihoodGradient = channel.unary_unary(
+            "/UserCode/LogLikelihoodGradient",
+            request_serializer=user__code__pb2.LogLikelihoodGradientRequest.SerializeToString,
+            response_deserializer=user__code__pb2.LogLikelihoodGradientResponse.FromString,
+        )
+        self.LogPrior = channel.unary_unary(
+            "/UserCode/LogPrior",
+            request_serializer=user__code__pb2.LogPriorRequest.SerializeToString,
+            response_deserializer=user__code__pb2.LogPriorResponse.FromString,
+        )
+        self.LogPriorGradient = channel.unary_unary(
+            "/UserCode/LogPriorGradient",
+            request_serializer=user__code__pb2.LogPriorGradientRequest.SerializeToString,
+            response_deserializer=user__code__pb2.LogPriorGradientResponse.FromString,
+        )
         self.InitialState = channel.unary_unary(
             "/UserCode/InitialState",
             request_serializer=user__code__pb2.InitialStateRequest.SerializeToString,
@@ -41,6 +61,30 @@ class UserCodeServicer(object):
         raise NotImplementedError("Method not implemented!")
 
     def LogProbGradient(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def LogLikelihood(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def LogLikelihoodGradient(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def LogPrior(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def LogPriorGradient(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
@@ -64,6 +108,26 @@ def add_UserCodeServicer_to_server(servicer, server):
             servicer.LogProbGradient,
             request_deserializer=user__code__pb2.LogProbGradientRequest.FromString,
             response_serializer=user__code__pb2.LogProbGradientResponse.SerializeToString,
+        ),
+        "LogLikelihood": grpc.unary_unary_rpc_method_handler(
+            servicer.LogLikelihood,
+            request_deserializer=user__code__pb2.LogLikelihoodRequest.FromString,
+            response_serializer=user__code__pb2.LogLikelihoodResponse.SerializeToString,
+        ),
+        "LogLikelihoodGradient": grpc.unary_unary_rpc_method_handler(
+            servicer.LogLikelihoodGradient,
+            request_deserializer=user__code__pb2.LogLikelihoodGradientRequest.FromString,
+            response_serializer=user__code__pb2.LogLikelihoodGradientResponse.SerializeToString,
+        ),
+        "LogPrior": grpc.unary_unary_rpc_method_handler(
+            servicer.LogPrior,
+            request_deserializer=user__code__pb2.LogPriorRequest.FromString,
+            response_serializer=user__code__pb2.LogPriorResponse.SerializeToString,
+        ),
+        "LogPriorGradient": grpc.unary_unary_rpc_method_handler(
+            servicer.LogPriorGradient,
+            request_deserializer=user__code__pb2.LogPriorGradientRequest.FromString,
+            response_serializer=user__code__pb2.LogPriorGradientResponse.SerializeToString,
         ),
         "InitialState": grpc.unary_unary_rpc_method_handler(
             servicer.InitialState,
@@ -127,6 +191,122 @@ class UserCode(object):
             "/UserCode/LogProbGradient",
             user__code__pb2.LogProbGradientRequest.SerializeToString,
             user__code__pb2.LogProbGradientResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
+
+    @staticmethod
+    def LogLikelihood(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/UserCode/LogLikelihood",
+            user__code__pb2.LogLikelihoodRequest.SerializeToString,
+            user__code__pb2.LogLikelihoodResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
+
+    @staticmethod
+    def LogLikelihoodGradient(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/UserCode/LogLikelihoodGradient",
+            user__code__pb2.LogLikelihoodGradientRequest.SerializeToString,
+            user__code__pb2.LogLikelihoodGradientResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
+
+    @staticmethod
+    def LogPrior(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/UserCode/LogPrior",
+            user__code__pb2.LogPriorRequest.SerializeToString,
+            user__code__pb2.LogPriorResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
+
+    @staticmethod
+    def LogPriorGradient(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/UserCode/LogPriorGradient",
+            user__code__pb2.LogPriorGradientRequest.SerializeToString,
+            user__code__pb2.LogPriorGradientResponse.FromString,
             options,
             channel_credentials,
             insecure,

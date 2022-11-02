@@ -86,6 +86,7 @@ def run(basename, job_spec, remote_logging_config_path):
         job_spec.optimization_parameters,
         runner,
         storage_backend,
+        job_spec.tempered_dist_family,
         basename=basename,
         **optimization_objects,
     )

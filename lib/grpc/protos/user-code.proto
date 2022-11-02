@@ -18,6 +18,42 @@ message LogProbGradientResponse {
   bytes gradient_bytes = 1;
 }
 
+message LogLikelihoodRequest {
+  bytes state_bytes = 1;
+  int32 job_id = 2;
+}
+
+message LogLikelihoodResponse {
+  float log_likelihood_result = 1;
+}
+
+message LogLikelihoodGradientRequest {
+  bytes state_bytes = 1;
+  int32 job_id = 2;
+}
+
+message LogLikelihoodGradientResponse {
+  bytes gradient_bytes = 1;
+}
+
+message LogPriorRequest {
+  bytes state_bytes = 1;
+  int32 job_id = 2;
+}
+
+message LogPriorResponse {
+  float log_prior_result = 1;
+}
+
+message LogPriorGradientRequest {
+  bytes state_bytes = 1;
+  int32 job_id = 2;
+}
+
+message LogPriorGradientResponse {
+  bytes gradient_bytes = 1;
+}
+
 message InitialStateRequest {
   int32 job_id = 1;
 }
@@ -30,6 +66,14 @@ service UserCode {
   rpc LogProb(LogProbRequest) returns (LogProbResponse);
 
   rpc LogProbGradient(LogProbGradientRequest) returns (LogProbGradientResponse);
+
+  rpc LogLikelihood(LogLikelihoodRequest) returns (LogLikelihoodResponse);
+
+  rpc LogLikelihoodGradient(LogLikelihoodGradientRequest) returns (LogLikelihoodGradientResponse);
+
+  rpc LogPrior(LogPriorRequest) returns (LogPriorResponse);
+
+  rpc LogPriorGradient(LogPriorGradientRequest) returns (LogPriorGradientResponse);
 
   rpc InitialState(InitialStateRequest) returns (InitialStateResponse);
 }

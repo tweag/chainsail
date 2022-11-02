@@ -1,4 +1,5 @@
 {
+    "tempered_dist_family": "likelihood_tempered",
     "probability_definition": "wedon'tneedthat",
     "max_replicas": 8,
     "initial_number_of_replicas": 5,
@@ -6,7 +7,7 @@
         "minimum_beta": 0.1
     },
     "optimization_parameters": {
-        "optimization_quantity_target": 0.6,
+        "optimization_quantity_target": 0.8,
 	"decrement": 0.025,
 	"min_param": 0.1
     },

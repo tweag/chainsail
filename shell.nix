@@ -1,7 +1,6 @@
 { pkgs ? import ./nix { } }:
 pkgs.mkShell {
   buildInputs = with pkgs; [
-    (python38.withPackages (pp: with pp; [ black ]))
     poetry # version 1.1.10 (required) while pythonPackages38.poetry is lower
     niv
     yarn

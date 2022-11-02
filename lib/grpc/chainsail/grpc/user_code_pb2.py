@@ -3,6 +3,7 @@
 # source: user-code.proto
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
+from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
@@ -12,307 +13,25 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-DESCRIPTOR = _descriptor.FileDescriptor(
-    name="user-code.proto",
-    package="",
-    syntax="proto3",
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-    serialized_pb=b'\n\x0fuser-code.proto"5\n\x0eLogProbRequest\x12\x13\n\x0bstate_bytes\x18\x01 \x01(\x0c\x12\x0e\n\x06job_id\x18\x02 \x01(\x05"*\n\x0fLogProbResponse\x12\x17\n\x0flog_prob_result\x18\x01 \x01(\x02"=\n\x16LogProbGradientRequest\x12\x13\n\x0bstate_bytes\x18\x01 \x01(\x0c\x12\x0e\n\x06job_id\x18\x02 \x01(\x05"1\n\x17LogProbGradientResponse\x12\x16\n\x0egradient_bytes\x18\x01 \x01(\x0c"%\n\x13InitialStateRequest\x12\x0e\n\x06job_id\x18\x01 \x01(\x05"3\n\x14InitialStateResponse\x12\x1b\n\x13initial_state_bytes\x18\x01 \x01(\x0c\x32\xbb\x01\n\x08UserCode\x12,\n\x07LogProb\x12\x0f.LogProbRequest\x1a\x10.LogProbResponse\x12\x44\n\x0fLogProbGradient\x12\x17.LogProbGradientRequest\x1a\x18.LogProbGradientResponse\x12;\n\x0cInitialState\x12\x14.InitialStateRequest\x1a\x15.InitialStateResponseb\x06proto3',
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
+    b'\n\x0fuser-code.proto"5\n\x0eLogProbRequest\x12\x13\n\x0bstate_bytes\x18\x01 \x01(\x0c\x12\x0e\n\x06job_id\x18\x02 \x01(\x05"*\n\x0fLogProbResponse\x12\x17\n\x0flog_prob_result\x18\x01 \x01(\x02"=\n\x16LogProbGradientRequest\x12\x13\n\x0bstate_bytes\x18\x01 \x01(\x0c\x12\x0e\n\x06job_id\x18\x02 \x01(\x05"1\n\x17LogProbGradientResponse\x12\x16\n\x0egradient_bytes\x18\x01 \x01(\x0c";\n\x14LogLikelihoodRequest\x12\x13\n\x0bstate_bytes\x18\x01 \x01(\x0c\x12\x0e\n\x06job_id\x18\x02 \x01(\x05"6\n\x15LogLikelihoodResponse\x12\x1d\n\x15log_likelihood_result\x18\x01 \x01(\x02"C\n\x1cLogLikelihoodGradientRequest\x12\x13\n\x0bstate_bytes\x18\x01 \x01(\x0c\x12\x0e\n\x06job_id\x18\x02 \x01(\x05"7\n\x1dLogLikelihoodGradientResponse\x12\x16\n\x0egradient_bytes\x18\x01 \x01(\x0c"6\n\x0fLogPriorRequest\x12\x13\n\x0bstate_bytes\x18\x01 \x01(\x0c\x12\x0e\n\x06job_id\x18\x02 \x01(\x05",\n\x10LogPriorResponse\x12\x18\n\x10log_prior_result\x18\x01 \x01(\x02">\n\x17LogPriorGradientRequest\x12\x13\n\x0bstate_bytes\x18\x01 \x01(\x0c\x12\x0e\n\x06job_id\x18\x02 \x01(\x05"2\n\x18LogPriorGradientResponse\x12\x16\n\x0egradient_bytes\x18\x01 \x01(\x0c"%\n\x13InitialStateRequest\x12\x0e\n\x06job_id\x18\x01 \x01(\x05"3\n\x14InitialStateResponse\x12\x1b\n\x13initial_state_bytes\x18\x01 \x01(\x0c\x32\xcd\x03\n\x08UserCode\x12,\n\x07LogProb\x12\x0f.LogProbRequest\x1a\x10.LogProbResponse\x12\x44\n\x0fLogProbGradient\x12\x17.LogProbGradientRequest\x1a\x18.LogProbGradientResponse\x12>\n\rLogLikelihood\x12\x15.LogLikelihoodRequest\x1a\x16.LogLikelihoodResponse\x12V\n\x15LogLikelihoodGradient\x12\x1d.LogLikelihoodGradientRequest\x1a\x1e.LogLikelihoodGradientResponse\x12/\n\x08LogPrior\x12\x10.LogPriorRequest\x1a\x11.LogPriorResponse\x12G\n\x10LogPriorGradient\x12\x18.LogPriorGradientRequest\x1a\x19.LogPriorGradientResponse\x12;\n\x0cInitialState\x12\x14.InitialStateRequest\x1a\x15.InitialStateResponseb\x06proto3'
 )
 
 
-_LOGPROBREQUEST = _descriptor.Descriptor(
-    name="LogProbRequest",
-    full_name="LogProbRequest",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="state_bytes",
-            full_name="LogProbRequest.state_bytes",
-            index=0,
-            number=1,
-            type=12,
-            cpp_type=9,
-            label=1,
-            has_default_value=False,
-            default_value=b"",
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="job_id",
-            full_name="LogProbRequest.job_id",
-            index=1,
-            number=2,
-            type=5,
-            cpp_type=1,
-            label=1,
-            has_default_value=False,
-            default_value=0,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=19,
-    serialized_end=72,
-)
-
-
-_LOGPROBRESPONSE = _descriptor.Descriptor(
-    name="LogProbResponse",
-    full_name="LogProbResponse",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="log_prob_result",
-            full_name="LogProbResponse.log_prob_result",
-            index=0,
-            number=1,
-            type=2,
-            cpp_type=6,
-            label=1,
-            has_default_value=False,
-            default_value=float(0),
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=74,
-    serialized_end=116,
-)
-
-
-_LOGPROBGRADIENTREQUEST = _descriptor.Descriptor(
-    name="LogProbGradientRequest",
-    full_name="LogProbGradientRequest",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="state_bytes",
-            full_name="LogProbGradientRequest.state_bytes",
-            index=0,
-            number=1,
-            type=12,
-            cpp_type=9,
-            label=1,
-            has_default_value=False,
-            default_value=b"",
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
-            name="job_id",
-            full_name="LogProbGradientRequest.job_id",
-            index=1,
-            number=2,
-            type=5,
-            cpp_type=1,
-            label=1,
-            has_default_value=False,
-            default_value=0,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=118,
-    serialized_end=179,
-)
-
-
-_LOGPROBGRADIENTRESPONSE = _descriptor.Descriptor(
-    name="LogProbGradientResponse",
-    full_name="LogProbGradientResponse",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="gradient_bytes",
-            full_name="LogProbGradientResponse.gradient_bytes",
-            index=0,
-            number=1,
-            type=12,
-            cpp_type=9,
-            label=1,
-            has_default_value=False,
-            default_value=b"",
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=181,
-    serialized_end=230,
-)
-
-
-_INITIALSTATEREQUEST = _descriptor.Descriptor(
-    name="InitialStateRequest",
-    full_name="InitialStateRequest",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="job_id",
-            full_name="InitialStateRequest.job_id",
-            index=0,
-            number=1,
-            type=5,
-            cpp_type=1,
-            label=1,
-            has_default_value=False,
-            default_value=0,
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=232,
-    serialized_end=269,
-)
-
-
-_INITIALSTATERESPONSE = _descriptor.Descriptor(
-    name="InitialStateResponse",
-    full_name="InitialStateResponse",
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    create_key=_descriptor._internal_create_key,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name="initial_state_bytes",
-            full_name="InitialStateResponse.initial_state_bytes",
-            index=0,
-            number=1,
-            type=12,
-            cpp_type=9,
-            label=1,
-            has_default_value=False,
-            default_value=b"",
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-    extensions=[],
-    nested_types=[],
-    enum_types=[],
-    serialized_options=None,
-    is_extendable=False,
-    syntax="proto3",
-    extension_ranges=[],
-    oneofs=[],
-    serialized_start=271,
-    serialized_end=322,
-)
-
-DESCRIPTOR.message_types_by_name["LogProbRequest"] = _LOGPROBREQUEST
-DESCRIPTOR.message_types_by_name["LogProbResponse"] = _LOGPROBRESPONSE
-DESCRIPTOR.message_types_by_name["LogProbGradientRequest"] = _LOGPROBGRADIENTREQUEST
-DESCRIPTOR.message_types_by_name["LogProbGradientResponse"] = _LOGPROBGRADIENTRESPONSE
-DESCRIPTOR.message_types_by_name["InitialStateRequest"] = _INITIALSTATEREQUEST
-DESCRIPTOR.message_types_by_name["InitialStateResponse"] = _INITIALSTATERESPONSE
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
-
+_LOGPROBREQUEST = DESCRIPTOR.message_types_by_name["LogProbRequest"]
+_LOGPROBRESPONSE = DESCRIPTOR.message_types_by_name["LogProbResponse"]
+_LOGPROBGRADIENTREQUEST = DESCRIPTOR.message_types_by_name["LogProbGradientRequest"]
+_LOGPROBGRADIENTRESPONSE = DESCRIPTOR.message_types_by_name["LogProbGradientResponse"]
+_LOGLIKELIHOODREQUEST = DESCRIPTOR.message_types_by_name["LogLikelihoodRequest"]
+_LOGLIKELIHOODRESPONSE = DESCRIPTOR.message_types_by_name["LogLikelihoodResponse"]
+_LOGLIKELIHOODGRADIENTREQUEST = DESCRIPTOR.message_types_by_name["LogLikelihoodGradientRequest"]
+_LOGLIKELIHOODGRADIENTRESPONSE = DESCRIPTOR.message_types_by_name["LogLikelihoodGradientResponse"]
+_LOGPRIORREQUEST = DESCRIPTOR.message_types_by_name["LogPriorRequest"]
+_LOGPRIORRESPONSE = DESCRIPTOR.message_types_by_name["LogPriorResponse"]
+_LOGPRIORGRADIENTREQUEST = DESCRIPTOR.message_types_by_name["LogPriorGradientRequest"]
+_LOGPRIORGRADIENTRESPONSE = DESCRIPTOR.message_types_by_name["LogPriorGradientResponse"]
+_INITIALSTATEREQUEST = DESCRIPTOR.message_types_by_name["InitialStateRequest"]
+_INITIALSTATERESPONSE = DESCRIPTOR.message_types_by_name["InitialStateResponse"]
 LogProbRequest = _reflection.GeneratedProtocolMessageType(
     "LogProbRequest",
     (_message.Message,),
@@ -357,6 +76,94 @@ LogProbGradientResponse = _reflection.GeneratedProtocolMessageType(
 )
 _sym_db.RegisterMessage(LogProbGradientResponse)
 
+LogLikelihoodRequest = _reflection.GeneratedProtocolMessageType(
+    "LogLikelihoodRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _LOGLIKELIHOODREQUEST,
+        "__module__": "user_code_pb2"
+        # @@protoc_insertion_point(class_scope:LogLikelihoodRequest)
+    },
+)
+_sym_db.RegisterMessage(LogLikelihoodRequest)
+
+LogLikelihoodResponse = _reflection.GeneratedProtocolMessageType(
+    "LogLikelihoodResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _LOGLIKELIHOODRESPONSE,
+        "__module__": "user_code_pb2"
+        # @@protoc_insertion_point(class_scope:LogLikelihoodResponse)
+    },
+)
+_sym_db.RegisterMessage(LogLikelihoodResponse)
+
+LogLikelihoodGradientRequest = _reflection.GeneratedProtocolMessageType(
+    "LogLikelihoodGradientRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _LOGLIKELIHOODGRADIENTREQUEST,
+        "__module__": "user_code_pb2"
+        # @@protoc_insertion_point(class_scope:LogLikelihoodGradientRequest)
+    },
+)
+_sym_db.RegisterMessage(LogLikelihoodGradientRequest)
+
+LogLikelihoodGradientResponse = _reflection.GeneratedProtocolMessageType(
+    "LogLikelihoodGradientResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _LOGLIKELIHOODGRADIENTRESPONSE,
+        "__module__": "user_code_pb2"
+        # @@protoc_insertion_point(class_scope:LogLikelihoodGradientResponse)
+    },
+)
+_sym_db.RegisterMessage(LogLikelihoodGradientResponse)
+
+LogPriorRequest = _reflection.GeneratedProtocolMessageType(
+    "LogPriorRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _LOGPRIORREQUEST,
+        "__module__": "user_code_pb2"
+        # @@protoc_insertion_point(class_scope:LogPriorRequest)
+    },
+)
+_sym_db.RegisterMessage(LogPriorRequest)
+
+LogPriorResponse = _reflection.GeneratedProtocolMessageType(
+    "LogPriorResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _LOGPRIORRESPONSE,
+        "__module__": "user_code_pb2"
+        # @@protoc_insertion_point(class_scope:LogPriorResponse)
+    },
+)
+_sym_db.RegisterMessage(LogPriorResponse)
+
+LogPriorGradientRequest = _reflection.GeneratedProtocolMessageType(
+    "LogPriorGradientRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _LOGPRIORGRADIENTREQUEST,
+        "__module__": "user_code_pb2"
+        # @@protoc_insertion_point(class_scope:LogPriorGradientRequest)
+    },
+)
+_sym_db.RegisterMessage(LogPriorGradientRequest)
+
+LogPriorGradientResponse = _reflection.GeneratedProtocolMessageType(
+    "LogPriorGradientResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _LOGPRIORGRADIENTRESPONSE,
+        "__module__": "user_code_pb2"
+        # @@protoc_insertion_point(class_scope:LogPriorGradientResponse)
+    },
+)
+_sym_db.RegisterMessage(LogPriorGradientResponse)
+
 InitialStateRequest = _reflection.GeneratedProtocolMessageType(
     "InitialStateRequest",
     (_message.Message,),
@@ -379,51 +186,38 @@ InitialStateResponse = _reflection.GeneratedProtocolMessageType(
 )
 _sym_db.RegisterMessage(InitialStateResponse)
 
+_USERCODE = DESCRIPTOR.services_by_name["UserCode"]
+if _descriptor._USE_C_DESCRIPTORS == False:
 
-_USERCODE = _descriptor.ServiceDescriptor(
-    name="UserCode",
-    full_name="UserCode",
-    file=DESCRIPTOR,
-    index=0,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-    serialized_start=325,
-    serialized_end=512,
-    methods=[
-        _descriptor.MethodDescriptor(
-            name="LogProb",
-            full_name="UserCode.LogProb",
-            index=0,
-            containing_service=None,
-            input_type=_LOGPROBREQUEST,
-            output_type=_LOGPROBRESPONSE,
-            serialized_options=None,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.MethodDescriptor(
-            name="LogProbGradient",
-            full_name="UserCode.LogProbGradient",
-            index=1,
-            containing_service=None,
-            input_type=_LOGPROBGRADIENTREQUEST,
-            output_type=_LOGPROBGRADIENTRESPONSE,
-            serialized_options=None,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.MethodDescriptor(
-            name="InitialState",
-            full_name="UserCode.InitialState",
-            index=2,
-            containing_service=None,
-            input_type=_INITIALSTATEREQUEST,
-            output_type=_INITIALSTATERESPONSE,
-            serialized_options=None,
-            create_key=_descriptor._internal_create_key,
-        ),
-    ],
-)
-_sym_db.RegisterServiceDescriptor(_USERCODE)
-
-DESCRIPTOR.services_by_name["UserCode"] = _USERCODE
-
+    DESCRIPTOR._options = None
+    _LOGPROBREQUEST._serialized_start = 19
+    _LOGPROBREQUEST._serialized_end = 72
+    _LOGPROBRESPONSE._serialized_start = 74
+    _LOGPROBRESPONSE._serialized_end = 116
+    _LOGPROBGRADIENTREQUEST._serialized_start = 118
+    _LOGPROBGRADIENTREQUEST._serialized_end = 179
+    _LOGPROBGRADIENTRESPONSE._serialized_start = 181
+    _LOGPROBGRADIENTRESPONSE._serialized_end = 230
+    _LOGLIKELIHOODREQUEST._serialized_start = 232
+    _LOGLIKELIHOODREQUEST._serialized_end = 291
+    _LOGLIKELIHOODRESPONSE._serialized_start = 293
+    _LOGLIKELIHOODRESPONSE._serialized_end = 347
+    _LOGLIKELIHOODGRADIENTREQUEST._serialized_start = 349
+    _LOGLIKELIHOODGRADIENTREQUEST._serialized_end = 416
+    _LOGLIKELIHOODGRADIENTRESPONSE._serialized_start = 418
+    _LOGLIKELIHOODGRADIENTRESPONSE._serialized_end = 473
+    _LOGPRIORREQUEST._serialized_start = 475
+    _LOGPRIORREQUEST._serialized_end = 529
+    _LOGPRIORRESPONSE._serialized_start = 531
+    _LOGPRIORRESPONSE._serialized_end = 575
+    _LOGPRIORGRADIENTREQUEST._serialized_start = 577
+    _LOGPRIORGRADIENTREQUEST._serialized_end = 639
+    _LOGPRIORGRADIENTRESPONSE._serialized_start = 641
+    _LOGPRIORGRADIENTRESPONSE._serialized_end = 691
+    _INITIALSTATEREQUEST._serialized_start = 693
+    _INITIALSTATEREQUEST._serialized_end = 730
+    _INITIALSTATERESPONSE._serialized_start = 732
+    _INITIALSTATERESPONSE._serialized_end = 783
+    _USERCODE._serialized_start = 786
+    _USERCODE._serialized_end = 1247
 # @@protoc_insertion_point(module_scope)
