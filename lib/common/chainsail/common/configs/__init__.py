@@ -17,7 +17,7 @@ class ControllerConfig:
     metrics_port: int
     runner: str
     remote_logging_config_path: str
-    storage_basename: str = ""
+    storage_dirname: str = ""
     port: int = 50051
     n_threads: int = 10
     log_level: str = "INFO"
@@ -30,7 +30,7 @@ class ControllerConfigSchema(Schema):
     metrics_port = fields.Integer(required=True)
     runner = fields.String(required=True)
     remote_logging_config_path = fields.String(required=True)
-    storage_basename = fields.String()
+    storage_dirname = fields.String()
     port = fields.Integer()
     n_threads = fields.Integer()
     log_level = fields.String()

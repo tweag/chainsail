@@ -31,9 +31,7 @@ def check_status(proc: Process) -> ProcessStatus:
 
 
 @click.command()
-@click.option(
-    "--basename", required=True, type=click.Path(), help="basename for simulation output"
-)
+@click.option("--dirname", required=True, type=click.Path(), help="dirname for simulation output")
 @click.option(
     "--job-spec", required=True, type=click.Path(exists=True), help="path to job spec json file"
 )
@@ -43,7 +41,7 @@ def check_status(proc: Process) -> ProcessStatus:
     type=click.Path(),
     help="Config file with remote logging settings",
 )
-def run(basename, job_spec, remote_logging_config_path):
+def run(dirname, job_spec, remote_logging_config_path):
     """
     The resaas node controller.
     """
@@ -87,7 +85,7 @@ def run(basename, job_spec, remote_logging_config_path):
         runner,
         storage_backend,
         job_spec.tempered_dist_family,
-        basename=basename,
+        dirname=dirname,
         **optimization_objects,
     )
 

@@ -38,7 +38,7 @@ def _config_template_from_params(re_params, local_sampling_params, dist_family):
     local_sampling["sampler"] = get_sampler_from_params(local_sampling_params).value
     general = dict(
         n_iterations=None,
-        basename=None,
+        dirname=None,
         output_path=None,
         initial_states=None,
         num_replicas=None,
@@ -136,7 +136,7 @@ class BaseREJobController:
         schedule_optimizer,
         dos_estimator,
         initial_schedule,
-        basename="",
+        dirname="",
     ):
         """
         Initializes a basic Replica Exchange job controller, which can be used
@@ -167,7 +167,7 @@ class BaseREJobController:
             initial_schedule(dict): initial parameter schedule
               maker object which calculates a very first Replica Exchange
               schedule
-            basename(str): optional basename to the simulation storage path
+            dirname(str): optional dirname to the simulation storage path
               (required for running locally or when reusing an existing bucket)
         """
         self._re_runner = re_runner
@@ -175,7 +175,7 @@ class BaseREJobController:
         self._schedule_optimizer = schedule_optimizer
         self._dos_estimator = dos_estimator
         self._storage_backend = storage_backend
-        self._basename = basename
+        self._dirname = dirname
         self._tempered_dist_family = tempered_dist_family
         self._re_params = re_params
         self._local_sampling_params = local_sampling_params
@@ -234,7 +234,7 @@ class BaseREJobController:
                 "Schedule optimization simulation #{}/{} started".format(run_counter + 1, max_runs)
             )
             current_storage = SimulationStorage(
-                self._basename,
+                self._dirname,
                 "optimization_run{}".format(run_counter),
                 self._storage_backend,
             )
@@ -307,7 +307,7 @@ class BaseREJobController:
             "n_iterations": num_samples,
             "output_path": storage.sim_path,
             "num_replicas": schedule_length(schedule),
-            "basename": storage._basename,
+            "dirname": storage._dirname,
         }
         updates["re"] = {
             "schedule": dir_structure.SCHEDULE_FILE_NAME,
@@ -381,7 +381,7 @@ class BaseREJobController:
         optimization_result = self.optimize_schedule()
         final_opt_storage, final_schedule = optimization_result
 
-        prod_storage = SimulationStorage(self._basename, "production_run", self._storage_backend)
+        prod_storage = SimulationStorage(self._dirname, "production_run", self._storage_backend)
         self._setup_simulation(prod_storage, final_schedule, final_opt_storage, prod=True)
         self._do_single_run(prod_storage)
 
@@ -406,7 +406,7 @@ class CloudREJobController(BaseREJobController):
         initial_schedule,
         node_updater,
         tempered_dist_family,
-        basename="",
+        dirname="",
         connection_retries=5,
         connection_retry_interval=1,
         connection_timeout=1200,
@@ -447,7 +447,7 @@ class CloudREJobController(BaseREJobController):
             tempered_dist_family(:class:`TemperedDistributionFamily`): tempered
               distribution family enum member that tells which tempering scheme
               will be used
-            basename(str): optional basename to the simulation storage path
+            dirname(str): optional dirname to the simulation storage path
               (required for running locally or when reusing an existing bucket)
             connection_retries(int): the number of connection attempts to make when
               contacting the scheduler
@@ -465,7 +465,7 @@ class CloudREJobController(BaseREJobController):
             schedule_optimizer,
             dos_estimator,
             initial_schedule,
-            basename=basename,
+            dirname=dirname,
         )
         self.job_id = job_id
         self.scheduler_address = scheduler_address

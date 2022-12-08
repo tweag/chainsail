@@ -24,7 +24,7 @@ spec:
         - containerPort: 5002
         resources: {}
         env:
-          - name: STORAGE_BASENAME
+          - name: STORAGE_DIRNAME
             value: /storage
           - name: STORAGE_CONFIG
             value: /config/storage.yaml

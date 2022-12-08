@@ -137,7 +137,7 @@ def mock_config():
         results_access_key_id="id",
         results_secret_key="secret",
         results_bucket="results",
-        results_basename="results_base",
+        results_dirname="results_dir",
     )
     return config
 
