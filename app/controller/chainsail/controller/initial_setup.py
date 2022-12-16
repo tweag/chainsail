@@ -19,7 +19,7 @@ def setup_stepsizes(current_storage, schedule, previous_storage=None):
           simulation
     """
     if previous_storage is None:
-        stepsizes = np.linspace(1e-3, 1e-1, len(schedule))
+        stepsizes = np.linspace(1e-5, 1e-5, len(schedule))
     else:
         old_stepsizes = previous_storage.load_final_stepsizes()
         old_schedule = previous_storage.load_schedule()

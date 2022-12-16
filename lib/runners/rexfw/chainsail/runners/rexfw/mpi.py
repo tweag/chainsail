@@ -229,7 +229,7 @@ def run_rexfw_mpi(
         if config["local_sampling"]["stepsizes"] is not None:
             stepsize = storage.load_initial_stepsizes()[rank - 1]
         else:
-            stepsize = 0.1
+            stepsize = 1e-6
 
         ls_params = config["local_sampling"]
         sampler = get_sampler(ls_params["sampler"])

@@ -301,7 +301,7 @@ class BaseREJobController:
         num_adaption_samples = cfg_template["local_sampling"]["num_adaption_samples"]
         if num_adaption_samples is None:
             num_adaption_samples = int(0.1 * num_samples)
-        updates["local_sampling"]["num_adaption_samples"] = num_adaption_samples
+        updates["local_sampling"]["num_adaption_samples"] = 10000000 # num_adaption_samples
 
         updates["general"] = {
             "n_iterations": num_samples,
