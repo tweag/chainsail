@@ -84,7 +84,7 @@ const fireAnimation = () => {
   console.log('Animation fired');
   const parent = document.getElementById('animation-main-page');
   if (!parent) {
-    return
+    return;
   }
   const id = Math.random(); //or some such identifier
   const div = document.createElement('div');
