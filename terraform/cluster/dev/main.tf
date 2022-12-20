@@ -11,7 +11,7 @@ terraform {
     prefix = "terraform/state/dev-app"
   }
   required_providers {
-    // this is necessary not run into
+    // this is necessary in order to not run into
     // https://github.com/hashicorp/terraform-provider-kubernetes/issues/1724
     kubernetes = {
       source  = "hashicorp/kubernetes"
