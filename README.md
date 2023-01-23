@@ -2,7 +2,7 @@
 Chainsail is a web service which helps you sample from multimodal probability distributions. In the context of Bayesian statistics, they arise in the case of unidentifiable parameters which are due to some symmetry in the model or if you have ambiguous data.
 
 ## High-level overview
-Also see the [announcement blog post](link).
+Also see the [announcement blog post](https://www.tweag.io/blog/2022-08-09-chainsail-announcement/).
 
 Chainsail is essentially a Replica Exchange ([Wikipedia](https://en.wikipedia.org/wiki/Parallel_tempering), [blog post](https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/)) implementation with automated tuning and support for cloud computing platforms providing the necessary parallel computing power.
 ### Replica Exchange
