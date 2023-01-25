@@ -76,6 +76,10 @@ $ poetry shell
 $ PYTHONPATH="$PYTHONPATH:$PWD" pytest --cov-report html --cov=chainsail
 ```
 
+## Endpoints
+
+The Flask endpoints are listed in `./chainsail/scheduler/apps.py` and, while sparsely documented, it should be pretty clear what they do.
+
 ## Resources:
 
 **User Manuals:**
