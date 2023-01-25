@@ -1,7 +1,7 @@
 # Controller
 
 The job controller application runs single sampling jobs as submitted by the client to the scheduler. Invoking the controller
-will execute the sampling job, exposing a gRPC endpoint for health monitoring. 
+will execute the sampling job, exposing a gRPC endpoint for health monitoring.
 Running a single sampling job entails optimizing the schedule parameters and performing a production run.
 Optimizing the schedule is an iterative procedure consisting of the following steps:
 1. perform a Replica Exchange run using a [runner](/lib/runners/)
@@ -16,7 +16,7 @@ These for points are iterated several times, until finally a production run is s
 
 This application can use any implementation of [AbstractRERunner](/lib/runners/).
 The runner class is specified in the controller configuration file and is loaded *at runtime*.
-The controller comes packaged with builtin runners as package extras and they must be installed explicitly. 
+The controller comes packaged with builtin runners as package extras and they must be installed explicitly.
 
 Available runners:
 
@@ -29,15 +29,15 @@ See the example in [../scheduler/example/controller.yaml](../scheduler/example/c
 
 ## Running the controller as a stand-alone local app
 The controller can be used as a stand-alone app on a single machine. To that end,
-1. make sure you have any system dependencies for the runner installed (`rexfw` requires `openmpi`, for example, provided in the [Nix shell](../../shell.nix))
-2. make sure that your `probability.py` file (and everything imported in there) is in this directory,
-3. install the controller app with the necessary runner (currently, there's only the `rexfw` runner) via `poetry install --extras rexfw`,
-4. install the Python dependencies of your `probability.py` in the Poetry virtual environment via
+1. Make sure you have any system dependencies for the runner installed (`rexfw` requires `openmpi`, for example, provided in the [Nix shell](../../shell.nix)).
+2. Make sure that your `probability.py` file that defines the log-probability you want to sample is in this directory. Examples for valid probability definitions can be found [here](https://github.com/tweag/chainsail-resources/tree/main/examples).
+3. Install the controller app with the necessary runner (currently, there's only the `rexfw` runner) via `poetry install --extras rexfw`,
+4. Install the Python dependencies of your `probability.py` in the Poetry virtual environment via
    ```bash
    $ poetry shell
    $ pip install numpy scipy anotherpackage
    ```
-5. prepare a job configuration JSON file (an example is provided in `examples/local_run/job.json`).
+5. Prepare a job configuration JSON file (an example is provided [here](https://github.com/tweag/chainsail-resources/tree/main/examples/job.json)).
 6. execute the local controller run script via
    ```bash
    $ poetry run chainsail-controller-local --job-spec <job config file> --dirname <some file system path>

@@ -1,17 +1,21 @@
-# scheduler
+# Scheduler
 
-The resaas scheduler handles spinning up new sampling job clusters, tearing them down, and querying their metadata.
+The Chainsail scheduler handles spinning up new sampling job clusters, tearing them down, and querying their metadata.
 It is a single application with two main components:
 
-1. A flask REST API ([chainsail/scheduler/app.py](chainsail/scheduler/app.py)) which is what clients use to interact with the resaas system.
+1. A flask REST API ([chainsail/scheduler/app.py](chainsail/scheduler/app.py)) which is what clients use to interact with the Chainsail system.
 2. A celery task runner for processing asynchronous tasks spawned by the flask application
 
-The resaas scheduler is designed to work with Postgres (for flask) and Redis (for celery). An example docker-compose file can be found in the [example directory](./example) along with
+The Chainsail scheduler is designed to work with Postgres (for flask) and Redis (for celery). An example docker-compose file can be found in the [example directory](./example) along with
 an example configuration file. The configuration file's schema is defined in [chainsail/scheduler/config.py](chainsail/scheduler/config.py).
 
 ## Running locally
+:warning: this is outdated and will likely not immediately work, e.g. we don't use `docker-compose` anymore, YAML files in `./examples/` are outdated and the AWS part is specific to an early Chainsail development deployment.
+The job specification also has evolved since.
+The easiest way to run Chainsail locally is using Minikube + Terraform + Helm, as described in `../../doc/deployment.md`.
+Unfortunately, this entails building Docker images and makes for slow iteration.
 
-There are a few steps to running the resaas scheduler locally. Make sure that you
+There are a few steps to running the Chainsail scheduler locally. Make sure that you
 are in a nix-shell environment.
 
 1.  Enter a nix and poetry shell
