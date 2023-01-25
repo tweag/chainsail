@@ -4,7 +4,7 @@ The job controller application runs single sampling jobs as submitted by the cli
 will execute the sampling job, exposing a gRPC endpoint for health monitoring. 
 Running a single sampling job entails optimizing the schedule parameters and performing a production run.
 Optimizing the schedule is an iterative procedure consisting of the following steps:
-1. perform a Replica Exchange run using a [runner](../lib/runners/)
+1. perform a Replica Exchange run using a [runner](/lib/runners/)
 2. estimate the density of states (DOS) from the results using multiple histogram reweighting ([implementation](../../lib/schedule_estimation/chainsail/schedule_estimation/dos_estimators.py))
 3. determine improved schedule with approximatively constant acceptance rates based on DOS estimate ([implementation](../../lib/schedule_estimation/chainsail/schedule_estimation/schedule_optimizers.py))
 4. draw initial states for the next iteration's simulation by reweighting samples using the DOS estimate ([implementation](./chainsail/controller/initial_setup.py)) and interpolate sampling stepsizes
@@ -14,7 +14,7 @@ These for points are iterated several times, until finally a production run is s
 
 ## Replica Exchange sampling runners
 
-This application can use any implementation of [AbstractRERunner](../lib/runners/).
+This application can use any implementation of [AbstractRERunner](/lib/runners/).
 The runner class is specified in the controller configuration file and is loaded *at runtime*.
 The controller comes packaged with builtin runners as package extras and they must be installed explicitly. 
 
