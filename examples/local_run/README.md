@@ -1,1 +1,0 @@
-See the instructions [here](../../app/controller/README.md) on how to run the controller app locally. This currently just contains an example job config file. Note that not all of the given options are mandatory.
