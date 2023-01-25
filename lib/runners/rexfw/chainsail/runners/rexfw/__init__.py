@@ -6,7 +6,7 @@ import subprocess
 import time
 
 from chainsail.common.runners import AbstractRERunner, runner_config
-from chainsail.common.storage import AbstractStorageBackend
+from chainsail.common.storage import SimulationStorage
 
 logger = logging.getLogger("chainsail.controller")
 
@@ -29,7 +29,7 @@ class MPIRERunner(AbstractRERunner):
     DEFAULT_USER_CODE_HOST = "localhost"
     DEFAULT_USER_CODE_PORT = 50052
 
-    def run_sampling(self, storage: AbstractStorageBackend):
+    def run_sampling(self, storage: SimulationStorage):
         # Get configuration
         hostfile = runner_config.get("hostfile", self.DEFAULT_HOSTFILE)
         storage_config = runner_config.get("storage_config", self.DEFAULT_STORAGEFILE)
