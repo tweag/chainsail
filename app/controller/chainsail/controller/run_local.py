@@ -65,15 +65,15 @@ def run(basename, job_spec, remote_logging_config_path):
     runner = MPIRERunner()
     # TODO: Hard-coding this for now until we have a need for multiple runners
     tempdir = TemporaryDirectory()
-    hostsfile = os.path.join(tempdir.name, "hostsfile")
-    with open(hostsfile, "w") as f:
+    hostfile = os.path.join(tempdir.name, "hostfile")
+    with open(hostfile, "w") as f:
         for _ in range(job_spec.max_replicas):
             f.write("localhost\n")
     storage = os.path.join(tempdir.name, "storage.yaml")
     with open(storage, "w") as f:
         yaml.dump({"backend": "local", "backend_config": {"local": {}}}, f)
 
-    runner_config["hostsfile"] = hostsfile
+    runner_config["hostfile"] = hostfile
     runner_config["run_id"] = -1
     runner_config["storage_config"] = storage
     runner_config["storage_config"] = storage

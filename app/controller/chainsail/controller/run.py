@@ -69,17 +69,17 @@ def check_status(proc: Process) -> ProcessStatus:
     help="path to storage backend YAML config file",
 )
 # Note: The controller is currently configured to only work with mpi, so this is not
-#  abstracted away. At some point in the future the hostsfile logic could get moved
+#  abstracted away. At some point in the future the hostfile logic could get moved
 #  into its own area. The main thing is that with a master-worker achitecture, the
 #  master process (running the controller in the current case) needs a way of identifying
 #  the workers.
 @click.option(
-    "--hostsfile", required=True, type=click.Path(exists=False), help="path to job hostsfile"
+    "--hostfile", required=True, type=click.Path(exists=False), help="path to job hostfile"
 )
 @click.option(
     "--job-spec", required=True, type=click.Path(exists=True), help="path to job spec json file"
 )
-def run(job, config, storage, hostsfile, job_spec):
+def run(job, config, storage, hostfile, job_spec):
     """
     The resaas node controller.
     """
@@ -102,7 +102,7 @@ def run(job, config, storage, hostsfile, job_spec):
     # Load the controller
     runner = load_runner(config.runner)()
     # TODO: Hard-coding this for now until we have a need for multiple runners
-    runner_config["hostsfile"] = hostsfile
+    runner_config["hostfile"] = hostfile
     runner_config["run_id"] = job
     runner_config["storage_config"] = storage
     runner_config["metrics_host"] = config.metrics_address
@@ -122,7 +122,7 @@ def run(job, config, storage, hostsfile, job_spec):
         runner,
         storage_backend,
         tempered_dist_family=job_spec.tempered_dist_family,
-        node_updater=partial(update_nodes_mpi, hostfile_path=hostsfile),
+        node_updater=partial(update_nodes_mpi, hostfile_path=hostfile),
         basename=f"{config.storage_basename}/{job}",
         **optimization_objects,
     )

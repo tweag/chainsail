@@ -22,7 +22,7 @@ class MPIRERunner(AbstractRERunner):
 
     REXFW_SCRIPT = "run-rexfw-mpi"
     DEFAULT_RUN_ID = 1
-    DEFAULT_HOSTSFILE = "hostsfile"
+    DEFAULT_HOSTFILE = "hostfile"
     DEFAULT_STORAGEFILE = "storage.yaml"
     DEFAULT_METRICS_HOST = "localhost"
     DEFAULT_METRICS_PORT = 2004
@@ -31,7 +31,7 @@ class MPIRERunner(AbstractRERunner):
 
     def run_sampling(self, storage: AbstractStorageBackend):
         # Get configuration
-        hostsfile = runner_config.get("hostsfile", self.DEFAULT_HOSTSFILE)
+        hostfile = runner_config.get("hostfile", self.DEFAULT_HOSTFILE)
         storage_config = runner_config.get("storage_config", self.DEFAULT_STORAGEFILE)
         run_id = runner_config.get("run_id", self.DEFAULT_RUN_ID)
         metrics_host = runner_config.get("metrics_host", self.DEFAULT_METRICS_HOST)
@@ -50,7 +50,7 @@ class MPIRERunner(AbstractRERunner):
             # For running in docker
             "--allow-run-as-root",
             "--hostfile",
-            hostsfile,
+            hostfile,
             # "--oversubscribe",
             "-n",
             f"{n_replicas + 1}",

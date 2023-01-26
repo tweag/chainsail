@@ -73,7 +73,7 @@ locals {
         # FIXME: Might need to ensure that these paths match the helm chart as well
         "--storage",
         "/chainsail/storage.yaml",
-        "--hostsfile",
+        "--hostfile",
         "/chainsail-hostfile/hostfile",
         "--job-spec",
         "/chainsail-jobspec/job.json",
