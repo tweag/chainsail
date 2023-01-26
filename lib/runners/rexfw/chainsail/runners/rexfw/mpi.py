@@ -58,10 +58,10 @@ def ensure_mpi_failure(func):
 
 @click.command()
 @click.option(
-    "--basename",
+    "--dirname",
     required=True,
     type=str,
-    help="Storage backend basename",
+    help="Storage backend dirname",
 )
 @click.option(
     "--path",
@@ -108,7 +108,7 @@ def ensure_mpi_failure(func):
 )
 @ensure_mpi_failure
 def run_rexfw_mpi(
-    basename,
+    dirname,
     path,
     storage_config,
     name,
@@ -143,7 +143,7 @@ def run_rexfw_mpi(
     # etc.) are stored
     storage_backend = load_storage_config(storage_config).get_storage_backend()
     storage = SimulationStorage(
-        basename=basename,
+        dirname=dirname,
         sim_path=path,
         storage_backend=storage_backend,
     )
@@ -168,7 +168,7 @@ def run_rexfw_mpi(
             }
         master = setup_default_re_master(
             n_replicas,
-            os.path.join(basename, path),
+            os.path.join(dirname, path),
             storage_backend,
             comm,
             graphite_params=graphite_params,

@@ -34,8 +34,8 @@ DirStructure = namedtuple("DirStructure", dir_structure)
 default_dir_structure = DirStructure(**dir_structure)
 
 
-def make_sure_basename_exists(file_path):
-    """Makes sure the basename of a file path exists.
+def make_sure_dirname_exists(file_path):
+    """Makes sure the dirname of a file path exists.
 
     TODO: log warning if it does.
 
@@ -189,7 +189,7 @@ class AbstractStorageBackend(ABC):
 
 class LocalStorageBackend(AbstractStorageBackend):
     def write(self, data, file_name, data_type="pickle"):
-        make_sure_basename_exists(file_name)
+        make_sure_dirname_exists(file_name)
         if data_type == "pickle":
             with open(file_name, "wb") as f:
                 dump(data, f)
@@ -281,15 +281,15 @@ class CloudStorageBackend(AbstractStorageBackend):
 
 
 class SimulationStorage:
-    def __init__(self, basename, sim_path, storage_backend, dir_structure=default_dir_structure):
-        self._basename = basename
+    def __init__(self, dirname, sim_path, storage_backend, dir_structure=default_dir_structure):
+        self._dirname = dirname
         self._sim_path = sim_path
         self._storage_backend = storage_backend
         self._dir_structure = dir_structure
 
     @property
-    def basename(self):
-        return self._basename
+    def dirname(self):
+        return self._dirname
 
     @property
     def sim_path(self):
@@ -302,7 +302,7 @@ class SimulationStorage:
 
     @property
     def config_file_name(self):
-        return os.path.join(self._basename, self._sim_path, self.dir_structure.CONFIG_FILE_NAME)
+        return os.path.join(self._dirname, self._sim_path, self.dir_structure.CONFIG_FILE_NAME)
 
     @property
     def dir_structure(self):
@@ -310,12 +310,12 @@ class SimulationStorage:
 
     def save(self, data, file_name, data_type="pickle"):
         self._storage_backend.write(
-            data, os.path.join(self._basename, self.sim_path, file_name), data_type
+            data, os.path.join(self._dirname, self.sim_path, file_name), data_type
         )
 
     def load(self, file_name, data_type="pickle"):
         return self._storage_backend.load(
-            os.path.join(self._basename, self.sim_path, file_name), data_type
+            os.path.join(self._dirname, self.sim_path, file_name), data_type
         )
 
     def save_samples(self, samples, replica_name, from_samples, to_samples):

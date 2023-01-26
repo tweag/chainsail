@@ -28,17 +28,17 @@ def get_s3_client_and_container():
     return s3, scheduler_config.results_bucket
 
 
-def get_storage_basename():
-    storage_basename = scheduler_config.results_basename
-    if storage_basename.startswith("/"):
-        storage_basename = storage_basename[1:]
+def get_storage_dirname():
+    storage_dirname = scheduler_config.results_dirname
+    if storage_dirname.startswith("/"):
+        storage_dirname = storage_dirname[1:]
 
-    return storage_basename
+    return storage_dirname
 
 
 def get_job_blob_root(job_id):
-    storage_basename = get_storage_basename()
-    return os.path.join(storage_basename, str(job_id)) + "/"
+    storage_dirname = get_storage_dirname()
+    return os.path.join(storage_dirname, str(job_id)) + "/"
 
 
 def get_signed_url(blob_path, expiry_time, s3=None, container=None):

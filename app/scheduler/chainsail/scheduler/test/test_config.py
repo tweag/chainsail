@@ -53,7 +53,7 @@ VALID_CONFIG_VM = {
     "results_access_key_id": "id",
     "results_secret_key": "secret",
     "results_bucket": "results",
-    "results_basename": "results_base",
+    "results_dirname": "results_dir",
 }
 
 VALID_CONFIG_VM_CHAINSAIL_DRIVER = {
@@ -80,7 +80,7 @@ VALID_CONFIG_VM_CHAINSAIL_DRIVER = {
     "results_access_key_id": "id",
     "results_secret_key": "secret",
     "results_bucket": "results",
-    "results_basename": "results_base",
+    "results_dirname": "results_dir",
 }
 
 K8S_POD_CONFIG = {
@@ -117,7 +117,7 @@ VALID_CONFIG_K8S = {
     "results_access_key_id": "id",
     "results_secret_key": "secret",
     "results_bucket": "results",
-    "results_basename": "results_base",
+    "results_dirname": "results_dir",
 }
 
 # The below config fails to specify inputs for the driver

@@ -123,7 +123,7 @@ def run(job, config, storage, hostfile, job_spec):
         storage_backend,
         tempered_dist_family=job_spec.tempered_dist_family,
         node_updater=partial(update_nodes_mpi, hostfile_path=hostfile),
-        basename=f"{config.storage_basename}/{job}",
+        dirname=f"{config.storage_dirname}/{job}",
         **optimization_objects,
     )
 

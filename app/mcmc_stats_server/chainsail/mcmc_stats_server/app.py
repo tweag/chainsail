@@ -12,14 +12,14 @@ app = Flask(__name__)
 storage_config = yaml.safe_load(open(os.getenv("STORAGE_CONFIG")))
 
 storage_backend = load_storage_backend("cloud", storage_config["backend_config"]["cloud"])
-basename = os.getenv("STORAGE_BASENAME")
-if not basename:
-    raise ValueError("STORAGE_BASENAME not set")
+dirname = os.getenv("STORAGE_DIRNAME")
+if not dirname:
+    raise ValueError("STORAGE_DIRNAME not set")
 
 
 @app.route("/mcmc_stats/<job_id>/<simulation_run>/neg_log_prob_sum", methods=["GET"])
 def neg_log_prob_sum(job_id, simulation_run):
-    storage = SimulationStorage(basename, f"{job_id}/{simulation_run}", storage_backend)
+    storage = SimulationStorage(dirname, f"{job_id}/{simulation_run}", storage_backend)
     energies = storage.load_all_energies(fail_if_not_existing=False)
     dump_step = storage.load_config()["re"]["dump_step"]
     try:
@@ -39,6 +39,6 @@ def neg_log_prob_sum(job_id, simulation_run):
 
 @app.route("/mcmc_stats/<job_id>/<simulation_run>/re_acceptance_rates", methods=["GET"])
 def re_acceptance_rates(job_id, simulation_run):
-    storage = SimulationStorage(basename, f"{job_id}/{simulation_run}", storage_backend)
+    storage = SimulationStorage(dirname, f"{job_id}/{simulation_run}", storage_backend)
     stats = np.loadtxt(StringIO(storage.load_re_acceptance_rates()))
     return jsonify({int(step_data[0]): list(step_data[1:]) for step_data in stats})

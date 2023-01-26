@@ -78,7 +78,7 @@ class testREJobController(unittest.TestCase):
             optimizer,
             MockWham(),
             initial_schedule,
-            basename="/tmp",
+            dirname="/tmp",
         )
 
     def testOptimizeSchedule(self):

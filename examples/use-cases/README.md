@@ -12,7 +12,7 @@ The typical workflow to try out these use cases would be
 3. load the Chainsail results and store them in a single `numpy` array written to the use case directory by running (in this directory)
    ```bash
    $ poetry shell
-   $ python chainsail_results_local.py <local controller basename argument> production_run <use case directory>
+   $ python chainsail_results_local.py <local controller dirname argument> production_run <use case directory>
    ```
-   , where the first argument is what you gave as the `--basename` argument to the local controller run script, the second argument denotes either an optimization run (`optimization_run0` (1, 2, ...), mostly for debug purposes) or, ususally, the `production_run`and the third argument is the use case directory (`mixture`, `or-line-fitting`),
+   , where the first argument is what you gave as the `--dirname` argument to the local controller run script, the second argument denotes either an optimization run (`optimization_run0` (1, 2, ...), mostly for debug purposes) or, ususally, the `production_run`and the third argument is the use case directory (`mixture`, `or-line-fitting`),
 4. run `python compare.py 0` in the use case directory and be amazed how much better Chainsail sampled your distribution. The only argument to `compare.py` is the replica index; `0` corresponds to the target distribution, while higher integers correspond to the increasingly flatter versions. This is nice to illustrate the enhanced sampling in the "flatter" replicas.

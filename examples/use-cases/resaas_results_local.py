@@ -4,10 +4,10 @@ import sys
 import numpy as np
 from chainsail.common.storage import SimulationStorage, LocalStorageBackend
 
-basename = sys.argv[1]
+dirname = sys.argv[1]
 sim_path = sys.argv[2]
 outfolder = sys.argv[3]
-storage = SimulationStorage(basename, sim_path, LocalStorageBackend())
+storage = SimulationStorage(dirname, sim_path, LocalStorageBackend())
 
 samples = storage.load_all_samples()
 print(samples.shape)
