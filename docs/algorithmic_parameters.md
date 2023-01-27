@@ -63,11 +63,3 @@ The parameters are
 - `hmc_adaption_percentage`: upon acceptance / rejection, the HMC time step is increased / decreased by this percentage to eventually converge to an acceptance rate of 50%. Default: 0.95
 - `hmc_num_adaption_steps`: length of burn-in after which adaption is stopped. Default: 10% of the number of total samples.
 
-## Summary: list of most important (boldfaced) parameters
-Those should be on the basic job submission form:
-- `max_replicas`
-- `optimization_num_samples`
-- `production_num_samples`
-- `hmc_trajectory_length`
-- `initial_beta_min`
-- `initial_beta_ratio`
