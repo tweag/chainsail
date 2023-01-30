@@ -11,7 +11,7 @@ from chainsail.common.storage import SimulationStorage
 logger = logging.getLogger("chainsail.controller")
 
 
-def format_metric_name(run_id: int, storage: AbstractStorageBackend):
+def format_metric_name(run_id: int, storage: SimulationStorage):
     return f"job{run_id}.{storage.sim_path}"
 
 
