@@ -82,6 +82,12 @@ minikube service <service> --url &
 With that in hand, you can follow the instruction in the [`frontend README`](app/client/README#Develop), but skip the SSH tunneling part.
 In the final call to `yarn run dev`, adapt the URLs in the environment variables to match the output of the service tunnel commands.
 
+:warning: the link provided by the client to download samples won't work when Chainsail is deployed via Minikube, the reason being that the host machine does not see the Minikube-internal DNS server by default. To download sampling results, use the following command:
+```console
+kubectl exec -it scheduler-worker-<tab complete here> -- \
+  curl --output - "<URL from download button>" > results.zip
+```
+
 ### Deploying changes
 
 Each time you make local changes to the chainsail back-end, re-build the Docker image(s) for the services you have modified and run a Helm upgrade to deploy them locally:
@@ -99,7 +105,7 @@ You need to make sure that your local Google Cloud credentials are set correctly
 To that end, run
 ```console
 gcloud auth application-default login --project resaas-simeon-dev
-``` 
+```
 .
 
 ### 1. Provision the cloud environment on Google Cloud
