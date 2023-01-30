@@ -1,5 +1,5 @@
 """
-Main entrypoint to the resaas controller
+Main entrypoint to the locally-run Chainsail controller
 """
 import os
 from multiprocessing import Process
@@ -43,7 +43,7 @@ def check_status(proc: Process) -> ProcessStatus:
 )
 def run(dirname, job_spec, remote_logging_config_path):
     """
-    The resaas node controller.
+    The Chainsail node controller.
     """
     # Configure logging
     configure_logging(

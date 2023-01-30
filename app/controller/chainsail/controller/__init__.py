@@ -420,7 +420,7 @@ class CloudREJobController(BaseREJobController):
         optimizing schedules.
 
         Args:
-            job_id(int): The id of the resaas job to which this controller belongs
+            job_id(int): The id of the Chainsail job to which this controller belongs
             scheduler_address(str): The address to the scheduler
             scheduler_port(int): The scheduler's listening port
             re_params(:class:`ReplicaExchangeParameters`): Replica Exchange-

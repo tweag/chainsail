@@ -1,5 +1,5 @@
 """
-Main entrypoint to the resaas controller
+Main entrypoint to the Chainsail controller
 """
 import logging
 from concurrent import futures
@@ -55,7 +55,7 @@ def check_status(proc: Process) -> ProcessStatus:
 
 
 @click.command()
-@click.option("--job", required=True, type=str, help="resaas job id")
+@click.option("--job", required=True, type=str, help="Chainsail job id")
 @click.option(
     "--config",
     required=True,
@@ -81,7 +81,7 @@ def check_status(proc: Process) -> ProcessStatus:
 )
 def run(job, config, storage, hostfile, job_spec):
     """
-    The resaas node controller.
+    The Chainsail node controller.
     """
     # Load the controller configuration file
     with open(config) as f:

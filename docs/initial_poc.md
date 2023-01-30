@@ -6,15 +6,13 @@ For now, we are only considering the back-end. Front-end can be added later and 
 This service allows users to sample high-dimensional, multimodal probability distributions via a combination of "local" sampling (via, most certainly, HMC or a variant) and "global" sampling (via a Replica Exchange (RE) algorithm).
 After a user submits a sampling problem, the service will then do several preliminary sampling runs and automatically tune parameters such as number of replicas, the temperature schedule etc. via histogram reweighting and the density of states.
 Once this optimization is finished, a production run is performed.
-After the production run is done, the user gets a link to a cloud bucket, which contains the samples, sampling statistics such as acceptance rates and an estimate of the density of states. 
+After the production run is done, the user gets a link to a cloud bucket, which contains the samples, sampling statistics such as acceptance rates and an estimate of the density of states.
 
 ## Components of this service
-We have a sketch of the components available [here](https://docs.google.com/drawings/d/1dfO6ECrAy6SGIzeKcRk97zWtKm6InBXZsy-d6BQyiXU).
-
-Additional notes on the components can be found [here](https://docs.google.com/document/d/1NrI1zmHi2Lh3E7vqYvLhgEH4VZ3FSJzg9Z-62myycsU/edit?ts=5ff59174#)
+We have a sketch of the components available [here](/images/service_architecture.png).
 
 ### Replica Exchange implementation
-At the heart of this initial proof-of-concept is a [Replica Exchange (RE) implementation](https://github.com/simeoncarstens/rexfw/tree/py3) Simeon wrote for his research back then. We have [forked this project](https://github.com/tweag/rexfw) in the Tweag org for the development of resaas.
+At the heart of this initial proof-of-concept is a [Replica Exchange (RE) implementation](https://github.com/simeoncarstens/rexfw/tree/py3) Simeon wrote for his research back then. We have [forked this project](https://github.com/tweag/rexfw/tree/resaas) in the Tweag org for the development of Chainsail.
 It uses the Message Passing Interface (MPI) to communicate between one (unfortunately still badly named) master process and several slave processes, each of which is responsible for local sampling of a single replica.
 It should be easily possible to extend this implementation to means of communication between replicas other than MPI.
 
@@ -31,12 +29,12 @@ The controller takes care of
 - kicking off the next sampling run with these new parameters in the adjusted environment,
 It loops over these three points (in that order) until some convergence / stopping criterion is met and finally initiates a production run instead of another iteration of this loop. It should also store sampling run results in a (TODO: which?) database.
 
-### Replica Exchange Job Runner 
+### Replica Exchange Job Runner
 The Replica Exchange job runner launches a new `rexfw` calculation. It takes as inputs
 - the algorithmic parameters (initial states, timesteps, temperature schedule)
 - output settings (where to store samples)
 - a REJobId / iteration ID / something else that identifies the sampling statistics logged to the Metadata server as belonging to this particular iteration
-- a definition of the computing environment 
+- a definition of the computing environment
 
 ### Job database
 The job database has one entry for each sampling run and stores its metadata:
@@ -46,7 +44,7 @@ The job database has one entry for each sampling run and stores its metadata:
 - where to find sampling results.
 
 ### Controller
-Main entrypoint of a single job. This process runs a monitoring server to which the scheduler can connect and handles executing the ModelRunner. The ModelRunner is an object which executes rexfw code and performs parameter tuning. 
+Main entrypoint of a single job. This process runs a monitoring server to which the scheduler can connect and handles executing the ModelRunner. The ModelRunner is an object which executes rexfw code and performs parameter tuning.
 
 ### MetaServer
 Mini flask server with endpoints for logging sampling data. Replicas and master processes can use this to log metadata while sampling.

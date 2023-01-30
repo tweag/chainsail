@@ -1,6 +1,5 @@
-# chainsail.grpc
-
-gRPC specs used in resaas. To re-generate run:
+gRPC specs used in Chainsal.
+To re-generate run:
 
 ```shell
 $ poetry run python -m grpc_tools.protoc \
