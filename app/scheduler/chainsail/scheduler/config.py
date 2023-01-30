@@ -191,12 +191,12 @@ NODE_CONFIG_SCHEMAS: Dict[NodeType, Schema] = {
 
 @dataclass
 class SchedulerConfig:
-    """Configurations for the resaas scheduler
+    """Configurations for the Chainsail scheduler
 
     Args:
         controller: The configurations for the control (master) node
         worker: The configurations for worker nodes
-        node_type: The type of resaas node
+        node_type: The type of Chainsail node
         node_config: The corresponding configuration object for the provided
             node_type. This is used for things like generating drivers for
             connecting to the node's corresponding backend

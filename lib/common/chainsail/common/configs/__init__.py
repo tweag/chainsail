@@ -9,7 +9,7 @@ from marshmallow.decorators import post_load
 
 @dataclass
 class ControllerConfig:
-    """Resaas controller configurations"""
+    """Chainsail controller configurations"""
 
     scheduler_address: str
     scheduler_port: int

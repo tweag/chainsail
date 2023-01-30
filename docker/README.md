@@ -1,6 +1,4 @@
-# docker
-
-Docker images for all chainsail back-end components.
+Docker images for all Chainsail back-end components.
 
 ## Building
 
@@ -35,7 +33,7 @@ An http-stan server which can be used for evalulating Stan models.
 
 ### node
 
-Docker image containing all dependencies required to run resaas job nodes, including
+Docker image containing all dependencies required to run Chainsail job nodes, including
 `controller`.
 
 Accepts the following configurations:

@@ -10,10 +10,10 @@
 \date{}
 %\author{Simeon Carstens}
 \renewcommand{\d}{\mathrm{d}}
-\hyphenation{RESAAS}
+\hyphenation{Chainsail}
 \begin{document}
 \maketitle
-This document gives mathematical details about the density of states-based methods used in RESAAS to optimize Replica Exchange schedules and to draw good initial states for consecutive simulation runs. All credit for these ideas goes to Prof. Michael Habeck at Jena University / Germany.
+This document gives mathematical details about the density of states-based methods used in Chainsail to optimize Replica Exchange schedules and to draw good initial states for consecutive simulation runs. All credit for these ideas goes to Prof. Michael Habeck at Jena University / Germany.
 \section*{General theory}
 Two replicas are sampling distributions $p_1(x)$ and $p_2(x)$ and are currently at states $x_1$ and $x_2$. The probability for accepting an exchange is then given by
 \begin{equation}
@@ -52,7 +52,7 @@ Long story short: if we have access to $g(E)$, we can estimate the expected acce
 We can get a good estimate of $g(E)$ via multiple histogram reweighting\cite{habeck_dos_wham}; which results in an estimate of $g(E)$ at every sampled value and thus the integrals collapse into sums.\\
 
 \section*{Example: Boltzmann ensemble}
-The only family of tempered distributions currently supported in RESAAS is the Boltzmann ensemble. It is given by
+The only family of tempered distributions currently supported in CHAINSAIL is the Boltzmann ensemble. It is given by
 \begin{equation*}
   p_\beta(E) = \frac{\exp(-\beta E)}{Z(\beta)}
 \end{equation*}
@@ -60,7 +60,7 @@ and we thus define
 \begin{gather}
 \begin{aligned}
   p_1(x) &= \frac{1}{Z(\beta_1)}\exp(-\beta_1 E(x)) \mbox , \nonumber \\
-  p_2(x) &= \frac{1}{Z(\beta_2)}\exp(-\beta_2 E(x)) \mbox . \nonumber 
+  p_2(x) &= \frac{1}{Z(\beta_2)}\exp(-\beta_2 E(x)) \mbox . \nonumber
 \end{aligned}
 \end{gather}
 The expected acceptance rate is then
@@ -95,18 +95,18 @@ Say now that $\beta_0=1$ gives us the distribution we actually are interested in
 we start with $\beta = 1$ and lower $\beta$ in increments of $\Delta\beta$, until the expected acceptance rate drops below $p_{\mathrm{acc}}^\mathrm{target}$. We then save the $\beta$ value before the last decrement as $\beta_1$. We then calculate acceptance rates between $\beta_1$ and steadily decreasing $\beta$ values, until the acceptance reate drops below $p_{\mathrm{acc}}^\mathrm{target}$ again and we save the previous $\beta$ value as $\beta_2$ and so on and so forth. At one point, we will hit a predefined $\beta_{\mathrm{min}}$. We then terminate and have obtained the desired sequence of $\beta$ values as our optimized schedule.
 
 \subsection*{Drawing initial states using the density of states}
-To shorten the burnin period of simulations other than the very first one, RESAAS uses the density of states to reweight samples from a previous simulation and then to draw ``good'' initial states in high-probability regions for a Replica Exchange simulation.\\
+To shorten the burnin period of simulations other than the very first one, Chainsail uses the density of states to reweight samples from a previous simulation and then to draw ``good'' initial states in high-probability regions for a Replica Exchange simulation.\\
 Given an unnormalized probability density $q(x)$ which, as above, depends on $x$ only via an ``energy'' $E$, meaning $q(x) = q(E_x)$ (sorry for the abuse of notation), we observe that
 \begin{equation*}
   q(x) = \frac{g(E_x)q(E_x)}{Z_i}
 \end{equation*}
 Remember that the relation between states $x$ and energies $E_x$ is not one-to-one. The $x$-ses are samples obtained from a previous simulation and for each $x$ we have an estimate $g(E_x)$. Using above relation we can thus calculate, for each previous sample $x$, its probability weight under the new distribution $q$, which can be any member of the set of tempered distributions used in the next Replica Exchange run. Approximately drawing from $q$ then amounts to draw samples from the categorical distribution of $x$-ses with probabilities given by the sample weights. This idea is also due to Prof. Michael Habeck\cite{habeck_ensemble_annealing}.
 \begin{thebibliography}{9}
-\bibitem{habeck_dos_wham} 
+\bibitem{habeck_dos_wham}
 Habeck, Michael. “Evaluation of marginal likelihoods via the density of states.” \textit{AISTATS} (2012).
 
 \bibitem{habeck_ensemble_annealing}
-Habeck, Michael. “Ensemble annealing of complex physical systems.” \textit{arXiv: Computational Physics} (2015). 
+Habeck, Michael. “Ensemble annealing of complex physical systems.” \textit{arXiv: Computational Physics} (2015).
 \end{thebibliography}
 
 \end{document}

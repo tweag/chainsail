@@ -1,7 +1,7 @@
 apiVersion: v2
 name: chainsail
-description: A Helm chart for chainsail
-home: https://github.com/tweag/resaas
+description: A Helm chart for Chainsail
+home: https://github.com/tweag/chainsail
 # A chart can be either an 'application' or a 'library' chart.
 #
 # Application charts are a collection of templates that can be packaged into versioned archives
