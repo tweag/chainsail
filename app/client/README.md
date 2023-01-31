@@ -52,6 +52,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
+## Activating / deactivating mandatory Firebase login
+
+For development purposes and when you're sure you don't need to identify your users, you can deactivate mandatory Firebase login by setting `require_auth = false` in the `serverRuntimeConfig` section of `./next.js.config`.
+This is the default.
+Setting the same setting to `true` makes Firebase login mandatory and passes a user's email address and an unique user ID along to the scheduler.
+Note that the scheduler has a separate authorisation check, which you can enable or disable in the scheduler settings section of the [Helm charts](../../helm) (`values-dev.yaml` for Google Cloud deployment, `values-local.yaml` for deployment using Minikube).
+
 ## Deployment
 
 ### ... with Docker
