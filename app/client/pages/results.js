@@ -2,7 +2,6 @@ import useSWR from 'swr';
 import nookies from 'nookies';
 import { v4 as uuidv4 } from 'uuid';
 
-import { verifyIdToken } from '../utils/firebaseAdmin';
 import {
   Layout,
   FlexCenter,
@@ -17,6 +16,8 @@ import JobInfo from '../components/JobInfo';
 import fetcher from '../utils/fetcher';
 import { useState } from 'react';
 import { dateFormatter } from '../utils/date';
+
+// const { getConfig } = require('next/config');
 
 const JobsTableForNonMobile = ({ data }) => {
   const headersName = [
@@ -212,12 +213,18 @@ const Results = ({ authed, isMobile }) => {
 
 export async function getServerSideProps(context) {
   try {
-    const cookies = nookies.get(context);
-    const token = await verifyIdToken(cookies.token);
-    const { uid, email } = token;
-    return {
-      props: { email, uid, authed: true },
-    };
+    const { serverRuntimeConfig } = require('../next.config.js');
+    let props;
+    if (serverRuntimeConfig.require_auth) {
+      const { verifyIdToken } = require('../utils/firebaseAdmin');
+      const cookies = nookies.get(context);
+      const token = await verifyIdToken(cookies.token);
+      const { uid, email } = token;
+      props = { email, uid, authed: true };
+    } else {
+      props = { email: 'jane@doe.com', uid: 'fakeuid', authed: true };
+    }
+    return { props };
   } catch (err) {
     nookies.set(context, 'latestPage', '/results', {});
     return {

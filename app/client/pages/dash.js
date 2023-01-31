@@ -7,7 +7,6 @@ import moment from 'moment';
 import { Line } from '@reactchartjs/react-chart.js';
 import { v4 as uuidv4 } from 'uuid';
 
-import { verifyIdToken } from '../utils/firebaseAdmin';
 import { Layout, FlexCol, FlexCenter, FlexRow, Container, Navbar } from '../components';
 import JobInfo from '../components/JobInfo';
 import fetcher from '../utils/fetcher';
@@ -370,12 +369,18 @@ const Dash = ({ authed, isMobile }) => {
 
 export async function getServerSideProps(context) {
   try {
-    const cookies = nookies.get(context);
-    const token = await verifyIdToken(cookies.token);
-    const { uid, email } = token;
-    return {
-      props: { email, uid, authed: true },
-    };
+    const { serverRuntimeConfig } = require('../next.config.js');
+    let props;
+    if (serverRuntimeConfig.require_auth) {
+      const { verifyIdToken } = require('../utils/firebaseAdmin');
+      const cookies = nookies.get(context);
+      const token = await verifyIdToken(cookies.token);
+      const { uid, email } = token;
+      props = { email, uid, authed: true };
+    } else {
+      props = { email: 'jane@doe.com', uid: 'fakeuid', authed: true };
+    }
+    return { props };
   } catch (err) {
     nookies.set(context, 'latestPage', '/dash', {});
     return {

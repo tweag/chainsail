@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import nookies from 'nookies';
-import firebaseClient from '../utils/firebaseClient';
-import { verifyIdToken } from '../utils/firebaseAdmin';
 import {
   Container,
   Dropdown,
@@ -16,6 +14,9 @@ import {
   Navbar,
   Modal,
 } from '../components';
+import getConfig from 'next/config';
+const { serverRuntimeConfig } = getConfig();
+import firebaseClient from '../utils/firebaseClient';
 
 const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) => {
   const buttonStyle =
@@ -167,8 +168,10 @@ const OptionalFormSection = ({ children, active }) => (
   </FlexCol>
 );
 
-const Job = ({ authed, isMobile }) => {
-  firebaseClient();
+const Job = ({ authed = true, isMobile }) => {
+  if (serverRuntimeConfig.require_auth) {
+    firebaseClient();
+  }
 
   const [activeField, setActiveField] = useState('other');
 
@@ -523,12 +526,17 @@ const Job = ({ authed, isMobile }) => {
 
 export async function getServerSideProps(context) {
   try {
-    const cookies = nookies.get(context);
-    const token = await verifyIdToken(cookies.token);
-    const { uid, email } = token;
-    return {
-      props: { email, uid, authed: true },
-    };
+    let props;
+    if (serverRuntimeConfig.require_auth) {
+      const { verifyIdToken } = require('../utils/firebaseAdmin');
+      const cookies = nookies.get(context);
+      const token = await verifyIdToken(cookies.token);
+      const { uid, email } = token;
+      props = { email, uid, authed: true };
+    } else {
+      props = { email: 'jane@doe.com', uid: 'fakeuid', authed: true };
+    }
+    return { props };
   } catch (err) {
     nookies.set(context, 'latestPage', '/job', {});
     return {
