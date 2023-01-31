@@ -18,7 +18,7 @@ See [here](https://github.com/tweag/chainsail-resources/blob/main/documentation/
 
 The user is furthermore expected to set a few essential parameters for sampling and optimization, although somewhat reasonable defaults are given.
 See [here](https://github.com/tweag/chainsail-resources/blob/main/documentation/parameters.md) for the parameters that can be set via the web app and [here](https://github.com/tweag/chainsail/blob/main/docs/algorithmic_parameters.md) for a more complete list of parameters.
-Garantueed up-to-date and complete, but somewhat undocumented is the job specification schema](https://github.com/tweag/chainsail/blob/main/lib/common/chainsail/common/spec.py#L236).
+Garanteed up-to-date and complete, but somewhat undocumented is the [job specification schema](https://github.com/tweag/chainsail/blob/main/lib/common/chainsail/common/spec.py).
 
 ## Service architecture
 Chainsail consists of several components as sketched out in the following schema:
