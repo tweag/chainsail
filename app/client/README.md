@@ -3,16 +3,8 @@
 The `client` is based on [Next.js](https://nextjs.org/) framework and bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 We use [Tailwindcss](https://tailwindcss.com/) for CSS styling.
 
-## Firebase
-
-Make sure to copy your [firebase](https://firebase.google.com/) credentials to the project directory
-for the login to work properly. Client configuration should be placed in `.env.local`.
-The desired interface for `.env.local` is given in `.env.local.example`.
-
 ## Develop
 
-Get a key for the `resaas-client@resaas-simeon-dev.iam.gserviceaccount.com` service account, which has the correct permissions to access the Firebase admin secrets in Google Cloud Secret Manager.
-Save that key to, say, `client_sa_key.json`.
 Then use `nix-shell` from the project root directory.
 It helps all developers to have an identical environment with the required build inputs.
 Then come back to the `client` directory, install the dependencies and run the development server:
@@ -20,7 +12,7 @@ Then come back to the `client` directory, install the dependencies and run the d
 ```bash
 $ cd client
 $ yarn # install the dependencies
-$ GOOGLE_APPLICATION_CREDENTIALS=client_sa_key.json yarn dev # run a dev server
+$ yarn dev # run a dev server
 ```
 
 To get the local client connect to the cloud backend, first set the GCP ssh keys :
@@ -39,8 +31,7 @@ $ ssh -L 8080:localhost:8080 -L 5000:localhost:5000 -L 8081:localhost:8081 resaa
 That opens a new shell, which you don't use. Then open a new shell (on your local machine) and run the client locally with
 
 ```
-$ GOOGLE_APPLICATION_CREDENTIALS=client_sa_key.json \
-  GRAPHITE_URL=http://localhost:8080 \
+$ GRAPHITE_URL=http://localhost:8080 \
   SCHEDULER_URL=http://localhost:5000 \
   MCMC_STATS_URL=http://localhost:8081 \
   yarn run dev
@@ -52,12 +43,25 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
-## Activating / deactivating mandatory Firebase login
+## Firebase login
+
+### Activating / deactivating mandatory Firebase login
 
 For development purposes and when you're sure you don't need to identify your users, you can deactivate mandatory Firebase login by setting `require_auth = false` in the `serverRuntimeConfig` section of `./next.js.config`.
 This is the default.
 Setting the same setting to `true` makes Firebase login mandatory and passes a user's email address and an unique user ID along to the scheduler.
 Note that the scheduler has a separate authorisation check, which you can enable or disable in the scheduler settings section of the [Helm charts](../../helm) (`values-dev.yaml` for Google Cloud deployment, `values-local.yaml` for deployment using Minikube).
+
+### Providing Firebase credentials
+
+Make sure to copy your [Firebase](https://firebase.google.com/) credentials to the project directory for the login to work properly. Client configuration should be placed in `.env.local`.
+The desired interface for `.env.local` is given in `.env.local.example`.
+
+Firebase admin credentials are expected to be found in Google Cloud Secret Manager; the secret name can be configured in `next.config.js`.
+Once that is done, get a key for a service account that has the correct permissions to access the Firebase admin secrets in Google Cloud Secret Manager.
+Save that key to, say, `client_sa_key.json`.
+Then set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the path of `client_sa_key.json` before running `yarn run dev` or another command that serves the application.
+
 
 ## Deployment
 
@@ -75,14 +79,18 @@ To run the docker image:
 
 ```shell
 $ docker run \
-    -v /path/to/client_service_account_key.json:/config/client_sa_key.json \
-	-e GOOGLE_APPLICATION_CREDENTIALS=/config/client_sa_key.json \
     -p 3000:3000\
     -e GRAPHITE_URL=<GRAPHITE URL> \
     -e SCHEDULER_URL=<SCHEDULER URL> \
 	-e MCMC_STATS_URL=<MCMC STATS SERVER URL> \
     chainsail-client:latest
 ```
+If using Firebase authentication, remember to mount in the service account key and set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable by adding
+```console
+-v /path/to/client_service_account_key.json:/config/client_sa_key.json \
+-e GOOGLE_APPLICATION_CREDENTIALS=/config/client_sa_key.json \
+```
+to the above command.
 
 ### ... to AppEngine
 
