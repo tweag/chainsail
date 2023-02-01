@@ -1,7 +1,10 @@
 module.exports = {
-  serverRuntimeConfig: {
-    secret_name: 'projects/164370646194/secrets/firebase-sa/versions/latest',
-    require_auth: true,
+    serverRuntimeConfig: {
+        // Switch to enable / disable mandatory Firebase authentication
+        require_auth: true,
+        // Google Secret Manager secret that holds the Firebase admin credentials.
+        // Can have an arbitrary value as long as the above option is set to `false`.
+        secret_name: 'TODO',
   },
   distDir: 'build',
 };

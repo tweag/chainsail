@@ -5,41 +5,20 @@ We use [Tailwindcss](https://tailwindcss.com/) for CSS styling.
 
 ## Develop
 
-Then use `nix-shell` from the project root directory.
+To get all necessary non-JavaScript dependencies, best use the repository root Nix shell.
 It helps all developers to have an identical environment with the required build inputs.
-Then come back to the `client` directory, install the dependencies and run the development server:
+Then come back to the `client` directory, install the JavaScript dependencies and run the development server:
 
 ```bash
 $ cd client
 $ yarn # install the dependencies
-$ yarn dev # run a dev server
-```
-
-To get the local client connect to the cloud backend, first set the GCP ssh keys :
-
-```
-$ gcloud config set project resaas-simeon-dev
-$ gcloud compute config-ssh
-```
-
-And then open an ssh channel to the Google Cloud VM like so:
-
-```
-$ ssh -L 8080:localhost:8080 -L 5000:localhost:5000 -L 8081:localhost:8081 resaas-dev.europe-west3-c.resaas-simeon-dev
-```
-
-That opens a new shell, which you don't use. Then open a new shell (on your local machine) and run the client locally with
-
-```
-$ GRAPHITE_URL=http://localhost:8080 \
-  SCHEDULER_URL=http://localhost:5000 \
-  MCMC_STATS_URL=http://localhost:8081 \
+$ GRAPHITE_URL=<URL to Graphite logging server> \
+  SCHEDULER_URL=<URL to scheduler> \
+  MCMC_STATS_URL=<URL to MCMC stats server> \
   yarn run dev
 ```
-
+If you deployed the Chainsail backend via Minikube, you can use the `run_dev_client.sh` helper script to set the URL environment variables and start the development server.
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
@@ -94,32 +73,21 @@ to the above command.
 
 ### ... to AppEngine
 
-Create a file `app.yaml` file from the template in `app.yaml.template`. To make completing the required fields easier, here's some useful information:
+If deploying the client to AppEngine and the backend via Terraform and Helm on Google Cloud, make sure to also create a [VPC connector](https://cloud.google.com/vpc/docs/configure-serverless-vpc-access) that allows the App Engine deployment to access the VPC the backend works in.
 
-By default, on our current dev VMs, the ports are
+Once that is done, create a file `app.yaml` file from the template in `app.yaml.template`.
 
-- 8000 for Graphite,
-- 80 for the scheduler,
-- 8081 for the MCMC stats server.
-
-The two current development VMs have the following IPs:
-
-- `resaas-dev`: 10.156.0.2
-- `ressas-dev2`: 10.156.0.3
-
-The project number can be obtained via the following command:
-
+The project number for the VPC connector setting can be obtained via the following command:
 ```bash
 $ gcloud projects list --format="value(PROJECT_NUMBER)"
 ```
-
-The location is currently "europe-west3" and the connector ID can be obtained via
+The connector ID can be obtained via
 
 ```bash
-$ gcloud compute networks vpc-access connectors list --region europe-west3 --format="value(CONNECTOR_ID)"
+$ gcloud compute networks vpc-access connectors list --region <connector region> --format="value(CONNECTOR_ID)"
 ```
 
-If you'd like to deploy a new / different service (meaning, not the default one which `chainsail.io` points to), change `service: default` to, e.g., `service: test`.
+If you'd like to deploy a new / different service, change `service: default` to, e.g., `service: test`.
 Once all fields are filled in, run:
 
 ```shell
