@@ -1,8 +1,9 @@
-{ sources ? import ./sources.nix }:     # import the sources
-with
-  { overlay = _: pkgs:
-      { niv = (import sources.niv {}).niv;    # use the sources :)
-      };
+let
+  lock = builtins.fromJSON (builtins.readFile ../flake.lock);
+  inherit (lock.nodes.nixpkgs.locked) rev narHash;
+  nixpkgs = fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz";
+    sha256 = narHash;
   };
-import sources.nixpkgs                  # and use them again!
-  { overlays = [ overlay ] ; config = {}; }
+in
+import nixpkgs

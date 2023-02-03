@@ -2,7 +2,6 @@
 pkgs.mkShell {
   buildInputs = with pkgs; [
     poetry # version 1.1.10 (required) while pythonPackages38.poetry is lower
-    niv
     yarn
     nodejs
     docker-compose
