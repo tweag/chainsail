@@ -320,7 +320,7 @@ python-versions = "*"
 click = ">=4.0"
 
 [package.extras]
-dev = ["coveralls", "pytest (>=3.6)", "pytest-cov", "wheel"]
+dev = ["pytest (>=3.6)", "pytest-cov", "wheel", "coveralls"]
 
 [[package]]
 name = "click-repl"
@@ -352,16 +352,16 @@ requests = {version = ">=2.19.1", optional = true, markers = "extra == \"google\
 
 [package.extras]
 amazon = ["boto3 (>=1.8.00)"]
-dev = ["black (==19.10b0)", "flake8", "flake8 (==3.7.9)", "flake8-bugbear (==20.1.4)", "pre-commit (>=2.0,<3.0)", "prettyconf", "pytest", "requests (>=2.19.1)", "tox"]
+dev = ["flake8", "pytest", "prettyconf", "requests (>=2.19.1)", "black (==19.10b0)", "flake8 (==3.7.9)", "flake8-bugbear (==20.1.4)", "pre-commit (>=2.0,<3.0)", "tox"]
 digitalocean = ["boto3 (>=1.8.00)"]
-docs = ["pygments (==2.6.1)", "sphinx (==3.0.2)", "sphinx-autodoc-typehints (==1.10.3)", "sphinx-rtd-theme (==0.4.3)"]
+docs = ["sphinx (==3.0.2)", "sphinx-rtd-theme (==0.4.3)", "sphinx-autodoc-typehints (==1.10.3)", "pygments (==2.6.1)"]
 google = ["google-cloud-storage (>=1.18.0)", "requests (>=2.19.1)"]
 lint = ["black (==19.10b0)", "flake8 (==3.7.9)", "flake8-bugbear (==20.1.4)", "pre-commit (>=2.0,<3.0)"]
 local = ["filelock (>=3.0.0)", "itsdangerous (>=1.1.0)", "xattr (>=0.9.6)"]
 microsoft = ["azure (==4.0.0)"]
 minio = ["minio (>=4.0.0)"]
 rackspace = ["openstacksdk (<=0.17.2)", "rackspacesdk (==0.7.5)", "requests (>=2.19.1)"]
-tests = ["flake8", "prettyconf", "pytest", "requests (>=2.19.1)"]
+tests = ["flake8", "pytest", "prettyconf", "requests (>=2.19.1)"]
 
 [[package]]
 name = "colorama"
@@ -969,7 +969,7 @@ python-versions = ">=3.8"
 
 [[package]]
 name = "oauthlib"
-version = "3.2.0"
+version = "3.2.2"
 description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
 category = "main"
 optional = false
@@ -1581,7 +1581,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "76c99806b3cdff3f566119858f60500f5ef8c29621d017e49b6a1b4debcb7971"
+content-hash = "f1d32d782e0dc5c7e3b4550959bcc9cb90834559bd2c422be2ae849441e85289"
 
 [metadata.files]
 amqp = [
