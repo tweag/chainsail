@@ -965,7 +965,7 @@ python-versions = ">=3.8"
 
 [[package]]
 name = "oauthlib"
-version = "3.2.0"
+version = "3.2.1"
 description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
 category = "main"
 optional = false
@@ -1558,7 +1558,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "76c99806b3cdff3f566119858f60500f5ef8c29621d017e49b6a1b4debcb7971"
+content-hash = "9d7d5c73f312fe4650d2ea5970be59bfe4381f6c23f262da41aaa26f4709db7d"
 
 [metadata.files]
 amqp = []
