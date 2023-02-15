@@ -21,8 +21,10 @@ terraform {
 }
 
 provider "google" {
-  project = "resaas-simeon-dev"
-  region  = "europe-west3"
+  # Fill in Google Cloud project name and region here.
+  # Best have this match the values in ../../base/dev/main.tf
+  project = TODO
+  region  = TODO
 }
 
 data "google_client_config" "default" {}
@@ -121,7 +123,7 @@ EOT
 }
 
 
-# This ingress is the primary way the chainsail backend should be accessed via the internal network
+# This ingress is the primary way the Chainsail backend should be accessed via the internal network
 resource "kubernetes_ingress_v1" "chainsail_backend" {
   depends_on = [helm_release.ingress_nginx]
   # Note: setting this to false so that Terraform will return even if the services
