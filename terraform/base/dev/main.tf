@@ -12,8 +12,9 @@ terraform {
 }
 
 locals {
-  project = "resaas-simeon-dev"
-  region  = "europe-west3"
+  # fill in your Google Cloud project name and region here
+  project = TODO
+  region  = TODO
 }
 
 provider "google" {
@@ -32,7 +33,9 @@ data "google_project" "project" {}
 module "chainsail_gcp" {
   source              = "../../modules/chainsail-gcp"
   storage_location    = "EU"
-  node_location       = "europe-west3-a"
+  # fill in node location here; this location should probably be
+  # in the region defined above
+  node_location       = TODO
   core_node_type      = "e2-standard-8"
   job_node_type       = "e2-standard-8"
   ssh_pem_secret_name = "chainsail_job_ssh_pem"
