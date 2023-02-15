@@ -1,4 +1,4 @@
-# Deploying chainsail
+# Deploying Chainsail
 
 Chainsail is designed to be run on a kubernetes cluster either locally or in the cloud. We use the following set of tools for deploying chainsail:
 
@@ -55,9 +55,9 @@ and add them to Minikube's Docker registry. One way to do this is:
 # This makes docker commands use Minikube's Docker daemon
 eval $(minikube docker-env)
 
-HUB_NAMESPACE="eu.gcr.io/resaas-simeon-dev/" make images
+HUB_NAMESPACE="<container registry>/" make images
 ```
-The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml`, but with a trailing slash (`/`).
+The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml` and the `container_registry` value in the `locals` block of `terraform/cluster/local/main.tf`, but with a trailing slash (`/`).
 
 Then, you can install Chainsail with Helm:
 
@@ -101,12 +101,14 @@ helm upgrade -f helm/values-local.yaml chainsail ./helm
 ## Cloud deployment
 
 ### Prerequisites
-You need to make sure that your local Google Cloud credentials are set correctly.
-To that end, run
-```console
-gcloud auth application-default login --project resaas-simeon-dev
-```
-.
+- Make sure that your local Google Cloud credentials are set correctly.
+  To that end, run
+  ```console
+  gcloud auth application-default login --project <project name>
+  ```
+  .
+- Fill in your Google Cloud project name and -region in `terraform/base/dev/main.tf` and `terraform/cluster/dev/main.tf`
+- Manually provision a Google Cloud Storage bucket `chainsail-dev-terraform-state` that holds the Terraform state.
 
 ### 1. Provision the cloud environment on Google Cloud
 
@@ -137,13 +139,16 @@ terraform apply
 ### 3. Deploy chainsail back-end
 
 If Docker images have not already been built and pushed to the Google Cloud Container Registry for your desired version of chainsail, you should go ahead and build those now.
-In order to be able to push the images to the container registry, your user needs to have access to the `eu.artifacts.resaas-simeon-dev` bucket.
+In order to be able to push the images to the container registry, the Google Cloud credentials you use for the following need to have access to the container registry bucket created by Terraform.
+It is called something like `<eu, ...>.artifacts.<project name>` bucket.
 The name of the bucket might vary depending on the `zone` and `node_location` entries in the `chainsail_gcp` Terraform module in `terraform/base/dev/main.tf`.
 
 To build and push images, run
 ```console
-HUB_NAMESPACE="eu.gcr.io/resaas-simeon-dev/" make push-images
+HUB_NAMESPACE="<container registry>/" make push-images
 ```
+
+The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml`, but with a trailing slash (`/`).
 
 The first time you deploy chainsail, you will need to fetch the cluster's kubernetes access credentials using `gcloud`:
 
@@ -206,11 +211,11 @@ To add a user:
 ```console
 export SCHEDULER_POD=$(kubectl get pods -l chainsail.io.service=scheduler -o jsonpath='{.items[0]..metadata.name}')
 
-kubectl exec $SCHEDULER_POD -- scheduler-add-user --email someone@tweag.io
+kubectl exec $SCHEDULER_POD -- scheduler-add-user --email someone@provider.com
 ```
 
 To remove a user:
 
 ```console
-kubectl exec $SCHEDULER_POD -- scheduler-remove-user --email someone@tweag.io
+kubectl exec $SCHEDULER_POD -- scheduler-remove-user --email someone@provider.com
 ```
