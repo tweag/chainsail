@@ -35,7 +35,10 @@ locals {
     }
     }
   )
-  container_registry = "eu.gcr.io/resaas-simeon-dev"
+  # when using both Minikube and cloud deployments, you probably
+  # want to replace `fake-project-name` with your actual Google Cloud
+  # project name in order to avoid having to retag Docker images
+  container_registry = "eu.gcr.io/fake-project-name"
 }
 
 
