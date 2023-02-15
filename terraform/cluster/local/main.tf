@@ -35,9 +35,11 @@ locals {
     }
     }
   )
-  # when using both Minikube and cloud deployments, you probably
+  # When using both Minikube and cloud deployments, you probably
   # want to replace `fake-project-name` with your actual Google Cloud
-  # project name in order to avoid having to retag Docker images
+  # project name in order to avoid having to retag Docker images.
+  # Either way, make sure this matches the value of `imageHubNamespace`
+  # in `helm/values.yaml`.
   container_registry = "eu.gcr.io/fake-project-name"
 }
 
