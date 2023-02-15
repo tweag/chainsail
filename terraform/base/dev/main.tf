@@ -32,7 +32,8 @@ data "google_project" "project" {}
 
 module "chainsail_gcp" {
   source              = "../../modules/chainsail-gcp"
-  storage_location    = "EU"
+  # fill in storage location here, e.g. "EU"
+  storage_location    = TODO
   # fill in node location here; this location should probably be
   # in the region defined above
   node_location       = TODO
