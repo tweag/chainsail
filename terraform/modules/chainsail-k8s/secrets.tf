@@ -48,7 +48,7 @@ resource "kubernetes_secret_v1" "remote_logging_yaml" {
 }
 
 
-# FIXME: This should also be a secret. Need to update the chainsail k8s node implementation
+# FIXME: This should also be a secret. Need to update the Chainsail k8s node implementation
 # to use a secret instead of a configmap for this to be possible though.
 resource "kubernetes_config_map_v1" "worker_node_config" {
   metadata {
@@ -70,7 +70,7 @@ locals {
       args = [
         "--job",
         "{job_id}",
-        # FIXME: Might need to ensure that these paths match the helm chart as well
+        # FIXME: Might need to ensure that these paths match the Helm chart as well
         "--storage",
         "/chainsail/storage.yaml",
         "--hostfile",
