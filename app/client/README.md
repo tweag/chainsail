@@ -74,8 +74,10 @@ to the above command.
 ### ... to AppEngine
 
 If deploying the client to AppEngine and the backend via Terraform and Helm on Google Cloud, make sure to also create a [VPC connector](https://cloud.google.com/vpc/docs/configure-serverless-vpc-access) that allows the App Engine deployment to access the VPC the backend works in.
+The Terraform configuration currently expects a connector with name `client-vm-connector`.
 
 Once that is done, create a file `app.yaml` file from the template in `app.yaml.template`.
+Note that, when using Terraform, `app.yaml` is generated automatically when applying the Terraform configuration.
 
 The project number for the VPC connector setting can be obtained via the following command:
 ```bash
