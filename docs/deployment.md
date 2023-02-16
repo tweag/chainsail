@@ -11,6 +11,7 @@ This guide describes how to set up a chainsail environment from scratch, either 
 ## Table of Contents
 - [Deploying chainsail](#deploying-chainsail)
   - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites-for-both-minikube-and-google-cloud-deployment)
   - [Local deployment](#local-deployment)
     - [Initial Setup](#initial-setup)
     - [Deploying changes](#deploying-changes)
@@ -24,11 +25,22 @@ This guide describes how to set up a chainsail environment from scratch, either 
     - [Upgrading chainsail](#upgrading-chainsail)
     - [Allowing / disallowing application users](#allowing--disallowing-application-users)
 #
+
+## Prerequisites for both Minikube and Google Cloud deployment
+Make sure that you correctly edit the Terraform and Helm files.
+Specifically, you'll want to make sure that you have matching container registry in
+the following files / environment variables:
+- `/terraform/cluster/local/main.tf` (`container_registry` in the `locals` block),
+- `/helm/values.yaml` (`imageHubNamespace`),
+- `/helm/values-local.yaml` (`imageHubNamespace`),
+- `/helm/values-dev.yaml` (`imageHubNamespace`),if you're considering a Google Cloud deployment,
+- and the `HUB_NAMESPACE` environment variable later, **but with an additional trailing `/`**.
+
 ## Local deployment
 
 ### Initial Setup
 
-To deploy locally, you need to start a local cluster using minikube:
+To deploy locally, you first need to start a local cluster using minikube:
 
 ```console
 minikube start
@@ -101,6 +113,7 @@ helm upgrade -f helm/values-local.yaml chainsail ./helm
 ## Cloud deployment
 
 ### Prerequisites
+In addition to the general [Prerequisites](#prerequisites-for-both-minikube-and-google-cloud-deployment),
 - Make sure that your local Google Cloud credentials are set correctly.
   To that end, run
   ```console
