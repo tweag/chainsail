@@ -232,3 +232,7 @@ To remove a user:
 ```console
 kubectl exec $SCHEDULER_POD -- scheduler-remove-user --email someone@provider.com
 ```
+
+## Stand-alone deployment of the controller
+
+See the instructions in [/app/controller/README.md])(app/controller/README.md).
