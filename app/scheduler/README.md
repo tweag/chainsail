@@ -36,7 +36,7 @@ are in a nix-shell environment.
     $ PYTHONPATH="PYTHONPATH:$PWD/app/scheduler" \
       CELERY_BROKER_URL="redis://localhost:6379/0" \
       CELERY_RESULT_BACKEND="redis://localhost:6379/1" \
-      SQLALCHEMY_DATABASE_URI="postgresql://postgres:resaas-dev@localhost:5432/postgres" \
+      SQLALCHEMY_DATABASE_URI="postgresql://postgres:chainsail-dev@localhost:5432/postgres" \
       CHAINSAIL_SCHEDULER_CONFIG="$PWD/app/scheduler/example/scheduler.yaml" \
         celery --app "chainsail.scheduler.tasks.celery" worker --task-events --pool gevent --concurrency=1
     ```
@@ -53,7 +53,7 @@ are in a nix-shell environment.
     $ PYTHONPATH="PYTHONPATH:$PWD/app/scheduler" \
       CELERY_BROKER_URL="redis://localhost:6379/0" \
       CELERY_RESULT_BACKEND="redis://localhost:6379/1" \
-      SQLALCHEMY_DATABASE_URI="postgresql://postgres:resaas-dev@localhost:5432/postgres" \
+      SQLALCHEMY_DATABASE_URI="postgresql://postgres:chainsail-dev@localhost:5432/postgres" \
       CHAINSAIL_SCHEDULER_CONFIG="$PWD/app/scheduler/example/scheduler.yaml" \
       PYTHON_ENV=dev \
           python -m 'chainsail.scheduler.app'

@@ -3,7 +3,7 @@ backend_config:
   local: {}
   cloud:
     libcloud_provider: S3
-    container_name: "resaas-dev"
+    container_name: "chainsail-dev"
     driver_kwargs:
       key: xxxxxxxxxxxxxxxxxxxxxxx
       secret: xxxxxxxxxxxxxxxxxxxx
