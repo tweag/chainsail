@@ -29,7 +29,8 @@ spec:
           - name: CELERY_RESULT_BACKEND
             value: redis://redis.default.svc.cluster.local:6379/1
           - name: SQLALCHEMY_DATABASE_URI
-            value: postgresql://postgres:resaas-dev@postgres.default.svc.cluster.local:5432/postgres
+            # FIXME: Secret for password
+            value: postgresql://postgres:chainsail-dev@postgres.default.svc.cluster.local:5432/postgres
           - name: CHAINSAIL_SCHEDULER_CONFIG
             value: /config/scheduler.yaml
           - name: CONCURRENCY
