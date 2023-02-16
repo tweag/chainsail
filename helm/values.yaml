@@ -17,7 +17,15 @@ tolerations:
     value: 'true'
     effect: 'NoSchedule'
 
-imageHubNamespace: 'eu.gcr.io/resaas-simeon-dev'
+# For Minikube deployment, `imageHubNamespace` has to match the
+# `imageHubNamespace` value in `values-local.yaml` and the `container_registry`
+# value in the `locals` block of `terraform/cluster/local/main.tf`.
+# For GCP deployment, it has to match the `imageHubNamespace` value in
+# `values-dev.yaml`.
+# Furthermore, this value with an additional forward slash is the
+# `HUB_NAMESPACE` environment variable you have to set when building the
+# Docker images using the Makefile.
+imageHubNamespace: 'eu.gcr.io/project-name'
 imageTag: 'latest'
 
 ##############################################################################
