@@ -3,7 +3,7 @@
 
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "nixpkgs/21.11";
+    nixpkgs.url = "nixpkgs/release-22.11";
   };
 
   outputs = { self, nixpkgs, flake-utils }:
