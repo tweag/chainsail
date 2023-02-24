@@ -38,7 +38,7 @@ pytoolconfig = { git = "https://github.com/bagel897/pytoolconfig", rev = "965517
 
 flake8 = "^3.8.4"
 pylint = "^2.6.0"
-mypy = "^0.790"
+mypy = "^0.800"
 pytest-dotenv = "^0.5.2"
 pytest-cov = "^2.10.1"
 isort = "^5.7.0"
