@@ -54,9 +54,3 @@ See the [controller README](./app/controller/README.md) for instructions..
 # Contributing
 
 We very much welcome your feedback and own contributions to Chainsail in the form of issues and pull requests!
-
-# License
-
-**FIXME**
-
-Copyright © 2021–present Tweag I/O
