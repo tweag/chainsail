@@ -18,6 +18,12 @@ poetry2nix.mkPoetryApplication {
             (old.buildInputs or [ ]) ++ [ pkgs.python3Packages.cython ];
         }
       );
+      rexfw = prev.rexfw.overrideAttrs (
+        old: {
+          buildInputs =
+            (old.buildInputs or [ ]) ++ [ pkgs.poetry ];
+        }
+      );
     }
   );
 }
