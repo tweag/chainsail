@@ -34,7 +34,7 @@ the following files / environment variables:
 - `/helm/values.yaml` (`imageHubNamespace`),
 - `/helm/values-local.yaml` (`imageHubNamespace`),
 - `/helm/values-dev.yaml` (`imageHubNamespace`),if you're considering a Google Cloud deployment,
-- and the `HUB_NAMESPACE` environment variable later, **but with an additional trailing `/`**.
+- and the `HUB_NAMESPACE` environment variable later.
 
 ## Local deployment
 
@@ -69,7 +69,7 @@ eval $(minikube docker-env)
 
 HUB_NAMESPACE="<container registry>/" make images
 ```
-The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml` and the `container_registry` value in the `locals` block of `terraform/cluster/local/main.tf`, but with a trailing slash (`/`).
+The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml` and the `container_registry` value in the `locals` block of `terraform/cluster/local/main.tf`.
 
 Then, you can install Chainsail with Helm:
 
@@ -161,7 +161,7 @@ To build and push images, run
 HUB_NAMESPACE="<container registry>/" make push-images
 ```
 
-The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml`, but with a trailing slash (`/`).
+The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml`.
 
 The first time you deploy chainsail, you will need to fetch the cluster's kubernetes access credentials using `gcloud`:
 
