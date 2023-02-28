@@ -38,7 +38,7 @@ def get_storage_dirname():
 
 def get_job_blob_root(job_id):
     storage_dirname = get_storage_dirname()
-    return os.path.join(storage_dirname, str(job_id)) + "/"
+    return os.path.join(storage_dirname, str(job_id))
 
 
 def get_signed_url(blob_path, expiry_time, s3=None, container=None):
