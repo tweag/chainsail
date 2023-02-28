@@ -17,6 +17,7 @@ $ GRAPHITE_URL=<URL to Graphite logging server> \
   MCMC_STATS_URL=<URL to MCMC stats server> \
   yarn run dev
 ```
+
 If you deployed the Chainsail backend via Minikube, you can use the `run_dev_client.sh` helper script to set the URL environment variables and start the development server.
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
@@ -41,7 +42,6 @@ Once that is done, get a key for a service account that has the correct permissi
 Save that key to, say, `client_sa_key.json`.
 Then set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the path of `client_sa_key.json` before running `yarn run dev` or another command that serves the application.
 
-
 ## Deployment
 
 ### ... with Docker
@@ -64,11 +64,14 @@ $ docker run \
 	-e MCMC_STATS_URL=<MCMC STATS SERVER URL> \
     chainsail-client:latest
 ```
+
 If using Firebase authentication, remember to mount in the service account key and set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable by adding
+
 ```console
 -v /path/to/client_service_account_key.json:/config/client_sa_key.json \
 -e GOOGLE_APPLICATION_CREDENTIALS=/config/client_sa_key.json \
 ```
+
 to the above command.
 
 ### ... to AppEngine
@@ -80,9 +83,11 @@ Once that is done, create a file `app.yaml` file from the template in `app.yaml.
 Note that, when using Terraform, `app.yaml` is generated automatically when applying the Terraform configuration.
 
 The project number for the VPC connector setting can be obtained via the following command:
+
 ```bash
 $ gcloud projects list --format="value(PROJECT_NUMBER)"
 ```
+
 The connector ID can be obtained via
 
 ```bash
