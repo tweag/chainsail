@@ -14,8 +14,9 @@ pkgs.mkShell {
     kubernetes-helm
     minikube
     kubectl
+    zlib
   ];
   # Setting the LD_LIBRARY_PATH environment variable.
   # Can also make use of the `.overrideAttrs` medthod to prevent from overwriting it (See PR #310 for details)
-  LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.file}/lib";
+  LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.file}/lib:${pkgs.zlib}/lib";
 }
