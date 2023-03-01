@@ -12,11 +12,11 @@ import {
   FormField,
   MathTex,
   Navbar,
+  NotDeployed,
   Modal,
 } from '../components';
-import getConfig from 'next/config';
-const { serverRuntimeConfig } = getConfig();
 import firebaseClient from '../utils/firebaseClient';
+const { serverRuntimeConfig } = require('../next.config.js');
 
 const JobPageModal = ({ jobId, err, errMsg, isModalActive, setIsModelActive }) => {
   const buttonStyle =
@@ -263,265 +263,269 @@ const Job = ({ authed = true, isMobile }) => {
     }
   };
 
-  if (authed)
-    return (
-      <Layout>
-        <JobPageModal
-          isModalActive={isModalActive}
-          setIsModelActive={setIsModelActive}
-          jobId={createdJobId}
-          err={err}
-          errMsg={errMsg}
-        />
-        <FlexCol className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
-          <Navbar isMobile={isMobile} />
-          <Container>
-            <FlexCenter className="w-full h-full py-5 md:py-20">
-              <FlexCol center className="w-full h-full">
-                <div className="mb-10 text-2xl md:text-5xl lg:text-6xl">
-                  Create a sampling job
-                  <i className="ml-3 fas fa-rocket"></i>
-                </div>
-                <FlexCol
-                  between
-                  className="w-full mb-10 text-base md:text-xl lg:w-2/3 md:text-justify"
-                >
-                  <div>
-                    Run Chainsail with an ready-made density (download an{' '}
-                    <a
-                      target="_blank"
-                      href="https://storage.googleapis.com/resaas-dev-public/mixture.zip"
-                      className="inline text-blue-400 hover:text-white transition duration-300"
-                      target="_blank"
-                    >
-                      example
-                    </a>
-                    ) or define your own probability! To do that, use the probability density
-                    function (PDF) interfaces provided in the{' '}
-                    <a
-                      target="_blank"
-                      href="https://github.com/tweag/chainsail-resources/blob/main/chainsail_helpers"
-                      className="inline text-blue-400 hover:text-white transition duration-300"
-                      target="_blank"
-                    >
-                      chainsail-helpers
-                    </a>{' '}
-                    Python package.
+  if (serverRuntimeConfig.is_deployed) {
+    if (authed)
+      return (
+        <Layout>
+          <JobPageModal
+            isModalActive={isModalActive}
+            setIsModelActive={setIsModelActive}
+            jobId={createdJobId}
+            err={err}
+            errMsg={errMsg}
+          />
+          <FlexCol className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
+            <Navbar isMobile={isMobile} />
+            <Container>
+              <FlexCenter className="w-full h-full py-5 md:py-20">
+                <FlexCol center className="w-full h-full">
+                  <div className="mb-10 text-2xl md:text-5xl lg:text-6xl">
+                    Create a sampling job
+                    <i className="ml-3 fas fa-rocket"></i>
                   </div>
-                  <div>
-                    The{' '}
-                    <a
-                      target="_blank"
-                      href="https://github.com/tweag/chainsail-resources"
-                      className="inline text-blue-400 hover:text-white transition duration-300"
-                    >
-                      chainsail-resources
-                    </a>{' '}
-                    repository contains examples for PDFs defined from scratch, using PyMC3 and
-                    Stan. There you'll also find a{' '}
-                    <a
-                      href="https://github.com/tweag/chainsail-resources/blob/main/documentation/parameters.md"
-                      className="inline text-blue-400 hover:text-white transition duration-300"
-                      target="_blank"
-                    >
-                      detailed explanation
-                    </a>{' '}
-                    of all job parameters.
-                  </div>
-                </FlexCol>
-                <FlexCol
-                  between
-                  className="w-full mb-10 text-base md:text-xl lg:w-2/3 md:text-justify"
-                >
-                  <div>
-                    You can extract the samples from your distribution from the downloaded results
-                    by using the{' '}
-                    <a
-                      href="https://github.com/tweag/chainsail-resources/tree/main/chainsail_helpers/chainsail_helpers/scripts"
-                      className="inline text-blue-400 hover:text-white transition duration-300"
-                      target="_blank"
-                    >
-                      concatenate-samples script
-                    </a>{' '}
-                    provided in the chainsail-helpers package.
-                  </div>
-                </FlexCol>
-                <FlexRow
-                  between
-                  responsive
-                  media="lg"
-                  className={`${
-                    seeMoreFields ? 'space-y-28' : ''
-                  } w-full lg:space-y-0 lg:h-4/5 lg:space-x-10`}
-                >
-                  <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 lg:w-1/2">
-                    <form
-                      className="h-full"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!isModalActive) createJob(e);
-                      }}
-                    >
-                      <FlexCol between className="mb-1 space-y-1">
-                        <FormField
-                          label="Job name"
-                          inputName="job_name"
-                          setActiveField={setActiveField}
-                          value={job_name}
-                          onChange={(e) => setJobName(e.target.value)}
-                        />
-                        <FormField
-                          label="N° production samples"
-                          inputName="num_production_samples"
-                          inputType="number"
-                          setActiveField={setActiveField}
-                          minNumber={1000}
-                          maxNumber={50000}
-                          stepNumber={1000}
-                          value={num_production_samples}
-                          onChange={(e) => setNumProductionSamples(e.target.value)}
-                        />
-                        <FormField
-                          label="Max N° replicas"
-                          inputName="max_replicas"
-                          inputType="number"
-                          setActiveField={setActiveField}
-                          minNumber={2}
-                          maxNumber={20}
-                          value={max_replicas}
-                          onChange={(e) => setMaxReplicas(e.target.value)}
-                        />
-                        <FileFormField
-                          label="Probability definition (.zip)"
-                          inputName="probability_definition"
-                          setActiveField={setActiveField}
-                          onChange={function (e) {
-                            if (e.target.files[0].size > 2097152) {
-                              alert('File exceeds maximum size (2 Mb)');
-                              e.target.value = '';
-                            } else {
-                              setProbDef(e.target.files[0]);
-                            }
-                          }}
-                        />
-                        <FormField
-                          label="Dependencies"
-                          inputName="dependencies"
-                          inputType="text"
-                          setActiveField={setActiveField}
-                          value={dependencies}
-                          onChange={(e) => setDeps(e.target.value.split(','))}
-                          className="mb-5"
-                        />
-                      </FlexCol>
-                      <OptionalFormSection active={seeMoreFields}>
-                        <FlexRow
-                          responsive
-                          media="md"
-                          className="space-y-1 md:space-y-0 md:space-x-2"
-                        >
+                  <FlexCol
+                    between
+                    className="w-full mb-10 text-base md:text-xl lg:w-2/3 md:text-justify"
+                  >
+                    <div>
+                      Run Chainsail with an ready-made density (download an{' '}
+                      <a
+                        target="_blank"
+                        href="https://storage.googleapis.com/resaas-dev-public/mixture.zip"
+                        className="inline text-blue-400 hover:text-white transition duration-300"
+                        target="_blank"
+                      >
+                        example
+                      </a>
+                      ) or define your own probability! To do that, use the probability density
+                      function (PDF) interfaces provided in the{' '}
+                      <a
+                        target="_blank"
+                        href="https://github.com/tweag/chainsail-resources/blob/main/chainsail_helpers"
+                        className="inline text-blue-400 hover:text-white transition duration-300"
+                        target="_blank"
+                      >
+                        chainsail-helpers
+                      </a>{' '}
+                      Python package.
+                    </div>
+                    <div>
+                      The{' '}
+                      <a
+                        target="_blank"
+                        href="https://github.com/tweag/chainsail-resources"
+                        className="inline text-blue-400 hover:text-white transition duration-300"
+                      >
+                        chainsail-resources
+                      </a>{' '}
+                      repository contains examples for PDFs defined from scratch, using PyMC3 and
+                      Stan. There you'll also find a{' '}
+                      <a
+                        href="https://github.com/tweag/chainsail-resources/blob/main/documentation/parameters.md"
+                        className="inline text-blue-400 hover:text-white transition duration-300"
+                        target="_blank"
+                      >
+                        detailed explanation
+                      </a>{' '}
+                      of all job parameters.
+                    </div>
+                  </FlexCol>
+                  <FlexCol
+                    between
+                    className="w-full mb-10 text-base md:text-xl lg:w-2/3 md:text-justify"
+                  >
+                    <div>
+                      You can extract the samples from your distribution from the downloaded
+                      results by using the{' '}
+                      <a
+                        href="https://github.com/tweag/chainsail-resources/tree/main/chainsail_helpers/chainsail_helpers/scripts"
+                        className="inline text-blue-400 hover:text-white transition duration-300"
+                        target="_blank"
+                      >
+                        concatenate-samples script
+                      </a>{' '}
+                      provided in the chainsail-helpers package.
+                    </div>
+                  </FlexCol>
+                  <FlexRow
+                    between
+                    responsive
+                    media="lg"
+                    className={`${
+                      seeMoreFields ? 'space-y-28' : ''
+                    } w-full lg:space-y-0 lg:h-4/5 lg:space-x-10`}
+                  >
+                    <FlexCenter className="flex-grow mb-10 lg:py-10 h-96 md:h-80 lg:h-full lg:mb-0 lg:w-1/2">
+                      <form
+                        className="h-full"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (!isModalActive) createJob(e);
+                        }}
+                      >
+                        <FlexCol between className="mb-1 space-y-1">
                           <FormField
-                            optional
-                            label="Initial N° replicas"
-                            inputName="initial_number_of_replicas"
-                            inputType="number"
+                            label="Job name"
+                            inputName="job_name"
                             setActiveField={setActiveField}
-                            minNumber={2}
-                            maxNumber={max_replicas}
-                            value={initial_number_of_replicas}
-                            onChange={(e) => setInitNReplicas(e.target.value)}
+                            value={job_name}
+                            onChange={(e) => setJobName(e.target.value)}
                           />
-
                           <FormField
-                            optional
-                            label="N° optimzation samples"
-                            inputName="num_optimization_samples"
+                            label="N° production samples"
+                            inputName="num_production_samples"
                             inputType="number"
                             setActiveField={setActiveField}
                             minNumber={1000}
                             maxNumber={50000}
                             stepNumber={1000}
-                            value={num_optimization_samples}
-                            onChange={(e) => setNumOptimizationSamples(e.target.value)}
+                            value={num_production_samples}
+                            onChange={(e) => setNumProductionSamples(e.target.value)}
                           />
-                        </FlexRow>
-                        <Dropdown
-                          optional
-                          label="Tempering scheme"
-                          inputName="tempered_distribution_family"
-                          setActiveField={setActiveField}
-                          value={tempered_distribution_family}
-                          onChange={(e) => setTemperedDist(e.target.value)}
-                        />
-                        <FlexRow
-                          responsive
-                          media="md"
-                          className="space-y-1 md:space-y-0 md:space-x-2"
+                          <FormField
+                            label="Max N° replicas"
+                            inputName="max_replicas"
+                            inputType="number"
+                            setActiveField={setActiveField}
+                            minNumber={2}
+                            maxNumber={20}
+                            value={max_replicas}
+                            onChange={(e) => setMaxReplicas(e.target.value)}
+                          />
+                          <FileFormField
+                            label="Probability definition (.zip)"
+                            inputName="probability_definition"
+                            setActiveField={setActiveField}
+                            onChange={function (e) {
+                              if (e.target.files[0].size > 2097152) {
+                                alert('File exceeds maximum size (2 Mb)');
+                                e.target.value = '';
+                              } else {
+                                setProbDef(e.target.files[0]);
+                              }
+                            }}
+                          />
+                          <FormField
+                            label="Dependencies"
+                            inputName="dependencies"
+                            inputType="text"
+                            setActiveField={setActiveField}
+                            value={dependencies}
+                            onChange={(e) => setDeps(e.target.value.split(','))}
+                            className="mb-5"
+                          />
+                        </FlexCol>
+                        <OptionalFormSection active={seeMoreFields}>
+                          <FlexRow
+                            responsive
+                            media="md"
+                            className="space-y-1 md:space-y-0 md:space-x-2"
+                          >
+                            <FormField
+                              optional
+                              label="Initial N° replicas"
+                              inputName="initial_number_of_replicas"
+                              inputType="number"
+                              setActiveField={setActiveField}
+                              minNumber={2}
+                              maxNumber={max_replicas}
+                              value={initial_number_of_replicas}
+                              onChange={(e) => setInitNReplicas(e.target.value)}
+                            />
+
+                            <FormField
+                              optional
+                              label="N° optimzation samples"
+                              inputName="num_optimization_samples"
+                              inputType="number"
+                              setActiveField={setActiveField}
+                              minNumber={1000}
+                              maxNumber={50000}
+                              stepNumber={1000}
+                              value={num_optimization_samples}
+                              onChange={(e) => setNumOptimizationSamples(e.target.value)}
+                            />
+                          </FlexRow>
+                          <Dropdown
+                            optional
+                            label="Tempering scheme"
+                            inputName="tempered_distribution_family"
+                            setActiveField={setActiveField}
+                            value={tempered_distribution_family}
+                            onChange={(e) => setTemperedDist(e.target.value)}
+                          />
+                          <FlexRow
+                            responsive
+                            media="md"
+                            className="space-y-1 md:space-y-0 md:space-x-2"
+                          >
+                            <FormField
+                              label="Beta min"
+                              optional
+                              inputName="minimum_beta"
+                              inputType="number"
+                              setActiveField={setActiveField}
+                              minNumber={0.001}
+                              maxNumber={1}
+                              stepNumber={0.001}
+                              value={minimum_beta}
+                              onChange={(e) => setMinBeta(e.target.value)}
+                            />
+                            <FormField
+                              optional
+                              label="Target acceptance rate"
+                              inputName="target_acceptance_rate"
+                              inputType="number"
+                              minNumber={0.1}
+                              maxNumber={0.9}
+                              stepNumber={0.1}
+                              setActiveField={setActiveField}
+                              value={target_acceptance_rate}
+                              onChange={(e) => setTargetAcceptanceRate(e.target.value)}
+                            />
+                          </FlexRow>
+                        </OptionalFormSection>
+                        <div
+                          className="mb-2 text-sm cursor-pointer md:mb-0 opacity-60 hover:opacity-100 transition duration-300"
+                          onClick={() => setSeeMoreFields((s) => !s)}
                         >
-                          <FormField
-                            label="Beta min"
-                            optional
-                            inputName="minimum_beta"
-                            inputType="number"
-                            setActiveField={setActiveField}
-                            minNumber={0.001}
-                            maxNumber={1}
-                            stepNumber={0.001}
-                            value={minimum_beta}
-                            onChange={(e) => setMinBeta(e.target.value)}
-                          />
-                          <FormField
-                            optional
-                            label="Target acceptance rate"
-                            inputName="target_acceptance_rate"
-                            inputType="number"
-                            minNumber={0.1}
-                            maxNumber={0.9}
-                            stepNumber={0.1}
-                            setActiveField={setActiveField}
-                            value={target_acceptance_rate}
-                            onChange={(e) => setTargetAcceptanceRate(e.target.value)}
-                          />
-                        </FlexRow>
-                      </OptionalFormSection>
-                      <div
-                        className="mb-2 text-sm cursor-pointer md:mb-0 opacity-60 hover:opacity-100 transition duration-300"
-                        onClick={() => setSeeMoreFields((s) => !s)}
-                      >
-                        {seeMoreFields ? (
-                          <div>
-                            <i className="mr-1 fas fa-caret-square-up"></i> less parameters
-                          </div>
-                        ) : (
-                          <div>
-                            <i className="mr-1 fas fa-caret-square-down"></i> more parameters
-                          </div>
-                        )}
-                      </div>
+                          {seeMoreFields ? (
+                            <div>
+                              <i className="mr-1 fas fa-caret-square-up"></i> less parameters
+                            </div>
+                          ) : (
+                            <div>
+                              <i className="mr-1 fas fa-caret-square-down"></i> more parameters
+                            </div>
+                          )}
+                        </div>
 
-                      <FlexCenter>
-                        <input
-                          type="submit"
-                          value="Create job"
-                          className={
-                            'w-52 px-6 pt-3 pb-4 text-base text-center bg-purple-700  ' +
-                            ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
-                          }
-                        />
-                      </FlexCenter>
-                    </form>
-                  </FlexCenter>
+                        <FlexCenter>
+                          <input
+                            type="submit"
+                            value="Create job"
+                            className={
+                              'w-52 px-6 pt-3 pb-4 text-base text-center bg-purple-700  ' +
+                              ' rounded-lg cursor-pointer lg:transition lg:duration-300 hover:bg-purple-900 text-white'
+                            }
+                          />
+                        </FlexCenter>
+                      </form>
+                    </FlexCenter>
 
-                  <FlexCenter className="w-full lg:w-1/2 duration-300 transition">
-                    <Descs activeField={activeField} seeMoreFields={seeMoreFields} />
-                  </FlexCenter>
-                </FlexRow>
-              </FlexCol>
-            </FlexCenter>
-          </Container>
-        </FlexCol>
-      </Layout>
-    );
+                    <FlexCenter className="w-full lg:w-1/2 duration-300 transition">
+                      <Descs activeField={activeField} seeMoreFields={seeMoreFields} />
+                    </FlexCenter>
+                  </FlexRow>
+                </FlexCol>
+              </FlexCenter>
+            </Container>
+          </FlexCol>
+        </Layout>
+      );
+  } else {
+    return <NotDeployed />;
+  }
 };
 
 export async function getServerSideProps(context) {

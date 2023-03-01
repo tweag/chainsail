@@ -8,6 +8,7 @@ import {
   FlexCol,
   JobButton,
   Navbar,
+  NotDeployed,
   Container,
   Link,
   ResultsLink,
@@ -17,7 +18,7 @@ import fetcher from '../utils/fetcher';
 import { useState } from 'react';
 import { dateFormatter } from '../utils/date';
 
-// const { getConfig } = require('next/config');
+const { serverRuntimeConfig } = require('../next.config.js');
 
 const JobsTableForNonMobile = ({ data }) => {
   const headersName = [
@@ -187,33 +188,40 @@ const Results = ({ authed, isMobile }) => {
   });
   if (error) console.log(error);
 
-  if (authed)
-    return (
-      <Layout>
-        <FlexCol className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
-          <Navbar isMobile={isMobile} />
-          <Container>
-            <FlexCenter className="py-5 md:py-20">
-              {error && <div>Failed to load. Please refresh the page.</div>}
-              {!error && data && data.errno && <div>Failed to load. Please refresh the page.</div>}
-              {!error && data == undefined && <div>Loading ...</div>}
-              {!error && Array.isArray(data) && data.length == 0 && <div>no jobs created yet</div>}
-              {!error && Array.isArray(data) && data.length > 0 && isMobile && (
-                <JobsTableForMobile data={data} />
-              )}
-              {!error && Array.isArray(data) && data.length > 0 && !isMobile && (
-                <JobsTableForNonMobile data={data} />
-              )}
-            </FlexCenter>
-          </Container>
-        </FlexCol>
-      </Layout>
-    );
+  if (serverRuntimeConfig.is_deployed) {
+    if (authed)
+      return (
+        <Layout>
+          <FlexCol className="min-h-screen text-white bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
+            <Navbar isMobile={isMobile} />
+            <Container>
+              <FlexCenter className="py-5 md:py-20">
+                {error && <div>Failed to load. Please refresh the page.</div>}
+                {!error && data && data.errno && (
+                  <div>Failed to load. Please refresh the page.</div>
+                )}
+                {!error && data == undefined && <div>Loading ...</div>}
+                {!error && Array.isArray(data) && data.length == 0 && (
+                  <div>no jobs created yet</div>
+                )}
+                {!error && Array.isArray(data) && data.length > 0 && isMobile && (
+                  <JobsTableForMobile data={data} />
+                )}
+                {!error && Array.isArray(data) && data.length > 0 && !isMobile && (
+                  <JobsTableForNonMobile data={data} />
+                )}
+              </FlexCenter>
+            </Container>
+          </FlexCol>
+        </Layout>
+      );
+  } else {
+    return <NotDeployed />;
+  }
 };
 
 export async function getServerSideProps(context) {
   try {
-    const { serverRuntimeConfig } = require('../next.config.js');
     let props;
     if (serverRuntimeConfig.require_auth) {
       const { verifyIdToken } = require('../utils/firebaseAdmin');

@@ -7,9 +7,19 @@ import moment from 'moment';
 import { Line } from '@reactchartjs/react-chart.js';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Layout, FlexCol, FlexCenter, FlexRow, Container, Navbar } from '../components';
+import {
+  Layout,
+  FlexCol,
+  FlexCenter,
+  FlexRow,
+  Container,
+  Navbar,
+  NotDeployed,
+} from '../components';
 import JobInfo from '../components/JobInfo';
 import fetcher from '../utils/fetcher';
+
+const { serverRuntimeConfig } = require('../next.config.js');
 
 function thin(arr, n) {
   return arr.filter(function (value, index) {
@@ -315,61 +325,68 @@ const Dash = ({ authed, isMobile }) => {
       job.status == 'stopped' ||
       job.status == 'success');
 
-  if (authed)
-    return (
-      <Layout>
-        <FlexCol className="min-h-screen text-white lg:h-screen bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
-          <Navbar isMobile={isMobile} />
-          {jobFound && (
-            <FlexRow responsive className="w-full h-full">
-              <FlexCol className="pt-5 mx-10 md:pt-20 lg:w-1/3 lg:mx-20">
-                <div className="p-5 mb-10 bg-indigo-900 border-2 shadow-xl lg:p-8 border-gray-50 border-opacity-30 rounded-xl">
-                  The plot of the total negative log-probability of all replicas helps to monitor
-                  sampling convergence. If it scatters around a fixed value, your target
-                  distribution is, given good Replica Exchange acceptance rates, likely to be
-                  sampled exhaustively.
-                </div>
-                <JobInfoDiv jobId={jobId} />
-                <Dropdown />
-              </FlexCol>
-              <FlexCol between className="p-10 lg:w-2/3">
-                <NegLogPChart job={job} simulationRun={simulationRun} isMobile={isMobile} />
-                <AcceptanceRateChart job={job} simulationRun={simulationRun} isMobile={isMobile} />
-                <Logs job={job} />
-              </FlexCol>
-              {!jobRunOrStop && (
-                <div className="fixed invisible w-2/3 text-3xl lg:visible left-1/3 opacity-80 h-2/3">
-                  <FlexCenter className="w-full h-full">No data to plot</FlexCenter>
-                </div>
-              )}
-            </FlexRow>
-          )}
-          {jobNotFound && (
-            <FlexCenter className="w-full h-full">
-              <FlexCol className="space-y-5">
-                <div>
-                  This job is not accessible for this user. Please refer to results page and choose
-                  one of the jobs listed in the table.
-                </div>
-                <FlexCenter>
-                  <Link href="/results">
-                    <a className="px-6 py-2 text-base text-center text-white bg-purple-700 rounded-lg cursor-pointer w-72 lg:transition lg:duration-300 hover:bg-purple-900">
-                      Go back to results page!
-                    </a>
-                  </Link>
-                </FlexCenter>
-              </FlexCol>
-            </FlexCenter>
-          )}
-          {isLoading && <FlexCenter className="w-full h-full">Loading ...</FlexCenter>}
-        </FlexCol>
-      </Layout>
-    );
+  if (serverRuntimeConfig.is_deployed) {
+    if (authed)
+      return (
+        <Layout>
+          <FlexCol className="min-h-screen text-white lg:h-screen bg-gradient-to-r from-purple-900 to-indigo-600 font-body">
+            <Navbar isMobile={isMobile} />
+            {jobFound && (
+              <FlexRow responsive className="w-full h-full">
+                <FlexCol className="pt-5 mx-10 md:pt-20 lg:w-1/3 lg:mx-20">
+                  <div className="p-5 mb-10 bg-indigo-900 border-2 shadow-xl lg:p-8 border-gray-50 border-opacity-30 rounded-xl">
+                    The plot of the total negative log-probability of all replicas helps to monitor
+                    sampling convergence. If it scatters around a fixed value, your target
+                    distribution is, given good Replica Exchange acceptance rates, likely to be
+                    sampled exhaustively.
+                  </div>
+                  <JobInfoDiv jobId={jobId} />
+                  <Dropdown />
+                </FlexCol>
+                <FlexCol between className="p-10 lg:w-2/3">
+                  <NegLogPChart job={job} simulationRun={simulationRun} isMobile={isMobile} />
+                  <AcceptanceRateChart
+                    job={job}
+                    simulationRun={simulationRun}
+                    isMobile={isMobile}
+                  />
+                  <Logs job={job} />
+                </FlexCol>
+                {!jobRunOrStop && (
+                  <div className="fixed invisible w-2/3 text-3xl lg:visible left-1/3 opacity-80 h-2/3">
+                    <FlexCenter className="w-full h-full">No data to plot</FlexCenter>
+                  </div>
+                )}
+              </FlexRow>
+            )}
+            {jobNotFound && (
+              <FlexCenter className="w-full h-full">
+                <FlexCol className="space-y-5">
+                  <div>
+                    This job is not accessible for this user. Please refer to results page and
+                    choose one of the jobs listed in the table.
+                  </div>
+                  <FlexCenter>
+                    <Link href="/results">
+                      <a className="px-6 py-2 text-base text-center text-white bg-purple-700 rounded-lg cursor-pointer w-72 lg:transition lg:duration-300 hover:bg-purple-900">
+                        Go back to results page!
+                      </a>
+                    </Link>
+                  </FlexCenter>
+                </FlexCol>
+              </FlexCenter>
+            )}
+            {isLoading && <FlexCenter className="w-full h-full">Loading ...</FlexCenter>}
+          </FlexCol>
+        </Layout>
+      );
+  } else {
+    return <NotDeployed />;
+  }
 };
 
 export async function getServerSideProps(context) {
   try {
-    const { serverRuntimeConfig } = require('../next.config.js');
     let props;
     if (serverRuntimeConfig.require_auth) {
       const { verifyIdToken } = require('../utils/firebaseAdmin');
