@@ -36,10 +36,26 @@ const Heading = () => (
               Chainsail resources repository
             </a>{' '}
             contains some background on the algorithms used in Chainsail and a complete
-            walk-through. Also see our blog posts for details on the algorithms at work in
-            Chainsail:
+            walk-through. Also see our blog posts for details on Chainsail and the algorithms at
+            work:
           </div>
           <FlexCol>
+            <a
+              href="https://www.tweag.io/blog/2022-08-09-chainsail-announcement/"
+              target="_blank"
+              className="inline"
+            >
+              <i className="ml-2 mr-5 fas fa-chevron-right"></i>
+              Chainsail announcement blog post
+            </a>
+            <a
+              href="https://www.tweag.io/blog/2022-08-11-chainsail-soft-kmeans-clustering/"
+              target="_blank"
+              className="inline"
+            >
+              <i className="ml-2 mr-5 fas fa-chevron-right"></i>
+              Inferring Gaussian mixture parameters with Chainsail
+            </a>
             <a
               href="https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/"
               target="_blank"
