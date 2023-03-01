@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { Button, Container, FlexCenter, FlexCol, Layout, Navbar } from '../components';
 import AnimationMainPage from '../components/AnimationMainPage';
+const { serverRuntimeConfig } = require('../next.config.js');
 
-const Heading = () => (
+const Heading = ({ isDeployed }) => (
   <FlexCol center className="h-full">
     <div className="mb-10 text-5xl md:text-9xl">Chainsail</div>
     <div className="mb-10 text-2xl lg:w-2/3 md:text-4xl md:mb-20">
@@ -17,15 +18,38 @@ const Heading = () => (
           defining your probability density and its log-probability gradient.
         </div>
         <div>
-          This beta version of Chainsail is free. Please{' '}
-          <a
-            href="mailto:support@chainsail.io"
-            className="inline text-blue-400 hover:text-white transition duration-300"
-          >
-            e-mail us
-          </a>{' '}
-          to get your account authorized. Do ask us for a live demo!
+          {(() => {
+            if (isDeployed) {
+              return (
+                <div>
+                  This beta version of Chainsail is free. Please{' '}
+                  <a
+                    href="mailto:support@chainsail.io"
+                    className="inline text-blue-400 hover:text-white transition duration-300"
+                  >
+                    e-mail us
+                  </a>{' '}
+                  to get your account authorized. Do ask us for a live demo!
+                </div>
+              );
+            } else {
+              return (
+                <div>
+                  Chainsail is currently not deployed under this URL. If you would like to see a
+                  demo, please contact the Chainsail team at{' '}
+                  <a
+                    href="mailto:support@chainsail.io"
+                    className="inline text-blue-400 hover:text-white transition duration-300"
+                  >
+                    support@chainsail.io
+                  </a>
+                  .
+                </div>
+              );
+            }
+          })()}
         </div>
+
         <FlexCol className="space-y-2">
           <div>
             Chainsail is open-source and you can find the source code{' '}
@@ -86,9 +110,17 @@ const Heading = () => (
         </FlexCol>
       </FlexCol>
     </div>
-    <Button href="/job" className="bg-purple-600 hover:bg-purple-700">
-      Give it a whirl
-    </Button>
+    {(() => {
+      if (isDeployed) {
+        return (
+          <Button href="/job" className="bg-purple-600 hover:bg-purple-700">
+            Give it a whirl
+          </Button>
+        );
+      } else {
+        return undefined;
+      }
+    })()}
   </FlexCol>
 );
 
@@ -160,15 +192,22 @@ export default function Home({ isMobile }) {
     toggleAnim(!isMobile);
     return () => toggleAnim(false);
   }, [isMobile]);
+  let isDeployed = serverRuntimeConfig.is_deployed;
   return (
     <Layout>
       <FlexCol
         between
         className="min-h-screen text-white bg-gradient-to-r opacity-95 from-purple-900 to-indigo-600 font-body"
       >
-        <Navbar isMobile={isMobile} />
+        {(() => {
+          if (isDeployed) {
+            return <Navbar isMobile={isMobile} />;
+          } else {
+            return undefined;
+          }
+        })()}
         <Container>
-          <Heading />
+          <Heading isDeployed={isDeployed} />
         </Container>
         <CopyrightFooter />
       </FlexCol>
