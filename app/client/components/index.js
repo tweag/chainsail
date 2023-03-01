@@ -14,6 +14,7 @@ import Modal from './Modal';
 import AnimatedPing from './AnimatedPing';
 import JobButton from './JobButton';
 import ResultsLink from './ResultsLink';
+import NotDeployed from './NotDeployed';
 
 export {
   AnimatedPing,
@@ -34,5 +35,6 @@ export {
   MathTex,
   Modal,
   Navbar,
+  NotDeployed,
   ResultsLink,
 };
