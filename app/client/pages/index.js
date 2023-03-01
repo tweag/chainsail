@@ -28,6 +28,16 @@ const Heading = () => (
         </div>
         <FlexCol className="space-y-2">
           <div>
+            Chainsail is open-source and you can find the source code{' '}
+            <a
+              href="https://github.com/tweag/chainsail"
+              className="inline text-blue-400 hover:text-white transition duration-300"
+            >
+              here
+            </a>
+            . Please feel free to create an issue or contribute via PRs!
+          </div>
+          <div>
             The{' '}
             <a
               href="https://github.com/tweag/chainsail-resources"
