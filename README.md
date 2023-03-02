@@ -2,9 +2,9 @@
 Chainsail is a web service which helps you sample from multimodal probability distributions. In the context of Bayesian statistics, they arise in the case of unidentifiable parameters which are due to some symmetry in the model or if you have ambiguous data.
 
 ## High-level overview
-Also see the [announcement blog post](https://www.tweag.io/blog/2022-08-09-chainsail-announcement/).
+The [announcement blog post](https://www.tweag.io/blog/2022-08-09-chainsail-announcement/) gives a high-level introduction into Chainsail, and the [blog post announcing the open source release](https://www.tweag.io/blog/2023-03-02-chainsail-open-source/) lines out the main components and links to relevant parts in the code.
 
-Chainsail is essentially a Replica Exchange ([Wikipedia](https://en.wikipedia.org/wiki/Parallel_tempering), [blog post](https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/)) implementation with automated tuning and support for cloud computing platforms providing the necessary parallel computing power.
+In a nutshell, Chainsail is a Replica Exchange ([Wikipedia](https://en.wikipedia.org/wiki/Parallel_tempering), [blog post](https://www.tweag.io/blog/2020-10-28-mcmc-intro-4/)) implementation with automated tuning and support for cloud computing platforms providing the necessary parallel computing power.
 
 ### Replica Exchange
 In a nutshell, Replica Exchange is a Markov chain Monte Carlo (MCMC)  algorithm that works by simulating a series of increasingly "flatter" versions of a probability distribution with a "local" MCMC algorithm such as Hamiltonian Monte Carlo ([blog post](https://www.tweag.io/blog/2020-08-06-mcmc-intro3/)) and occasionally exchanging states between all those simulations.
