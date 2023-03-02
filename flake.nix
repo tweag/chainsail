@@ -3,12 +3,14 @@
 
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "nixpkgs/21.11";
+    nixpkgs.url = "nixpkgs/release-22.11";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, poetry2nix, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = nixpkgs.legacyPackages.${system}; in {
+       let
+         pkgs = nixpkgs.legacyPackages.${system};
+      in {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             docker-compose
@@ -20,7 +22,7 @@
             ncurses
             nodejs
             openmpi
-            poetry # version 1.1.10 (required) while pythonPackages38.poetry is lower
+            poetry
             python38Packages.tkinter
             terraform
             yarn
