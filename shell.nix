@@ -6,7 +6,7 @@ pkgs.mkShell {
     nodejs
     docker-compose
     openmpi
-    python38Packages.tkinter
+#    python38Packages.tkinter
     ncurses
     file
     gnumake
