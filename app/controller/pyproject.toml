@@ -5,8 +5,6 @@ description = "Chainsail component which, within a job received from the schedul
 authors = ["simeoncarstens <simeon.carstens@tweag.io>"]
 packages = [ { include = 'chainsail' } ]
 
-
-
 [tool.poetry.scripts]
 chainsail-controller = 'chainsail.controller.run:run'
 chainsail-controller-local = 'chainsail.controller.run_local:run'
