@@ -21,7 +21,6 @@ click = "^8.0.0"
 chainsail-runner-rexfw = { path = "../../lib/runners/rexfw", optional = true, develop = true }
 grpcio = "^1.35.0"
 regex = "^2022.8.17"
-black = "22.3.0"
 certifi = "2022.12.7"
 
 [tool.poetry.extras]
@@ -29,15 +28,25 @@ rexfw = ["chainsail-runner-rexfw"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
+
 black = "22.3.0"
+# Prevent build error due to invalid licence.
+# See https://github.com/bagel897/pytoolconfig/commit/9655177fa82329aa772bce34da25f1ee7f321dc9
+pytoolconfig = { git = "https://github.com/bagel897/pytoolconfig", rev = "9655177fa82329aa772bce34da25f1ee7f321dc9" }
+
 flake8 = "^3.8.4"
 pylint = "^2.6.0"
-mypy = "^0.790"
+mypy = "^1.0.0"
 pytest-dotenv = "^0.5.2"
 pytest-cov = "^2.10.1"
 isort = "^5.7.0"
 jedi = "*"
-rope = "*"
+
+# Commenting out rope for now as it causes a Nix build error:
+# ERROR: No matching distribution found for pytoolconfig[global]>=1.2.2
+# This doesn't make sense as the above pytoolconfig is version 1.2.6.dev2+g9655177.
+#rope = "*"
+
 pyyaml = "*"
 numpy = "*"
 
