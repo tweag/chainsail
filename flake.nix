@@ -60,6 +60,25 @@
                 // addNativeBuildInputs "rexfw" [ final.poetry-core ]
             );
           };
+          scheduler = poetry2nixPkg.mkPoetryApplication {
+            projectDir = ./app/scheduler;
+            overrides = poetry2nixPkg.overrides.withDefaults (
+              final: prev:
+                let
+                  addNativeBuildInputs = drvName: inputs: {
+                    "${drvName}" = prev.${drvName}.overridePythonAttrs (
+                      old: {
+                        nativeBuildInputs =
+                          (old.nativeBuildInputs or [ ]) ++ inputs;
+                      }
+                    );
+                  };
+                in
+                { }
+                // addNativeBuildInputs "uwsgi" [ final.setuptools ]
+                // addNativeBuildInputs "firebase-admin" [ final.setuptools ]
+            );
+          };
           default = self.packages.${system}.controller;
         };
       }
