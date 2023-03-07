@@ -10,7 +10,7 @@ chainsail-controller = 'chainsail.controller.run:run'
 chainsail-controller-local = 'chainsail.controller.run_local:run'
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.8,<3.11"
 numpy = "*"
 chainsail-common = { path = "../../lib/common", develop = true }
 chainsail-grpc = { path = "../../lib/grpc", develop = true }
