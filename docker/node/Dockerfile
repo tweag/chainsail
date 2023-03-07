@@ -36,7 +36,7 @@ FROM base as builder-common
 RUN apt-get update && apt-get install -y wget unzip git build-essential libffi-dev libssl-dev zlib1g-dev
 
 # Python package managers
-RUN pip install --upgrade pip && pip install "poetry==1.1.10"
+RUN pip install --upgrade pip && pip install "poetry==1.3.0"
 
 ##############################################################################
 FROM builder-common as builder
