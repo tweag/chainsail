@@ -15,6 +15,11 @@ rexfw = { git = "https://github.com/tweag/rexfw", branch = "resaas" }
 mpi4py = { git = "https://github.com/mpi4py/mpi4py", rev = "fc20dedf73ed83acb9b5b491003f42368a1bcd1e" }
 click = "^8.0.0"
 
+# Temporary deps to allow running user-code locally.
+chainsail-helpers = "*"
+scipy = "*"
+pymc = "*"
+
 [tool.poetry.scripts]
 run-rexfw-mpi = 'chainsail.runners.rexfw.mpi:run_rexfw_mpi'
 
