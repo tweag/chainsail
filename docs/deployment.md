@@ -49,7 +49,7 @@ minikube start
 Then you can provision cluster resources with:
 
 ```console
-cd ./terraform/clusters/local
+cd ./terraform/cluster/local
 
 # The first time you run terraform you need to run an init command:
 terraform init
