@@ -6,6 +6,12 @@ terraform {
   backend "local" {
     path = "terraform.tfstate"
   }
+  required_providers {
+    kubernetes = {
+      version = ">= 2.16.1"
+      source = "hashicorp/kubernetes"
+    }
+  }
 }
 
 provider "kubernetes" {
