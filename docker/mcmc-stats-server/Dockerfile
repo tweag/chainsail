@@ -46,7 +46,7 @@ RUN cd /app/app/mcmc_stats_server && \
 ##############################################################################
 FROM system-deps as app
 
-COPY --from=builder /app /app
+COPY --chown=www-data:www-data --from=builder /app /app
 ENV PYTHONPATH=$PYTHONPATH:/app/app/mcmc_stats_server
 
 # Adding the app venv bin to the front of path so it is the default pip, etc.
