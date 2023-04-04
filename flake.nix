@@ -4,6 +4,7 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "nixpkgs/release-22.11";
+    yarn-nixpkgs.url = "nixpkgs/21.11";
     poetry2nix = {
       url = "github:nix-community/poetry2nix";
       inputs = {
@@ -13,11 +14,16 @@
     };
   };
 
-  outputs = { self, flake-utils, nixpkgs, poetry2nix }:
+  outputs = { self, flake-utils, nixpkgs, yarn-nixpkgs, poetry2nix }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        nodePkgs = yarn-nixpkgs.legacyPackages.${system};
         poetry2nixPkg = poetry2nix.legacyPackages.${system};
+        ourNode = pkgs.nodejs-14_x;
+        ourYarn = nodePkgs.yarn.override(_: {
+          nodejs = ourNode;
+        });
       in
       {
         devShells.default = pkgs.mkShell {
@@ -29,12 +35,12 @@
             kubernetes-helm
             minikube
             ncurses
-            nodejs
+            ourNode
             openmpi
             poetry
             python38Packages.tkinter
             terraform
-            yarn
+            ourYarn
             zlib
           ];
 
