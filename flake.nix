@@ -6,7 +6,7 @@
     nixpkgs.url = "nixpkgs/release-22.11";
     yarn-nixpkgs.url = "nixpkgs/21.11";
     poetry2nix = {
-      url = "github:nix-community/poetry2nix";
+      url = "github:steshaw/poetry2nix/git-branch-dependency";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-utils.follows = "flake-utils";
