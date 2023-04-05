@@ -44,3 +44,64 @@ The controller can be used as a stand-alone app on a single machine. To that end
    ```
 
 , which will run the main optimization loop and a production run and write all results to the directory specified via the `--dirname` argument.
+
+
+## Development workflow
+
+This is the development workflow for working with the controller locally.
+
+1. Enter the dev shell:
+
+```bash
+nix develop .#controller
+```
+
+2. Edit `../../lib/runners/rexfw/pyproject.toml` to add dependencies necessary to run the `probability.py`. e.g.
+
+```toml
+chainsail-helpers = "*"
+scipy = "*"
+pymc = "*"
+```
+
+3. Update the `poetry.lock` for the controller to bring in the additional dependencies:
+
+```sh-session
+$ poetry lock --no-update
+```
+
+4. Exit and re-enter the controller dev shell
+
+```bash
+exit
+nix develop .#controller
+```
+
+5. You will find that you have a Python interpreter on your PATH with the necessary dependencies:
+
+```sh-session
+$ which python
+/nix/store/4834b5pqk6fsn1sjh1mrpwdln9jw5nrj-python3-3.10.9-env/bin/python
+```
+
+6. Then, assuming you have [chainsail-resources](https://github.com/tweag/chainsail-resources/) cloned at the same level as [chainsail](https://github.com/tweag/chainsail) and you have a job.json in the `./app/controller` directory such as  [job.json](https://gist.github.com/steshaw/10edb377b89a5c315d92c3c2e40454ea), you can run the following examples from `chainsail-resources`.
+
+```bash
+PYTHONPATH=../../../chainsail-resources/examples/mixture/ chainsail-controller-local --job-spec=job.json --dirname=/tmp/out
+```
+
+```bash
+PYTHONPATH=../../../chainsail-resources/examples/pymc-mixture/ chainsail-controller-local --job-spec=job.json --dirname=/tmp/out
+```
+
+```bash
+$ PYTHONPATH=../../../chainsail-resources/examples/soft-kmeans/ chainsail-controller-local --job-spec=job.json --dirname=/tmp/out
+```
+
+7. You can edit local source files and they will be reflected the next time you run `chainsail-controller-local`.
+
+### Direnv
+
+There is `direnv` support supplied by [`../../.envrc`](../../.envrc). So, instead of `nix develop .#controller`, you can also enter a controller dev shell using `direnv allow`.
+
+If you like to use VS Code, you can install [direnv-vscode](https://marketplace.visualstudio.com/items?itemName=mkhl.direnv) to enable Python tooling. VSCode uses Pylance from Microsoft, powered by Pyright.
