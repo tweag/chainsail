@@ -96,8 +96,7 @@ In the final call to `yarn run dev`, adapt the URLs in the environment variables
 
 :warning: the link provided by the client to download samples won't work when Chainsail is deployed via Minikube, the reason being that the host machine does not see the Minikube-internal DNS server by default. To download sampling results, use the following command:
 ```console
-kubectl exec -it scheduler-worker-<tab complete here> -- \
-  curl --output - "<URL from download button>" > results.zip
+kubectl exec minio-0 -- curl --output - '<URL from download button>' >results.zip
 ```
 
 ### Deploying changes
