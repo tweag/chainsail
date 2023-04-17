@@ -42,13 +42,13 @@ the following files / environment variables:
 
 To deploy locally, you first need to start a local cluster using minikube:
 
-```console
+```bash
 minikube start
 ```
 
 Then you can provision cluster resources with:
 
-```console
+```bash
 cd ./terraform/cluster/local
 
 # The first time you run terraform you need to run an init command:
@@ -63,7 +63,7 @@ Note: Minikube has its own Docker registry, so if you want to deploy *local* ver
 of chainsail you will need to build the latest version of its Docker images
 and add them to Minikube's Docker registry. One way to do this is:
 
-```console
+```bash
 # This makes docker commands use Minikube's Docker daemon
 eval $(minikube docker-env)
 
@@ -73,7 +73,7 @@ The hub namespace environment variable has to match the value of the `imageHubNa
 
 Then, you can install Chainsail with Helm:
 
-```console
+```bash
 helm install -f helm/values-local.yaml chainsail ./helm
 ```
 
@@ -82,11 +82,11 @@ helm install -f helm/values-local.yaml chainsail ./helm
 For development purposes, you can run the frontend web app locally.
 But to get access to your minikube services, you need to create service tunnels.
 To do that, first get a list of all services with
-```console
+```bash
 kubectl get svc
 ```
 For each service (`scheduler` / `graphite` / `mcmc-stats-server`) you now need to establish a service tunnel via
-```console
+```bash
 minikube service <service> --url &
 ```
 . That command will print the URL and port at which the respective service will be reachable.
@@ -95,7 +95,7 @@ With that in hand, you can follow the instruction in the [`frontend README`](app
 In the final call to `yarn run dev`, adapt the URLs in the environment variables to match the output of the service tunnel commands.
 
 :warning: the link provided by the client to download samples won't work when Chainsail is deployed via Minikube, the reason being that the host machine does not see the Minikube-internal DNS server by default. To download sampling results, use the following command:
-```console
+```bash
 kubectl exec minio-0 -- curl --output - '<URL from download button>' >results.zip
 ```
 
@@ -103,7 +103,7 @@ kubectl exec minio-0 -- curl --output - '<URL from download button>' >results.zi
 
 Each time you make local changes to the chainsail back-end, re-build the Docker image(s) for the services you have modified and run a Helm upgrade to deploy them locally:
 
-```console
+```bash
 eval $(minikube docker-env)
 make images
 helm upgrade -f helm/values-local.yaml chainsail ./helm
@@ -115,7 +115,7 @@ helm upgrade -f helm/values-local.yaml chainsail ./helm
 In addition to the general [Prerequisites](#prerequisites-for-both-minikube-and-google-cloud-deployment),
 - Make sure that your local Google Cloud credentials are set correctly.
   To that end, run
-  ```console
+  ```bash
   gcloud auth application-default login --project <project name>
   ```
   .
@@ -126,7 +126,7 @@ In addition to the general [Prerequisites](#prerequisites-for-both-minikube-and-
 
 The first step in preparing a new chainsail environment is ensuring that (1) a Google Cloud Project already exists, (2) you have adequate access rights in the project to deploy infrastructure, and (3) the GCS bucket for storing the Terraform state has already been created. If you try running the commands in this guide without these pre-requisites, you'll likely run into some error messages.
 
-```console
+```bash
 cd ./terraform/base/dev
 
 # The first time you run terraform you need to run an init command:
@@ -139,7 +139,7 @@ terraform apply
 
 With the base Google Cloud environment created, we can now provision the kubernetes cluster. This step creates things like k8s service accounts and the k8s secrets required to run chainsail.
 
-```console
+```bash
 cd ./terraform/clusters/dev
 
 # The first time you run terraform you need to run an init command:
@@ -156,7 +156,7 @@ It is called something like `<eu, ...>.artifacts.<project name>` bucket.
 The name of the bucket might vary depending on the `zone` and `node_location` entries in the `chainsail_gcp` Terraform module in `terraform/base/dev/main.tf`.
 
 To build and push images, run
-```console
+```bash
 HUB_NAMESPACE="<container registry>/" make push-images
 ```
 
@@ -164,14 +164,14 @@ The hub namespace environment variable has to match the value of the `imageHubNa
 
 The first time you deploy chainsail, you will need to fetch the cluster's kubernetes access credentials using `gcloud`:
 
-```console
+```bash
 gcloud container clusters get-credentials --region $GCP_REGION chainsail
 ```
 The GCP region can be found in `terraform/base/dev/main.tf` in the `node_location` entry of the `chainsail_gcp` module.
 
 Once all of the desired images are published, you can install chainsail with:
 
-```console
+```bash
 helm install -f helm/values-dev.yaml chainsail ./helm
 ```
 
@@ -181,7 +181,7 @@ The chainsail front-end is currently deployed separately using App Engine:
 
 > **Note: The App Engine app.yaml is generated by Terraform. Run the `terraform/base/<env-name>` module to recreate it.
 
-```console
+```bash
 cd app/client
 npm run deploy
 ```
@@ -201,14 +201,14 @@ There are a couple of additional steps which need to be configured manually:
 
 To upgrade an already running chainsail cluster to a newer version of the chart. Use:
 
-```console
+```bash
 helm upgrade -f helm/values-dev.yaml chainsail ./helm
 ```
 
 If using the `latest` tag for images in the helm chart, you will also need to restart the services so that
 the latest image is pulled:
 
-```console
+```bash
 kubectl rollout restart deployment scheduler-worker
 kubectl rollout restart deployment scheduler
 kubectl rollout restart deployment mcmc-stats-server
@@ -220,7 +220,7 @@ The scheduler pod supports adding / removing user email addresses from the allow
 
 To add a user:
 
-```console
+```bash
 export SCHEDULER_POD=$(kubectl get pods -l chainsail.io.service=scheduler -o jsonpath='{.items[0]..metadata.name}')
 
 kubectl exec $SCHEDULER_POD -- scheduler-add-user --email someone@provider.com
@@ -228,7 +228,7 @@ kubectl exec $SCHEDULER_POD -- scheduler-add-user --email someone@provider.com
 
 To remove a user:
 
-```console
+```bash
 kubectl exec $SCHEDULER_POD -- scheduler-remove-user --email someone@provider.com
 ```
 
