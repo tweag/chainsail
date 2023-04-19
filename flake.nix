@@ -47,6 +47,11 @@
         };
         controller = poetry2nixPkg.mkPoetryApplication controllerOpts;
         controllerEnv = poetry2nixPkg.mkPoetryEnv controllerOpts;
+        controller-image = pkgs.dockerTools.streamLayeredImage {
+          name = "chainsail-mpi-node-k8s";
+          contents = [ controller ];
+          config.Cmd = [ "chainsail-controller" ];
+        };
 
         basePackages = [
           pkgs.docker-compose
@@ -63,21 +68,32 @@
           ourYarn
         ];
 
-        pythonDevShell = ps: pkgs.mkShell {
-          packages = ps ++ basePackages;
+        mkDevShell = {extraPkgs ? []}: pkgs.mkShell {
+          packages = extraPkgs ++ basePackages;
+          shellHook = ''
+            private_env_sh=.config/env.private.sh
+            if [[ -r $private_env_sh ]]; then
+              echo loading $private_env_sh
+              source $private_env_sh
+            fi
+            unset private_env_sh
+          '';
         };
-        controllerDevShell = pythonDevShell [
-          controllerEnv
-          controller
-        ];
+        controllerDevShell = mkDevShell {
+          extraPkgs = [
+            controllerEnv
+            controller
+          ];
+        };
       in
       {
         devShells = {
           controller = controllerDevShell;
-          default = pkgs.mkShell { packages = basePackages; };
+          default = mkDevShell {};
         };
         packages = {
           inherit controller;
+          inherit controller-image;
           scheduler = poetry2nixPkg.mkPoetryApplication {
             projectDir = ./app/scheduler;
             overrides = poetry2nixPkg.overrides.withDefaults (

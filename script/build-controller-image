@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+name=${1:-controller-image}
+image="${HUB_NAMESPACE}chainsail-mpi-node-k8s" # XXX
+
+mkdir -p .cache
+out_file=$(mktemp --tmpdir=.cache --suffix=.out docker-load.XXXXXXXXXX)
+
+
+image_gen_script=".cache/build/$name"
+nix build ".#${name}" -o "$image_gen_script"
+$image_gen_script | docker load | tee "$out_file"
+built_image=$(sed 's/Loaded image: //' <"$out_file")
+echo "Built image $image"
+set -x
+docker tag "$built_image" "$image:latest"
+echo docker run -it --rm "${image}"

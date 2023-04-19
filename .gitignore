@@ -27,3 +27,4 @@ app/client/app.yaml
 
 /result
 /.direnv/
+/.cache/
