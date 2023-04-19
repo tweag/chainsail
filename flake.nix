@@ -47,9 +47,24 @@
         };
         controller = poetry2nixPkg.mkPoetryApplication controllerOpts;
         controllerEnv = poetry2nixPkg.mkPoetryEnv controllerOpts;
+        sshdUser = pkgs.runCommand "user-setup" { } ''
+          mkdir -p $out/etc/
+
+          echo 'sshd:x:105:65534::/run/sshd:/usr/sbin/nologin' >>$out/etc/passwd
+          echo "root:x:0:0:root user:/root:${pkgs.bash}/bin/bash" >> $out/etc/passwd
+        '';
         controller-image = pkgs.dockerTools.streamLayeredImage {
           name = "chainsail-mpi-node-k8s";
-          contents = [ controller ];
+          contents = [
+            controller
+            pkgs.openssh
+            sshdUser
+
+            # debug aids
+            pkgs.bashInteractive
+            pkgs.coreutils
+            pkgs.ps
+          ];
           config.Cmd = [ "chainsail-controller" ];
         };
 
