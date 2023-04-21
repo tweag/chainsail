@@ -1,15 +1,15 @@
 # Deploying Chainsail
 
-Chainsail is designed to be run on a kubernetes cluster either locally or in the cloud. We use the following set of tools for deploying chainsail:
+Chainsail is designed to be run on a Kubernetes cluster either locally or in the cloud. We use the following set of tools for deploying chainsail:
 
   * Terraform - Used for provisioning cloud resources and base k8s cluster resources
-  * Docker - For building chainsail images
-  * Helm - For installing chainsail itself
+  * Docker - For building Chainsail images
+  * Helm - For installing Chainsail itself
 
-This guide describes how to set up a chainsail environment from scratch, either locally or in the cloud.
+This guide describes how to set up a Chainsail environment from scratch, either locally or in the cloud.
 #
 ## Table of Contents
-- [Deploying chainsail](#deploying-chainsail)
+- [Deploying Chainsail](#deploying-chainsail)
   - [Table of Contents](#table-of-contents)
   - [Prerequisites](#prerequisites-for-both-minikube-and-google-cloud-deployment)
   - [Local deployment](#local-deployment)
@@ -17,12 +17,12 @@ This guide describes how to set up a chainsail environment from scratch, either 
     - [Deploying changes](#deploying-changes)
   - [Cloud deployment](#cloud-deployment)
     - [1. Provision the cloud environment on Google Cloud](#1-provision-the-cloud-environment-on-google-cloud)
-    - [2. Provision the kubernetes cluster](#2-provision-the-kubernetes-cluster)
-    - [3. Deploy chainsail back-end](#3-deploy-chainsail-back-end)
-    - [4. Deploy chainsail front-end](#4-deploy-chainsail-front-end)
+    - [2. Provision the Kubernetes cluster](#2-provision-the-kubernetes-cluster)
+    - [3. Deploy Chainsail back-end](#3-deploy-chainsail-back-end)
+    - [4. Deploy Chainsail front-end](#4-deploy-chainsail-front-end)
     - [5. Additional steps](#5-additional-steps)
   - [Maintenance / Development](#maintenance--development)
-    - [Upgrading chainsail](#upgrading-chainsail)
+    - [Upgrading Chainsail](#upgrading-chainsail)
     - [Allowing / disallowing application users](#allowing--disallowing-application-users)
 #
 
@@ -40,7 +40,7 @@ the following files / environment variables:
 
 ### Initial Setup
 
-To deploy locally, you first need to start a local cluster using minikube:
+To deploy locally, you first need to start a local cluster using Minikube:
 
 ```bash
 minikube start
@@ -60,7 +60,7 @@ terraform apply
 The local cluster uses `minio` for local object storage.
 
 Note: Minikube has its own Docker registry, so if you want to deploy *local* versions
-of chainsail you will need to build the latest version of its Docker images
+of Chainsail you will need to build the latest version of its Docker images
 and add them to Minikube's Docker registry. One way to do this is:
 
 ```bash
@@ -80,7 +80,7 @@ helm install -f helm/values-local.yaml chainsail ./helm
 ### Running the client locally
 
 For development purposes, you can run the frontend web app locally.
-But to get access to your minikube services, you need to create service tunnels.
+But to get access to your Minikube services, you need to create service tunnels.
 To do that, first get a list of all services with
 ```bash
 kubectl get svc
@@ -101,7 +101,7 @@ kubectl exec minio-0 -- curl --output - '<URL from download button>' >results.zi
 
 ### Deploying changes
 
-Each time you make local changes to the chainsail back-end, re-build the Docker image(s) for the services you have modified and run a Helm upgrade to deploy them locally:
+Each time you make local changes to the Chainsail back-end, re-build the Docker image(s) for the services you have modified and run a Helm upgrade to deploy them locally:
 
 ```bash
 eval $(minikube docker-env)
@@ -124,7 +124,7 @@ In addition to the general [Prerequisites](#prerequisites-for-both-minikube-and-
 
 ### 1. Provision the cloud environment on Google Cloud
 
-The first step in preparing a new chainsail environment is ensuring that (1) a Google Cloud Project already exists, (2) you have adequate access rights in the project to deploy infrastructure, and (3) the GCS bucket for storing the Terraform state has already been created. If you try running the commands in this guide without these pre-requisites, you'll likely run into some error messages.
+The first step in preparing a new Chainsail environment is ensuring that (1) a Google Cloud Project already exists, (2) you have adequate access rights in the project to deploy infrastructure, and (3) the GCS bucket for storing the Terraform state has already been created. If you try running the commands in this guide without these pre-requisites, you'll likely run into some error messages.
 
 ```bash
 cd ./terraform/base/dev
@@ -135,9 +135,9 @@ terraform init
 terraform apply
 ```
 
-### 2. Provision the kubernetes cluster
+### 2. Provision the Kubernetes cluster
 
-With the base Google Cloud environment created, we can now provision the kubernetes cluster. This step creates things like k8s service accounts and the k8s secrets required to run chainsail.
+With the base Google Cloud environment created, we can now provision the Kubernetes cluster. This step creates things like k8s service accounts and the k8s secrets required to run chainsail.
 
 ```bash
 cd ./terraform/clusters/dev
@@ -148,7 +148,7 @@ terraform init
 terraform apply
 ```
 
-### 3. Deploy chainsail back-end
+### 3. Deploy Chainsail back-end
 
 If Docker images have not already been built and pushed to the Google Cloud Container Registry for your desired version of chainsail, you should go ahead and build those now.
 In order to be able to push the images to the container registry, the Google Cloud credentials you use for the following need to have access to the container registry bucket created by Terraform.
@@ -162,22 +162,22 @@ HUB_NAMESPACE="<container registry>/" make push-images
 
 The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml`.
 
-The first time you deploy chainsail, you will need to fetch the cluster's kubernetes access credentials using `gcloud`:
+The first time you deploy Chainsail, you will need to fetch the cluster's Kubernetes access credentials using `gcloud`:
 
 ```bash
 gcloud container clusters get-credentials --region $GCP_REGION chainsail
 ```
 The GCP region can be found in `terraform/base/dev/main.tf` in the `node_location` entry of the `chainsail_gcp` module.
 
-Once all of the desired images are published, you can install chainsail with:
+Once all of the desired images are published, you can install Chainsail with:
 
 ```bash
 helm install -f helm/values-dev.yaml chainsail ./helm
 ```
 
-### 4. Deploy chainsail front-end
+### 4. Deploy Chainsail front-end
 
-The chainsail front-end is currently deployed separately using App Engine:
+The Chainsail front-end is currently deployed separately using App Engine:
 
 > **Note: The App Engine app.yaml is generated by Terraform. Run the `terraform/base/<env-name>` module to recreate it.
 
@@ -193,13 +193,13 @@ There are a couple of additional steps which need to be configured manually:
 
 2. The app engine domain created in (4) must manually set as an authorized domain in Firebase at https://console.firebase.google.com
 
-3. A VPC Connector must be created for the region in which you have deployed chainsail (See https://cloud.google.com/vpc/docs/configure-serverless-vpc-access)
+3. A VPC Connector must be created for the region in which you have deployed Chainsail (See https://cloud.google.com/vpc/docs/configure-serverless-vpc-access)
 
 
 ## Maintenance / Development
-### Upgrading chainsail
+### Upgrading Chainsail
 
-To upgrade an already running chainsail cluster to a newer version of the chart. Use:
+To upgrade an already running Chainsail cluster to a newer version of the chart. Use:
 
 ```bash
 helm upgrade -f helm/values-dev.yaml chainsail ./helm
