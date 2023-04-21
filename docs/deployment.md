@@ -86,7 +86,7 @@ cd ./app/client
 ./run_dev_client.sh
 ```
 
-For more information see the [`frontend README`](app/client/README#Develop).
+For more information see the [`frontend README`](../app/client/README.md#Develop).
 
 > **Warning** 
 > The link provided by the client to download samples won't work when Chainsail is deployed via Minikube, the reason being that the host machine does not see the Minikube-internal DNS server by default. To download sampling results, use the following command:
