@@ -80,19 +80,13 @@ helm install -f helm/values-local.yaml chainsail ./helm
 ### Running the client locally
 
 For development purposes, you can run the frontend web app locally.
-But to get access to your Minikube services, you need to create service tunnels.
-To do that, first get a list of all services with
-```bash
-kubectl get svc
-```
-For each service (`scheduler` / `graphite` / `mcmc-stats-server`) you now need to establish a service tunnel via
-```bash
-minikube service <service> --url &
-```
-. That command will print the URL and port at which the respective service will be reachable.
 
-With that in hand, you can follow the instruction in the [`frontend README`](app/client/README#Develop), but skip the SSH tunneling part.
-In the final call to `yarn run dev`, adapt the URLs in the environment variables to match the output of the service tunnel commands.
+```bash
+cd ./app/client
+./run_dev_client.sh
+```
+
+For more information see the [`frontend README`](app/client/README#Develop).
 
 :warning: the link provided by the client to download samples won't work when Chainsail is deployed via Minikube, the reason being that the host machine does not see the Minikube-internal DNS server by default. To download sampling results, use the following command:
 ```bash
