@@ -10,6 +10,7 @@ images:
 	docker build -t "${IMAGE_PREFIX}chainsail-nginx:latest" -f ./docker/nginx/Dockerfile .
 	docker build -t "${IMAGE_PREFIX}chainsail-user-code:latest" -f docker/user-code/Dockerfile .
 	docker build -t "${IMAGE_PREFIX}chainsail-httpstan-server:latest" -f docker/httpstan-server/Dockerfile .
+	docker build -t "${IMAGE_PREFIX}chainsail-sshd:latest" ./docker/sshd
 	docker build -t "${IMAGE_PREFIX}chainsail-mpi-node-k8s:latest" -f docker/node/Dockerfile .
 	docker build -t "${IMAGE_PREFIX}chainsail-mcmc-stats-server:latest" -f docker/mcmc-stats-server/Dockerfile .
 	@echo "Done."

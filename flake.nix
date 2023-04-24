@@ -92,6 +92,7 @@
               source $private_env_sh
             fi
             unset private_env_sh
+            PATH=$PWD/script:$PATH
           '';
         };
         controllerDevShell = mkDevShell {
