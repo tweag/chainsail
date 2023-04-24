@@ -33,6 +33,7 @@ cloudstorage = {extras = ["google"], version = "^0.11.0"}
 kubernetes = "^18.20.0"
 boto3 = "^1.20.26"
 setuptools = "*"
+oauthlib = "^3.2.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
