@@ -59,7 +59,6 @@
           ourNode
           pkgs.openmpi
           pkgs.poetry
-          pkgs.python38Packages.tkinter
           pkgs.terraform
           ourYarn
         ];
