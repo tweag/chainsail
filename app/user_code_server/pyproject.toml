@@ -14,7 +14,7 @@ numpy = "*"
 chainsail-common = { path = "../../lib/common", develop = true }
 chainsail-grpc = { path = "../../lib/grpc", develop = true }
 click = "^8.0.0"
-grpcio = "^1.35.0"
+grpcio = "^1.53.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
