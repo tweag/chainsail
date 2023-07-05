@@ -19,7 +19,7 @@ click = "^8.0.0"
 
 # Runners can be installed as extras for convenience
 chainsail-runner-rexfw = { path = "../../lib/runners/rexfw", optional = true, develop = true }
-grpcio = "^1.35.0"
+grpcio = "^1.53.0"
 regex = "^2022.8.17"
 certifi = "2022.12.7"
 
