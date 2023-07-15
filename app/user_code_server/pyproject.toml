@@ -9,7 +9,7 @@ packages = [ { include = 'chainsail' } ]
 chainsail-user-code-server = 'chainsail.user_code_server:run'
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 numpy = "*"
 chainsail-common = { path = "../../lib/common", develop = true }
 chainsail-grpc = { path = "../../lib/grpc", develop = true }
