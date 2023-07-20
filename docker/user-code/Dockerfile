@@ -49,11 +49,11 @@ RUN cd /app/app/user_code_server && \
 ARG BRIDGESTAN_PATH=/app/deps/bridgestan
 RUN git clone --recurse-submodules --shallow-submodules --branch v2.1.1 --single-branch https://github.com/roualdes/bridgestan.git $BRIDGESTAN_PATH
 RUN cd /app/app/user_code_server && poetry add $BRIDGESTAN_PATH/python/
-# TODO: BridgeStan downloads the Stan compiler upon the first model compilation
-# (see https://github.com/roualdes/bridgestan/blob/cdde53c47db8608c23a79633f3620661b14682b0/Makefile#L137),
-# but ideally we would like to not have to do this at runtime. But if you just download it beforehand
-# to $BRIDGESTAN/bin/stanc, model compilation fails with an error about ./bin/stanc not being found, stemming
-# from the stan_math library.
+## BridgeStan requires the Stan compiler. If not available, it gets automatically downloaded
+## when first compiling a model, but why do this at runtime if we can do it at image build time
+RUN mkdir $BRIDGESTAN_PATH/bin
+RUN wget -O $BRIDGESTAN_PATH/bin/stanc https://github.com/stan-dev/stanc3/releases/download/v2.32.1/linux-stanc
+RUN chmod 777 $BRIDGESTAN_PATH/bin/stanc
 
 ##############################################################################
 # FINAL
