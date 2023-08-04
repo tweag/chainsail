@@ -1,7 +1,7 @@
 ##############################################################################
 # BASE
 ##############################################################################
-FROM python:3.8.7-slim as base
+FROM python:3.10-slim as base
 
 # up-to-date GCC
 RUN echo 'deb http://deb.debian.org/debian stable main' >> /etc/apt/sources.list
