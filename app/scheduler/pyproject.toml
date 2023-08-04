@@ -22,7 +22,7 @@ Flask-SQLAlchemy = "^2.4.4"
 flask-marshmallow = "^0.14.0"
 marshmallow-sqlalchemy = "^0.24.1"
 marshmallow-enum = "^1.5.1"
-PyYAML = "^5.3.1"
+PyYAML = "^6.0"
 shortuuid = "^1.0.1"
 celery = {extras = ["gevent", "redis"], version = "^5.0.5"}
 grpcio = "^1.35.0"

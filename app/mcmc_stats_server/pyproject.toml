@@ -8,7 +8,7 @@ authors = ["Simeon Carstens <simeon.carstens@tweag.io>"]
 python = "^3.8"
 chainsail-common = { path = "../../lib/common", develop = true }
 Flask = "^2.2.2"
-PyYAML = "^5.3.1"
+PyYAML = "^6.0"
 uWSGI = "^2.0.19"
 click = "^8.0.3"
 
@@ -32,4 +32,3 @@ omit = ["*test*"]
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-
