@@ -216,7 +216,12 @@ class K8sNode(Node):
                 ),
             ],
             startup_probe=kub.client.V1Probe(
-                grpc=kub.client.V1GRPCAction(port=50052)
+                grpc=kub.client.V1GRPCAction(port=50052),
+                # try every 10 seconds...
+                period_seconds=10,
+                # ... up to 30 times.
+                failure_threshold=30,
+                # This gives the user code server 10 * 30 seconds = 5 minutes to be ready
         )
         # Worker container
         container_cmd = [self._config.cmd] + self._config.args
