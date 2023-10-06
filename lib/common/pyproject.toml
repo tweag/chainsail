@@ -9,7 +9,7 @@ packages = [ { include = "chainsail" } ]
 python = "^3.8"
 apache-libcloud = "^3.3.1"
 numpy = "^1.19.5"
-PyYAML = "^5.4.1"
+PyYAML = "^6.0"
 marshmallow = "^3.10.0"
 marshmallow-enum = "^1.5.1"
 cryptography = "^3.4.1"
