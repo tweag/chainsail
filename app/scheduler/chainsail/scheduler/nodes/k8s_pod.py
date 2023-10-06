@@ -215,6 +215,8 @@ class K8sNode(Node):
                     sub_path=self._CM_FILE_USERCODE,
                 ),
             ],
+            startup_probe=kub.client.V1Probe(
+                grpc=kub.client.V1GRPCAction(port=50052)
         )
         # Worker container
         container_cmd = [self._config.cmd] + self._config.args
