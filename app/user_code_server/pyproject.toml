@@ -9,7 +9,11 @@ packages = [ { include = 'chainsail' } ]
 chainsail-user-code-server = 'chainsail.user_code_server:run'
 
 [tool.poetry.dependencies]
-python = "^3.8"
+# Other Python applications / libraries in this project have Python 3.8 as a
+# minimal requirement, but here we need Python 3.9 because that's the lower Python
+# version bound for BridgeStan. Else Poetry would not be able to resolve dependencies
+# when installing BridgeStan.
+python = "^3.9"
 numpy = "*"
 chainsail-common = { path = "../../lib/common", develop = true }
 chainsail-grpc = { path = "../../lib/grpc", develop = true }

@@ -1,7 +1,10 @@
 ##############################################################################
 # BASE
 ##############################################################################
-FROM python:3.8.7-slim as base
+
+# We use Python 3.10 (in contrast to Python 3.8 elsewhere in this project), because
+# BridgeStan needs at least Python 3.9.
+FROM python:3.10-slim as base
 
 # Set up required directories
 RUN mkdir -p /app/deps && mkdir -p /run/sshd
@@ -42,6 +45,15 @@ RUN cd /app/app/user_code_server && \
     poetry run pip install --upgrade pip && \
     poetry install --no-dev
 
+# Install BridgeStan
+ARG BRIDGESTAN_PATH=/app/deps/bridgestan
+RUN git clone --recurse-submodules --shallow-submodules --branch v2.1.1 --single-branch https://github.com/roualdes/bridgestan.git $BRIDGESTAN_PATH
+RUN cd /app/app/user_code_server && poetry add $BRIDGESTAN_PATH/python/
+## BridgeStan requires the Stan compiler. If not available, it gets automatically downloaded
+## when first compiling a model, but why do this at runtime if we can do it at image build time
+RUN mkdir $BRIDGESTAN_PATH/bin
+RUN wget -O $BRIDGESTAN_PATH/bin/stanc https://github.com/stan-dev/stanc3/releases/download/v2.32.1/linux-stanc
+RUN chmod 777 $BRIDGESTAN_PATH/bin/stanc
 
 ##############################################################################
 # FINAL
@@ -62,7 +74,7 @@ RUN chmod 555 /app/entrypoint.sh
 # Adding the app venv bin to the front of path so it is the default pip, etc.
 ENV PATH=/app/app/user_code_server/.venv/bin:$PATH
 RUN pip install scipy==1.9.1 numpy==1.23.2 pymc==4.1.7 requests==2.28.1 chainsail-helpers==0.1.4
-
+ENV BRIDGESTAN=/app/deps/bridgestan
 WORKDIR /probability
 
 ENV USER_CODE_SERVER_PORT=50052
