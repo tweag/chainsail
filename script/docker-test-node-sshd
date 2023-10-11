@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+docker run -it --rm "${IMAGE_PREFIX}chainsail-mpi-node-k8s:latest" \
+  sh -c 'ssh-keygen -A && mkdir -p /var/empty && exec /bin/sshd -p26 -D'

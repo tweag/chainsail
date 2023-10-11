@@ -17,14 +17,12 @@ tolerations:
     value: 'true'
     effect: 'NoSchedule'
 
-# For Minikube deployment, `imageHubNamespace` has to match the
-# `imageHubNamespace` value in `values-local.yaml` and the `container_registry`
-# value in the `locals` block of `terraform/cluster/local/main.tf`.
-# For GCP deployment, it has to match the `imageHubNamespace` value in
-# `values-dev.yaml`.
-# Furthermore, this value is the `HUB_NAMESPACE` environment variable you have
-# to set when building the Docker images using the Makefile.
-imageHubNamespace: 'eu.gcr.io/project-name/'
+# Ensure the imagePrefix matches your IMAGE_PREFIX environment variable with
+# this command:
+#
+# helm install -f helm/values-dev.yaml --set imagePrefix=$IMAGE_PREFIX chainsail ./helm
+#
+imagePrefix: ''
 imageTag: 'latest'
 
 ##############################################################################

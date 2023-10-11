@@ -47,6 +47,26 @@
         };
         controller = poetry2nixPkg.mkPoetryApplication controllerOpts;
         controllerEnv = poetry2nixPkg.mkPoetryEnv controllerOpts;
+        sshdUser = pkgs.runCommand "user-setup" { } ''
+          mkdir -p $out/etc/
+
+          echo 'sshd:x:105:65534::/run/sshd:/usr/sbin/nologin' >>$out/etc/passwd
+          echo "root:x:0:0:root user:/root:${pkgs.bash}/bin/bash" >> $out/etc/passwd
+        '';
+        controller-image = pkgs.dockerTools.streamLayeredImage {
+          name = "chainsail-mpi-node-k8s";
+          contents = [
+            controller
+            pkgs.openssh
+            sshdUser
+
+            # debug aids
+            pkgs.bashInteractive
+            pkgs.coreutils
+            pkgs.ps
+          ];
+          config.Cmd = [ "chainsail-controller" ];
+        };
 
         basePackages = [
           pkgs.docker-compose
@@ -63,21 +83,33 @@
           ourYarn
         ];
 
-        pythonDevShell = ps: pkgs.mkShell {
-          packages = ps ++ basePackages;
+        mkDevShell = {extraPkgs ? []}: pkgs.mkShell {
+          packages = extraPkgs ++ basePackages;
+          shellHook = ''
+            private_env_sh=.config/env.private.sh
+            if [[ -r $private_env_sh ]]; then
+              echo loading $private_env_sh
+              source $private_env_sh
+            fi
+            unset private_env_sh
+            PATH=$PWD/script:$PATH
+          '';
         };
-        controllerDevShell = pythonDevShell [
-          controllerEnv
-          controller
-        ];
+        controllerDevShell = mkDevShell {
+          extraPkgs = [
+            controllerEnv
+            controller
+          ];
+        };
       in
       {
         devShells = {
           controller = controllerDevShell;
-          default = pkgs.mkShell { packages = basePackages; };
+          default = mkDevShell {};
         };
         packages = {
           inherit controller;
+          inherit controller-image;
           scheduler = poetry2nixPkg.mkPoetryApplication {
             projectDir = ./app/scheduler;
             overrides = poetry2nixPkg.overrides.withDefaults (

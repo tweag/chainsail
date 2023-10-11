@@ -9,7 +9,7 @@ terraform {
   required_providers {
     kubernetes = {
       version = ">= 2.16.1"
-      source = "hashicorp/kubernetes"
+      source  = "hashicorp/kubernetes"
     }
   }
 }
@@ -41,14 +41,12 @@ locals {
     }
     }
   )
-  # When using both Minikube and cloud deployments, you probably
-  # want to replace `project-name` with your actual Google Cloud
-  # project name in order to avoid having to retag Docker images.
-  # Either way, make sure this matches the value of `imageHubNamespace`
-  # in `helm/values.yaml`.
-  container_registry = "eu.gcr.io/project-name"
 }
 
+variable "image_prefix" {
+  type    = string
+  default = ""
+}
 
 module "chainsail-k8s" {
   source             = "../../modules/chainsail-k8s"
@@ -59,12 +57,10 @@ module "chainsail-k8s" {
   storage_access_key = "chainsail"
   storage_secret_key = "chainsail"
   storage_bucket     = "chainsail-samples"
-  # TODO: Make these images match whatever local build script we use
-  # for rebuilding images
-  image_controller = "${local.container_registry}/chainsail-mpi-node-k8s:latest"
-  image_worker     = "${local.container_registry}/chainsail-mpi-node-k8s:latest"
-  image_httpstan   = "${local.container_registry}/chainsail-httpstan-server:latest"
-  image_user_code  = "${local.container_registry}/chainsail-user-code:latest"
+  image_controller   = "${var.image_prefix}chainsail-mpi-node-k8s:latest"
+  image_worker       = "${var.image_prefix}chainsail-mpi-node-k8s:latest"
+  image_httpstan     = "${var.image_prefix}chainsail-httpstan-server:latest"
+  image_user_code    = "${var.image_prefix}chainsail-user-code:latest"
 }
 
 ###############################################################################

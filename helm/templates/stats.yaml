@@ -17,7 +17,7 @@ spec:
       tolerations:
 {{ toYaml .Values.tolerations | indent 8}}
       containers:
-      - image: {{ .Values.imageHubNamespace }}chainsail-mcmc-stats-server:{{ .Values.imageTag }}
+      - image: {{ .Values.imagePrefix }}chainsail-mcmc-stats-server:{{ .Values.imageTag }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         name: mcmc-stats-server
         ports:

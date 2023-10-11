@@ -26,15 +26,6 @@ This guide describes how to set up a Chainsail environment from scratch, either 
     - [Allowing / disallowing application users](#allowing--disallowing-application-users)
 #
 
-## Prerequisites for both Minikube and Google Cloud deployment
-Make sure that you correctly edit the Terraform and Helm files.
-Specifically, you'll want to make sure that you have matching container registry in
-the following files / environment variables:
-- `/terraform/cluster/local/main.tf` (`container_registry` in the `locals` block),
-- `/helm/values.yaml` (`imageHubNamespace`),
-- `/helm/values-local.yaml` (`imageHubNamespace`),
-- `/helm/values-dev.yaml` (`imageHubNamespace`),if you're considering a Google Cloud deployment,
-- and the `HUB_NAMESPACE` environment variable later.
 
 ## Local deployment
 
@@ -67,9 +58,8 @@ and add them to Minikube's Docker registry. One way to do this is:
 # This makes docker commands use Minikube's Docker daemon
 eval $(minikube docker-env)
 
-HUB_NAMESPACE="<container registry>/" make images
+make images
 ```
-The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml` and the `container_registry` value in the `locals` block of `terraform/cluster/local/main.tf`.
 
 Then, you can install Chainsail with Helm:
 
@@ -151,24 +141,34 @@ In order to be able to push the images to the container registry, the Google Clo
 It is called something like `<eu, ...>.artifacts.<project name>` bucket.
 The name of the bucket might vary depending on the `zone` and `node_location` entries in the `chainsail_gcp` Terraform module in `terraform/base/dev/main.tf`.
 
-To build and push images, run
-```bash
-HUB_NAMESPACE="<container registry>/" make push-images
+Configure the image prefix for container images by creating a shell file call
+`.config/env.private.sh` containing something like:
+
+```
+export IMAGE_PREFIX='<your-container-registry>'
+export TF_VAR_image_prefix="$IMAGE_PREFIX"
 ```
 
-The hub namespace environment variable has to match the value of the `imageHubNamespace` property in `helm/values.yaml`.
+Setting `TF_VAR_image_prefix` ensures that Terraform will use the same image
+prefix.
+
+To build and push images, run
+```bash
+make push-images
+```
 
 The first time you deploy Chainsail, you will need to fetch the cluster's Kubernetes access credentials using `gcloud`:
 
 ```bash
 gcloud container clusters get-credentials --region $GCP_REGION chainsail
 ```
+
 The GCP region can be found in `terraform/base/dev/main.tf` in the `node_location` entry of the `chainsail_gcp` module.
 
 Once all of the desired images are published, you can install Chainsail with:
 
 ```bash
-helm install -f helm/values-dev.yaml chainsail ./helm
+helm install -f helm/values-dev.yaml --set imagePrefix=$IMAGE_PREFIX chainsail ./helm
 ```
 
 ### 4. Deploy Chainsail front-end
@@ -198,7 +198,7 @@ There are a couple of additional steps which need to be configured manually:
 To upgrade an already running Chainsail cluster to a newer version of the chart. Use:
 
 ```bash
-helm upgrade -f helm/values-dev.yaml chainsail ./helm
+helm upgrade -f helm/values-dev.yaml --set imagePrefix=$IMAGE_PREFIX chainsail ./helm
 ```
 
 If using the `latest` tag for images in the helm chart, you will also need to restart the services so that
