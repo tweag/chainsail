@@ -1,7 +1,7 @@
 ##############################################################################
 # BASE
 ##############################################################################
-FROM python:3.8.7-slim as base
+FROM python:3.10-slim as base
 
 # Set up required directories
 RUN mkdir -p /app/deps && mkdir -p /run/sshd
