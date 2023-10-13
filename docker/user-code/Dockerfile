@@ -1,7 +1,6 @@
 ##############################################################################
 # BASE
 ##############################################################################
-
 # We use Python 3.10 (in contrast to Python 3.8 elsewhere in this project), because
 # BridgeStan needs at least Python 3.9.
 FROM python:3.10-slim as base

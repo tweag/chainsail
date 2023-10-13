@@ -3,7 +3,7 @@
 
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "nixpkgs/release-22.11";
+    nixpkgs.url = "nixpkgs/release-23.05";
     yarn-nixpkgs.url = "nixpkgs/21.11";
     poetry2nix = {
       url = "github:steshaw/poetry2nix/git-branch-dependency";
