@@ -9,7 +9,7 @@ RUN apt update -y
 RUN apt install -y gcc build-essential
 
 # Python package managers
-RUN pip install --upgrade pip && pip install httpstan
+RUN pip install --upgrade pip && pip install httpstan==4.9.1
 
 ENV HTTPSTAN_PORT=8082
 
