@@ -24,7 +24,7 @@ tolerations:
 # `values-dev.yaml`.
 # Furthermore, this value is the `HUB_NAMESPACE` environment variable you have
 # to set when building the Docker images using the Makefile.
-imageHubNamespace: 'eu.gcr.io/project-name/'
+imageHubNamespace: 'my-project/'
 imageTag: 'latest'
 
 ##############################################################################

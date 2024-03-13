@@ -61,6 +61,12 @@ def _is_dev_mode():
         return False
 
 
+import logging
+import os
+
+
+
+
 def check_user(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -159,6 +165,18 @@ def get_job(job_id, user_id):
     """List a single job"""
     job = find_job(job_id, user_id)
     return JobViewSchema().jsonify(job, many=False)
+
+@app.route("/user/add", methods=["POST"])
+def add_user():
+    """Add a user to the database"""
+    email = request.form.get("email")
+    user = TblUsers.query.filter_by(email=email).first()
+    if user:
+        return jsonify({"message": f"User with email {email} already exists"}), 409
+    user = TblUsers(email=email, is_allowed=True)
+    db.session.add(user)
+    db.session.commit()
+    return jsonify({"message": f"User with email {email} added"}), 200
 
 
 @app.route("/job", methods=["POST"])

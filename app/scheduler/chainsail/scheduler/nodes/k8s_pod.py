@@ -218,14 +218,14 @@ class K8sNode(Node):
             startup_probe=kub.client.V1Probe(
                 grpc=kub.client.V1GRPCAction(port=50052),
                 # try every 30 seconds...
-                period_seconds=30,
+                period_seconds=90,
                 # ... up to 10 times.
                 # This gives the user code server 30 * 10 seconds = 5 minutes to be ready.
-                failure_threshold=10,
+                failure_threshold=3,
                 # If everything is well, the gradient evaluation in the health check
                 # should surely not take more than 5 seconds
-                timeout_seconds=5,
-                )
+                timeout_seconds=360,
+                ) if self._is_controller else None
         )
         # Worker container
         container_cmd = [self._config.cmd] + self._config.args

@@ -17,7 +17,7 @@ FROM base as system-deps
 # up-to-date GCC
 RUN echo 'deb http://deb.debian.org/debian stable main' >> /etc/apt/sources.list
 RUN apt update -y
-RUN apt-get install -y gcc build-essential curl wget unzip libopenblas-dev && \
+RUN apt-get install -y git gcc build-essential curl wget unzip libopenblas-dev && \
     rm -rf /var/lib/apt/lists/*
 
 

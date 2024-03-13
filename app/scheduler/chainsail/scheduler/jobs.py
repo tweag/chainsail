@@ -188,12 +188,21 @@ class Job:
             logger.info(f"Scaling up from {current_size} to {n_replicas} replicas...")
             # Scale up
             to_add = requested_size - current_size
-            for _ in range(to_add):
-                new_node = self._add_node()
-                started, logs = new_node.create()
-                if not started:
-                    self.sync_representation()
-                    raise JobError(f"Failed to start new node while scaling up. Logs: \n {logs}")
+            new_nodes = [self._add_node() for _ in range(to_add)]
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=to_add) as executor:
+                futures = [executor.submit(new_node.create) for new_node in new_nodes]
+                for future in concurrent.futures.as_completed(futures):
+                    started, logs = future.result()
+                    if not started:
+                        self.sync_representation()
+                        raise JobError(f"Failed to start new node while scaling up. Logs: \n {logs}")
+            # for _ in range(to_add):
+            #     new_node = self._add_node()
+            #     started, logs = new_node.create()
+            #     if not started:
+            #         self.sync_representation()
+            #         raise JobError(f"Failed to start new node while scaling up. Logs: \n {logs}")
         else:
             # Scale down
             logger.info(f"Scaling down from {current_size} to {n_replicas} replicas...")
