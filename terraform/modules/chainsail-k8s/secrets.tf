@@ -82,7 +82,6 @@ locals {
       ]
       ports           = [50051, 26]
       user_code_image = "${var.image_user_code}"
-      httpstan_image  = "${var.image_httpstan}"
     }
     worker = {
       image           = "${var.image_worker}"
@@ -90,7 +89,6 @@ locals {
       args            = ["-D"]
       ports           = [26]
       user_code_image = "${var.image_user_code}"
-      httpstan_image  = "${var.image_httpstan}"
     }
     # FIXME: Ensure that this path matches helm chart
     remote_logging_config_path = "/config/remote_logging.yaml"

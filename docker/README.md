@@ -27,10 +27,6 @@ A small server which queries chainsail job storage and returns MCMC samples.
 
 A small gRPC server which evaluates user-defined probability distributions.
 
-### httpstan-server
-
-An http-stan server which can be used for evalulating Stan models.
-
 ### node
 
 Docker image containing all dependencies required to run Chainsail job nodes, including

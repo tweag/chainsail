@@ -1,4 +1,4 @@
-import pytest
+.import pytest
 from marshmallow.exceptions import ValidationError
 
 VM_NODE_CONFIG = {
@@ -36,14 +36,12 @@ VALID_CONFIG_VM = {
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
         "user_code_image": "some-docker-image",
-        "httpstan_image": "another-docker-image",
     },
     "worker": {
         "image": "some-docker-image:latest",
         "ports": [22],
         "cmd": "ls",
         "user_code_image": "some-docker-image",
-        "httpstan_image": "another-docker-image",
     },
     "node_type": "LibcloudVM",
     "node_config": VM_NODE_CONFIG,
@@ -63,14 +61,12 @@ VALID_CONFIG_VM_CHAINSAIL_DRIVER = {
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
         "user_code_image": "some-docker-image",
-        "httpstan_image": "another-docker-image",
     },
     "worker": {
         "image": "some-docker-image:latest",
         "ports": [22],
         "cmd": "ls",
         "user_code_image": "some-docker-image",
-        "httpstan_image": "another-docker-image",
     },
     "node_type": "LibcloudVM",
     "node_config": VM_NODE_CONFIG_CHAINSAIL_DRIVER,
@@ -100,14 +96,12 @@ VALID_CONFIG_K8S = {
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
         "user_code_image": "some-docker-image",
-        "httpstan_image": "another-docker-image",
     },
     "worker": {
         "image": "some-docker-image:latest",
         "ports": [22],
         "cmd": "ls",
         "user_code_image": "some-docker-image",
-        "httpstan_image": "another-docker-image",
     },
     "node_type": "KubernetesPod",
     "node_config": K8S_POD_CONFIG,
@@ -128,14 +122,12 @@ CONFIG_INVALID_TYPE = {
         "cmd": "bash",
         "args": ["-c", "'echo foo'"],
         "user_code_image": "some-docker-image",
-        "httpstan_image": "another-docker-image",
     },
     "worker": {
         "image": "some-docker-image:latest",
         "ports": [22],
         "cmd": "ls",
         "user_code_image": "some-docker-image",
-        "httpstan_image": "another-docker-image",
     },
     "node_type": "DoesNotExist",
     "node_config": VM_NODE_CONFIG,

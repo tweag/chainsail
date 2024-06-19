@@ -15,7 +15,6 @@ def mock_scheduler_config():
         args=["-c", "'echo foo'"],
         ports=[8080],
         user_code_image="bar:earliest",
-        httpstan_image="moo:sometag",
     )
     node_config = VMNodeConfig(
         "1",
