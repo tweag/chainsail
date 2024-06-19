@@ -16,7 +16,6 @@ from chainsail.grpc import user_code_pb2_grpc, user_code_pb2
 logger = logging.getLogger("chainsail.controller")
 pdf, initial_states = import_from_user()
 
-
 class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
     def LogProb(self, request, context):
         state = np.frombuffer(request.state_bytes)
@@ -50,6 +49,17 @@ class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
         return user_code_pb2.InitialStateResponse(initial_state_bytes=initial_states.tobytes())
 
 
+class HealthServicer(user_code_pb2_grpc.HealthServicer):
+        def Check(self, request, context):
+            pdf.log_prob_gradient(initial_states)
+            return user_code_pb2.HealthCheckResponse(status=user_code_pb2.HealthCheckResponse.SERVING)
+
+        def Watch(self, request, context):
+            pdf.log_prob_gradient(initial_states)
+            return user_code_pb2.HealthCheckResponse(status=user_code_pb2.HealthCheckResponse.SERVING)
+
+
+
 @click.command()
 @click.option(
     "--port",
@@ -66,9 +76,10 @@ class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
 def run(port, remote_logging_config):
     # Configure logging
     configure_logging("chainsail.controller", "DEBUG", remote_logging_config)
-
     logger.debug("Starting user code gRPC server")
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
+
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
+    user_code_pb2_grpc.add_HealthServicer_to_server(HealthServicer(), server)
     user_code_pb2_grpc.add_UserCodeServicer_to_server(UserCodeServicer(), server)
     server.add_insecure_port(f"[::]:{port}")
     server.start()
