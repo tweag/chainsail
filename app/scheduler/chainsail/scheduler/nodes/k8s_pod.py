@@ -176,13 +176,6 @@ class K8sNode(Node):
         ## CONTAINERS
         # TODO: Add something to replace `--log-driver=gcplogs` for every container
         # -> See this issue : https://github.com/kubernetes/kubernetes/issues/15478
-        # HTTPStan Container
-        httpstan_container = kub.client.V1Container(
-            name="httpstan",
-            image=self._config.httpstan_image,
-            env=[kub.client.V1EnvVar(name="HTTPSTAN_PORT", value="8082")],
-            image_pull_policy=self._node_config.image_pull_policy,
-        )
         # User code container
         install_script_target = os.path.join("/chainsail", self._CM_FILE_USERCODE)
         user_code_container = kub.client.V1Container(
@@ -302,7 +295,7 @@ class K8sNode(Node):
             spec=kub.client.V1PodSpec(
                 # Note: we don't want k8s to restart this pod since chainsail handles retries internally
                 restart_policy="Never",
-                containers=[httpstan_container, user_code_container, container],
+                containers=[user_code_container, container],
                 volumes=[job_volume, config_volume, ssh_volume],
                 tolerations=[kub.client.V1Toleration(key="app", value="chainsail")],
             ),

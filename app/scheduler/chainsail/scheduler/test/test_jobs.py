@@ -108,7 +108,6 @@ def mock_config():
             args=["bar"],
             ports=[8080],
             user_code_image="bar:earliest",
-            httpstan_image="moo:laitest (funny for French speaking people)",
         ),
         worker=GeneralNodeConfig(
             image="foo:latest",
@@ -116,7 +115,6 @@ def mock_config():
             args=["bar"],
             ports=[8080],
             user_code_image="bar:earliest",
-            httpstan_image="moo:laitest (funny for French speaking people)",
         ),
         node_type="mock",
         node_config=VMNodeConfig(

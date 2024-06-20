@@ -63,7 +63,6 @@ module "chainsail-k8s" {
   # for rebuilding images
   image_controller = "${local.container_registry}/chainsail-mpi-node-k8s:latest"
   image_worker     = "${local.container_registry}/chainsail-mpi-node-k8s:latest"
-  image_httpstan   = "${local.container_registry}/chainsail-httpstan-server:latest"
   image_user_code  = "${local.container_registry}/chainsail-user-code:latest"
 }
 

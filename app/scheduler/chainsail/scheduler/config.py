@@ -163,7 +163,6 @@ class GeneralNodeConfig:
     ports: List[int]
     cmd: str
     user_code_image: str
-    httpstan_image: str
     args: Optional[List[str]] = None
     max_nodes_per_job: int = 50
 
@@ -173,7 +172,6 @@ class GeneralNodeConfigSchema(Schema):
     cmd = fields.String(required=True)
     ports = fields.List(fields.Int(required=True))
     user_code_image = fields.String(required=True)
-    httpstan_image = fields.String(required=True)
     args = fields.List(fields.String())
     max_nodes_per_job = fields.Int()
 
