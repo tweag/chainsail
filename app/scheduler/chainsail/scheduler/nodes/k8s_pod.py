@@ -215,7 +215,7 @@ class K8sNode(Node):
                     sub_path=self._CM_FILE_USERCODE,
                 ),
             ],
-            startup_probe=kub.client.V1Probe(
+            readiness_probe=kub.client.V1Probe(
                 grpc=kub.client.V1GRPCAction(port=50052),
                 # try every 30 seconds...
                 period_seconds=30,
