@@ -59,6 +59,14 @@ def monitor_deployment(pod: "K8sNode") -> bool:
             time.sleep(2)
             continue
         elif pod.status == NodeStatus.RUNNING:
+            logger.debug(f"Pod {pod._name} is in status RUNNING")
+            # if pod._pod.status:
+            #     logger.debug(f"Pod {pod._name} is has pod._pod.status != None")
+            #     if pod._pod.status.condition.type == "Ready":
+            #         logger.debug(f"Pod {pod._name} has pod._pod.status.condition.type == Ready")
+            #         return True
+            #     continue
+            # continue
             return True
         elif pod.status == NodeStatus.FAILED:
             logger.error("Pod failed during its creation process.")
@@ -68,6 +76,8 @@ def monitor_deployment(pod: "K8sNode") -> bool:
                 f"Unexpected pod status during its creation process"
                 f"Pod status: {pod.status.value}"
             )
+            time.sleep(2)
+            # continue
             return False
 
 
@@ -211,13 +221,14 @@ class K8sNode(Node):
             readiness_probe=kub.client.V1Probe(
                 grpc=kub.client.V1GRPCAction(port=50052),
                 # try every 30 seconds...
-                period_seconds=30,
+                period_seconds=15,
                 # ... up to 10 times.
                 # This gives the user code server 30 * 10 seconds = 5 minutes to be ready.
-                failure_threshold=10,
+                failure_threshold=100,
                 # If everything is well, the gradient evaluation in the health check
                 # should surely not take more than 5 seconds
                 timeout_seconds=5,
+                initial_delay_seconds=15,
                 )
         )
         # Worker container
