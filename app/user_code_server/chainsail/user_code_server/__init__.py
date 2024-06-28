@@ -52,10 +52,12 @@ class UserCodeServicer(user_code_pb2_grpc.UserCodeServicer):
 class HealthServicer(user_code_pb2_grpc.HealthServicer):
         def Check(self, request, context):
             pdf.log_prob_gradient(initial_states)
+            print("HealthServicer Check called")
             return user_code_pb2.HealthCheckResponse(status=user_code_pb2.HealthCheckResponse.SERVING)
 
         def Watch(self, request, context):
             pdf.log_prob_gradient(initial_states)
+            print("HealthServicer Watch called")
             return user_code_pb2.HealthCheckResponse(status=user_code_pb2.HealthCheckResponse.SERVING)
 
 
