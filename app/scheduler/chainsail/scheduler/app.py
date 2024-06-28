@@ -10,7 +10,6 @@ from datetime import datetime
 
 import shortuuid
 from celery import chain
-from cloudstorage.exceptions import NotFoundError
 from firebase_admin.auth import (
     ExpiredIdTokenError,
     InvalidIdTokenError,
@@ -231,7 +230,7 @@ def get_job_signed_url(job_id, user_id):
     find_job(job_id, user_id)
     try:
         signed_url = get_signed_url(job_id)
-    except NotFoundError:
+    except:
         return ("Results not zipped yet", 404)
     update_signed_url_task.apply_async((job_id, signed_url), {})
     return (signed_url, 200)
