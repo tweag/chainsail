@@ -19,7 +19,7 @@ spec:
       serviceAccountName: chainsail-scheduler
       automountServiceAccountToken: true
       containers:
-      - image: {{ .Values.imageHubNamespace }}chainsail-celery-worker:{{ .Values.imageTag }}
+      - image: {{ .Values.imagePrefix }}chainsail-celery-worker:{{ .Values.imageTag }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         name: scheduler-worker
         resources: {}
